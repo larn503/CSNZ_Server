@@ -1,0 +1,7 @@
+﻿/src/Debug
+/src/Release
+/src/ReleasePublic
+/src/.vs
+/.vs
+/src/out
+src/CMakeSettings.json

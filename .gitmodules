@@ -1,0 +1,9 @@
+[submodule "src/Thirdparty/json"]
+	path = src/Thirdparty/json
+	url = https://github.com/nlohmann/json
+[submodule "src/Thirdparty/SQLiteCpp"]
+	path = src/Thirdparty/SQLiteCpp
+	url = https://github.com/SRombauts/SQLiteCpp
+[submodule "src/Thirdparty/KeyValues"]
+	path = src/Thirdparty/KeyValues
+	url = https://github.com/JusicP/KeyValues

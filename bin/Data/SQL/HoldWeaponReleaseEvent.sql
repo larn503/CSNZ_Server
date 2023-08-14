@@ -1,0 +1,2 @@
+DELETE FROM UserMiniGameWeaponReleaseItemProgress;
+DELETE FROM UserMiniGameWeaponReleaseCharacters;
