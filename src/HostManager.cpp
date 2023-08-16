@@ -19,12 +19,12 @@ bool CHostManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	if (room == NULL)
 		return false;
 
+	if (server == NULL && room->GetHostUser() != user)
+		return false;
+
 	CGameMatch* gamematch = room->GetGameMatch();
 
 	if (gamematch == NULL)
-		return false;
-
-	if (server == NULL && room->GetHostUser() != user)
 		return false;
 
 	int type = msg->ReadUInt8();
@@ -39,7 +39,7 @@ bool CHostManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	case HostPacketType::UseScenItem:
 		return OnUseInGameItem(msg, socket);
 	case HostPacketType::FlyerFlock:
-		return OnFlyerFlockRequest(msg, user);
+		return OnFlyerFlockRequest(msg, socket);
 	case HostPacketType::UpdateUserStatus:
 		return OnUpdateUserStatus(msg, socket);
 	case HostPacketType::OnKillEvent:
@@ -226,15 +226,12 @@ bool CHostManager::OnUseInGameItem(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CHostManager::OnFlyerFlockRequest(CReceivePacket* msg, CUser* user)
+bool CHostManager::OnFlyerFlockRequest(CReceivePacket* msg, CExtendedSocket* socket)
 {
-	if (!user)
-		return false;
-
 	// TODO: rewrite
 	string type = msg->ReadString();
 
-	g_pPacketManager->SendHostFlyerFlock(user->GetExtendedSocket(), g_pServerConfig->flockingFlyerType);
+	g_pPacketManager->SendHostFlyerFlock(socket, g_pServerConfig->flockingFlyerType);
 
 	return true;
 }
@@ -529,7 +526,8 @@ void CHostManager::OnHostChanged(CUser* gameMatchUser, CUser* newHost, CGameMatc
 	g_pPacketManager->SendHostRestart(gameMatchUser->GetExtendedSocket(), newHost->GetID(), gameMatchUser == newHost ? true : false, match);
 
 	if (gameMatchUser != newHost)
-		g_pPacketManager->SendHostJoin(gameMatchUser->GetExtendedSocket(), newHost->GetID());
+		//g_pPacketManager->SendHostJoin(gameMatchUser->GetExtendedSocket(), newHost->GetID());
+		g_pPacketManager->SendHostServerJoin(gameMatchUser->GetExtendedSocket(), ip_string_to_int(newHost->GetNetworkConfig().m_szExternalIpAddress), false, newHost->GetNetworkConfig().m_nExternalServerPort, gameMatchUser->GetID());
 }
 
 bool CHostManager::OnUserWeapon(CReceivePacket* msg, CExtendedSocket* socket)

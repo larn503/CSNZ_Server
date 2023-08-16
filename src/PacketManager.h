@@ -75,6 +75,7 @@ public:
 	void SendMetadataItemExpireTime(CExtendedSocket* socket);
 	void SendMetadataUnk20(CExtendedSocket* socket);
 	void SendMetadataUnk15(CExtendedSocket* socket);
+	void SendMetadataRandomWeaponList(CExtendedSocket* socket);
 	void SendMetadataHash(CExtendedSocket* socket);
 	void SendMetadataUnk31(CExtendedSocket* socket);
 	void SendMetadataHonorMoneyShop(CExtendedSocket* socket);
@@ -245,6 +246,7 @@ private:
 	HZIP m_hWeaponPropZip;
 	BinMetadata* m_pPaintItemList;
 	BinMetadata* m_pReinforceItemsExp;
+	BinMetadata* m_pRandomWeaponList;
 	BinMetadata* m_pUnk3;
 	BinMetadata* m_pUnk8;
 	BinMetadata* m_pUnk15;

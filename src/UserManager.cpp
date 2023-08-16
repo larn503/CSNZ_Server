@@ -502,6 +502,8 @@ void CUserManager::SendMetadata(CExtendedSocket* socket)
 		g_pPacketManager->SendMetadataWeaponProp(socket);
 	if (flag & kMetadataFlag_Hash)
 		g_pPacketManager->SendMetadataHash(socket);
+	if (flag & kMetadataFlag_RandomWeaponList)
+		g_pPacketManager->SendMetadataRandomWeaponList(socket);
 }
 
 void CUserManager::SendUserLoadout(CUser* user)

@@ -821,10 +821,11 @@ void CServerInstance::Listen()
 					}
 					else
 					{
+						g_pDedicatedServerManager->RemoveServer(s);
 						g_pNetwork->RemoveSocket(s);
 					}
 
-					g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, recevied: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, WSAGetLastError(), user);
+					g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, received: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, WSAGetLastError(), user);
 				}
 				else if (s->m_nReadResult == SOCKET_ERROR)
 				{
@@ -847,14 +848,16 @@ void CServerInstance::Listen()
 						}
 						else
 						{
+							g_pDedicatedServerManager->RemoveServer(s);
 							g_pNetwork->RemoveSocket(s);
 						}
 
-						g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, recevied: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, WSAGetLastError(), user);
+						g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, received: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, WSAGetLastError(), user);
 					}
 					else
 					{
 						g_pConsole->Log(OBFUSCATE("Unhandled WSA error: %d, user object will remain...\n"), wsaResult);
+						g_pDedicatedServerManager->RemoveServer(s);
 						g_pNetwork->RemoveSocket(s);
 					}
 				}
@@ -1145,6 +1148,7 @@ void CServerInstance::DisconnectClient(CExtendedSocket* socket)
 	}
 	else
 	{
+		g_pDedicatedServerManager->RemoveServer(socket);
 		g_pNetwork->RemoveSocket(socket);
 	}
 }

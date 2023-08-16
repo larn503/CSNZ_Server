@@ -25,7 +25,7 @@ CRoomSettings::CRoomSettings()
 	freezeTime = 0;
 	buyTime = 90;
 	displayNickname = 0;
-	teamBalance = 0;
+	teamBalance = 1;
 	unk21 = 0;
 	friendlyFire = 0;
 	flashlight = 1;
@@ -45,10 +45,10 @@ CRoomSettings::CRoomSettings()
 	unk37 = 0;
 	unk38 = 0;
 	botDifficulty = 0;
-	friendlyBots = 0;
-	enemyBots = 0;
+	friendlyBots = 8;
+	enemyBots = 8;
 	botBalance = 0;
-	botAdd = 0;
+	botAdd = 1;
 	kdRule = 0;
 	startingCash = 0;
 	unk46 = 0;

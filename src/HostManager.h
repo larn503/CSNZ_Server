@@ -14,7 +14,7 @@ private:
 	bool OnSaveData(CReceivePacket* msg, CGameMatch* gamematch);
 	bool OnSetUserInventory(CReceivePacket* msg, CExtendedSocket* socket);
 	bool OnUseInGameItem(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnFlyerFlockRequest(CReceivePacket* msg, CUser* user);
+	bool OnFlyerFlockRequest(CReceivePacket* msg, CExtendedSocket* socket);
 	bool OnUpdateUserStatus(CReceivePacket* msg, CExtendedSocket* socket);
 	bool OnKillEvent(CReceivePacket* msg, CExtendedSocket* socket);
 	bool OnUpdateKillCounter(CReceivePacket* msg, CExtendedSocket* socket);
