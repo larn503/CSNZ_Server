@@ -165,6 +165,7 @@ enum EMetadataPacketType
 	kPacket_Metadata_Unk8 = 8,
 	kPacket_Metadata_MatchOption = 9,
 	kPacket_Metadata_Unk15 = 15,
+	kPacket_Metadata_RandomWeaponList = 16,
 	kPacket_Metadata_WeaponParts = 17,
 	kPacket_Metadata_Unk20 = 20,
 	kPacket_Metadata_Encyclopedia = 23,
@@ -222,6 +223,7 @@ enum EServerConfig_MetadataFlag
 	kMetadataFlag_PPSystem = 1 << 28,
 	kMetadataFlag_Item = 1 << 29,
 	kMetadataFlag_CodisData = 1 << 30,
+	kMetadataFlag_RandomWeaponList = 1 << 31,
 };
 
 enum ItemPacketType

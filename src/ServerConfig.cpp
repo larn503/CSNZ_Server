@@ -987,6 +987,8 @@ bool CServerConfig::Load()
 				metadataToSend |= kMetadataFlag_WeaponProp;
 			if (jMetadata.value("Hash", false))
 				metadataToSend |= kMetadataFlag_Hash;
+			if (jMetadata.value("RandomWeaponList", true))
+				metadataToSend |= kMetadataFlag_RandomWeaponList;
 		}
 		if (cfg.contains("DefaultUser"))
 		{

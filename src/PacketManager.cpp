@@ -79,6 +79,7 @@ CPacketManager::CPacketManager()
 
 	m_pPaintItemList = LoadBinaryMetadata("Data/Metadata_PaintItemList.bin");
 	m_pReinforceItemsExp = LoadBinaryMetadata("Data/Metadata_ReinforceItemsExp.bin");
+	m_pRandomWeaponList = LoadBinaryMetadata("Data/Metadata_RandomWeaponList.bin");
 	m_pUnk3 = LoadBinaryMetadata("Data/Metadata_Unk3.bin");
 	m_pUnk8 = LoadBinaryMetadata("Data/Metadata_Unk8.bin");
 	m_pUnk15 = LoadBinaryMetadata("Data/Metadata_Unk15.bin");
@@ -87,9 +88,9 @@ CPacketManager::CPacketManager()
 	m_pUnk43 = LoadBinaryMetadata("Data/Metadata_Unk43.bin");
 	m_pUnk49 = LoadBinaryMetadata("Data/Metadata_Unk49.bin");
 
-	if (!m_pPaintItemList || !m_pReinforceItemsExp || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49)
+	if (!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49)
 	{
-		g_pConsole->Error("Required metadata:\nMetadata_PaintItemList.bin\nMetadata_ReinforceItemsExp.bin\nMetadata_Unk3.bin\nMetadata_Unk8.bin\nMetadata_Unk15.bin\nMetadata_Unk20.bin\nMetadata_Unk31.bin\nMetadata_Unk43.bin\nMetadata_Unk49.bin\n");
+		g_pConsole->Error("Required metadata:\nMetadata_PaintItemList.bin\nMetadata_ReinforceItemsExp.bin\nMetadata_RandomWeaponList.bin\nMetadata_Unk3.bin\nMetadata_Unk8.bin\nMetadata_Unk15.bin\nMetadata_Unk20.bin\nMetadata_Unk31.bin\nMetadata_Unk43.bin\nMetadata_Unk49.bin\n");
 	}
 }
 
@@ -138,6 +139,11 @@ CPacketManager::~CPacketManager()
 	{
 		free(m_pUnk15->buffer);
 		delete m_pUnk15;
+	}
+	if (m_pRandomWeaponList)
+	{
+		free(m_pRandomWeaponList->buffer);
+		delete m_pRandomWeaponList;
 	}
 	if (m_pUnk20)
 	{
@@ -1218,6 +1224,19 @@ void CPacketManager::SendMetadataUnk15(CExtendedSocket* socket)
 	msg->BuildHeader();
 
 	msg->WriteData(m_pUnk15->buffer, m_pUnk15->size);
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMetadataRandomWeaponList(CExtendedSocket* socket)
+{
+	if (!m_pRandomWeaponList)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteData(m_pRandomWeaponList->buffer, m_pRandomWeaponList->size);
 
 	socket->Send(msg);
 }

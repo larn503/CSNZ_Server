@@ -916,6 +916,11 @@ void CRoom::SendPlayerLeaveIngame(CUser* user)
 
 void CRoom::OnUserRemoved(CUser* user)
 {
+	if (m_pGameMatch)
+	{
+		m_pGameMatch->Disconnect(user); // remove from game match user list
+	}
+
 	if (m_Users.size() > 0)
 	{
 		SendRemovedUser(user);
@@ -928,11 +933,6 @@ void CRoom::OnUserRemoved(CUser* user)
 	{
 		m_pParentChannel->RemoveRoomById(m_nID);
 		//m_pParentChannel->OnEmptyRoomCallback(this);
-	}
-
-	if (m_pGameMatch)
-	{
-		m_pGameMatch->Disconnect(user); // remove from game match user list
 	}
 
 	user->SetStatus(UserStatus::STATUS_MENU);
@@ -951,10 +951,10 @@ void CRoom::UpdateHost(CUser* newHost)
 	m_pHostUser = newHost;
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendRoomSetHost(u->GetExtendedSocket(), m_pHostUser);
+		g_pPacketManager->SendRoomSetHost(u->GetExtendedSocket(), newHost);
 	}
 
-	if (m_pGameMatch)
+	if (m_pGameMatch && m_pServer == NULL)
 	{
 		m_pGameMatch->OnHostChanged(newHost);
 	}

@@ -38,7 +38,8 @@
 		"CodisData": true,
 		"Item": false,
 		"WeaponProp": true,
-		"Unk255": false
+		"Unk255": false,
+		"RandomWeaponList": true
 	},
 	"DefaultUser": {
 		"GameMaster": true,
