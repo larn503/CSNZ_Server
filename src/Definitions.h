@@ -1214,6 +1214,7 @@ enum InRoomType
 	UserInviteRequest = 19,
 	RoomListRequest = 22,
 	JoinRoomRequest = 23,
+	SetZBAddons = 35,
 };
 
 enum UMsgReceiveType
