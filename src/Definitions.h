@@ -950,6 +950,7 @@ public:
 	int win;
 	int kills;
 	int deaths;
+	std::string regionName; // TODO: add to table
 	int nation;
 	int city;
 	int town;
