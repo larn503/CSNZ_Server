@@ -171,7 +171,7 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, CExtendedSocket* sock
 			inGameItems.begin(),
 			inGameItems.end(),
 			[](CUserInventoryItem& item) -> bool {
-				return !(item.m_nItemID && item.m_nInUse && g_pItemTable->GetRowValueByItemID<int>((const char*)OBFUSCATE("InGameItem"), to_string(item.m_nItemID)));
+				return !(item.m_nItemID && item.m_nStatus && item.m_nInUse && g_pItemTable->GetRowValueByItemID<int>((const char*)OBFUSCATE("InGameItem"), to_string(item.m_nItemID)));
 			}
 		),
 		inGameItems.end()
@@ -221,7 +221,7 @@ bool CHostManager::OnUseInGameItem(CReceivePacket* msg, CExtendedSocket* socket)
 
 	g_pItemManager->UseItem(destUser, items[0].GetGameSlot());
 
-	g_pPacketManager->SendHostOnItemUse(destRoom->GetHostUser()->GetExtendedSocket(), userID, items[0].m_nItemID);
+	g_pPacketManager->SendHostOnItemUse(socket, userID, items[0].m_nItemID);
 
 	return true;
 }

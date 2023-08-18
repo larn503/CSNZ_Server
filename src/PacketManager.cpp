@@ -792,12 +792,19 @@ void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, vector<CUserInven
 				msg->WriteUInt32(item.m_nObtainDate);
 				msg->WriteUInt32(item.m_nExpiryDate);
 
-				// paint related i think
 				msg->WriteUInt16(item.m_nPaintID);
-				msg->WriteUInt16(0); // какой-то массив
-				if (0)
+
+				std::stringstream iss(item.m_nPaintIDList);
+				std::vector<int> paintIDs;
+				int pID;
+
+				while (iss >> pID)
+					paintIDs.push_back(pID);
+
+				msg->WriteUInt16(paintIDs.size());
+				for (auto paintID : paintIDs)
 				{
-					msg->WriteUInt16(0);
+					msg->WriteUInt16(paintID);
 				}
 
 				msg->WriteUInt16(item.m_nEnhancementLevel);
@@ -823,7 +830,7 @@ void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, vector<CUserInven
 
 				// unk shit #2
 				msg->WriteUInt8(0); // bound flag (idk what is it)
-				msg->WriteUInt8(0); // 0 - locked, 1 - unlocked, 2 - special item
+				msg->WriteUInt8(item.m_nLockStatus); // 0 - locked, 1 - unlocked, 2 - special item
 
 				// unk shit
 				msg->WriteUInt32(0); // unk
@@ -3330,10 +3337,18 @@ void CPacketManager::SendDefaultItems(CExtendedSocket* socket, vector<CUserInven
 			msg->WriteUInt32(item.m_nExpiryDate);
 
 			msg->WriteUInt16(item.m_nPaintID);
-			msg->WriteUInt16(0); // какой-то массив
-			if (0)
+
+			std::stringstream iss(item.m_nPaintIDList);
+			std::vector<int> paintIDs;
+			int pID;
+
+			while (iss >> pID)
+				paintIDs.push_back(pID);
+
+			msg->WriteUInt16(paintIDs.size());
+			for (auto paintID : paintIDs)
 			{
-				msg->WriteUInt16(0);
+				msg->WriteUInt16(paintID);
 			}
 
 			msg->WriteUInt16(item.m_nEnhancementLevel);
@@ -3355,11 +3370,11 @@ void CPacketManager::SendDefaultItems(CExtendedSocket* socket, vector<CUserInven
 				msg->WriteUInt16(item.m_nPartSlot2);
 			}
 
-			msg->WriteUInt8(1); // item->m_nInUse
+			msg->WriteUInt8(item.m_nInUse);
 
 			// unk shit
 			msg->WriteUInt8(0); 
-			msg->WriteUInt8(0); // locked item
+			msg->WriteUInt8(item.m_nLockStatus); // locked item
 
 			msg->WriteUInt32(0); // unk
 			msg->WriteUInt8(0); // unk array size
