@@ -22,7 +22,6 @@ public:
 	RoomTeamNum m_Team;
 	RoomReadyStatus m_Ready;
 	bool m_bIsIngame;
-	std::vector<int> m_Addons; // ZBS
 };
 
 class CRoom

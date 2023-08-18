@@ -509,11 +509,22 @@ bool CHostManager::OnUpdateClass(CReceivePacket* msg, CExtendedSocket* socket)
 	// send zbs addon info
 	if (destRoom->GetSettings()->gameMode == 15)
 	{
-		CRoomUser* roomUser = destUser->GetRoomData();
-		if (!roomUser)
-			g_pConsole->Error("CHostManager::OnUpdateClass: no roomUser for '%d'!\n", destUser->GetID());
-		else
-			g_pPacketManager->SendHostZBAddon(socket, destUser->GetID(), roomUser->m_Addons);
+		vector<int> realAddonList;
+
+		vector<int> addons;
+		g_pUserDatabase->GetAddons(destUser->GetID(), addons);
+
+		for (auto itemID : addons)
+		{
+			CUserInventoryItem item;
+			if (g_pUserDatabase->GetFirstActiveItemByItemID(destUser->GetID(), itemID, item) == 1
+				&& g_pItemManager->OnItemUse(destUser, item))
+			{
+				realAddonList.push_back(itemID);
+			}
+		}
+
+		g_pPacketManager->SendHostZBAddon(socket, destUser->GetID(), realAddonList);
 	}
 
 	return true;

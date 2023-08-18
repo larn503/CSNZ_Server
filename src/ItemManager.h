@@ -32,7 +32,6 @@ public:
 	int UseItem(CUser* user, int slot, int additionalArg = 0, int additionalArg2 = 0);
 	bool CanUseItem(const CUserInventoryItem& item);
 	bool OpenDecoder(CUser* user, int count, int slot);
-	//void PartCheck(CUser* user, CPacketIn_ItemPartCheck packet);
 	bool ExtendItem(int userID, CUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration = false);
 	bool OnDisassembleRequest(CUser* user, CReceivePacket* msg);
 	RewardNotice GiveReward(int userID, CUser* user, int rewardID, int rewardSelectID = 0, bool ignoreClient = false, int randomRepeatCount = 0);
@@ -42,10 +41,10 @@ public:
 	void OnNicknameChangeUse(CUser* user, std::string newNickname);
 	void OnRewardSelect(CReceivePacket* msg, CUser* user);
 	void OnCostumeEquip(CUser* user, int slot);
+	bool OnItemUse(CUser* user, CUserInventoryItem& item, int count = 1);
 
 private:
 	Reward* GetRewardByID(int rewardID);
-	bool OnItemUse(CUser* user, CUserInventoryItem& item, int count = 1);
 	bool OnDailyRewardsRequest(CUser* user, int requestId);
 	bool OnEnhancementRequest(CUser* user, CReceivePacket* msg);
 	bool OnWeaponPaintRequest(CUser* user, CReceivePacket* msg);

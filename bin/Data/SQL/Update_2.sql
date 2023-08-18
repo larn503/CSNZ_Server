@@ -1,3 +1,9 @@
 ALTER TABLE UserInventory ADD COLUMN paintIDList TEXT DEFAULT '';
 ALTER TABLE UserInventory ADD COLUMN lockStatus INT;
 ALTER TABLE UserCostumeLoadout ADD COLUMN pet INT;
+
+CREATE TABLE IF NOT EXISTS "UserAddon" (
+	"userID"	INT NOT NULL,
+	"itemID"	INT NOT NULL,
+	FOREIGN KEY("userID") REFERENCES "UserCharacter"("userID") ON DELETE CASCADE
+);

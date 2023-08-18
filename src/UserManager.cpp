@@ -1051,16 +1051,11 @@ bool CUserManager::OnAddonPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	if (user == NULL)
 		return false;
 
-	CRoom* room = user->GetCurrentRoom();
-	if (room == NULL)
-		return false;
+	vector<int> addons;
+	g_pUserDatabase->GetAddons(user->GetID(), addons);
 
-	CRoomUser* roomData = user->GetRoomData();
-	if (roomData == NULL)
-		return false;
-
-	if (!roomData->m_Addons.empty())
-		g_pPacketManager->SendAddonPacket(user->GetExtendedSocket(), roomData->m_Addons);
+	if (!addons.empty())
+		g_pPacketManager->SendAddonPacket(user->GetExtendedSocket(), addons);
 
 	return true;
 }

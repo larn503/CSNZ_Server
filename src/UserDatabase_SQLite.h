@@ -23,7 +23,7 @@ public:
 	bool Init();
 	bool CheckForTables();
 	void LoadLastBackup();
-	bool UpgradeDatabase(int currentDatabaseVer);
+	bool UpgradeDatabase(int& currentDatabaseVer);
 	bool ExecuteScript(std::string scriptPath);
 	bool ExecuteOnce();
 
@@ -100,6 +100,9 @@ public:
 	int UpdateWeaponReleaseCharacter(int userID, UserWeaponReleaseCharacter& character);
 
 	int SetWeaponReleaseCharacter(int userID, int weaponSlot, int slot, int character, bool opened);
+
+	int GetAddons(int userID, std::vector<int>& addons);
+	int SetAddons(int userID, std::vector<int>& addons);
 
 	// clan related
 	int CreateClan(ClanCreateConfig& clanCfg);

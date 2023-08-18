@@ -1361,12 +1361,6 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, CUser* user)
 		return false;
 	}
 
-	CRoomUser* roomUser = user->GetRoomData();
-	if (roomUser == NULL)
-	{
-		return false;
-	}
-
 	vector<int> addons;
 	int size = msg->ReadUInt16();
 	for (int i = 0; i < size; i++)
@@ -1374,9 +1368,9 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, CUser* user)
 		addons.push_back(msg->ReadUInt16());
 	}
 
-	// TODO: check if addons is real
+	g_pUserDatabase->SetAddons(user->GetID(), addons);
 
-	roomUser->m_Addons = addons;
+	// TODO: check if addons is real
 
 	// update addon list on client side
 	g_pPacketManager->SendAddonPacket(user->GetExtendedSocket(), addons);

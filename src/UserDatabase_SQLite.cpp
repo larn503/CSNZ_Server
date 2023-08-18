@@ -58,6 +58,11 @@ bool CUserDatabaseSQLite::CheckForTables()
 			{
 				return false;
 			}
+
+			if (dbVer != LAST_DB_VERSION)
+			{
+				g_pConsole->Error("CUserDatabaseSQLite::CheckForTables: database version mismatch, got: %d, expected: %d\n", dbVer, LAST_DB_VERSION);
+			}
 		}
 		else
 		{
@@ -78,8 +83,9 @@ bool CUserDatabaseSQLite::CheckForTables()
 }	
 
 // upgrades user database to last version
-bool CUserDatabaseSQLite::UpgradeDatabase(int currentDatabaseVer)
+bool CUserDatabaseSQLite::UpgradeDatabase(int& currentDatabaseVer)
 {
+	bool upgrade = false;
 	for (int i = currentDatabaseVer; i < LAST_DB_VERSION; i++)
 	{
 		if (!ExecuteScript(va(OBFUSCATE("Data/SQL/Update_%d.sql"), i + 1)))
@@ -87,9 +93,15 @@ bool CUserDatabaseSQLite::UpgradeDatabase(int currentDatabaseVer)
 			g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::UpgradeDatabase: file Update_%d.sql doesn't exist or sql execute returned error, current db ver: %d, last db ver: %d. Script not applied.\n"), i + 1, currentDatabaseVer, LAST_DB_VERSION);
 			return false;
 		}
+
+		upgrade = true;
 	}
 
-	m_Database.exec(va(OBFUSCATE("PRAGMA user_version = %d"), LAST_DB_VERSION));
+	if (upgrade)
+	{
+		m_Database.exec(va(OBFUSCATE("PRAGMA user_version = %d"), LAST_DB_VERSION));
+		currentDatabaseVer = LAST_DB_VERSION;
+	}
 
 	return true;
 }
@@ -3370,6 +3382,63 @@ int CUserDatabaseSQLite::SetWeaponReleaseCharacter(int userID, int weaponSlot, i
 	catch (exception& e)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::UpdateWeaponReleaseCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
+
+int CUserDatabaseSQLite::GetAddons(int userID, vector<int>& addons)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT itemID FROM UserAddon WHERE userID = ?"));
+		query.bind(1, userID);
+		while (query.executeStep())
+		{
+			addons.push_back(query.getColumn(0));
+		}
+	}
+	catch (exception& e)
+	{
+		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::GetAddons: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
+int CUserDatabaseSQLite::SetAddons(int userID, vector<int>& addons)
+{
+	try
+	{
+		SQLite::Transaction transaction(m_Database);
+
+		SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM UserAddon WHERE userID = ?"));
+		query.bind(1, userID);
+		query.exec();
+
+		{
+			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO UserAddon VALUES(?, ?)"));
+
+			for (auto itemID : addons)
+			{
+				query.bind(1, userID);
+				query.bind(2, itemID);
+				if (!query.exec())
+				{
+					return -1;
+				}
+				query.clearBindings();
+			}
+		}
+
+		transaction.commit();
+	}
+	catch (exception& e)
+	{
+		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::SetAddons: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
