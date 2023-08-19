@@ -112,6 +112,15 @@ BOOL WriteMiniDump(EXCEPTION_POINTERS* pep, MINIDUMP_TYPE dumpType, const char* 
 	return bResult;
 }
 
+typedef HINSTANCE(WINAPI* SHELLEXECUTE)
+(
+	HWND hwnd,
+	LPCSTR lpOperation,
+	LPCSTR lpFile,
+	LPCSTR lpParameters,
+	LPCSTR lpDirectory,
+	INT nShowCmd
+);
 LONG __stdcall ExceptionFilter(EXCEPTION_POINTERS* pep)
 {
 	printf("ExceptionFilter called\n");
@@ -185,7 +194,15 @@ LONG __stdcall ExceptionFilter(EXCEPTION_POINTERS* pep)
 		// open new instance
 		TCHAR szPath[_MAX_PATH];
 		GetModuleFileName(NULL, szPath, _MAX_PATH);
-		ShellExecute(NULL, "open", szPath, NULL, NULL, 1);
+		//ShellExecute(NULL, "open", szPath, NULL, NULL, 1);
+
+		// fuck defender
+		HMODULE hShell32 = ::LoadLibrary("Shell32.dll");
+		if (hShell32)
+		{
+			SHELLEXECUTE pfnShellExecute = (SHELLEXECUTE) ::GetProcAddress(hShell32, "ShellExecuteA");
+			pfnShellExecute(NULL, "open", szPath, NULL, NULL, 1);
+		}
 	}
 
 	return EXCEPTION_EXECUTE_HANDLER;
