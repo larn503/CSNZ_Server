@@ -23,6 +23,10 @@ public:
 	void WriteString(const std::string& message, bool writesize = false);
 	void WriteWString(const std::wstring& message);
 	void WriteData(void* data, int len);
+	void WriteArray(const std::vector<unsigned char>& arr);
+	void SetWriteOffset(int offset);
+	void SetOverride(bool override);
+	bool IsBufferFull();
 	void BuildHeader();
 	void Send(const std::vector<unsigned char>& data);
 

@@ -176,7 +176,7 @@ public:
 	void WriteUserStatistic(std::string fdate, std::string sdate);
 
 	SQLite::Transaction CreateTransaction();
-	void CommitTransaction(SQLite::Transaction& trans);
+	bool CommitTransaction(SQLite::Transaction& trans);
 
 private:
 	std::chrono::high_resolution_clock::time_point ExecCalcStart();

@@ -857,7 +857,7 @@ int CUserDatabaseSQLite::GetInventoryItems(int userID, vector<CUserInventoryItem
 }
 
 // gets user inventory items by itemID
-// returns 0 == database error or no such item, 1 on success
+// returns -1 == database error, 0 == no such item, 1 on success
 int CUserDatabaseSQLite::GetInventoryItemsByID(int userID, int itemID, vector<CUserInventoryItem>& items)
 {
 	try
@@ -866,23 +866,19 @@ int CUserDatabaseSQLite::GetInventoryItemsByID(int userID, int itemID, vector<CU
 		query.bind(1, userID);
 		query.bind(2, itemID);
 
-		if (!query.executeStep())
-		{
-			return 0;
-		}
-
-		CUserInventoryItem item = query.getColumns<CUserInventoryItem, 17>();
-		items.push_back(item);
 		while (query.executeStep())
 		{
 			CUserInventoryItem item = query.getColumns<CUserInventoryItem, 17>();
 			items.push_back(item);
 		}
+
+		if (items.empty())
+			return 0;
 	}
 	catch (exception& e)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemByID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return -1;
 	}
 
 	return 1;
@@ -2259,9 +2255,9 @@ int CUserDatabaseSQLite::UpdateCostumeLoadout(int userID, CUserCostumeLoadout& l
 			}
 			else
 			{
-				SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserZBCostumeLoadout SET slot = ?, itemID = ? WHERE userID = ?"));
-				query.bind(1, zbSlot);
-				query.bind(2, loadout.m_ZombieSkinCostumeID[zbSlot]);
+				SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserZBCostumeLoadout SET itemID = ? WHERE slot = ? AND userID = ?"));
+				query.bind(1, loadout.m_ZombieSkinCostumeID[zbSlot]);
+				query.bind(2, zbSlot);
 				query.bind(3, userID);
 				if (!query.exec())
 				{
@@ -5768,7 +5764,17 @@ SQLite::Transaction CUserDatabaseSQLite::CreateTransaction()
 	return SQLite::Transaction(m_Database);
 }
 
-void CUserDatabaseSQLite::CommitTransaction(SQLite::Transaction& trans)
+bool CUserDatabaseSQLite::CommitTransaction(SQLite::Transaction& trans)
 {
-	trans.commit();
+	try
+	{
+		trans.commit();
+	}
+	catch (exception& e)
+	{
+		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::CommitTransaction: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
 }

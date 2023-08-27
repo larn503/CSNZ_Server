@@ -745,97 +745,103 @@ void CPacketManager::SendStatistic(CExtendedSocket* socket)
 void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, vector<CUserInventoryItem>& items, int curSlot)
 {
 	int itemsToSend = items.size();
-	if (itemsToSend)
+	int itemStart = 0;
+	int itemSent = 0;
+	Buffer buf;
+	do
 	{
-		int itemStart = 0;
-		do
+		CSendPacket* msg = CreatePacket(socket, PacketId::Inventory);
+		msg->BuildHeader();
+
+		msg->WriteUInt32(0);
+		msg->WriteUInt16(0); // items count
+
+		for (int i = itemStart; i < itemsToSend; i++)
 		{
-			vector<unsigned char> buf;
-			int itemsSent = 0;
-			for (int i = itemStart; i < itemsToSend; i++)
+			CUserInventoryItem& item = items[i];
+			if (curSlot)
 			{
-				Buffer tempBuf;
-				CUserInventoryItem& item = items[i];
-				if (curSlot)
-				{
-					tempBuf.writeUInt16_LE(curSlot++);
-				}
-				else
-				{
-					tempBuf.writeUInt16_LE(item.GetGameSlot());
-				}
-
-				tempBuf.writeUInt8(item.m_nItemID != 0); // not empty slot
-				if (item.m_nItemID != 0)
-				{
-					tempBuf.writeUInt16_LE(item.m_nItemID);
-					tempBuf.writeUInt16_LE(item.m_nCount);
-					tempBuf.writeUInt8(item.m_nStatus);
-					tempBuf.writeUInt8(item.m_nInUse);
-					tempBuf.writeUInt32_LE(item.m_nObtainDate);
-					tempBuf.writeUInt32_LE(item.m_nExpiryDate);
-
-					tempBuf.writeUInt16_LE(item.m_nPaintID);
-					tempBuf.writeUInt16_LE(item.m_nPaintIDList.size());
-					for (auto paintID : item.m_nPaintIDList)
-					{
-						tempBuf.writeUInt16_LE(paintID);
-					}
-
-					tempBuf.writeUInt16_LE(item.m_nEnhancementLevel);
-					tempBuf.writeUInt32_LE(item.m_nEnhancementExp);
-					tempBuf.writeUInt32_LE(item.m_nEnhanceValue);
-
-					tempBuf.writeUInt8(0); // is storage item
-					tempBuf.writeUInt32_LE(0); // itemID or timestamp
-
-					tempBuf.writeUInt8(item.GetPartCount());
-					if (item.m_nPartSlot1)
-					{
-						tempBuf.writeUInt8(0);
-						tempBuf.writeUInt16_LE(item.m_nPartSlot1);
-					}
-					if (item.m_nPartSlot2)
-					{
-						tempBuf.writeUInt8(1);
-						tempBuf.writeUInt16_LE(item.m_nPartSlot2);
-					}
-
-					tempBuf.writeUInt8(item.m_nInUse);
-
-					// unk shit #2
-					tempBuf.writeUInt8(0); // bound flag (idk what is it)
-					tempBuf.writeUInt8(item.m_nLockStatus); // 0 - locked, 1 - unlocked, 2 - special item
-
-					// unk shit
-					tempBuf.writeUInt32_LE(0); // unk
-					tempBuf.writeUInt8(0); // unk array size
-					for (int i = 0; i < 0; i++)
-					{
-						tempBuf.writeUInt8(i++);
-						tempBuf.writeUInt16_LE(0);
-					}
-				}
-
-				if (buf.size() + tempBuf.getBuffer().size() > 0xFFF6) // 0xFFF6 = PACKET_MAX_SIZE - PACKET_HEADER_SIZE - 4 bytes (0) - 2 bytes (itemsSent)
-					break;
-
-				buf.insert(buf.end(), tempBuf.getBuffer().begin(), tempBuf.getBuffer().end());
-				itemsSent++;
+				buf.writeUInt16_LE(curSlot++);
+			}
+			else
+			{
+				buf.writeUInt16_LE(item.GetGameSlot());
 			}
 
-			CSendPacket* msg = CreatePacket(socket, PacketId::Inventory);
-			msg->BuildHeader();
+			buf.writeUInt8(item.m_nItemID != 0); // not empty slot
+			if (item.m_nItemID != 0)
+			{
+				buf.writeUInt16_LE(item.m_nItemID);
+				buf.writeUInt16_LE(item.m_nCount);
+				buf.writeUInt8(item.m_nStatus);
+				buf.writeUInt8(item.m_nInUse);
+				buf.writeUInt32_LE(item.m_nObtainDate);
+				buf.writeUInt32_LE(item.m_nExpiryDate);
 
-			msg->WriteUInt32(0);
-			msg->WriteUInt16(itemsSent);
-			msg->WriteData(buf.data(), buf.size());
+				buf.writeUInt16_LE(item.m_nPaintID);
+				buf.writeUInt16_LE(item.m_nPaintIDList.size());
+				for (auto paintID : item.m_nPaintIDList)
+				{
+					buf.writeUInt16_LE(paintID);
+				}
 
-			socket->Send(msg);
+				buf.writeUInt16_LE(item.m_nEnhancementLevel);
+				buf.writeUInt32_LE(item.m_nEnhancementExp);
+				buf.writeUInt32_LE(item.m_nEnhanceValue);
 
-			itemStart += itemsSent;
-		} while (itemStart != itemsToSend);
-	}
+				buf.writeUInt8(0); // is storage item
+				buf.writeUInt32_LE(0); // itemID or timestamp
+
+				buf.writeUInt8(item.GetPartCount());
+				if (item.m_nPartSlot1)
+				{
+					buf.writeUInt8(0);
+					buf.writeUInt16_LE(item.m_nPartSlot1);
+				}
+				if (item.m_nPartSlot2)
+				{
+					buf.writeUInt8(1);
+					buf.writeUInt16_LE(item.m_nPartSlot2);
+				}
+
+				buf.writeUInt8(item.m_nInUse);
+
+				// unk shit #2
+				buf.writeUInt8(0); // bound flag (idk what is it)
+				buf.writeUInt8(item.m_nLockStatus); // 0 - locked, 1 - unlocked, 2 - special item
+
+				// unk shit
+				buf.writeUInt32_LE(0); // unk
+				buf.writeUInt8(0); // unk array size
+				for (int i = 0; i < 0; i++)
+				{
+					buf.writeUInt8(i++);
+					buf.writeUInt16_LE(0);
+				}
+			}
+
+			if ((buf.getBuffer().size() + msg->GetData().getBuffer().size()) >= (PACKET_MAX_SIZE - PACKET_HEADER_SIZE))
+			{
+				buf.clear();
+				break;
+			}
+
+			msg->WriteArray(buf.getBuffer());
+
+			itemSent++;
+			buf.clear();
+		}
+
+		msg->SetWriteOffset(PACKET_HEADER_SIZE + 1 + 4); // PACKET_HEADER_SIZE + PACKET ID + UNK_32
+		msg->SetOverride(true);
+		msg->WriteUInt16(itemSent);
+		msg->SetOverride(false);
+
+		socket->Send(msg);
+
+		itemStart += itemSent;
+		itemSent = 0;
+	} while (itemStart != itemsToSend);
 }
 
 // Note: you can remove only 1 item from the vector

@@ -6,11 +6,13 @@ Buffer::Buffer() {
 	buffer.reserve(20000);
 	readOffset = 0;
 	writeOffset = 0;
+	overrideBuf = 0;
 }
 Buffer::Buffer(const std::vector<unsigned char>& _buffer) :
 	buffer(_buffer) {
 	readOffset = 0;
 	writeOffset = 0;
+	overrideBuf = 0;
 }
 
 void Buffer::setBuffer(std::vector<unsigned char>& _buffer) {
@@ -47,12 +49,22 @@ template <class T> inline void Buffer::writeBytes(const T& val, bool LE) {
 
 	if (LE == true) {
 		for (unsigned int i = 0, mask = 0; i < size; ++i, mask += 8)
-			buffer.push_back(val >> mask);
+		{
+			if (overrideBuf)
+				buffer.at(writeOffset + i) = val >> mask;
+			else
+				buffer.insert(buffer.begin() + writeOffset + i, val >> mask);
+		}
 	}
 	else {
 		unsigned const char* array = reinterpret_cast<unsigned const char*>(&val);
 		for (unsigned int i = 0; i < size; ++i)
-			buffer.push_back(array[size - i - 1]);
+		{
+			if (overrideBuf)
+				buffer.at(writeOffset + i) = array[size - i - 1];
+			else
+				buffer.insert(buffer.begin() + writeOffset + i, array[size - i - 1]);
+		}
 	}
 	writeOffset += size;
 }
@@ -63,6 +75,9 @@ unsigned long long Buffer::getWriteOffset() const {
 
 void Buffer::setWriteOffset(unsigned long long newOffset) {
 	writeOffset = newOffset;
+}
+void Buffer::setOverride(bool override) {
+	overrideBuf = override;
 }
 
 void Buffer::writeBool(bool val) {
@@ -82,12 +97,19 @@ void Buffer::writeInt8(char val) {
 void Buffer::writeUInt8(unsigned char val) {
 	writeBytes<unsigned char>(val, false);
 }
-void Buffer::writeArray(std::vector<unsigned char>& vec) {
-	buffer.insert(buffer.end(), vec.begin(), vec.end());
+void Buffer::writeArray(const std::vector<unsigned char>& vec) {
+	if (overrideBuf)
+		__debugbreak();
+	else
+		buffer.insert(buffer.begin() + writeOffset, vec.begin(), vec.end());
+	
 	writeOffset += vec.size();
 }
 void Buffer::writeData(void* data, int len) {
-	buffer.insert(buffer.end(), (unsigned char*)data, (unsigned char*)data + len);
+	if (overrideBuf)
+		__debugbreak();
+	else
+		buffer.insert(buffer.begin() + writeOffset, (unsigned char*)data, (unsigned char*)data + len);
 	writeOffset += len;
 }
 

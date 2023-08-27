@@ -373,7 +373,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket)
 		int unk = msg->ReadUInt8();
 		int itemCount = msg->ReadUInt16();
 
-		if (useItemType == 1) // switch status
+		if (useItemType == 1 || useItemType == 17) // switch status
 		{
 			CUserInventoryItem item;
 			g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(itemSlot), item);
@@ -493,20 +493,36 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 	if (count <= 0)
 		count = 1;
 
-	if (duration == -1)
+	if (duration < 0)
 		duration = 0;
 
 	// don't add PasswordBox add as separate item, increment uData->passwordBoxes value
 	if (itemID == 166) // PasswordBox
 	{
-		if (user)
-			user->UpdatePasswordBoxes(count);
+		if (!user)
+		{
+			CUserCharacter character;
+			character.flag = UFLAG_PASSWORDBOXES;
+			if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+				return ITEM_ADD_DB_ERROR;
+
+			character.passwordBoxes += count;
+
+			if (g_pUserDatabase->UpdateCharacter(userID, character) <= 0)
+				return ITEM_ADD_DB_ERROR;
+		}
+		else
+		{
+			if (user->UpdatePasswordBoxes(count) <= 0)
+				return ITEM_ADD_DB_ERROR;
+		}
 
 		return ITEM_ADD_SUCCESS;
 	}
 
 	vector<CUserInventoryItem> itemsWithSameID;
-	g_pUserDatabase->GetInventoryItemsByID(userID, itemID, itemsWithSameID);
+	if (g_pUserDatabase->GetInventoryItemsByID(userID, itemID, itemsWithSameID) <= -1)
+		return ITEM_ADD_DB_ERROR;
 
 	int currentTimestamp = g_pServerInstance->GetCurrentTime();
 
@@ -525,20 +541,26 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 					continue;
 
 				// TODO: check for return value
-				if (ExtendItem(userID, user, itemToExtend, duration, true)) // TEST THIS
+				int ret = ExtendItem(userID, user, itemToExtend, duration, true);
+				if (ret == 1)
 					return ITEM_ADD_SUCCESS;
+				else if (ret == -1)
+					return ITEM_ADD_DB_ERROR;
+				else
+					return ITEM_ADD_DB_ERROR; // TODO: add new define for case expirydate == 0
 			}
 		}
 	}
 	else if (duration)
-		duration = currentTimestamp + duration * CSO_24_HOURS_IN_MINUTES;
+		duration = currentTimestamp + duration * CSO_24_HOURS_IN_MINUTES; // !!! items must have inuse = 1 and status = 1
 
+	// Category: 1 - pistols, 2 - shotguns, 3 - SMG, 4 - rifle, 5 - machine guns, 6 - equipment,  7 - class, 12 - costume, 13 - weapon parts, 
+	int useType = g_pItemTable->GetRowValueByItemID<int>(OBFUSCATE("UseType"), to_string(itemID));
 	int category = g_pItemTable->GetRowValueByItemID<int>("Category", to_string(itemID));
-	string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
-	if (category == 9 || itemID == 676 || className == "RewardItem")	// items with category id 9 are stackable
+	// countable items with use button
+	if ((category == 9 && (useType == 0 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 	{
 		vector<CUserInventoryItem> items;
-
 		if (itemsWithSameID.size())
 		{
 			// update first item
@@ -552,12 +574,15 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 		}
 		else
 		{
+			itemStatus = 0;
+			itemInUse = 1;
+
 			CUserInventoryItem item;
 
 			// push item to vector after adding item to db!
-			item.PushItem(items, itemID, count, 0, 1, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
+			item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
-			if (g_pUserDatabase->AddInventoryItem(userID, items[0]) <= 0)
+			if (g_pUserDatabase->AddInventoryItem(userID, items.back()) <= 0)
 				return ITEM_ADD_DB_ERROR;
 		}
 
@@ -568,13 +593,16 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 		return ITEM_ADD_SUCCESS;
 	}
 
+	string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
 	if (category == 12 || className == "Tattoo")
 	{
 		CUserCostumeLoadout loadout;
-		g_pUserDatabase->GetCostumeLoadout(userID, loadout);
+		if (g_pUserDatabase->GetCostumeLoadout(userID, loadout) <= 0)
+			return ITEM_ADD_DB_ERROR;
+
 		int zombieSkinType = -1;
 
-		itemStatus = 1;
+		itemStatus = 0;
 		itemInUse = 0;
 
 		if (className == "HeadCostume")
@@ -582,6 +610,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			if (!loadout.m_nHeadCostumeID)
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_nHeadCostumeID = itemID;
 			}
 		}
@@ -590,6 +619,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			if (!loadout.m_nBackCostumeID)
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_nBackCostumeID = itemID;
 			}
 		}
@@ -598,6 +628,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			if (!loadout.m_nArmCostumeID)
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_nArmCostumeID = itemID;
 			}
 		}
@@ -606,6 +637,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			if (!loadout.m_nPelvisCostumeID)
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_nPelvisCostumeID = itemID;
 			}
 		}
@@ -614,6 +646,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			if (!loadout.m_nFaceCostumeID)
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_nFaceCostumeID = itemID;
 			}
 		}
@@ -627,6 +660,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			else if (!loadout.m_ZombieSkinCostumeID.count(zombieSkinType) && !loadout.m_ZombieSkinCostumeID[zombieSkinType])
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_ZombieSkinCostumeID[zombieSkinType] = itemID;
 			}
 		}
@@ -635,6 +669,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			if (!loadout.m_nTattooID)
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_nTattooID = itemID;
 			}
 		}
@@ -643,11 +678,13 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 			if (!loadout.m_nPetCostumeID)
 			{
 				itemInUse = 1;
+				itemStatus = 1;
 				loadout.m_nPetCostumeID = itemID;
 			}
 		}
 
-		g_pUserDatabase->UpdateCostumeLoadout(userID, loadout, zombieSkinType);
+		if (g_pUserDatabase->UpdateCostumeLoadout(userID, loadout, zombieSkinType) <= 0)
+			return ITEM_ADD_DB_ERROR;
 	}
 
 	CUserInventoryItem item;
@@ -657,8 +694,10 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 	item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
 	// add new item to db
-	// TODO: check for return value
-	g_pUserDatabase->AddInventoryItem(userID, items[0]);
+	if (g_pUserDatabase->AddInventoryItem(userID, items.back()) <= 0)
+	{
+		return ITEM_ADD_DB_ERROR;
+	}
 
 	// send inventory update to user
 	if (user)
@@ -673,7 +712,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 
 	SQLite::Transaction trans = g_pUserDatabase->CreateTransaction();
 
-	int result = 0;
+	int result = ITEM_ADD_SUCCESS;
 	for (auto& item : items)
 	{
 		int lastResult = 0;
@@ -695,14 +734,35 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 		if (count <= 0)
 			count = 1;
 
-		if (duration == -1)
+		if (duration < 0)
 			duration = 0;
 
 		// don't add PasswordBox add as separate item, increment uData->passwordBoxes value
 		if (itemID == 166) // PasswordBox
 		{
-			if (user)
-				user->UpdatePasswordBoxes(count);
+			if (!user)
+			{
+				CUserCharacter character;
+				character.flag = UFLAG_PASSWORDBOXES;
+				if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+				{
+					result = ITEM_ADD_DB_ERROR;
+					break;
+				}
+
+				character.passwordBoxes += count;
+
+				if (g_pUserDatabase->UpdateCharacter(userID, character) <= 0)
+				{
+					result = ITEM_ADD_DB_ERROR;
+					break;
+				}
+			}
+			else
+			{
+				if (user->UpdatePasswordBoxes(count) <= 0)
+					return ITEM_ADD_DB_ERROR;
+			}
 
 			lastResult = ITEM_ADD_SUCCESS;
 			continue;
@@ -713,7 +773,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 
 		int currentTimestamp = g_pServerInstance->GetCurrentTime();
 
-		if (itemsWithSameID.size())
+		if (!itemsWithSameID.empty())
 		{
 			itemStatus = 0;
 			itemInUse = 0;
@@ -727,24 +787,38 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 					if (itemToExtend.m_nEnhanceValue || itemToExtend.m_nPartSlot1 || itemToExtend.m_nPartSlot2)
 						continue;
 
-					// TODO: check for return value
-					if (ExtendItem(userID, user, itemToExtend, duration, true)) // TEST THIS
+					int ret = ExtendItem(userID, user, itemToExtend, duration, true);
+					if (ret == 1)
 					{
 						lastResult = ITEM_ADD_SUCCESS;
+						break;
+					}
+					else if (ret == -1)
+					{
+						lastResult = ITEM_ADD_DB_ERROR;
+						break;
+					}
+					else
+					{
+						lastResult = ITEM_ADD_DB_ERROR; // TODO: add new define for case expirydate == 0
 						break;
 					}
 				}
 
 				if (lastResult == ITEM_ADD_SUCCESS)
 					continue;
+				else
+					break;
 			}
 		}
 		else if (duration)
 			duration = currentTimestamp + duration * CSO_24_HOURS_IN_MINUTES;
 
+		// Category: 1 - pistols, 2 - shotguns, 3 - SMG, 4 - rifle, 5 - machine guns, 6 - equipment,  7 - class, 12 - costume, 13 - weapon parts, 
+		int useType = g_pItemTable->GetRowValueByItemID<int>(OBFUSCATE("UseType"), to_string(itemID));
 		int category = g_pItemTable->GetRowValueByItemID<int>("Category", to_string(itemID));
-		string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
-		if (category == 9 || itemID == 676 || className == "RewardItem")	// items with category id 9 are stackable
+		// countable items with use button
+		if ((category == 9 && (useType == 0 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 		{
 			if (itemsWithSameID.size())
 			{
@@ -754,30 +828,46 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 
 				item.PushItem(updatedItems, item);
 
-				g_pUserDatabase->UpdateInventoryItem(userID, updatedItems.back());
+				if (g_pUserDatabase->UpdateInventoryItem(userID, updatedItems.back()) <= 0)
+				{
+					result = ITEM_ADD_DB_ERROR;
+					break;
+				}
 			}
 			else
 			{
+				itemStatus = 0;
+				itemInUse = 1;
+
 				CUserInventoryItem item;
 
 				// push item to vector after adding item to db!
-				item.PushItem(updatedItems, itemID, count, 0, 1, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
+				item.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
 				// add new item to db
-				// TODO: check for return value
-				g_pUserDatabase->AddInventoryItem(userID, updatedItems.back());
+				if (g_pUserDatabase->AddInventoryItem(userID, updatedItems.back()) <= 0)
+				{
+					result = ITEM_ADD_DB_ERROR;
+					break;
+				}
 			}
 
 			continue;
 		}
 
+		string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
 		if (category == 12 || className == "Tattoo")
 		{
 			CUserCostumeLoadout loadout;
-			g_pUserDatabase->GetCostumeLoadout(userID, loadout);
+			if (g_pUserDatabase->GetCostumeLoadout(userID, loadout) <= 0)
+			{
+				result = ITEM_ADD_DB_ERROR;
+				break;
+			}
+
 			int zombieSkinType = -1;
 
-			itemStatus = 1;
+			itemStatus = 0;
 			itemInUse = 0;
 
 			if (className == "HeadCostume")
@@ -785,6 +875,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nHeadCostumeID)
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_nHeadCostumeID = itemID;
 				}
 			}
@@ -793,6 +884,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nBackCostumeID)
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_nBackCostumeID = itemID;
 				}
 			}
@@ -801,6 +893,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nArmCostumeID)
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_nArmCostumeID = itemID;
 				}
 			}
@@ -809,6 +902,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nPelvisCostumeID)
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_nPelvisCostumeID = itemID;
 				}
 			}
@@ -817,6 +911,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nFaceCostumeID)
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_nFaceCostumeID = itemID;
 				}
 			}
@@ -831,6 +926,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				else if (!loadout.m_ZombieSkinCostumeID.count(zombieSkinType) && !loadout.m_ZombieSkinCostumeID[zombieSkinType])
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_ZombieSkinCostumeID[zombieSkinType] = itemID;
 				}
 			}
@@ -839,6 +935,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nTattooID)
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_nTattooID = itemID;
 				}
 			}
@@ -847,28 +944,38 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nPetCostumeID)
 				{
 					itemInUse = 1;
+					itemStatus = 1;
 					loadout.m_nPetCostumeID = itemID;
 				}
 			}
 
-			// TODO: update all shit in the end!
-			g_pUserDatabase->UpdateCostumeLoadout(userID, loadout, zombieSkinType);
+			if (g_pUserDatabase->UpdateCostumeLoadout(userID, loadout, zombieSkinType) <= 0)
+			{
+				result = ITEM_ADD_DB_ERROR;
+				break;
+			}
 		}
 
 		CUserInventoryItem item;
-		
-		// push item to vector after adding item to db!
 		item.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
-		// add new item to db
-		// TODO: check for return value
-		g_pUserDatabase->AddInventoryItem(userID, updatedItems.back());
+		if (g_pUserDatabase->AddInventoryItem(userID, updatedItems.back()) <= 0)
+		{
+			result = ITEM_ADD_DB_ERROR;
+			break;
+		}
 	}
 
-	g_pUserDatabase->CommitTransaction(trans);
-
-	if (user && !updatedItems.empty())
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), updatedItems);
+	if (result == ITEM_ADD_SUCCESS && g_pUserDatabase->CommitTransaction(trans) == true)
+	{
+		if (user && !updatedItems.empty())
+			g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), updatedItems);
+	}
+	else
+	{
+		if (result == ITEM_ADD_SUCCESS)
+			result = ITEM_ADD_DB_ERROR;
+	}
 
 	return result;
 }
@@ -1073,11 +1180,10 @@ bool CItemManager::OpenDecoder(CUser* user, int count, int slot)
 	return true;
 }
 
-bool CItemManager::ExtendItem(int userID, CUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration)
+int CItemManager::ExtendItem(int userID, CUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration)
 {
-	// can't extend permanent item
 	if (item.m_nExpiryDate == 0)
-		return false;
+		return 0; // can't extend permanent item
 
 	if (!duration)
 	{
@@ -1094,7 +1200,8 @@ bool CItemManager::ExtendItem(int userID, CUser* user, CUserInventoryItem& item,
 		item.m_nExpiryDate += addontialTime;
 	}
 
-	g_pUserDatabase->UpdateInventoryItem(userID, item);
+	if (g_pUserDatabase->UpdateInventoryItem(userID, item) <= 0)
+		return -1; // db error
 
 	vector<CUserInventoryItem> items;
 	item.PushItem(items, item);
@@ -1103,7 +1210,7 @@ bool CItemManager::ExtendItem(int userID, CUser* user, CUserInventoryItem& item,
 	if (user)
 		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
 
-	return true;
+	return 1;
 }
 
 bool CItemManager::OnDisassembleRequest(CUser* user, CReceivePacket* msg)
@@ -2177,6 +2284,7 @@ void CItemManager::OnCostumeEquip(CUser* user, int gameSlot)
 		}
 
 		item.m_nInUse = 0;
+		item.m_nStatus = 0;
 	}
 	else
 	{
@@ -2249,12 +2357,14 @@ void CItemManager::OnCostumeEquip(CUser* user, int gameSlot)
 		if (activeCostumeItem.m_nItemID)
 		{
 			activeCostumeItem.m_nInUse = 0;
+			activeCostumeItem.m_nStatus = 0;
 
 			activeCostumeItem.PushItem(items, activeCostumeItem);
 			g_pUserDatabase->UpdateInventoryItem(user->GetID(), activeCostumeItem);
 		}
 
 		item.m_nInUse = 1;
+		item.m_nStatus = 1;
 	}
 
 	g_pUserDatabase->UpdateCostumeLoadout(user->GetID(), loadout, zombieSkinID);

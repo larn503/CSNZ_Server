@@ -138,7 +138,9 @@ CUserCharacter CUser::GetCharacter(int flag)
 {
 	CUserCharacter character = {};
 	character.flag = flag;
-	g_pUserDatabase->GetCharacter(m_nID, character);
+
+	if (g_pUserDatabase->GetCharacter(m_nID, character) <= 0)
+		character.flag = 0;
 
 	return character;
 }
@@ -147,7 +149,9 @@ CUserCharacterExtended CUser::GetCharacterExtended(int flag)
 {
 	CUserCharacterExtended character = {};
 	character.flag = flag;
-	g_pUserDatabase->GetCharacterExtended(m_nID, character);
+
+	if (g_pUserDatabase->GetCharacterExtended(m_nID, character) <= 0)
+		character.flag = 0;
 
 	return character;
 }
@@ -307,14 +311,20 @@ void CUser::UpdateExp(int64_t exp)
 	UpdateClientUserInfo(UFLAG_EXP | UFLAG_LEVEL | UFLAG_UNK2, character);
 }
 
-void CUser::UpdatePasswordBoxes(int passwordBoxes)
+int CUser::UpdatePasswordBoxes(int passwordBoxes)
 {
 	CUserCharacter character = GetCharacter(UFLAG_PASSWORDBOXES);
+	if (character.flag == 0)
+		return 0;
+
 	character.passwordBoxes += passwordBoxes;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	if (g_pUserDatabase->UpdateCharacter(m_nID, character) <= 0)
+		return 0;
 
 	UpdateClientUserInfo(UFLAG_PASSWORDBOXES, character);
+
+	return 1;
 }
 
 void CUser::UpdateTitles(int slot, int titleID)

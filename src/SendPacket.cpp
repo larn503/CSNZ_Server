@@ -77,12 +77,12 @@ void CSendPacket::WriteUInt64(unsigned long long number, bool littleEndian)
 	littleEndian ? m_OutStream.writeUInt64_LE(number) : m_OutStream.writeUInt64_BE(number);
 }
 
-void CSendPacket::WriteString(const std::string& message, bool writesize)
+void CSendPacket::WriteString(const string& message, bool writesize)
 {
 	m_OutStream.writeStr(message);
 }
 
-void CSendPacket::WriteWString(const std::wstring& message)
+void CSendPacket::WriteWString(const wstring& message)
 {
 	m_OutStream.writeWStr(message);
 }
@@ -90,6 +90,26 @@ void CSendPacket::WriteWString(const std::wstring& message)
 void CSendPacket::WriteData(void* data, int len)
 {
 	m_OutStream.writeData(data, len);
+}
+
+void CSendPacket::WriteArray(const vector<unsigned char>& arr)
+{
+	m_OutStream.writeArray(arr);
+}
+
+void CSendPacket::SetWriteOffset(int offset)
+{
+	m_OutStream.setWriteOffset(offset);
+}
+
+void CSendPacket::SetOverride(bool override)
+{
+	m_OutStream.setOverride(override);
+}
+
+bool CSendPacket::IsBufferFull()
+{
+	return (m_OutStream.getBuffer().size() - PACKET_HEADER_SIZE) >= PACKET_MAX_SIZE;
 }
 
 void CSendPacket::BuildHeader()
@@ -100,7 +120,7 @@ void CSendPacket::BuildHeader()
 	WriteUInt8(m_nPacketID);
 }
 
-void CSendPacket::Send(const std::vector<unsigned char>& data)
+void CSendPacket::Send(const vector<unsigned char>& data)
 {
 	m_pSocket->Send(data);
 }

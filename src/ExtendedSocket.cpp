@@ -2,8 +2,6 @@
 #include "SendPacket.h"
 
 using namespace std;
-#define PACKET_MAX_SIZE 0x10000
-#define PACKET_HEADER_SIZE 4
 
 CExtendedSocket::CExtendedSocket()
 {

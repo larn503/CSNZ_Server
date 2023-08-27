@@ -18,13 +18,14 @@ public:
 	template <class T> inline void writeBytes(const T& val, bool LE = true);
 	unsigned long long getWriteOffset() const;
 	void setWriteOffset(unsigned long long newOffset);
+	void setOverride(bool override);
 
 	void writeBool(bool);
 	void writeStr(const std::string&);
 	void writeWStr(const std::wstring& str);
 	void writeInt8(char);
 	void writeUInt8(unsigned char);
-	void writeArray(std::vector<unsigned char>&);
+	void writeArray(const std::vector<unsigned char>&);
 	void writeData(void*, int);
 
 	void writeInt16_LE(short);
@@ -85,4 +86,5 @@ private:
 	std::vector<unsigned char> buffer;
 	unsigned long long readOffset;
 	unsigned long long writeOffset;
+	bool overrideBuf;
 };

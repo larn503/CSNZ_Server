@@ -45,7 +45,7 @@ public:
 	void UpdateRank(int leagueID);
 	void UpdateLevel(int level);
 	void UpdateExp(int64_t exp);
-	void UpdatePasswordBoxes(int passwordBoxes);
+	int UpdatePasswordBoxes(int passwordBoxes);
 	void UpdateTitles(int slot, int titleID);
 	void UpdateAchievementList(int titleID);
 	void UpdateClan(int clanID);

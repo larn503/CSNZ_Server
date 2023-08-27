@@ -32,7 +32,7 @@ public:
 	int UseItem(CUser* user, int slot, int additionalArg = 0, int additionalArg2 = 0);
 	bool CanUseItem(const CUserInventoryItem& item);
 	bool OpenDecoder(CUser* user, int count, int slot);
-	bool ExtendItem(int userID, CUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration = false);
+	int ExtendItem(int userID, CUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration = false);
 	bool OnDisassembleRequest(CUser* user, CReceivePacket* msg);
 	RewardNotice GiveReward(int userID, CUser* user, int rewardID, int rewardSelectID = 0, bool ignoreClient = false, int randomRepeatCount = 0);
 

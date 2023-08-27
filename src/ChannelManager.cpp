@@ -488,6 +488,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Item ID you wrote does not exist in the item database"));
 					break;
 				case ITEM_ADD_SUCCESS:
+				{
 					// send notification about new item
 					RewardItem rewardItem;
 					rewardItem.itemID = itemID;
@@ -513,6 +514,10 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 
 					break;
 				}
+				case ITEM_ADD_DB_ERROR:
+					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
+					break;
+				}
 
 				return true;
 			}
@@ -536,8 +541,14 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				int status = g_pItemManager->AddItems(user->GetID(), user, rewardItems);
 				switch (status)
 				{
+				case ITEM_ADD_SUCCESS:
+					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Done"));
+					break;
 				case ITEM_ADD_INVENTORY_FULL:
 					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Your inventory is full"));
+					break;
+				case ITEM_ADD_DB_ERROR:
+					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
 					break;
 				}
 
