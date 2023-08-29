@@ -8,7 +8,7 @@
 
 using namespace std;
 
-#define SUPPORTED_CLIENT_BUILD "26.07.23"
+#define SUPPORTED_CLIENT_BUILD "26.08.23"
 
 CUserManager::CUserManager(int maxPlayers)
 {

@@ -400,6 +400,9 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				case ITEM_ADD_UNKNOWN_ITEMID:
 					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Item ID you wrote does not exist in the item database"));
 					break;
+				case ITEM_ADD_DB_ERROR:
+					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
+					break;
 				case ITEM_ADD_SUCCESS:
 					// send notification about new item
 					RewardItem rewardItem;
@@ -487,6 +490,9 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				case ITEM_ADD_UNKNOWN_ITEMID:
 					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Item ID you wrote does not exist in the item database"));
 					break;
+				case ITEM_ADD_DB_ERROR:
+					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
+					break;
 				case ITEM_ADD_SUCCESS:
 				{
 					// send notification about new item
@@ -514,9 +520,6 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 
 					break;
 				}
-				case ITEM_ADD_DB_ERROR:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
-					break;
 				}
 
 				return true;

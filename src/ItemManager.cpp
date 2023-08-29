@@ -368,19 +368,22 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	{
 	case ItemPacketType::UseItem:
 	{
-		int useItemType = msg->ReadUInt8();
+		int inventoryType = msg->ReadUInt8();
 		int itemSlot = msg->ReadUInt16();
 		int unk = msg->ReadUInt8();
 		int itemCount = msg->ReadUInt16();
 
-		if (useItemType == 1 || useItemType == 17) // switch status
+		// TODO: shit
+		CUserInventoryItem item;
+		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(itemSlot), item);
+
+		if (!item.m_nItemID)
+			return false;
+
+		string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(item.m_nItemID));
+
+		if (inventoryType == 1) // switch status
 		{
-			CUserInventoryItem item;
-			g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(itemSlot), item);
-
-			if (!item.m_nItemID)
-				return false;
-
 			vector<CUserInventoryItem> itemsWithSameID;
 			g_pUserDatabase->GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID);
 
@@ -407,7 +410,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket)
 			// send inventory update to user
 			g_pPacketManager->SendInventoryAdd(socket, items);
 		}
-		else if (useItemType == 8) // costume
+		else if (inventoryType == 8 || className == "Tattoo")
 		{
 			OnCostumeEquip(user, itemSlot);
 		}
@@ -416,7 +419,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket)
 			UseItem(user, itemSlot, itemCount);
 		}
 
-		g_pConsole->Log("CItemManager::OnItemPacket: useType: %d, slot: %d, unk: %d, itemCount: %d\n", useItemType, itemSlot, unk, itemCount);
+		g_pConsole->Log("CItemManager::OnItemPacket: inventoryType: %d, slot: %d, unk: %d, itemCount: %d\n", inventoryType, itemSlot, unk, itemCount);
 		break;
 	}
 	case ItemPacketType::OpenDecoder:
@@ -546,8 +549,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 					return ITEM_ADD_SUCCESS;
 				else if (ret == -1)
 					return ITEM_ADD_DB_ERROR;
-				else
-					return ITEM_ADD_DB_ERROR; // TODO: add new define for case expirydate == 0
+				// else make item not in use
 			}
 		}
 	}
@@ -798,16 +800,11 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 						lastResult = ITEM_ADD_DB_ERROR;
 						break;
 					}
-					else
-					{
-						lastResult = ITEM_ADD_DB_ERROR; // TODO: add new define for case expirydate == 0
-						break;
-					}
 				}
 
 				if (lastResult == ITEM_ADD_SUCCESS)
 					continue;
-				else
+				else if (lastResult != 0)
 					break;
 			}
 		}
