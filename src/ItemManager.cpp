@@ -560,7 +560,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 	int useType = g_pItemTable->GetRowValueByItemID<int>(OBFUSCATE("UseType"), to_string(itemID));
 	int category = g_pItemTable->GetRowValueByItemID<int>("Category", to_string(itemID));
 	// countable items with use button
-	if ((category == 9 && (useType == 0 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
+	if ((category == 9 && (useType == 0 || useType == 1 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 	{
 		vector<CUserInventoryItem> items;
 		if (itemsWithSameID.size())
@@ -864,7 +864,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 
 			int zombieSkinType = -1;
 
-			itemStatus = 0;
 			itemInUse = 0;
 
 			if (className == "HeadCostume")
@@ -872,7 +871,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nHeadCostumeID)
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_nHeadCostumeID = itemID;
 				}
 			}
@@ -881,7 +879,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nBackCostumeID)
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_nBackCostumeID = itemID;
 				}
 			}
@@ -890,7 +887,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nArmCostumeID)
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_nArmCostumeID = itemID;
 				}
 			}
@@ -899,7 +895,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nPelvisCostumeID)
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_nPelvisCostumeID = itemID;
 				}
 			}
@@ -908,7 +903,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nFaceCostumeID)
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_nFaceCostumeID = itemID;
 				}
 			}
@@ -923,7 +917,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				else if (!loadout.m_ZombieSkinCostumeID.count(zombieSkinType) && !loadout.m_ZombieSkinCostumeID[zombieSkinType])
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_ZombieSkinCostumeID[zombieSkinType] = itemID;
 				}
 			}
@@ -932,7 +925,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nTattooID)
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_nTattooID = itemID;
 				}
 			}
@@ -941,7 +933,6 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 				if (!loadout.m_nPetCostumeID)
 				{
 					itemInUse = 1;
-					itemStatus = 1;
 					loadout.m_nPetCostumeID = itemID;
 				}
 			}
@@ -2242,7 +2233,8 @@ void CItemManager::OnCostumeEquip(CUser* user, int gameSlot)
 	int zombieSkinID = className == "ZombieSkinCostume" ? g_pItemTable->GetRowValueByItemID<int>("ZombieSkin", to_string(item.m_nItemID)) : -1;
 
 	CUserCostumeLoadout loadout;
-	g_pUserDatabase->GetCostumeLoadout(user->GetID(), loadout);
+	if (g_pUserDatabase->GetCostumeLoadout(user->GetID(), loadout) <= 0)
+		return;
 
 	// unequip costume if item already in use
 	if (item.m_nInUse == 1)
@@ -2281,7 +2273,6 @@ void CItemManager::OnCostumeEquip(CUser* user, int gameSlot)
 		}
 
 		item.m_nInUse = 0;
-		item.m_nStatus = 0;
 	}
 	else
 	{
@@ -2354,13 +2345,17 @@ void CItemManager::OnCostumeEquip(CUser* user, int gameSlot)
 		if (activeCostumeItem.m_nItemID)
 		{
 			activeCostumeItem.m_nInUse = 0;
-			activeCostumeItem.m_nStatus = 0;
+			activeCostumeItem.m_nStatus = 1;
 
 			activeCostumeItem.PushItem(items, activeCostumeItem);
 			g_pUserDatabase->UpdateInventoryItem(user->GetID(), activeCostumeItem);
 		}
 
 		item.m_nInUse = 1;
+
+		if (!item.m_nStatus)
+			item.ConvertDurationToExpiryDate();
+
 		item.m_nStatus = 1;
 	}
 

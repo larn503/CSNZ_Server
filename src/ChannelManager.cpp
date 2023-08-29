@@ -957,6 +957,70 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 
 				return true;
 			}
+			else if (args[0] == "/setitemstatus")
+			{
+				if (args.size() <= 2 || !isNumber(args[1]) || !isNumber(args[2]))
+				{
+					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setitemstatus usage: /setitemstatus <slot> <status>"));
+					return true;
+				}
+
+				int slot = stoi(args[1]);
+				int status = stoi(args[2]);
+
+				CUserInventoryItem item;
+				if (g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), slot, item) <= 0 || !item.m_nItemID)
+				{
+					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Item does not exist"));
+					return true;
+				}
+
+				item.m_nStatus = status;
+				vector<CUserInventoryItem> items;
+				items.push_back(item);
+
+				if (g_pUserDatabase->UpdateInventoryItem(user->GetID(), item) <= 0)
+				{
+					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
+					return true;
+				}
+
+				g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+
+				return true;
+			}
+			else if (args[0] == "/setiteminuse")
+			{
+				if (args.size() <= 2 || !isNumber(args[1]) || !isNumber(args[2]))
+				{
+					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setiteminuse usage: /setiteminuse <slot> <inUse>"));
+					return true;
+				}
+
+				int slot = stoi(args[1]);
+				int inUse = stoi(args[2]);
+
+				CUserInventoryItem item;
+				if (g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), slot, item) <= 0 || !item.m_nItemID)
+				{
+					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Item does not exist"));
+					return true;
+				}
+
+				item.m_nInUse = inUse;
+				vector<CUserInventoryItem> items;
+				items.push_back(item);
+
+				if (g_pUserDatabase->UpdateInventoryItem(user->GetID(), item) <= 0)
+				{
+					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
+					return true;
+				}
+
+				g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+
+				return true;
+			}
 		}
 
 		if (args[0] == "/weaponrelease")
