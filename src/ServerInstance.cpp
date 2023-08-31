@@ -29,6 +29,7 @@ CMiniGameManager* g_pMiniGameManager;
 CClanManager* g_pClanManager;
 CCSVTable* g_pItemTable;
 CCSVTable* g_pMapListTable;
+CCSVTable* g_pGameModeListTable;
 CDedicatedServerManager* g_pDedicatedServerManager;
 CRankManager* g_pRankManager;
 
@@ -76,8 +77,9 @@ void CServerInstance::Init()
 	g_pClanManager = new CClanManager();
 	g_pRankManager = new CRankManager();
 
-	g_pItemTable = new CCSVTable(OBFUSCATE("Data/item.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
+	g_pItemTable = new CCSVTable(OBFUSCATE("Data/Item.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
 	g_pMapListTable = new CCSVTable(OBFUSCATE("Data/MapList.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
+	g_pGameModeListTable = new CCSVTable(OBFUSCATE("Data/GameModeList.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
 #ifdef DB_SQLITE
 	g_pUserDatabase = new CUserDatabaseSQLite();
 #elif defined DB_MYSQL
@@ -98,7 +100,19 @@ void CServerInstance::Init()
 	}
 	else if (g_pItemTable->IsLoadFailed())
 	{
-		g_pConsole->Error("Server initialization failed. Couldn't load item.csv.\n");
+		g_pConsole->Error("Server initialization failed. Couldn't load Item.csv.\n");
+		m_bIsServerActive = false;
+		return;
+	}
+	else if (g_pMapListTable->IsLoadFailed())
+	{
+		g_pConsole->Error("Server initialization failed. Couldn't load MapList.csv.\n");
+		m_bIsServerActive = false;
+		return;
+	}
+	else if (g_pGameModeListTable->IsLoadFailed())
+	{
+		g_pConsole->Error("Server initialization failed. Couldn't load GameModeList.csv.\n");
 		m_bIsServerActive = false;
 		return;
 	}
@@ -1048,6 +1062,12 @@ void CServerInstance::OnPackets(CExtendedSocket* s, CReceivePacket* msg, vector<
 			break;
 		case PacketId::Addon:
 			g_pUserManager->OnAddonPacket(msg, s);
+			break;
+		case PacketId::Ban:
+			g_pUserManager->OnBanPacket(msg, s);
+			break;
+		case PacketId::League:
+			g_pUserManager->OnLeaguePacket(msg, s);
 			break;
 		default:
 			g_pConsole->Warn("Unimplemented packet: %d\n", msg->GetID());

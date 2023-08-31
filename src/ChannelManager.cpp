@@ -197,7 +197,7 @@ bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, CUser* userSender)
 	if (!userDest)
 	{
 		// send no user reply
-		g_pPacketManager->SendUMsgSystemReply(socket, 1, "MSG_TELL_USER_NOT_FOUND", vector<string>{ userNameDest });
+		g_pPacketManager->SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_USER_NOT_FOUND", vector<string>{ userNameDest });
 	}
 	else if (userDest->GetExtendedSocket() == socket)
 	{
@@ -206,9 +206,29 @@ bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, CUser* userSender)
 	}
 	else
 	{
-		g_pPacketManager->SendUMsgWhisperMessage(socket, message, userNameDest, userSender, 0);
-		CUserCharacter character = userSender->GetCharacter(UFLAG_GAMENAME);
-		g_pPacketManager->SendUMsgWhisperMessage(userDest->GetExtendedSocket(), message, character.gameName, userDest, 1);
+		CUserCharacterExtended characterExtendedSender = userSender->GetCharacterExtended(EXT_UFLAG_BANSETTINGS);
+
+		if (characterExtendedSender.banSettings & 4)
+		{
+			// you can't send whisper message if you're blocking all whisper
+			g_pPacketManager->SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_SENDER_USING_BAN_CHAT_ALL");
+		}
+		else
+		{
+			CUserCharacterExtended characterExtendedDest = userDest->GetCharacterExtended(EXT_UFLAG_BANSETTINGS);
+
+			if (characterExtendedDest.banSettings & 4)
+			{
+				// you can't send whisper message if dest is blocking all whisper
+				g_pPacketManager->SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_LISTENER_USING_BAN_CHAT_ALL");
+			}
+			else
+			{
+				g_pPacketManager->SendUMsgWhisperMessage(socket, message, userNameDest, userSender, 0);
+				CUserCharacter character = userSender->GetCharacter(UFLAG_GAMENAME);
+				g_pPacketManager->SendUMsgWhisperMessage(userDest->GetExtendedSocket(), message, character.gameName, userDest, 1);
+			}
+		}
 	}
 
 	return true;
@@ -867,18 +887,23 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				CChannel* channel = user->GetCurrentChannel();
 				if (channel)
 				{
-					IRoomOptions_s options;
-					options.roomName = (char*)OBFUSCATE("GHOST ROOM NAME");
-					options.gameModeId = 15;
-					options.mapId = 128;
+					CRoomSettings* roomSettings = new CRoomSettings();
+					roomSettings->lowFlag |= ROOM_LOW_ROOMNAME | ROOM_LOW_PASSWORD | ROOM_LOW_GAMEMODEID | ROOM_LOW_MAPID | ROOM_LOW_MAXPLAYERS | ROOM_LOW_WINLIMIT | ROOM_LOW_KILLLIMIT;
+					roomSettings->lowMidFlag |= ROOM_LOWMID_ZSDIFFICULTY;
+					roomSettings->roomName = (char*)OBFUSCATE("GHOST ROOM NAME");
+					roomSettings->password = (char*)OBFUSCATE("r,=j$b5}a@dgN&^g0_!}['WH}l5i]#ugAhfQ ? dS; Qh1Ckk`R}bz, o[QMgp4]0");
+					roomSettings->gameModeId = 15;
+					roomSettings->mapId = 128;
+					roomSettings->maxPlayers = 10;
+					roomSettings->zsDifficulty = 1;
 
-					g_pConsole->Error("wtf RoomOptions is useless!\n");
+					if (!roomSettings->CheckSettings(user))
+					{
+						delete roomSettings;
+						return false;
+					}
 
-					CRoom* room = channel->CreateRoom(NULL, options);
-					CRoomSettings* settings = room->GetSettings();
-					settings->status = 0;
-					settings->password = (char*)OBFUSCATE("r,=j$b5}a@dgN&^g0_!}['WH}l5i]#ugAhfQ ? dS; Qh1Ckk`R}bz, o[QMgp4]0");
-					settings->zsDifficulty = 1;
+					CRoom* room = channel->CreateRoom(user, roomSettings);
 				}
 
 				return true;
@@ -1040,7 +1065,6 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 	return false;
 }
 
-
 bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, CUser* user)
 {
 	// don't allow the user to create a new room while in another one
@@ -1058,25 +1082,23 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, CUser* user)
 		return false;
 	}
 
-	IRoomOptions_s roomCfg;
-	roomCfg.roomName = "Test room name";
-	roomCfg.gameModeId = 14;
-	CRoom* newRoom = channel->CreateRoom(user, roomCfg);
+	CRoomSettings* roomSettings = new CRoomSettings(msg->GetData());
+	if (!roomSettings->CheckSettings(user))
+	{
+		delete roomSettings;
+		return false;
+	}
+
+	CRoom* newRoom = channel->CreateRoom(user, roomSettings);
 
 	user->SetCurrentRoom(newRoom);
 
-	OnRoomUpdateSettings(msg, user);
-
 	newRoom->SendJoinNewRoom(user);
-	newRoom->SendRoomSettings(user);
-	newRoom->SendTeamChange(user, user, (RoomTeamNum)2);
-
-	channel->SendAddRoomToRoomList(newRoom);
 
 	// hide user from channel users list
 	channel->UserLeft(user, true);
 
-	g_pConsole->Log("User '%d, %s' created a new room (RID: %d, name: '%s')\n", user->GetID(), user->GetUsername().c_str(), newRoom->GetID(), roomCfg.roomName.c_str());
+	g_pConsole->Log("User '%d, %s' created a new room (RID: %d, name: '%s')\n", user->GetID(), user->GetUsername().c_str(), newRoom->GetID(), roomSettings->roomName.c_str());
 
 	return true;
 }
@@ -1123,7 +1145,7 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, CUser* user)
 		}
 	}
 
-	CUserCharacterExtended hostCharacterExtended = user->GetCharacterExtended(EXT_UFLAG_BANSETTINGS);
+	CUserCharacterExtended hostCharacterExtended = room->GetHostUser()->GetCharacterExtended(EXT_UFLAG_BANSETTINGS);
 	if (hostCharacterExtended.banSettings & 1 && g_pUserDatabase->IsInBanList(room->GetHostUser()->GetID(), user->GetID()))
 	{
 		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_BAN"));
@@ -1138,7 +1160,6 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, CUser* user)
 
 	room->AddUser(user);
 	room->SendJoinNewRoom(user);
-	room->SendRoomSettings(user);
 
 	user->SetCurrentRoom(room);
 
@@ -1326,6 +1347,9 @@ bool CChannelManager::OnGameStartRequest(CUser* user)
 		return false;
 	}
 
+	CRoomSettings* roomSettings = currentRoom->GetSettings();
+	g_pPacketManager->SendLeagueGaugePacket(user->GetExtendedSocket(), roomSettings->gameModeId);
+
 	// send to the host game start request
 	if (currentRoom->GetHostUser() == user)
 	{
@@ -1360,8 +1384,6 @@ bool CChannelManager::OnCloseResultRequest(CUser* user)
 
 bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, CUser* user)
 {
-	CPacketHelper_RoomUpdateSettings newSettingsReq(msg->GetData());
-
 	CRoom* currentRoom = user->GetCurrentRoom();
 	CChannel* currentChannel = user->GetCurrentChannel();
 	if (currentRoom == NULL)
@@ -1382,15 +1404,31 @@ bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, CUser* user)
 		return false;
 	}
 
-	CRoomSettings* updatedSettings = currentRoom->UpdateSettings(newSettingsReq);
+	if (currentRoom->GetGameMatch() != NULL)
+	{
+		g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings, but m_pGameMatch != NULL (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		return false;
+	}
+
+	CRoomSettings* roomSettings = currentRoom->GetSettings();
+
+	if (roomSettings->mapPlaylistIndex > 1)
+	{
+		g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings while mapPlaylist is on-going (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		return false;
+	}
+
+	CRoomSettings newSettings(msg->GetData());
+	if (!newSettings.CheckNewSettings(user, roomSettings))
+		return false;
+
+	currentRoom->UpdateSettings(newSettings);
 
 	// inform every user in the room of the changes
 	for (auto u : currentRoom->GetUsers())
 	{
-		currentRoom->SendUpdateRoomSettings(u, updatedSettings, newSettingsReq.lowFlag, newSettingsReq.lowMidFlag, newSettingsReq.highMidFlag, newSettingsReq.highFlag);
+		currentRoom->SendUpdateRoomSettings(u, roomSettings, newSettings.lowFlag, newSettings.lowMidFlag, newSettings.highMidFlag, newSettings.highFlag);
 	}
-
-	delete updatedSettings;
 
 	currentChannel->SendUpdateRoomList(currentRoom);
 
