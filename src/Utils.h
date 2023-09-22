@@ -141,6 +141,15 @@ public:
 #endif
 	}
 
+	int TryEnter()
+	{
+#ifdef _WIN32
+		return TryEnterCriticalSection(&m_CriticalSection);
+#elif _LINUX
+		return pthread_mutex_trylock(&m_Mutex);
+#endif
+	}
+
 	void Leave()
 	{
 #ifdef _WIN32

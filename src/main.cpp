@@ -1,5 +1,6 @@
 #include "main.h"
 #include "ServerInstance.h"
+#include "Thread.h"
 
 CConsole* g_pConsole;
 CServerInstance* g_pServerInstance;
@@ -34,20 +35,22 @@ int main(int argc, char* argv[])
 	g_pServerInstance = new CServerInstance();
 	g_pServerInstance->Init();
 
-#ifdef WIN32
-	CreateThread(NULL, 0, ReadConsoleThread, NULL, 0, 0);
-	CreateThread(NULL, 0, ListenThread, NULL, 0, 0);
-	CreateThread(NULL, 0, ListenThreadUDP, NULL, 0, 0);
-	CreateThread(NULL, 0, MinuteTick, NULL, 0, 0);
-	CreateThread(NULL, 0, EventThread, NULL, 0, 0);
-#endif
+	CThread readConsoleThread(ReadConsoleThread);
+	CThread listenThreadTCP(ListenThread);
+	CThread listenThreadUDP(ListenThreadUDP);
+	CThread eventThread(EventThread);
+
+	readConsoleThread.Start();
+	listenThreadTCP.Start();
+	listenThreadUDP.Start();
+	eventThread.Start();
 
 	while (g_pServerInstance->IsServerActive())
 	{
 		g_EventCriticalSection.Enter();
 
 		Event_s ev;
-		ev.type = 2;
+		ev.type = SERVER_EVENT_SECOND_TICK;
 		ev.socket = NULL;
 		g_Events.push_back(ev);
 
@@ -58,7 +61,16 @@ int main(int argc, char* argv[])
 		Sleep(1000);
 	}
 
-	Sleep(2000);
+	listenThreadTCP.Join();
+	listenThreadUDP.Join();
+	eventThread.Join();
+
+	g_EventCriticalSection.Enter();
+
+	// terminate read console thread because of std::getline (should be safe)
+	readConsoleThread.Terminate();
+
+	g_EventCriticalSection.Leave();
 
 	delete g_pServerInstance;
 	delete g_pConsole;

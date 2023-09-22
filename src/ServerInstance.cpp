@@ -36,7 +36,7 @@ CRankManager* g_pRankManager;
 CServerInstance::CServerInstance()
 {
 	m_nNextClientIndex = 1;
-	m_nAutoSaveCounter = 0;
+	m_nMinuteCounter = 0;
 	m_bIsServerActive = true;
 	m_CurrentTime = 0;
 	m_pCurrentLocalTime = NULL;
@@ -170,13 +170,17 @@ void CServerInstance::AddBanHWID(vector<unsigned char>& hwid, bool unban)
 	g_pUserDatabase->UpdateHWIDBanList(hwid, unban);
 }
 
-DWORD WINAPI ListenThreadUDP(LPVOID lpParameter)
+void ListenThreadUDP()
 {
 	while (g_pServerInstance->IsServerActive())
 	{
 		g_pNetwork->m_Read_fds_u = g_pNetwork->m_Master_u; // reset
 
-		int activity = select(g_pNetwork->m_nFDmax_u + 1, &g_pNetwork->m_Read_fds_u, NULL, NULL, NULL);
+		struct timeval tv;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+
+		int activity = select(g_pNetwork->m_nFDmax_u + 1, &g_pNetwork->m_Read_fds_u, NULL, NULL, &tv);
 		if (activity == SOCKET_ERROR)
 		{
 			g_pConsole->Error("select(udp) failed with error: %d.\n", WSAGetLastError());
@@ -202,32 +206,9 @@ DWORD WINAPI ListenThreadUDP(LPVOID lpParameter)
 
 		g_EventCriticalSection.Leave();
 	}
-
-	return 1;
 }
 
-DWORD WINAPI MinuteTick(LPVOID lpParameter)
-{
-	while (g_pServerInstance->IsServerActive())
-	{
-		g_EventCriticalSection.Enter();
-
-		Event_s ev;
-		ev.type = 3;
-		ev.socket = NULL;
-		g_Events.push_back(ev);
-
-		g_Event.Signal();
-
-		g_EventCriticalSection.Leave();
-
-		Sleep(60000);
-	}
-
-	return 1;
-}
-
-DWORD WINAPI EventThread(LPVOID lpParameter)
+void EventThread()
 {
 	while (g_pServerInstance->IsServerActive())
 	{
@@ -235,8 +216,6 @@ DWORD WINAPI EventThread(LPVOID lpParameter)
 
 		g_pServerInstance->OnEvent();
 	}
-
-	return 1;
 }
 
 void CServerInstance::OnCommand(string command)
@@ -720,7 +699,7 @@ void CServerInstance::OnCommand(string command)
 	}
 }
 
-DWORD WINAPI ReadConsoleThread(LPVOID lpParameter)
+void ReadConsoleThread()
 {
 	while (g_pServerInstance->IsServerActive())
 	{
@@ -731,7 +710,7 @@ DWORD WINAPI ReadConsoleThread(LPVOID lpParameter)
 
 		Event_s ev;
 		ev.cmd = cmd;
-		ev.type = 0;
+		ev.type = SERVER_EVENT_CONSOLE_COMMAND;
 		ev.socket = NULL;
 		g_Events.push_back(ev);
 
@@ -739,18 +718,14 @@ DWORD WINAPI ReadConsoleThread(LPVOID lpParameter)
 
 		g_EventCriticalSection.Leave();
 	}
-
-	return 1;
 }
 
-DWORD WINAPI ListenThread(LPVOID lpParameter)
+void ListenThread()
 {
 	while (g_pServerInstance->IsServerActive())
 	{
 		g_pServerInstance->Listen();
 	}
-
-	return 1;
 }
 
 void CServerInstance::Listen()
@@ -771,7 +746,11 @@ void CServerInstance::Listen()
 			g_pNetwork->m_nFDmax = socket->m_Socket;
 	}
 
-	int activity = select(g_pNetwork->m_nFDmax + 1, &g_pNetwork->m_Read_fds, &g_pNetwork->m_Write_fds, NULL, NULL);
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+
+	int activity = select(g_pNetwork->m_nFDmax + 1, &g_pNetwork->m_Read_fds, &g_pNetwork->m_Write_fds, NULL, &tv);
 	if (activity == SOCKET_ERROR)
 	{
 		g_pConsole->Error("select() failed with error: %d\n", WSAGetLastError());
@@ -880,7 +859,7 @@ void CServerInstance::Listen()
 				else
 				{
 					Event_s ev;
-					ev.type = 1;
+					ev.type = SERVER_EVENT_TCP_PACKET;
 					ev.socket = s;
 					ev.msgs.push_back(s->m_pMsg);
 					g_Events.push_back(ev);
@@ -933,17 +912,14 @@ void CServerInstance::OnEvent()
 	{
 		switch (ev.type)
 		{
-		case 0:
-			OnCommand(ev.cmd.c_str());
+		case SERVER_EVENT_CONSOLE_COMMAND:
+			OnCommand(ev.cmd);
 			break;
-		case 1:
-			OnPackets(ev.socket, ev.msg, ev.msgs);
+		case SERVER_EVENT_TCP_PACKET:
+			OnPackets(ev.socket, ev.msgs);
 			break;
-		case 2:
+		case SERVER_EVENT_SECOND_TICK:
 			OnSecondTick();
-			break;
-		case 3:
-			OnMinuteTick();
 			break;
 		}
 	}
@@ -952,7 +928,7 @@ void CServerInstance::OnEvent()
 	{
 		switch (ev.type)
 		{
-		case 1:
+		case SERVER_EVENT_TCP_PACKET:
 			if (!ev.msgs.size())
 				g_pConsole->Warn("CServerInstance::OnEvent: !ev.msg.size(), memleak\n");
 
@@ -968,7 +944,7 @@ void CServerInstance::OnEvent()
 	g_EventCriticalSection.Leave();
 }
 
-void CServerInstance::OnPackets(CExtendedSocket* s, CReceivePacket* msg, vector<CReceivePacket*>& msgs)
+void CServerInstance::OnPackets(CExtendedSocket* s, vector<CReceivePacket*>& msgs)
 {
 	if (find(g_pNetwork->m_Sessions.begin(), g_pNetwork->m_Sessions.end(), s) == g_pNetwork->m_Sessions.end())
 	{
@@ -1129,19 +1105,16 @@ void CServerInstance::OnSecondTick()
 	m_pCurrentLocalTime = localtime(&m_CurrentTime);
 	m_CurrentTime /= 60; // get current time in minutes(last CSO builds use timestamp in minutes)
 
-#if 0
-	// update autosave counter
-	m_nAutoSaveCounter++;
-
-	if (m_nAutoSaveCounter == 300)
-	{
-		m_nAutoSaveCounter = 0;
-	}
-#endif
-
 	UpdateConsoleStatus();
 
 	g_pUserManager->OnSecondTick();
+
+	m_nMinuteCounter++;
+	if (m_nMinuteCounter == 60)
+	{
+		OnMinuteTick();
+		m_nMinuteCounter = 0;
+	}
 }
 
 const char* CServerInstance::GetMemoryInfo()

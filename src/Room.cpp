@@ -531,7 +531,6 @@ void CRoom::OnUserMessage(CReceivePacket* msg, CUser* user)
 	}
 	else if (!message.find("/changebotscount") && m_pHostUser == user)
 	{
-		int newEnemyBotsCount, newFriendlyBotsCount;
 		istringstream iss(message);
 		vector<string> results((istream_iterator<string>(iss)),
 			istream_iterator<string>());

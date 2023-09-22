@@ -59,6 +59,8 @@ target_sources(PROJECTNAME PRIVATE "ReceivePacket.cpp")
 target_sources(PROJECTNAME PRIVATE "SendPacket.cpp")
 target_sources(PROJECTNAME PRIVATE "PacketHelper_FullUserInfo.cpp")
 
+target_sources(PROJECTNAME PRIVATE "Thread.cpp")
+
 target_include_directories(PROJECTNAME PUBLIC
 	"./"
 	"Thirdparty"

@@ -14,13 +14,19 @@
 #include "ClanManager.h"
 #include "RankManager.h"
 
+enum ServerEvent
+{
+	SERVER_EVENT_CONSOLE_COMMAND = 0,
+	SERVER_EVENT_TCP_PACKET = 1,
+	SERVER_EVENT_SECOND_TICK = 2,
+};
+
 struct Event_s
 {
 	int type;
 	std::string cmd;
 	CExtendedSocket* socket;
 	std::vector<CReceivePacket*> msgs;
-	CReceivePacket* msg;
 };
 
 class CServerInstance
@@ -39,7 +45,7 @@ public:
 	void SetServerActive(bool active);
 	bool IsServerActive();
 	void OnEvent();
-	void OnPackets(CExtendedSocket* s, CReceivePacket* msg, std::vector<CReceivePacket*>& msgs);
+	void OnPackets(CExtendedSocket* s, std::vector<CReceivePacket*>& msgs);
 	void ReceiveUdpMessage();
 	void OnSecondTick();
 	void UpdateConsoleStatus();
@@ -57,14 +63,14 @@ private:
 	// data buffer
 	char network_data[15000];
 
-	int m_nAutoSaveCounter;
+	int m_nMinuteCounter;
 
 	time_t m_CurrentTime;
 	tm* m_pCurrentLocalTime;
 };
 
-DWORD WINAPI ReadConsoleThread(LPVOID lpParameter);
-DWORD WINAPI ListenThread(LPVOID lpParameter);
-DWORD WINAPI ListenThreadUDP(LPVOID lpParameter);
-DWORD WINAPI MinuteTick(LPVOID lpParameter);
-DWORD WINAPI EventThread(LPVOID lpParameter);
+void ReadConsoleThread();
+void ListenThread();
+void ListenThreadUDP();
+void MinuteTick();
+void EventThread();
