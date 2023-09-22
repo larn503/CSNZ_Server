@@ -6,7 +6,7 @@ CPacketHelper_FullUserInfo::CPacketHelper_FullUserInfo()
 {
 }
 
-vector<unsigned char> PackAchievementList(vector<int> unpacked)
+vector<unsigned char> PackAchievementList(const vector<int>& unpacked)
 {
 	vector<unsigned char> packed;
 

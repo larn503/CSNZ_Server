@@ -24,6 +24,7 @@ class CRoomSettings
 public:
 	CRoomSettings();
 	CRoomSettings(Buffer& inPacket);
+
 	void Init();
 	int GetGameModeDefaultSetting(int gameModeId, std::string setting);
 	int GetMapSetting(int mapId, std::string setting);
@@ -55,9 +56,9 @@ public:
 	bool IsStartingCashValid(int gameModeId, int startingCash);
 	bool IsStartingCashValid(int startingCash);
 	bool IsZombieItem(int itemId);
-	bool IsZbLimitValid(std::vector<int> zbLimit);
-	bool IsMutationRestrictValid(std::vector<int> mutationRestrict);
-	bool IsMapPlaylistValid(std::vector<mapPlaylist_data> mapPlaylist);
+	bool IsZbLimitValid(const std::vector<int>& zbLimit);
+	bool IsMutationRestrictValid(const std::vector<int>& mutationRestrict);
+	bool IsMapPlaylistValid(const std::vector<mapPlaylist_data>& mapPlaylist);
 	bool IsMutationLimitValid(int mutationLimit);
 	bool CanChangeTeamBalance(int gameModeId);
 	bool CanChangeFriendlyFire(int gameModeId);

@@ -31,6 +31,9 @@ CServerConfig::CServerConfig()
 	room.connectingMethod = 0;
 	activeMiniGamesFlag = 0;
 	metadataToSend = 0;
+	flockingFlyerType = 0;
+	allowedLauncherVersion = 0;
+	allowedClientTimestamp = 0;
 }
 
 CServerConfig::~CServerConfig()

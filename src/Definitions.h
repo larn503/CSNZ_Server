@@ -537,6 +537,7 @@ struct GameMatch_KillEvent
 	float killerPos[3];
 	float victimPos[3];
 };
+// outdated
 struct Quest_s
 {
 	int id;

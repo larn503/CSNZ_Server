@@ -459,7 +459,7 @@ bool CRoomSettings::IsZombieItem(int itemId)
 	return false;
 }
 
-bool CRoomSettings::IsZbLimitValid(std::vector<int> zbLimit)
+bool CRoomSettings::IsZbLimitValid(const std::vector<int>& zbLimit)
 {
 	bool empty = std::all_of(zbLimit.begin(), zbLimit.end(), [](int i) { return i == 0; });
 	if (!empty)
@@ -484,7 +484,7 @@ bool CRoomSettings::IsZbLimitValid(std::vector<int> zbLimit)
 	return true;
 }
 
-bool CRoomSettings::IsMutationRestrictValid(std::vector<int> mutationRestrict)
+bool CRoomSettings::IsMutationRestrictValid(const std::vector<int>& mutationRestrict)
 {
 	bool empty = std::all_of(mutationRestrict.begin(), mutationRestrict.end(), [](int i) { return i == -1; });
 	if (!empty)
@@ -509,7 +509,7 @@ bool CRoomSettings::IsMutationRestrictValid(std::vector<int> mutationRestrict)
 	return true;
 }
 
-bool CRoomSettings::IsMapPlaylistValid(std::vector<mapPlaylist_data> mapPlaylist)
+bool CRoomSettings::IsMapPlaylistValid(const std::vector<mapPlaylist_data>& mapPlaylist)
 {
 	for (int i = 0; i < mapPlaylist.size(); i++)
 	{

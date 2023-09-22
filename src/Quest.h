@@ -412,6 +412,7 @@ class CQuestConditionKillMonster : public CQuestBaseConditionGameMatch
 public:
 	CQuestConditionKillMonster(CQuestTask* task, int id, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestBaseConditionGameMatch(task, id, temp, gameModes, maps, playerCount)
 	{
+		m_nMonsterType = 0;
 	}
 
 	void SetMonsterType(int monsterType)

@@ -222,7 +222,7 @@ int CLuckyItemManager::OpenItemBox(CUser* user, int itemBoxID, int itemBoxOpenCo
 	}
 
 	CUserCharacter character = user->GetCharacter(UFLAG_PASSWORDBOXES | UFLAG_GAMENAME);
-	if (character.gameName.empty())
+	if (!character.flag)
 	{
 		// TODO: send reply and rewrite condition
 		printf("character.gameName.empty()!\n");
@@ -277,6 +277,7 @@ int CLuckyItemManager::OpenItemBox(CUser* user, int itemBoxID, int itemBoxOpenCo
 		item.duration = duration;
 		result.items.push_back(item);
 
+		// send notification in lobby chat to all users
 		if (item.grade == ItemBoxGrades::PREMIUM || item.grade == ItemBoxGrades::ADVANCED)
 		{
 			for (auto u : g_pUserManager->users)

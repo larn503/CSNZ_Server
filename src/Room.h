@@ -62,7 +62,7 @@ public:
 	void UserGameJoin(CUser* user);
 	void EndGame();
 	bool FindAndUpdateNewHost();
-	void UpdateSettings(CRoomSettings newSettings);
+	void UpdateSettings(CRoomSettings& newSettings);
 	void OnUserMessage(CReceivePacket* msg, CUser* user);
 	void OnUserTeamMessage(CReceivePacket* msg, CUser* user);
 	void OnGameStart();

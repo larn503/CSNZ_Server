@@ -1,6 +1,5 @@
 #include "GameMatch.h"
 #include "ServerConfig.h"
-//#include <functional> // should be moved to main.h but redefinition appears
 
 using namespace std;
 
@@ -26,6 +25,7 @@ CGameMatchUserStat::CGameMatchUserStat()
 	m_nPlayerCoopBonusExp = 0;
 	m_nClassItemID = 0;
 	m_nIsLevelUp = false;
+	m_nRank = 0;
 }
 
 void CGameMatchUserStat::IncrementScore(int score)
@@ -178,6 +178,7 @@ CGameMatch::CGameMatch(CRoom* room, int gameMode, int mapID)
 	m_nCtWinCount = 0;
 	m_nTerWinCount = 0;
 	m_nFirstPlaceUserId = 0;
+	m_nSecondCounter = 0;
 }
 
 CGameMatch::~CGameMatch()

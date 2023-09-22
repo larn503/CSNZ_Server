@@ -120,10 +120,7 @@ void CShopManager::LoadProducts()
 	catch (exception& ex)
 	{
 		g_pConsole->Error("CShopManager::LoadProducts: an error occured while parsing Shop.json: %s\n", ex.what());
-	}
-
-	// load recommended and popular products
-	
+	}	
 }
 
 // upgrade

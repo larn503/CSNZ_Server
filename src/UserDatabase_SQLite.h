@@ -36,7 +36,7 @@ public:
 	// user related
 	int AddInventoryItem(int userID, CUserInventoryItem& item);
 	int AddInventoryItems(int userID, std::vector<CUserInventoryItem>& items); // TODO
-	int UpdateInventoryItem(int userID, CUserInventoryItem item);
+	int UpdateInventoryItem(int userID, const CUserInventoryItem& item);
 	int GetInventoryItems(int userID, std::vector<CUserInventoryItem>& items);
 	int GetInventoryItemsByID(int userID, int itemID, std::vector<CUserInventoryItem>& items);
 	int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item);
@@ -138,9 +138,9 @@ public:
 
 	// quest event related
 	int GetQuestEventProgress(int userID, int questID, UserQuestProgress& questProgress);
-	int UpdateQuestEventProgress(int userID, UserQuestProgress questProgress);
+	int UpdateQuestEventProgress(int userID, const UserQuestProgress& questProgress);
 	int GetQuestEventTaskProgress(int userID, int questID, int taskID, UserQuestTaskProgress& taskProgress);
-	int UpdateQuestEventTaskProgress(int userID, int questID, UserQuestTaskProgress taskProgress);
+	int UpdateQuestEventTaskProgress(int userID, int questID, const UserQuestTaskProgress& taskProgress);
 	bool IsQuestEventTaskFinished(int userID, int questID, int taskID);
 
 	int IsUserExists(int userID);

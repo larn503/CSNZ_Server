@@ -798,7 +798,7 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 
 // updates user inventory item data
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::UpdateInventoryItem(int userID, CUserInventoryItem item)
+int CUserDatabaseSQLite::UpdateInventoryItem(int userID, const CUserInventoryItem& item)
 {
 	try
 	{
@@ -5095,7 +5095,7 @@ int CUserDatabaseSQLite::GetQuestEventProgress(int userID, int questID, UserQues
 	return 1;
 }
 
-int CUserDatabaseSQLite::UpdateQuestEventProgress(int userID, UserQuestProgress questProgress)
+int CUserDatabaseSQLite::UpdateQuestEventProgress(int userID, const UserQuestProgress& questProgress)
 {
 	try
 	{
@@ -5155,7 +5155,7 @@ int CUserDatabaseSQLite::GetQuestEventTaskProgress(int userID, int questID, int 
 	return 1;
 }
 
-int CUserDatabaseSQLite::UpdateQuestEventTaskProgress(int userID, int questID, UserQuestTaskProgress taskProgress)
+int CUserDatabaseSQLite::UpdateQuestEventTaskProgress(int userID, int questID, const UserQuestTaskProgress& taskProgress)
 {
 	try
 	{

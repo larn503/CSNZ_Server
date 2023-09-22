@@ -56,8 +56,7 @@ public:
 	void Init();
 	void Shutdown();
 	void LoadLuckyItems();
-	bool KVToJson();
-	float GetItemDropChance(int grade);
+	bool KVToJson(); // TODO: delete sometime 
 	int OpenItemBox(CUser* user, int itemBox, int itemBoxOpenCount);
 	std::vector<ItemBox*>& GetItemBoxes();
 	std::vector<ItemBoxItem>& GetItems();

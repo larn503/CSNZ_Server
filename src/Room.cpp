@@ -6,8 +6,6 @@
 
 using namespace std;
 
-#define INVALID_ENT -1
-
 CRoom::CRoom(int roomId, CUser* hostUser, CChannel* channel, CRoomSettings* settings)
 {
 	m_nID = roomId;
@@ -39,6 +37,7 @@ CRoom::~CRoom()
 
 int CRoom::GetNumOfPlayers()
 {
+	// TODO: should we count bot players???
 	int realPlayers = m_Users.size();
 	//int botPlayers = m_pSettings->unk39 + m_pSettings->unk40;
 
@@ -235,7 +234,7 @@ void CRoom::SendJoinNewRoom(CUser* user)
 	g_pPacketManager->SendRoomCreateAndJoin(user->GetExtendedSocket(), this);
 }
 
-void CRoom::UpdateSettings(CRoomSettings newSettings)
+void CRoom::UpdateSettings(CRoomSettings& newSettings)
 {
 	m_pSettings->lowFlag |= newSettings.lowFlag;
 	m_pSettings->lowMidFlag |= newSettings.lowMidFlag;
