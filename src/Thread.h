@@ -7,12 +7,14 @@
 #endif
 
 #ifdef WIN32
-typedef HANDLE ThreadHandle;
+typedef DWORD ThreadId;
 #else
-typedef pthread_t ThreadHandle;
+typedef pthread_t ThreadId;
 #endif
 
 typedef void (*Handler)();
+
+ThreadId GetCurrentThreadID();
 
 // Win32/POSIX thread class
 class CThread
@@ -24,8 +26,13 @@ public:
 	bool Start();
 	void Join();
 	void Terminate();
+	bool IsAlive();
+	bool IsCurrentThreadSame();
 
 private:
 	Handler m_Object;
-	ThreadHandle m_hHandle;
+#ifdef WIN32
+	HANDLE m_hHandle;
+#endif
+	ThreadId m_ID;
 };

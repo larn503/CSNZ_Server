@@ -1,9 +1,21 @@
 #include "Thread.h"
 
+ThreadId GetCurrentThreadID()
+{
+#ifdef WIN32
+    return GetCurrentThreadId();
+#else
+    return pthread_self();
+#endif
+}
+
 CThread::CThread(const Handler& function)
 {
     m_Object = function;
+#ifdef WIN32
     m_hHandle = 0;
+#endif
+    m_ID = 0;
 }
 
 CThread::~CThread()
@@ -16,20 +28,19 @@ CThread::~CThread()
 // just start thread
 bool CThread::Start()
 {
-    if (m_hHandle)
+    if (IsAlive())
     {
-        // already running
-        return true;
+        return false;
     }
 
 #ifdef WIN32
-    m_hHandle = CreateThread(0, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(m_Object), this, 0, 0);
+    m_hHandle = CreateThread(0, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(m_Object), this, 0, &m_ID);
     if (m_hHandle == 0)
     {
         return false;
     }
 #else
-    int result = pthread_create(&m_hHandle, NULL, m_Object, NULL);
+    int result = pthread_create(&m_ID, NULL, m_Object, NULL);
     if (result != 0)
     {
         return false;
@@ -42,7 +53,14 @@ bool CThread::Start()
 // pauses current thread execution until other thread is finish
 void CThread::Join()
 {
+#ifdef WIN32
     if (!m_hHandle)
+#else
+    if (!m_ID)
+#endif
+        return;
+     
+    if (IsCurrentThreadSame())
         return;
 
 #ifdef WIN32
@@ -50,7 +68,7 @@ void CThread::Join()
     if (dwResult == WAIT_FAILED)
         printf("CThread::Join: dwResult == WAIT_FAILED\n");
 #else
-    if (pthread_join(&m_hHandle, NULL) != 0)
+    if (pthread_join(&m_ID, NULL) != 0)
         printf("CThread::Join: pthread_join != 0\n");
 #endif
 }
@@ -61,9 +79,30 @@ void CThread::Terminate()
 #ifdef WIN32
     TerminateThread(m_hHandle, 0);
     CloseHandle(m_hHandle);
-#else
-    pthread_kill(m_hHandle, SIGKILL);
-#endif
-
     m_hHandle = 0;
+#else
+    pthread_kill(m_ID, SIGKILL);
+#endif
+    m_ID = 0;
+}
+
+// checks if thread is alive (created and not exited)
+bool CThread::IsAlive()
+{
+#ifdef WIN32
+    DWORD exitCode;
+    return (m_hHandle && GetExitCodeThread(m_hHandle, &exitCode) && exitCode == STILL_ACTIVE);
+#else
+    return m_ID;
+#endif
+}
+
+bool CThread::IsCurrentThreadSame()
+{
+    ThreadId id = GetCurrentThreadID();
+#ifdef WIN32
+    return id == m_ID;
+#else
+    return pthread_equal(id, m_ID);
+#endif
 }
