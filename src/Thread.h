@@ -29,6 +29,10 @@ public:
 	bool IsAlive();
 	bool IsCurrentThreadSame();
 
+	// threads are non-copyable
+	CThread(const CThread&) = delete;
+	CThread& operator=(const CThread&) = delete;
+
 private:
 	Handler m_Object;
 #ifdef WIN32
