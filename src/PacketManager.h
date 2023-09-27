@@ -16,7 +16,7 @@ struct BinMetadata
 	int size;
 };
 
-class CPacketManager : public CBaseManager, public IPacketManager
+class CPacketManager : public CBaseManager<IPacketManager>
 {
 public:
 	CPacketManager();

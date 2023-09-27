@@ -1,6 +1,6 @@
 #pragma once
 
-class IMiniGameManager
+class IMiniGameManager : public IBaseManager
 {
 public:
 	virtual void OnPacket(CReceivePacket* msg, CExtendedSocket* socket) = 0;

@@ -2,7 +2,7 @@
 
 #include "IDedicatedServerManager.h"
 
-class IDedicatedServerManager
+class IDedicatedServerManager : public IBaseManager
 {
 public:
 	virtual bool OnPacket(CReceivePacket* msg, CExtendedSocket* socket) = 0;

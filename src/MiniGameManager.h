@@ -3,7 +3,7 @@
 #include "UserManager.h"
 #include "IMiniGameManager.h"
 
-class CMiniGameManager : public CBaseManager, public IMiniGameManager
+class CMiniGameManager : public CBaseManager<IMiniGameManager>
 {
 public:
 	CMiniGameManager();

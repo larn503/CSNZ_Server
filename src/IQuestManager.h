@@ -1,6 +1,6 @@
 #pragma once
 
-class IQuestManager
+class IQuestManager : public IBaseManager
 {
 public:
 	virtual void LoadQuests() = 0;

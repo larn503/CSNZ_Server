@@ -6,7 +6,7 @@
 #include "QuestEvent.h"
 #include "IQuestManager.h"
 
-class CQuestManager : public CBaseManager, public IQuestManager
+class CQuestManager : public CBaseManager<IQuestManager>
 {
 public:
 	CQuestManager();

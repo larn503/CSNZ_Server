@@ -1,6 +1,6 @@
 #pragma once
 
-class IClanManager
+class IClanManager : public IBaseManager
 {
 public:
 	virtual bool OnPacket(CReceivePacket* msg, CExtendedSocket* socket) = 0;

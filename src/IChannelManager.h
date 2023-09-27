@@ -1,6 +1,6 @@
 #pragma once
 
-class IChannelManager
+class IChannelManager : public IBaseManager
 {
 public:
 	virtual bool OnChannelListPacket(CExtendedSocket* socket) = 0;

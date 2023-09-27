@@ -14,7 +14,7 @@
 #define ITEM_USE_BAD_SLOT -1
 #define ITEM_USE_WRONG_ITEM -2
 
-class CItemManager : public CBaseManager, public IItemManager
+class CItemManager : public CBaseManager<IItemManager>
 {
 public:
 	CItemManager();

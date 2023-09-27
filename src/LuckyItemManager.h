@@ -4,7 +4,7 @@
 #include "Manager.h"
 #include "ILuckyItemManager.h"
 
-class CLuckyItemManager : public CBaseManager, public ILuckyItemManager
+class CLuckyItemManager : public CBaseManager<ILuckyItemManager>
 {
 public:
 	CLuckyItemManager();

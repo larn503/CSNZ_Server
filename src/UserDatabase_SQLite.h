@@ -17,7 +17,7 @@ struct RewardItem;
 struct UserQuestProgress;
 class CClan;
 
-class CUserDatabaseSQLite : public CBaseManager, public IUserDatabase
+class CUserDatabaseSQLite : public CBaseManager<IUserDatabase>
 {
 public:
 	CUserDatabaseSQLite();

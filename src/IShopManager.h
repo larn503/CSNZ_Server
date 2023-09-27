@@ -1,6 +1,6 @@
 #pragma once
 
-class IShopManager
+class IShopManager : public IBaseManager
 {
 public:
 	virtual bool LoadProducts() = 0;

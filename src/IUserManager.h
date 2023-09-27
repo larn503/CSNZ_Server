@@ -1,6 +1,6 @@
 #pragma once
 
-class IUserManager
+class IUserManager : public IBaseManager
 {
 public:
 	virtual bool OnLoginPacket(CReceivePacket* msg, CExtendedSocket* socket) = 0;

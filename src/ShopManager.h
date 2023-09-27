@@ -3,7 +3,7 @@
 #include "ItemManager.h"
 #include "IShopManager.h"
 
-class CShopManager : public CBaseManager, public IShopManager
+class CShopManager : public CBaseManager<IShopManager>
 {
 public:
 	CShopManager();

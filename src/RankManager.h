@@ -2,7 +2,7 @@
 
 #include "IRankManager.h"
 
-class CRankManager : public CBaseManager, IRankManager
+class CRankManager : public CBaseManager<IRankManager>
 {
 public:
 	CRankManager();

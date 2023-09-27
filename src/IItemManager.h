@@ -1,6 +1,6 @@
 #pragma once
 
-class IItemManager
+class IItemManager : public IBaseManager
 {
 public:
 	virtual void LoadRewards() = 0;

@@ -26,7 +26,7 @@ private:
 	int m_iPort;
 };
 
-class CDedicatedServerManager : public CBaseManager, public IDedicatedServerManager
+class CDedicatedServerManager : public CBaseManager<IDedicatedServerManager>
 {
 public:
 	CDedicatedServerManager();

@@ -5,7 +5,7 @@
 #include "User.h"
 #include "IChannelManager.h"
 
-class CChannelManager : public CBaseManager, public IChannelManager
+class CChannelManager : public CBaseManager<IChannelManager>
 {
 public:
 	CChannelManager();

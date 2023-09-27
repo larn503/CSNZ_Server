@@ -14,23 +14,34 @@ public:
 };
 
 // Base manager implmentation
-class CBaseManager : public IBaseManager
+template<class IInterface>
+class CBaseManager : public IInterface
 {
 public:
-	CBaseManager(bool secondTick = false, bool minuteTick = false);
-	virtual ~CBaseManager();
+	CBaseManager(bool secondTick = false, bool minuteTick = false)
+	{
+		m_bSecondTick = secondTick;
+		m_bMinuteTick = minuteTick;
+
+		Manager().AddManager(this);
+	}
+
+	virtual ~CBaseManager()
+	{
+		printf("~CBaseManager called, 0x%p\n\n", this);
+		Manager().RemoveManager(this);
+	}
 
 	// stub methods
-	virtual bool Init();
-	virtual void Shutdown();
-	virtual void OnSecondTick(time_t curTime);
-	virtual void OnMinuteTick(time_t curTime);
+	virtual bool Init() { return true; }
+	virtual void Shutdown() { printf("Shutdown called, 0x%p\n", this); }
+	virtual void OnSecondTick(time_t curTime) {}
+	virtual void OnMinuteTick(time_t curTime) {}
+	virtual bool ShouldDoSecondTick() { return m_bSecondTick; }
+	virtual bool ShouldDoMinuteTick() { return m_bMinuteTick; }
 
-	virtual bool ShouldDoSecondTick();
-	virtual bool ShouldDoMinuteTick();
-
-	void SetSecondTick(bool tick);
-	void SetMinuteTick(bool tick);
+	void SetMinuteTick(bool tick) { m_bMinuteTick = tick; }
+	void SetSecondTick(bool tick) { m_bSecondTick = tick; }
 
 private:
 	bool m_bSecondTick;

@@ -2,7 +2,7 @@
 
 #include "IClanManager.h"
 
-class CClanManager : public CBaseManager, public IClanManager
+class CClanManager : public CBaseManager<IClanManager>
 {
 public:
 	CClanManager();

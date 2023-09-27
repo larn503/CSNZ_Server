@@ -4,7 +4,7 @@
 #include "Manager.h"
 #include "IUserManager.h"
 
-class CUserManager : public CBaseManager, public IUserManager
+class CUserManager : public CBaseManager<IUserManager>
 {
 public:
 	CUserManager(int maxPlayers);

@@ -1,6 +1,6 @@
 #pragma once
 
-class ILuckyItemManager
+class ILuckyItemManager : public IBaseManager
 {
 public:
 	virtual void LoadLuckyItems() = 0;

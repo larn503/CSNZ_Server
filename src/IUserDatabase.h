@@ -3,7 +3,7 @@
 #include "UserInventoryItem.h"
 #include "UserFastBuy.h"
 
-class IUserDatabase
+class IUserDatabase : public IBaseManager
 {
 public:
 	virtual int Login(std::string userName, std::string password, CExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData) = 0;

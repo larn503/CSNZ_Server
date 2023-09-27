@@ -1,6 +1,6 @@
 #pragma once
 
-class IPacketManager
+class IPacketManager : public IBaseManager
 {
 public:
 	virtual CSendPacket* CreatePacket(CExtendedSocket* socket, int msgID) = 0;

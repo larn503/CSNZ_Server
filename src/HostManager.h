@@ -1,8 +1,9 @@
 #pragma once
 
 #include "User.h"
+#include "IHostManager.h"
 
-class CHostManager : public CBaseManager
+class CHostManager : public CBaseManager<IHostManager>
 {
 public:
 	CHostManager();
