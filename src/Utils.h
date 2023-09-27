@@ -163,7 +163,7 @@ private:
 #ifdef _WIN32
 	CRITICAL_SECTION m_CriticalSection;
 #elif _LINUX
-	pthread_mutex_t m_mutex;
+	pthread_mutex_t m_Mutex;
 #endif
 };
 

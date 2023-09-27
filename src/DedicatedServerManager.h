@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include "IDedicatedServerManager.h"
 
 class CDedicatedServer
 {
@@ -25,14 +26,15 @@ private:
 	int m_iPort;
 };
 
-class CDedicatedServerManager
+class CDedicatedServerManager : public CBaseManager, public IDedicatedServerManager
 {
 public:
 	CDedicatedServerManager();
-	~CDedicatedServerManager();
+	virtual ~CDedicatedServerManager();
+
+	virtual void Shutdown();
 
 	bool OnPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	void Shutdown();
 
 	void AddServer(CDedicatedServer* server);
 

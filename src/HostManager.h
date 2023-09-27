@@ -2,7 +2,7 @@
 
 #include "User.h"
 
-class CHostManager
+class CHostManager : public CBaseManager
 {
 public:
 	CHostManager();

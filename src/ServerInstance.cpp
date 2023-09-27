@@ -36,13 +36,12 @@ CRankManager* g_pRankManager;
 CServerInstance::CServerInstance()
 {
 	m_nNextClientIndex = 1;
-	m_nMinuteCounter = 0;
 	m_bIsServerActive = true;
 	m_CurrentTime = 0;
 	m_pCurrentLocalTime = NULL;
 }
 
-void CServerInstance::Init()
+bool CServerInstance::Init()
 {
 	if (g_pServerConfig)
 	{
@@ -51,17 +50,17 @@ void CServerInstance::Init()
 		{
 			g_pConsole->Error("Server initialization failed.\n");
 			m_bIsServerActive = false;
-			return;
+			return false;
 		}
 
-		return;
+		return true;
 	}
 
 	if (!LoadConfigs())
 	{
 		g_pConsole->Error("Server initialization failed.\n");
 		m_bIsServerActive = false;
-		return;
+		return false;
 	}
 
 	g_pNetwork = new CNetwork();
@@ -92,46 +91,49 @@ void CServerInstance::Init()
 
 	g_pDedicatedServerManager = new CDedicatedServerManager();
 
-	if (!g_pUserDatabase->Init() || !g_pNetwork->ServerInit() || !g_pNetwork->UDPInit())
+	if (!Manager().InitAll() || !g_pNetwork->ServerInit() || !g_pNetwork->UDPInit())
 	{
 		g_pConsole->Error("Server initialization failed.\n");
 		m_bIsServerActive = false;
-		return;
+		return false;
 	}
 	else if (g_pItemTable->IsLoadFailed())
 	{
 		g_pConsole->Error("Server initialization failed. Couldn't load Item.csv.\n");
 		m_bIsServerActive = false;
-		return;
+		return false;
 	}
 	else if (g_pMapListTable->IsLoadFailed())
 	{
 		g_pConsole->Error("Server initialization failed. Couldn't load MapList.csv.\n");
 		m_bIsServerActive = false;
-		return;
+		return false;
 	}
 	else if (g_pGameModeListTable->IsLoadFailed())
 	{
 		g_pConsole->Error("Server initialization failed. Couldn't load GameModeList.csv.\n");
 		m_bIsServerActive = false;
-		return;
-	}
-	else
-	{
-		g_pConsole->Log("Server starts listening. Server developers: Jusic, Hardee, NekoMeow. Thx to Ochii for CSO2 server.\nFor more information visit vk.com/csnz_server or discord.gg/EvUAY6D\n");
-		g_pConsole->Log("Server build: %s, %s\n", build_number(),
-#ifdef PUBLIC_RELEASE
-			"Public Release");
-#else
-			"Private Release");
-#endif
+		return false;
 	}
 
+	g_pConsole->Log("Server starts listening. Server developers: Jusic, Hardee, NekoMeow. Thx to Ochii for CSO2 server.\nFor more information visit vk.com/csnz_server or discord.gg/EvUAY6D\n");
+	g_pConsole->Log("Server build: %s, %s\n", build_number(),
+#ifdef PUBLIC_RELEASE
+		"Public Release");
+#else
+		"Private Release");
+#endif
+
+	// TODO: why?
 	OnSecondTick();
+
+	return true;
 }
 
 CServerInstance::~CServerInstance()
 {
+	// TODO: test ShutdownSystems
+
 	delete g_pNetwork;
 	delete g_pPacketManager;
 	delete g_pUserDatabase;
@@ -147,6 +149,7 @@ CServerInstance::~CServerInstance()
 	delete g_pMiniGameManager;
 	delete g_pClanManager;
 	delete g_pRankManager;
+	delete g_pHostManager;
 }
 
 bool CServerInstance::LoadConfigs()
@@ -160,64 +163,6 @@ void CServerInstance::UnloadConfigs()
 	delete g_pServerConfig;
 }
 
-void CServerInstance::AddBanIP(string ip, bool unban)
-{
-	g_pUserDatabase->UpdateIPBanList(ip, unban);
-}
-
-void CServerInstance::AddBanHWID(vector<unsigned char>& hwid, bool unban)
-{
-	g_pUserDatabase->UpdateHWIDBanList(hwid, unban);
-}
-
-void ListenThreadUDP()
-{
-	while (g_pServerInstance->IsServerActive())
-	{
-		g_pNetwork->m_Read_fds_u = g_pNetwork->m_Master_u; // reset
-
-		struct timeval tv;
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-
-		int activity = select(g_pNetwork->m_nFDmax_u + 1, &g_pNetwork->m_Read_fds_u, NULL, NULL, &tv);
-		if (activity == SOCKET_ERROR)
-		{
-			g_pConsole->Error("select(udp) failed with error: %d.\n", WSAGetLastError());
-			continue; // since select failed, we can't do any shits
-		}
-
-		g_EventCriticalSection.Enter();
-
-		for (int i = 0; i <= g_pNetwork->m_nFDmax_u; i++)
-		{ 
-			if (FD_ISSET(i, &g_pNetwork->m_Read_fds_u))
-			{
-				if (i == g_pNetwork->m_UDPSocket)
-				{
-					g_pServerInstance->ReceiveUdpMessage();
-				}
-				else
-				{
-					g_pServerInstance->ReceiveUdpMessage();
-				}
-			}
-		}
-
-		g_EventCriticalSection.Leave();
-	}
-}
-
-void EventThread()
-{
-	while (g_pServerInstance->IsServerActive())
-	{
-		g_Event.WaitForSignal();
-
-		g_pServerInstance->OnEvent();
-	}
-}
-
 void CServerInstance::OnCommand(string command)
 {
 	istringstream iss(command);
@@ -229,7 +174,7 @@ void CServerInstance::OnCommand(string command)
 	if (args[0] == "users")
 	{
 		g_pConsole->Log(va("%-6s|%-32s|%-8s|%-6s|%-15s| (online: %d | connected: %d)\n",
-			"UserID", "Username/IP", "Uptime", "Status", "IP Address", g_pUserManager->users.size(), g_pNetwork->m_Sessions.size()));
+			"UserID", "Username/IP", "Uptime", "Status", "IP Address", g_pUserManager->GetUsers().size(), g_pNetwork->m_Sessions.size()));
 
 		for (auto sock : g_pNetwork->m_Sessions)
 		{
@@ -277,10 +222,7 @@ void CServerInstance::OnCommand(string command)
 			}
 		}
 
-		for (auto user : g_pUserManager->users)
-		{
-			g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Server down for maintenance");
-		}
+		g_pUserManager->SendNoticeMsgBoxToAll("Server down for maintenance");
 
 		g_pServerInstance->SetServerActive(false);
 	}
@@ -317,10 +259,9 @@ void CServerInstance::OnCommand(string command)
 			string msg(command);
 			msg = msg.substr(msg.find(" ") + 1);
 
-			for (auto user : g_pUserManager->users)
-				g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), msg.c_str());
+			g_pUserManager->SendNoticeMsgBoxToAll(msg);
 
-			g_pConsole->Log("Sent to %d online users: %s\n", g_pUserManager->users.size(), msg.c_str());
+			g_pConsole->Log("Sent to %d online users: %s\n", g_pUserManager->GetUsers().size(), msg.c_str());
 		}
 		else
 		{
@@ -366,10 +307,7 @@ void CServerInstance::OnCommand(string command)
 		g_pUserDatabase->GetCharacter(userID, character);
 		if (banType == 1)
 		{
-			for (auto u : g_pUserManager->users)
-			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(u->GetExtendedSocket(), va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
-			}
+			g_pUserManager->SendNoticeMessageToAll(va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
 		}
 	}
 	else if (args[0] == "unban")
@@ -418,7 +356,7 @@ void CServerInstance::OnCommand(string command)
 			if (user)
 				g_pUserManager->DisconnectUser(user);
 
-			g_pServerInstance->AddBanHWID(data.lastHWID);
+			g_pUserDatabase->UpdateHWIDBanList(data.lastHWID);
 		}
 	}
 	else if (args[0] == "unhban")
@@ -431,7 +369,7 @@ void CServerInstance::OnCommand(string command)
 
 		vector<unsigned char> hwid(args[1].begin(), args[1].end());
 
-		g_pServerInstance->AddBanHWID(hwid, true);
+		g_pUserDatabase->UpdateHWIDBanList(hwid, true);
 	}
 	else if (args[0] == "ipban")
 	{
@@ -457,7 +395,7 @@ void CServerInstance::OnCommand(string command)
 			if (user)
 				g_pUserManager->DisconnectUser(user);
 
-			g_pServerInstance->AddBanIP(data.lastIP);
+			g_pUserDatabase->UpdateIPBanList(data.lastIP);
 		}
 	}
 	else if (args[0] == "unipban")
@@ -468,7 +406,7 @@ void CServerInstance::OnCommand(string command)
 			return;
 		}
 
-		g_pServerInstance->AddBanIP(args[1], true);
+		g_pUserDatabase->UpdateIPBanList(args[1], true);
 	}
 	else if (args[0] == "togglegamemaster")
 	{
@@ -499,10 +437,10 @@ void CServerInstance::OnCommand(string command)
 	{
 		g_pShopManager->Init();
 		// send shop update to users
-		for (auto u : g_pUserManager->users)
-			g_pPacketManager->SendShopUpdate(u->GetExtendedSocket(), g_pShopManager->m_Products);
+		for (auto u : g_pUserManager->GetUsers())
+			g_pPacketManager->SendShopUpdate(u->GetExtendedSocket(), g_pShopManager->GetProducts());
 
-		g_pConsole->Log("Sent shop update to: %d\n", g_pUserManager->users.size());
+		g_pConsole->Log("Sent shop update to: %d\n", g_pUserManager->GetUsers().size());
 	}
 	else if (args[0] == "dbreload")
 	{
@@ -514,19 +452,19 @@ void CServerInstance::OnCommand(string command)
 		g_pQuestManager->Init();
 
 		// send userinfo to users
-		for (auto u : g_pUserManager->users)
+		for (auto u : g_pUserManager->GetUsers())
 		{
 			CUserCharacter character = u->GetCharacter(UFLAG_ALL);
 			g_pPacketManager->SendUserUpdateInfo(u->GetExtendedSocket(), u, character);
 		}
 
-		g_pConsole->Log("Sent user update info to: %d\n", g_pUserManager->users.size());
+		g_pConsole->Log("Sent user update info to: %d\n", g_pUserManager->GetUsers().size());
 
 		// send shop update to users
-		for (auto u : g_pUserManager->users)
-			g_pPacketManager->SendShopUpdate(u->GetExtendedSocket(), g_pShopManager->m_Products);
+		for (auto u : g_pUserManager->GetUsers())
+			g_pPacketManager->SendShopUpdate(u->GetExtendedSocket(), g_pShopManager->GetProducts());
 
-		g_pConsole->Log("Sent shop update to: %d\n", g_pUserManager->users.size());
+		g_pConsole->Log("Sent shop update to: %d\n", g_pUserManager->GetUsers().size());
 
 		g_pConsole->Log("Database reload successfull.\n");
 	}
@@ -699,6 +637,16 @@ void CServerInstance::OnCommand(string command)
 	}
 }
 
+void EventThread()
+{
+	while (g_pServerInstance->IsServerActive())
+	{
+		g_Event.WaitForSignal();
+
+		g_pServerInstance->OnEvent();
+	}
+}
+
 void ReadConsoleThread()
 {
 	while (g_pServerInstance->IsServerActive())
@@ -724,11 +672,19 @@ void ListenThread()
 {
 	while (g_pServerInstance->IsServerActive())
 	{
-		g_pServerInstance->Listen();
+		g_pServerInstance->ListenTCP();
 	}
 }
 
-void CServerInstance::Listen()
+void ListenThreadUDP()
+{
+	while (g_pServerInstance->IsServerActive())
+	{
+		g_pServerInstance->ListenUDP();
+	}
+}
+
+void CServerInstance::ListenTCP()
 {
 	FD_ZERO(&g_pNetwork->m_Write_fds);
 	FD_ZERO(&g_pNetwork->m_Read_fds);
@@ -756,6 +712,10 @@ void CServerInstance::Listen()
 		g_pConsole->Error("select() failed with error: %d\n", WSAGetLastError());
 		ForceEndServer();
 		SetServerActive(false);
+		return;
+	}
+	else if (!activity) // timeout
+	{
 		return;
 	}
 
@@ -894,6 +854,80 @@ void CServerInstance::Listen()
 	g_EventCriticalSection.Leave();
 }
 
+void CServerInstance::ListenUDP()
+{
+	g_pNetwork->m_Read_fds_u = g_pNetwork->m_Master_u; // reset
+
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+
+	int activity = select(g_pNetwork->m_nFDmax_u + 1, &g_pNetwork->m_Read_fds_u, NULL, NULL, &tv);
+	if (activity == SOCKET_ERROR)
+	{
+		g_pConsole->Error("select(udp) failed with error: %d.\n", WSAGetLastError());
+		return;
+	}
+	else if (!activity) // timeout
+	{
+		return;
+	}
+
+	g_EventCriticalSection.Enter();
+
+	for (int i = 0; i <= g_pNetwork->m_nFDmax_u; i++)
+	{
+		if (FD_ISSET(i, &g_pNetwork->m_Read_fds_u))
+		{
+			// got message
+			struct sockaddr_in from;
+			int fromlen = sizeof(from);
+
+			int datalen = recvfrom(g_pNetwork->m_UDPSocket, network_data, 15000, 0, (sockaddr*)&from, &fromlen);
+			if (datalen == 14)
+			{
+				Buffer buf(vector<unsigned char>(network_data, network_data + datalen));
+
+				char signature = buf.readUInt8();
+				if (signature != 'W')
+				{
+					g_pConsole->Log(OBFUSCATE("CPacketIn_UDP::Parse: signature error\n"));
+					return;
+				}
+
+				int userID = buf.readUInt32_LE();
+				int portID = buf.readUInt16_LE();
+				long longAddr = buf.readUInt32_BE();
+				string localIpAddress = ip_to_string(longAddr);
+				short port = buf.readUInt16_LE();
+
+				CUser* user = g_pUserManager->GetUserById(userID);
+				if (!user)
+				{
+					return;
+				}
+
+				int result = user->UpdateHolepunch(portID, port, from.sin_port);
+				if (result == -1)
+				{
+					g_pConsole->Warn("Unknown hole punch port\n");
+				}
+
+				Buffer replyBuffer;
+				replyBuffer.writeUInt8('W');
+				replyBuffer.writeUInt8(0);
+				replyBuffer.writeUInt8(1);
+
+				// send reply
+				const vector<unsigned char>& buffer = replyBuffer.getBuffer();
+				sendto(g_pNetwork->m_UDPSocket, reinterpret_cast<const char*>(&buffer[0]), buffer.size(), 0, (sockaddr*)&from, fromlen);
+			}
+		}
+	}
+
+	g_EventCriticalSection.Leave();
+}
+
 void CServerInstance::SetServerActive(bool active)
 {
 	m_bIsServerActive = active;
@@ -924,6 +958,7 @@ void CServerInstance::OnEvent()
 		}
 	}
 
+	// TODO: remove this?
 	for (auto& ev : g_Events)
 	{
 		switch (ev.type)
@@ -1052,69 +1087,29 @@ void CServerInstance::OnPackets(CExtendedSocket* s, vector<CReceivePacket*>& msg
 	}
 }
 
-void CServerInstance::ReceiveUdpMessage()
-{
-	struct sockaddr_in from;
-	int fromlen = sizeof(from);
-
-	int datalen = recvfrom(g_pNetwork->m_UDPSocket, network_data, 15000, 0, (sockaddr*)&from, &fromlen);
-	if (datalen == 14)
-	{
-		Buffer buf(vector<unsigned char>(network_data, network_data + datalen));
-
-		char signature = buf.readUInt8();
-		if (signature != 'W')
-		{
-			g_pConsole->Log(OBFUSCATE("CPacketIn_UDP::Parse: signature error\n"));
-			return;
-		}
-
-		int userID = buf.readUInt32_LE();
-		int portID = buf.readUInt16_LE();
-		long longAddr = buf.readUInt32_BE();
-		string localIpAddress = ip_to_string(longAddr);
-		short port = buf.readUInt16_LE();
-
-		CUser* user = g_pUserManager->GetUserById(userID);
-		if (!user)
-		{
-			return;
-		}
-
-		int result = user->UpdateHolepunch(portID, port, from.sin_port);
-		if (result == -1)
-		{
-			g_pConsole->Warn("Unknown hole punch port\n");
-		}
-
-		Buffer replyBuffer;
-		replyBuffer.writeUInt8('W');
-		replyBuffer.writeUInt8(0);
-		replyBuffer.writeUInt8(1);
-
-		// send reply
-		const vector<unsigned char>& buffer = replyBuffer.getBuffer();
-		sendto(g_pNetwork->m_UDPSocket, reinterpret_cast<const char*>(&buffer[0]), buffer.size(), 0, (sockaddr*)&from, fromlen);
-	}
-}
-
 void CServerInstance::OnSecondTick()
 {
 	// update current time
+	time_t prevTime = m_CurrentTime;
 	m_CurrentTime = time(NULL);
 	m_pCurrentLocalTime = localtime(&m_CurrentTime);
 	m_CurrentTime /= 60; // get current time in minutes(last CSO builds use timestamp in minutes)
 
 	UpdateConsoleStatus();
 
-	g_pUserManager->OnSecondTick();
+	Manager().SecondTick(m_CurrentTime);
 
-	m_nMinuteCounter++;
-	if (m_nMinuteCounter == 60)
+	if (m_CurrentTime - prevTime > 0)
 	{
 		OnMinuteTick();
-		m_nMinuteCounter = 0;
 	}
+}
+
+void CServerInstance::OnMinuteTick()
+{
+	g_pConsole->Log("%s\n", GetMemoryInfo());
+
+	Manager().MinuteTick(m_CurrentTime);
 }
 
 const char* CServerInstance::GetMemoryInfo()
@@ -1130,7 +1125,7 @@ const char* CServerInstance::GetMemoryInfo()
 	if (mem >= 1000)
 		g_pConsole->Error("[ALERT] Server is using more than 1G of memory.\n");
 
-	return va("Memory usage: %.2fmb. Connected users: %d. Logged in users: %d.", mem, static_cast<int>(g_pNetwork->m_Sessions.size()), static_cast<int>(g_pUserManager->users.size()));
+	return va("Memory usage: %.2fmb. Connected users: %d. Logged in users: %d.", mem, static_cast<int>(g_pNetwork->m_Sessions.size()), static_cast<int>(g_pUserManager->GetUsers().size()));
 }
 
 void CServerInstance::DisconnectClient(CExtendedSocket* socket)
@@ -1161,15 +1156,4 @@ time_t CServerInstance::GetCurrentTime()
 tm* CServerInstance::GetCurrentLocalTime()
 {
 	return m_pCurrentLocalTime;
-}
-
-void CServerInstance::OnMinuteTick()
-{
-	time_t curTime = g_pServerInstance->GetCurrentTime();
-	tm* localTime = g_pServerInstance->GetCurrentLocalTime();
-
-	g_pItemManager->ProcessEvents(curTime);
-	g_pUserDatabase->OnMinuteTick(curTime);
-
-	g_pConsole->Log("%s\n", GetMemoryInfo());
 }

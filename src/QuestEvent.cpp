@@ -4,6 +4,7 @@ using namespace std;
 
 CQuestEventBaseCondition::CQuestEventBaseCondition(CQuestEventTask* task, int id, int goal)
 {
+	m_nEventType = 0;
 	m_pTask = task;
 	m_nID = id;
 	m_nGoalPoints = goal;
@@ -38,23 +39,6 @@ CQuestEventTask::CQuestEventTask(CQuestEvent* quest, int id, int goal)
 	m_nGoal = goal;
 	m_nRewardID = 0;
 	m_nNoticeGoal = 0;
-}
-
-void CQuestEventTask::Event()
-{
-	//Event_Internal();
-}
-
-bool CQuestEventTask::Event_Internal(CUser* user)
-{
-	UserQuestTaskProgress progress = {};
-	if (g_pUserDatabase->GetQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
-		return false;
-
-	if (progress.unitsDone >= m_nGoal)
-		return false;
-
-	return true;
 }
 
 void CQuestEventTask::IncrementCount(CUser* user, int count, bool setForce)

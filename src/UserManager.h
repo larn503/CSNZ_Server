@@ -1,11 +1,15 @@
 #pragma once
 
 #include "User.h"
+#include "Manager.h"
+#include "IUserManager.h"
 
-class CUserManager
+class CUserManager : public CBaseManager, public IUserManager
 {
 public:
 	CUserManager(int maxPlayers);
+
+	virtual void OnSecondTick(time_t curTime);
 
 	bool OnLoginPacket(CReceivePacket* msg, CExtendedSocket* socket);
 	bool OnUdpPacket(CReceivePacket* msg, CExtendedSocket* socket);
@@ -23,8 +27,6 @@ public:
 	bool OnAddonPacket(CReceivePacket* msg, CExtendedSocket* socket);
 	bool OnLeaguePacket(CReceivePacket* msg, CExtendedSocket* socket);
 
-	void OnSecondTick();
-
 	void SendNoticeMessageToAll(std::string msg);
 	void SendNoticeMsgBoxToAll(std::string msg);
 
@@ -41,7 +43,8 @@ public:
 	void RemoveUserById(int userId);
 	void RemoveUserBySocket(CExtendedSocket* socket);
 	void CleanUpUser(CUser* user);
-	std::vector<CUser*> users;
+
+	std::vector<CUser*> GetUsers();
 
 	int ChangeUserNickname(CUser* user, std::string newNickname, bool createCharacter = false);
 
@@ -66,5 +69,6 @@ private:
 	void OnBanRemoveNicknameRequest(CReceivePacket* msg, CUser* user);
 	void OnBanSettingsRequest(CReceivePacket* msg, CUser* user);
 
+	std::vector<CUser*> m_Users;
 	std::vector<CUserInventoryItem> m_DefaultItems;
 };

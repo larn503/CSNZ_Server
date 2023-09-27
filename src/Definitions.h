@@ -1431,3 +1431,49 @@ enum RankReplyCode
 	RankErrorData,
 	RankNotPeriod
 };
+
+// LUCKY ITEM
+struct ItemBoxRate
+{
+	float rate;
+	int grade;
+	std::vector<int> duration;
+	std::vector<int> items;
+};
+
+struct ItemBox
+{
+	int itemId;
+	std::vector<ItemBoxRate> rates;
+};
+
+struct ItemBoxItem
+{
+	int itemBoxItemID;
+	int itemId;
+	int count;
+	int duration;
+	int grade;
+};
+
+struct ItemBoxOpenResult
+{
+	int itemBoxItemId;
+	std::vector<ItemBoxItem> items;
+};
+
+enum ItemBoxError
+{
+	FAIL_INVENTORY_FULL = 1,
+	FAIL_USEITEM = 2,
+	FAIL_PAUSED = 3,
+	NOT_KEY = 4,
+};
+
+enum ItemBoxGrades
+{
+	DEFAULT = 1,
+	NORMAL = 2,
+	ADVANCED = 3,
+	PREMIUM = 4,
+};

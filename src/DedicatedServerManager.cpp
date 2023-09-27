@@ -109,12 +109,13 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, CExtendedSocket* soc
 	return true;
 }
 
-CDedicatedServerManager::CDedicatedServerManager()
+CDedicatedServerManager::CDedicatedServerManager() : CBaseManager()
 {
 }
 
 CDedicatedServerManager::~CDedicatedServerManager()
 {
+	printf("~CItemManager\n");
 	Shutdown();
 }
 

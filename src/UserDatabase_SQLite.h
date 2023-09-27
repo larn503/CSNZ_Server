@@ -3,6 +3,8 @@
 
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <chrono>
+#include "Manager.h"
+#include "IUserDatabase.h"
 
 class CUser;
 class CUserInventory;
@@ -15,17 +17,14 @@ struct RewardItem;
 struct UserQuestProgress;
 class CClan;
 
-class CUserDatabaseSQLite
+class CUserDatabaseSQLite : public CBaseManager, public IUserDatabase
 {
 public:
 	CUserDatabaseSQLite();
 
-	bool Init();
-	bool CheckForTables();
-	void LoadLastBackup();
-	bool UpgradeDatabase(int& currentDatabaseVer);
+	virtual bool Init();
+
 	bool ExecuteScript(std::string scriptPath);
-	bool ExecuteOnce();
 
 	int Login(std::string userName, std::string password, CExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData);
 	int AddToRestoreList(int userID, int channelServerID, int channelID);
@@ -42,7 +41,6 @@ public:
 	int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item);
 	int GetFirstActiveItemByItemID(int userID, int itemID, CUserInventoryItem& item);
 	int IsInventoryFull(int userID);
-	int ProcessInventory(time_t curTime);
 	int GetUserData(int userID, CUserData& data);
 	int UpdateUserData(int userID, CUserData data);
 	int CreateCharacter(int userID, std::string gameName);
@@ -146,15 +144,13 @@ public:
 	int IsUserExists(int userID);
 	int IsUserExists(std::string userName, bool searchByUserName = true);
 
-#ifndef PUBLIC_RELEASE
 	// suspect system
 	int SuspectAddAction(std::vector<unsigned char>& hwid, int actionID);
 	int IsUserSuspect(int userID);
-#endif
 
-	int OnMinuteTick(time_t curTime);
-	int OnDayTick();
-	int OnWeekTick();
+	virtual void OnMinuteTick(time_t curTime);
+	void OnDayTick();
+	void OnWeekTick();
 
 	std::map<int, UserBan> GetUserBanList();
 	std::vector<int> GetUsers(int lastLoginTime = 0);
@@ -179,6 +175,11 @@ public:
 	bool CommitTransaction(SQLite::Transaction& trans);
 
 private:
+	bool CheckForTables();
+	void LoadLastBackup();
+	bool UpgradeDatabase(int& currentDatabaseVer);
+	bool ExecuteOnce();
+
 	std::chrono::high_resolution_clock::time_point ExecCalcStart();
 	void ExecCalcEnd(std::chrono::high_resolution_clock::time_point startTime, std::string funcName);
 

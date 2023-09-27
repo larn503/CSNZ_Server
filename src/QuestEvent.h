@@ -30,9 +30,6 @@ class CQuestEventTask
 public:
 	CQuestEventTask(CQuestEvent* quest, int id, int goal);
 
-	void Event();
-
-	bool Event_Internal(CUser* user);
 	void IncrementCount(CUser* user, int count = 0, bool setForce = false);
 	void Done(CUser* user, UserQuestTaskProgress& progress);
 	void SetNotice(int goal, std::string userMsg);

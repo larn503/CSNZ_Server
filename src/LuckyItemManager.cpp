@@ -11,20 +11,22 @@ using ordered_json = nlohmann::ordered_json;
 
 #define ITEM_BOX_VERSION 1
 
-CLuckyItemManager::CLuckyItemManager()
+CLuckyItemManager::CLuckyItemManager() : CBaseManager()
 {
-	Init();
 }
 
 CLuckyItemManager::~CLuckyItemManager()
 {
+	printf("~CLuckyItemManager\n");
 	Shutdown();
 }
 
-void CLuckyItemManager::Init()
+bool CLuckyItemManager::Init()
 {
 	if (!KVToJson())
 		LoadLuckyItems();
+
+	return true;
 }
 
 void CLuckyItemManager::Shutdown()
@@ -280,7 +282,8 @@ int CLuckyItemManager::OpenItemBox(CUser* user, int itemBoxID, int itemBoxOpenCo
 		// send notification in lobby chat to all users
 		if (item.grade == ItemBoxGrades::PREMIUM || item.grade == ItemBoxGrades::ADVANCED)
 		{
-			for (auto u : g_pUserManager->users)
+			// TODO: make method in manager for this
+			for (auto u : g_pUserManager->GetUsers())
 			{
 				g_pPacketManager->SendUMsgSystemReply(u->GetExtendedSocket(), 2, item.grade == ItemBoxGrades::PREMIUM ? "LOTTERY_WIN_PREMIUM" : "LOTTERY_WIN_PREMIUM_NUM", vector<string>{ character.gameName, to_string(item.itemId) });
 			}

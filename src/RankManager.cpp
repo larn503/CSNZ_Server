@@ -2,6 +2,10 @@
 
 using namespace std;
 
+CRankManager::CRankManager() : CBaseManager()
+{
+}
+
 bool CRankManager::OnRankPacket(CReceivePacket* msg, CExtendedSocket* socket)
 {
 	LOG_PACKET;

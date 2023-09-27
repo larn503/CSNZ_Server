@@ -16,7 +16,7 @@ using namespace std;
 #define OBFUSCATE(data) (char*)AY_OBFUSCATE_KEY(data, 'F')
 
 CUserDatabaseSQLite::CUserDatabaseSQLite()
-try : m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
+try : CBaseManager(), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {
 	m_bInited = false;
 }
@@ -62,6 +62,7 @@ bool CUserDatabaseSQLite::CheckForTables()
 			if (dbVer != LAST_DB_VERSION)
 			{
 				g_pConsole->Error("CUserDatabaseSQLite::CheckForTables: database version mismatch, got: %d, expected: %d\n", dbVer, LAST_DB_VERSION);
+				return false;
 			}
 		}
 		else
@@ -959,51 +960,6 @@ int CUserDatabaseSQLite::IsInventoryFull(int userID)
 	}
 
 	return 0;
-}
-
-// processes user inventory(finds expired items and sends user notification)
-// returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::ProcessInventory(time_t curTime)
-{
-	try
-	{
-		static SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE expiryDate != 0 AND inUse = 1 AND expiryDate < ?"));
-		query.bind(1, curTime);	
-
-		map<int, int> expiredItems;
-		while (query.executeStep())
-		{
-			CUserInventoryItem item(query.getColumn(1), query.getColumn(2), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0);
-			int userID = query.getColumn(0);
-
-			CUser* user = g_pUserManager->GetUserById(userID);
-			if (user)
-			{
-				g_pPacketManager->SendUMsgExpiryNotice(user->GetExtendedSocket(), vector<int>{ item.m_nItemID });
-
-				g_pItemManager->RemoveItem(userID, user, item);
-			}
-			else
-			{
-				// add to notice list
-				g_pUserDatabase->UpdateExpiryNotices(userID, item.m_nItemID);
-
-				// RemoveItem() should be used
-				item.Reset();
-
-				UpdateInventoryItem(userID, item);
-			}
-		}
-
-		query.reset();
-	}
-	catch (exception& e)
-	{
-		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::ProcessInventory: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
-	}
-
-	return 1;
 }
 
 string GetUserDataString(int flag, bool update)
@@ -2711,7 +2667,7 @@ bool CUserDatabaseSQLite::IsQuestTaskFinished(int userID, int questID, int taskI
 	catch (exception& e)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::IsAllQuestTasksFinished: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return false;
 	}
 
 	return true;
@@ -4183,6 +4139,12 @@ int CUserDatabaseSQLite::GetClanStorageItem(int userID, int pageID, int slot, CU
 	return 1;
 }
 
+int CUserDatabaseSQLite::GetClanStorageLastItems(int userID, std::vector<RewardItem>& items)
+{
+	g_pConsole->Warn("CUserDatabaseSQLite::GetClanStorageLastItems: not implemented\n");
+	return 0;
+}
+
 int CUserDatabaseSQLite::GetClanStoragePage(int userID, ClanStoragePage& clanStoragePage)
 {
 	try
@@ -5307,11 +5269,43 @@ int CUserDatabaseSQLite::IsUserSuspect(int userID)
 #endif
 
 // processes user database every minute
-// returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
+void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 {
 	try
 	{
+		// process inventory
+		{
+			static SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE expiryDate != 0 AND inUse = 1 AND expiryDate < ?"));
+			query.bind(1, curTime);
+
+			map<int, int> expiredItems;
+			while (query.executeStep())
+			{
+				CUserInventoryItem item(query.getColumn(1), query.getColumn(2), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0);
+				int userID = query.getColumn(0);
+
+				CUser* user = g_pUserManager->GetUserById(userID);
+				if (user)
+				{
+					g_pPacketManager->SendUMsgExpiryNotice(user->GetExtendedSocket(), vector<int>{ item.m_nItemID });
+
+					g_pItemManager->RemoveItem(userID, user, item);
+				}
+				else
+				{
+					// add to notice list
+					g_pUserDatabase->UpdateExpiryNotices(userID, item.m_nItemID);
+
+					// RemoveItem() should be used
+					item.Reset();
+
+					UpdateInventoryItem(userID, item);
+				}
+			}
+
+			query.reset();
+		}
+
 		// delete ban rows with expired term
 		{
 			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM UserBan WHERE term <= ?"));
@@ -5394,15 +5388,12 @@ int CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 	catch (exception& e)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::OnMinuteTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
 	}
-
-	return 1;
 }
 
 // processes user database every day
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::OnDayTick()
+void CUserDatabaseSQLite::OnDayTick()
 {
 	try
 	{
@@ -5494,42 +5485,12 @@ int CUserDatabaseSQLite::OnDayTick()
 	catch (exception& e)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
 	}
-
-	return 1;
-
-	/*vector<UserData_s*> users = g_pUserDatabase->GetUserData();
-	for (auto userData : users)
-	{
-	userData->dailyRewards.randomItems.clear();
-	if (!userData->dailyRewards.canGetReward)
-	{
-	if (userData->dailyRewards.day >= 7)
-	userData->dailyRewards.day = 0;
-	}
-	else
-	{
-	userData->dailyRewards.day = 0;
-	}
-
-	userData->dailyRewards.canGetReward = true;
-
-	CUser* user = g_pUserManager->GetUserById(userData->userId);
-	if (user)
-	{
-	UpdateDailyRewards(userData);
-
-	g_pPacketManager->SendItemDailyRewardsUpdate(user->GetExtendedSocket(), g_pServerConfig->dailyRewardsItems, userData->dailyRewards);
-	}
-
-	g_pUserDatabase->UpdateDailyRewards(userData);
-	}*/
 }
 
 // processes user database every week
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::OnWeekTick()
+void CUserDatabaseSQLite::OnWeekTick()
 {
 	try
 	{
@@ -5604,10 +5565,7 @@ int CUserDatabaseSQLite::OnWeekTick()
 	catch (exception& e)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
 	}
-
-	return 1;
 }
 
 map<int, UserBan> CUserDatabaseSQLite::GetUserBanList()

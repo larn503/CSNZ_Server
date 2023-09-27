@@ -27,7 +27,44 @@ enum OutRoomPacketType
 	WeaponSurvey = 35,
 };
 
-CPacketManager::CPacketManager()
+CPacketManager::CPacketManager() : CBaseManager()
+{
+	m_hMapListZip = 0;
+	m_hClientTableZip = 0;
+	m_hWeaponPartsZip = 0;
+	m_hMatchingZip = 0;
+	m_hProgressUnlockZip = 0;
+	m_hGameModeListZip = 0;
+	m_hReinforceMaxLvlZip = 0;
+	m_hReinforceMaxExpZip = 0;
+	m_hItemExpireTimeZip = 0;
+	m_hHonorMoneyShopZip = 0;
+	m_hScenarioTX_CommonZip = 0;
+	m_hScenarioTX_DediZip = 0;
+	m_hShopItemList_DediZip = 0;
+	m_hZBCompetitiveZip = 0;
+	m_hPPSystemZip = 0;
+	m_hItemZip = 0;
+	m_hCodisDataZip = 0;
+	m_hWeaponPropZip = 0;
+	m_pPaintItemList = NULL;
+	m_pReinforceItemsExp = NULL;
+	m_pRandomWeaponList = NULL;
+	m_pUnk3 = NULL;
+	m_pUnk8 = NULL;
+	m_pUnk15 = NULL;
+	m_pUnk20 = NULL;
+	m_pUnk31 = NULL;
+	m_pUnk43 = NULL;
+	m_pUnk49 = NULL;
+}
+
+CPacketManager::~CPacketManager()
+{
+	printf("~CPacketManager\n");
+}
+
+bool CPacketManager::Init()
 {
 	m_hMapListZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
 	m_hClientTableZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
@@ -54,6 +91,7 @@ CPacketManager::CPacketManager()
 		|| !m_hZBCompetitiveZip || !m_hPPSystemZip || !m_hItemZip || !m_hCodisDataZip || !m_hWeaponPropZip)
 	{
 		g_pConsole->Error("CPacketManager(): CreateZip() returned NULL. Some metadata not loaded\n");
+		return false;
 	}
 
 	if (ZipAdd(m_hMapListZip, "MapList.csv", "Data/MapList.csv", 0, ZIP_FILENAME)
@@ -76,6 +114,7 @@ CPacketManager::CPacketManager()
 		|| ZipAdd(m_hWeaponPropZip, "WeaponProp.json", "Data/WeaponProp.json", 0, ZIP_FILENAME))
 	{
 		g_pConsole->Error("CPacketManager(): ZipAdd() returned error. Some metadata not loaded\n");
+		return false;
 	}
 
 	m_pPaintItemList = LoadBinaryMetadata("Data/Metadata_PaintItemList.bin");
@@ -92,10 +131,13 @@ CPacketManager::CPacketManager()
 	if (!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49)
 	{
 		g_pConsole->Error("Required metadata:\nMetadata_PaintItemList.bin\nMetadata_ReinforceItemsExp.bin\nMetadata_RandomWeaponList.bin\nMetadata_Unk3.bin\nMetadata_Unk8.bin\nMetadata_Unk15.bin\nMetadata_Unk20.bin\nMetadata_Unk31.bin\nMetadata_Unk43.bin\nMetadata_Unk49.bin\n");
+		return false;
 	}
+
+	return true;
 }
 
-CPacketManager::~CPacketManager()
+void CPacketManager::Shutdown()
 {
 	CloseZip(m_hMapListZip);
 	CloseZip(m_hClientTableZip);
@@ -2093,7 +2135,7 @@ void CPacketManager::SendRoomListRemove(CExtendedSocket* socket, int roomID)
 */
 }
 
-void CPacketManager::SendShopUpdate(CExtendedSocket* socket, vector<Product>& products)
+void CPacketManager::SendShopUpdate(CExtendedSocket* socket, const vector<Product>& products)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Shop);
 	msg->BuildHeader();
@@ -2195,7 +2237,7 @@ void CPacketManager::SendShopBuyProductReply(CExtendedSocket* socket, int replyC
 	socket->Send(msg);
 }
 
-void CPacketManager::SendShopRecommendedProducts(CExtendedSocket* socket, vector<vector<int>>& products)
+void CPacketManager::SendShopRecommendedProducts(CExtendedSocket* socket, const vector<vector<int>>& products)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Shop);
 	msg->BuildHeader();
@@ -2216,7 +2258,7 @@ void CPacketManager::SendShopRecommendedProducts(CExtendedSocket* socket, vector
 	socket->Send(msg);
 }
 
-void CPacketManager::SendShopPopularProducts(CExtendedSocket* socket, vector<int>& products)
+void CPacketManager::SendShopPopularProducts(CExtendedSocket* socket, const vector<int>& products)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Shop);
 	msg->BuildHeader();

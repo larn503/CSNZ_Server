@@ -4,6 +4,7 @@ using namespace std;
 
 CQuestBaseCondition::CQuestBaseCondition(CQuestTask* task, int id)
 {
+	m_nEventType = 0;
 	m_pTask = task;
 	m_nID = id;
 }
@@ -14,9 +15,9 @@ bool CQuestBaseCondition::Event_Internal(CUser* user)
 	if (g_pUserDatabase->GetQuestTaskProgress(user->GetID(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), progress) <= 0)
 		return false;
 
+	// check if task is done
 	if (progress.unitsDone >= m_pTask->GetGoal())
 		return false;
-
 
 	return true;
 }
@@ -24,6 +25,11 @@ bool CQuestBaseCondition::Event_Internal(CUser* user)
 void CQuestBaseCondition::SetEventType(int eventType)
 {
 	m_nEventType = eventType;
+}
+
+int CQuestBaseCondition::GetID()
+{
+	return m_nID;
 }
 
 int CQuestBaseCondition::GetEventType()
@@ -37,24 +43,6 @@ CQuestTask::CQuestTask(CQuest* quest, int id, string name, int goal)
 	m_nID = id;
 	m_szName = name;
 	m_nGoal = goal;
-}
-
-void CQuestTask::Event()
-{
-	//Event_Internal();
-}
-
-// internal event for inheritance classes
-bool CQuestTask::Event_Internal(CUser* user)
-{
-	UserQuestTaskProgress progress = {};
-	if (g_pUserDatabase->GetQuestTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
-		return false;
-
-	if (progress.unitsDone >= m_nGoal)
-		return false;
-
-	return true;
 }
 
 void CQuestTask::IncrementCount(CUser* user, int count, bool setForce)

@@ -4,15 +4,17 @@
 #include "Definitions.h"
 #include "Quest.h"
 #include "QuestEvent.h"
+#include "IQuestManager.h"
 
-class CQuestManager
+class CQuestManager : public CBaseManager, public IQuestManager
 {
 public:
 	CQuestManager();
 	~CQuestManager();
 
-	void Init();
-	void Shutdown();
+	virtual bool Init();
+	virtual void Shutdown();
+
 	void LoadQuests();
 	void LoadEventQuests();
 	void LoadClanQuests();
@@ -21,9 +23,9 @@ public:
 	void OnTitlePacket(CReceivePacket* msg, CExtendedSocket* socket);
 
 	void OnMatchMinuteTick(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
-	void OnKillEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, GameMatch_KillEvent& killEvent);
 
 	// ingame events
+	void OnKillEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, GameMatch_KillEvent& killEvent);
 	void OnBombExplode(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnBombDefuse(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnHostageEscape(CGameMatchUserStat* userStat, CGameMatch* gameMatch);

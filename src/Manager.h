@@ -1,38 +1,54 @@
-#ifndef Manager_H
-#define Manager_H
+#pragma once
 
 #include "main.h"
 
-// load config method
-
-class CManagerBase
+class IBaseManager
 {
 public:
-	int m_type;
+	virtual bool Init() = 0;
+	virtual void Shutdown() = 0;
+	virtual void OnSecondTick(time_t curTime) = 0;
+	virtual void OnMinuteTick(time_t curTime) = 0;
+	virtual bool ShouldDoSecondTick() = 0;
+	virtual bool ShouldDoMinuteTick() = 0;
+};
 
-	CManagerBase();
-	virtual ~CManagerBase() {}
-	virtual void Init() { return; }
-	virtual void LoadConfig() { return; }
+// Base manager implmentation
+class CBaseManager : public IBaseManager
+{
+public:
+	CBaseManager(bool secondTick = false, bool minuteTick = false);
+	virtual ~CBaseManager();
 
-	CManagerBase(const CManagerBase& other) = delete;
-	CManagerBase(CManagerBase&& other) = delete;
-	bool operator<(const CManagerBase& other) const // for sorting
-	{
-		return m_type < other.m_type;
-	}
+	// stub methods
+	virtual bool Init();
+	virtual void Shutdown();
+	virtual void OnSecondTick(time_t curTime);
+	virtual void OnMinuteTick(time_t curTime);
+
+	virtual bool ShouldDoSecondTick();
+	virtual bool ShouldDoMinuteTick();
+
+	void SetSecondTick(bool tick);
+	void SetMinuteTick(bool tick);
+
+private:
+	bool m_bSecondTick;
+	bool m_bMinuteTick;
 };
 
 class CManager
 {
-private:
-	std::vector <std::reference_wrapper<CManagerBase>> m_List;
-
 public:
-	void Init();
-	inline void AddElem(CManagerBase* pElem) { m_List.push_back(*pElem); }
+	bool InitAll();
+	void ShutdownAll();
+	void AddManager(IBaseManager* pElem);
+	void RemoveManager(IBaseManager* pElem);
+	void SecondTick(time_t curTime);
+	void MinuteTick(time_t curTime);
+
+private:
+	std::vector<IBaseManager*> m_List;
 };
 
 extern CManager& Manager();
-
-#endif

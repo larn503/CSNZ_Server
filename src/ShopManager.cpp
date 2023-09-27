@@ -9,24 +9,28 @@ using ordered_json = nlohmann::ordered_json;
 
 #define SHOP_JSON_VERSION 1
 
-CShopManager::CShopManager()
+CShopManager::CShopManager() : CBaseManager()
 {
-	Init();
 }
 
 CShopManager::~CShopManager()
 {
-	Shutdown();
+	//Shutdown();
+	printf("~CShopManager\n");
 }
 
-void CShopManager::Init()
+bool CShopManager::Init()
 {
 	Shutdown();
 
 	KVToJson();
-	LoadProducts();
+
+	if (!LoadProducts())
+		return false;
 
 	g_pConsole->Log("[Shop] Loaded %d products.\n", m_Products.size());
+
+	return true;
 }
 
 void CShopManager::Shutdown()
@@ -34,7 +38,7 @@ void CShopManager::Shutdown()
 	m_Products.clear();
 }
 
-void CShopManager::LoadProducts()
+bool CShopManager::LoadProducts()
 {
 	try
 	{
@@ -43,15 +47,15 @@ void CShopManager::LoadProducts()
 
 		if (cfg.is_discarded())
 		{
-			g_pConsole->Error("CShopManager::LoadProducts: couldn't load Shop.json.\n");
-			return;
+			g_pConsole->Warn("CShopManager::LoadProducts: couldn't load Shop.json.\n");
+			return true; // just a warning
 		}
 
 		int version = cfg.value("Version", 0);
 		if (version != SHOP_JSON_VERSION)
 		{
 			g_pConsole->Error("CShopManager::LoadProducts: %d != SHOP_JSON_VERSION(%d)\n", version, SHOP_JSON_VERSION);
-			return;
+			return false;
 		}
 
 		if (cfg.contains("Recommended"))
@@ -114,13 +118,15 @@ void CShopManager::LoadProducts()
 				}
 				m_Products.push_back(product);
 			}
-
 		}
 	}
 	catch (exception& ex)
 	{
 		g_pConsole->Error("CShopManager::LoadProducts: an error occured while parsing Shop.json: %s\n", ex.what());
-	}	
+		return false;
+	}
+
+	return true;
 }
 
 // upgrade
@@ -347,7 +353,17 @@ bool CShopManager::BuyProduct(CUser* user, int productTypeId, int productId)
 	return true;
 }
 
-void CShopManager::InsertProduct(Product product)
+const vector<Product>& CShopManager::GetProducts()
 {
-	m_Products.push_back(product);
+	return m_Products;
+}
+
+const vector<vector<int>>& CShopManager::GetRecommendedProducts()
+{
+	return m_RecommendedProducts;
+}
+
+const vector<int>& CShopManager::GetPopularProducts()
+{
+	return m_PopularProducts;
 }

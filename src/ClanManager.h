@@ -1,10 +1,11 @@
 #pragma once
 
-class CClanManager
+#include "IClanManager.h"
+
+class CClanManager : public CBaseManager, public IClanManager
 {
 public:
 	CClanManager();
-	~CClanManager();
 
 	bool OnPacket(CReceivePacket* msg, CExtendedSocket* socket);
 	bool OnClanListRequest(CReceivePacket* msg, CUser* user);

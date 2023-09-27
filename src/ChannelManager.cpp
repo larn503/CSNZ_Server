@@ -711,10 +711,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				g_pUserDatabase->GetCharacter(userID, character);
 				if (banType == 1)
 				{
-					for (auto u : g_pUserManager->users)
-					{
-						g_pPacketManager->SendUMsgNoticeMessageInChat(u->GetExtendedSocket(), va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
-					}
+					g_pUserManager->SendNoticeMessageToAll(va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
 				}
 
 				return true;
@@ -745,7 +742,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				data.flag |= UDATA_FLAG_LASTHWID;
 				g_pUserDatabase->GetUserData(userID, data);
 
-				g_pServerInstance->AddBanHWID(data.lastHWID);
+				g_pUserDatabase->UpdateHWIDBanList(data.lastHWID);
 
 				return true;
 			}
@@ -775,7 +772,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				data.flag |= UDATA_FLAG_LASTIP;
 				g_pUserDatabase->GetUserData(userID, data);
 
-				g_pServerInstance->AddBanIP(data.lastIP);
+				g_pUserDatabase->UpdateIPBanList(data.lastIP);
 
 				return true;
 			}
@@ -808,8 +805,8 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				data.flag |= UDATA_FLAG_LASTIP | UDATA_FLAG_LASTHWID;
 				g_pUserDatabase->GetUserData(userID, data);
 
-				g_pServerInstance->AddBanIP(data.lastIP, true);
-				g_pServerInstance->AddBanHWID(data.lastHWID, true);
+				g_pUserDatabase->UpdateIPBanList(data.lastIP, true);
+				g_pUserDatabase->UpdateHWIDBanList(data.lastHWID, true);
 
 				return true;
 			}

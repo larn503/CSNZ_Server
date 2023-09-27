@@ -3,8 +3,9 @@
 #include "ChannelServer.h"
 #include "UserManager.h"
 #include "User.h"
+#include "IChannelManager.h"
 
-class CChannelManager
+class CChannelManager : public CBaseManager, public IChannelManager
 {
 public:
 	CChannelManager();

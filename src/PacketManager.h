@@ -6,6 +6,7 @@
 #include "ShopManager.h"
 #include "XZip.h"
 #include "Quest.h"
+#include "IPacketManager.h"
 
 struct Notice_s;
 
@@ -15,11 +16,14 @@ struct BinMetadata
 	int size;
 };
 
-class CPacketManager
+class CPacketManager : public CBaseManager, public IPacketManager
 {
 public:
 	CPacketManager();
 	~CPacketManager();
+
+	virtual bool Init();
+	virtual void Shutdown();
 
 	CSendPacket* CreatePacket(CExtendedSocket* socket, int msgID);
 
@@ -117,11 +121,11 @@ public:
 	void SendRoomListUpdate(CExtendedSocket* socket, CRoom* room);
 	void SendRoomListRemove(CExtendedSocket* socket, int roomID);
 
-	void SendShopUpdate(CExtendedSocket* socket, std::vector<Product>& products);
+	void SendShopUpdate(CExtendedSocket* socket, const std::vector<Product>& products);
 	void SendShopBuyProductReply(CExtendedSocket* socket, int replyCode);
 	void SendShopReply(CExtendedSocket* socket, int replyCode);
-	void SendShopRecommendedProducts(CExtendedSocket* socket, std::vector<std::vector<int>>& products);
-	void SendShopPopularProducts(CExtendedSocket* socket, std::vector<int>& products);
+	void SendShopRecommendedProducts(CExtendedSocket* socket, const std::vector<std::vector<int>>& products);
+	void SendShopPopularProducts(CExtendedSocket* socket, const std::vector<int>& products);
 	
 	void SendSearchRoomNotice(CExtendedSocket* socket, CRoom* room, std::string invitersGameName, std::string inviteMsg);
 

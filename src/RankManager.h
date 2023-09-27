@@ -1,8 +1,12 @@
 #pragma once
 
-class CRankManager
+#include "IRankManager.h"
+
+class CRankManager : public CBaseManager, IRankManager
 {
 public:
+	CRankManager();
+
 	bool OnRankPacket(CReceivePacket* msg, CExtendedSocket* socket);
 	
 private:

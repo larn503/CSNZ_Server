@@ -10,9 +10,9 @@ using namespace std;
 
 #define SUPPORTED_CLIENT_BUILD "26.08.23"
 
-CUserManager::CUserManager(int maxPlayers)
+CUserManager::CUserManager(int maxPlayers) : CBaseManager(true)
 {
-	users.reserve(maxPlayers);
+	m_Users.reserve(maxPlayers);
 
 	for (size_t i = 0; i < g_pServerConfig->defUser.defaultItems.size(); i++)
 		m_DefaultItems.push_back(CUserInventoryItem(i, g_pServerConfig->defUser.defaultItems[i], 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0));
@@ -442,9 +442,9 @@ void CUserManager::SendLoginPacket(CUser* user, const CUserCharacter& character)
 	SendUserLoadout(user);
 	SendUserNotices(user);
 
-	g_pPacketManager->SendShopUpdate(socket, g_pShopManager->m_Products);
-	g_pPacketManager->SendShopRecommendedProducts(socket, g_pShopManager->m_RecommendedProducts);
-	g_pPacketManager->SendShopPopularProducts(socket, g_pShopManager->m_PopularProducts);
+	g_pPacketManager->SendShopUpdate(socket, g_pShopManager->GetProducts());
+	g_pPacketManager->SendShopRecommendedProducts(socket, g_pShopManager->GetRecommendedProducts());
+	g_pPacketManager->SendShopPopularProducts(socket, g_pShopManager->GetPopularProducts());
 
 	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \nVK群组: https://vk.com/csnz_server
 	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \nVK: https://vk.com/csnz_server \n");
@@ -685,21 +685,21 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, CExtendedSocket* sock
 	return true;
 }
 
-void CUserManager::OnSecondTick()
+void CUserManager::OnSecondTick(time_t curTime)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 		u->OnTick();
 }
 
 void CUserManager::SendNoticeMessageToAll(string msg)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 		g_pPacketManager->SendUMsgNoticeMessageInChat(u->GetExtendedSocket(), msg);
 }
 
 void CUserManager::SendNoticeMsgBoxToAll(string msg)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(u->GetExtendedSocket(), msg);
 }
 
@@ -816,7 +816,7 @@ void CUserManager::DisconnectUser(CUser* user)
 
 void CUserManager::DisconnectAllFromServer()
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 	{
 		DisconnectUser(u);
 	}
@@ -824,18 +824,18 @@ void CUserManager::DisconnectAllFromServer()
 
 CUser* CUserManager::AddUser(CExtendedSocket* socket, int userID, string userName)
 {
-	if ((int)users.size() >= g_pServerConfig->maxPlayers)
+	if ((int)m_Users.size() >= g_pServerConfig->maxPlayers)
 		return NULL;
 
 	CUser* newUser = new CUser(socket, userID, userName);
-	users.push_back(newUser);
+	m_Users.push_back(newUser);
 
 	return newUser;
 }
 
 CUser* CUserManager::GetUserById(int userId)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 	{
 		if (u->GetID() == userId)
 			return u;
@@ -846,7 +846,7 @@ CUser* CUserManager::GetUserById(int userId)
 
 CUser* CUserManager::GetUserBySocket(CExtendedSocket* socket)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 	{
 		if (u->GetExtendedSocket() == socket)
 			return u;
@@ -857,7 +857,7 @@ CUser* CUserManager::GetUserBySocket(CExtendedSocket* socket)
 
 CUser* CUserManager::GetUserByUsername(string username)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 	{
 		if (u->GetUsername() == username)
 		{
@@ -877,11 +877,11 @@ CUser* CUserManager::GetUserByNickname(string nickname)
 
 void CUserManager::RemoveUser(CUser* user)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 	{
 		if (u == user)
 		{
-			users.erase(remove(begin(users), end(users), user), end(users));
+			m_Users.erase(remove(begin(m_Users), end(m_Users), user), end(m_Users));
 
 			CleanUpUser(u);
 			delete u;
@@ -891,11 +891,11 @@ void CUserManager::RemoveUser(CUser* user)
 
 void CUserManager::RemoveUserById(int userId)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 	{
 		if (u->GetID() == userId)
 		{
-			users.erase(remove(begin(users), end(users), u), end(users));
+			m_Users.erase(remove(begin(m_Users), end(m_Users), u), end(m_Users));
 
 			CleanUpUser(u);
 			delete u;
@@ -905,11 +905,11 @@ void CUserManager::RemoveUserById(int userId)
 
 void CUserManager::RemoveUserBySocket(CExtendedSocket* socket)
 {
-	for (auto u : users)
+	for (auto u : m_Users)
 	{
 		if (u->GetExtendedSocket() == socket)
 		{
-			users.erase(remove(begin(users), end(users), u), end(users));
+			m_Users.erase(remove(begin(m_Users), end(m_Users), u), end(m_Users));
 
 			CleanUpUser(u);
 			delete u;
@@ -928,6 +928,11 @@ void CUserManager::CleanUpUser(CUser* user)
 		channel->UserLeft(user);
 
 	user->SetCurrentChannel(NULL);
+}
+
+std::vector<CUser*> CUserManager::GetUsers()
+{
+	return m_Users;
 }
 
 bool CUserManager::OnReportPacket(CReceivePacket* msg, CExtendedSocket* socket)

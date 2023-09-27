@@ -2,23 +2,25 @@
 
 using namespace std;
 
-CQuestManager::CQuestManager()
+CQuestManager::CQuestManager() : CBaseManager()
 {
-	Init();
 }
 
 CQuestManager::~CQuestManager()
 {
+	printf("~CQuestManager\n");
 	Shutdown();
 }
 
-void CQuestManager::Init()
+bool CQuestManager::Init()
 {
 	Shutdown();
 
 	LoadQuests();
 	LoadEventQuests();
 	LoadClanQuests();
+
+	return true;
 }
 
 void CQuestManager::Shutdown()

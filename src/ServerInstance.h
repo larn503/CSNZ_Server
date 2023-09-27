@@ -35,23 +35,21 @@ public:
 	CServerInstance();
 	~CServerInstance();
 
-	void Init();
+	bool Init();
 	bool LoadConfigs();
 	void UnloadConfigs();
-	void Listen();
-	void AddBanIP(std::string ip, bool unban = false);
-	void AddBanHWID(std::vector<unsigned char>& hwid, bool unban = false);
-	void OnCommand(std::string command);
+	void ListenTCP();
+	void ListenUDP();
 	void SetServerActive(bool active);
 	bool IsServerActive();
+	void OnCommand(std::string command);
 	void OnEvent();
 	void OnPackets(CExtendedSocket* s, std::vector<CReceivePacket*>& msgs);
-	void ReceiveUdpMessage();
 	void OnSecondTick();
+	void OnMinuteTick();
 	void UpdateConsoleStatus();
 	time_t GetCurrentTime();
 	tm* GetCurrentLocalTime();
-	void OnMinuteTick();
 	const char* GetMemoryInfo();
 	void DisconnectClient(CExtendedSocket* socket);
 
@@ -63,8 +61,6 @@ private:
 	// data buffer
 	char network_data[15000];
 
-	int m_nMinuteCounter;
-
 	time_t m_CurrentTime;
 	tm* m_pCurrentLocalTime;
 };
@@ -72,5 +68,4 @@ private:
 void ReadConsoleThread();
 void ListenThread();
 void ListenThreadUDP();
-void MinuteTick();
 void EventThread();

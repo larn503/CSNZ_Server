@@ -8,19 +8,19 @@ using namespace std;
 
 #define ITEM_REWARDS_VERSION 1
 
-CItemManager::CItemManager()
+CItemManager::CItemManager() : CBaseManager(true, true)
 {
+	m_pReinforceMaxLvTable = NULL;
 	m_pReinforceMaxExpTable = NULL;
-
-	Init();
 }
 
 CItemManager::~CItemManager()
 {
+	printf("~CItemManager\n");
 	Shutdown();
 }
 
-void CItemManager::Init()
+bool CItemManager::Init()
 {
 	if (!KVToJson())
 		LoadRewards();
@@ -31,7 +31,10 @@ void CItemManager::Init()
 	if (m_pReinforceMaxLvTable->IsLoadFailed() || m_pReinforceMaxExpTable->IsLoadFailed())
 	{
 		g_pConsole->Error("CItemManager::Init(): couldn't load some csv files. Required csv:\nData/ReinforceMaxLv.csv\nData/ReinforceMaxEXP.csv\n");
+		return false;
 	}
+
+	return true;
 }
 
 void CItemManager::Shutdown()
@@ -341,16 +344,6 @@ bool CItemManager::KVToJson()
 	f << setfill('\t') << setw(1) << cfg << endl;
 
 	return true;
-}
-
-void CItemManager::ProcessEvents(time_t curTime)
-{
-	g_pUserDatabase->ProcessInventory(curTime);
-}
-
-void CItemManager::OnDayTick()
-{
-	g_pUserDatabase->OnDayTick();
 }
 
 bool CItemManager::OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket)

@@ -26,10 +26,6 @@ class CQuestTask
 public:
 	CQuestTask(CQuest* quest, int id, std::string name, int goal);
 
-	void Event();
-
-	// internal event for inheritance classes
-	bool Event_Internal(CUser* user);
 	void IncrementCount(CUser* user, int count = 0, bool setForce = false);
 	void Done(CUser* user, UserQuestTaskProgress progress);
 	void ApplyProgress(CUser* user, UserQuestTaskProgress progress);
@@ -320,7 +316,6 @@ public:
 		IncrementTempCount(userStat, gameMatch);
 	}
 };
-
 
 class CQuestConditionBombDefuse : public CQuestBaseConditionGameMatch
 {

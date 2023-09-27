@@ -1,8 +1,9 @@
 #pragma once
 
 #include "UserManager.h"
+#include "IMiniGameManager.h"
 
-class CMiniGameManager
+class CMiniGameManager : public CBaseManager, public IMiniGameManager
 {
 public:
 	CMiniGameManager();
