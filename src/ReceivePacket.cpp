@@ -2,7 +2,7 @@
 
 using namespace std;
 
-CReceivePacket::CReceivePacket(Buffer& buf)
+CReceivePacket::CReceivePacket(const Buffer& buf)
 {
 	SetBufferAndParse(buf);
 }
@@ -175,7 +175,7 @@ void CReceivePacket::ParseHeader()
 	}
 }
 
-void CReceivePacket::SetBufferAndParse(Buffer& buf)
+void CReceivePacket::SetBufferAndParse(const Buffer& buf)
 {
 	m_Buffer = buf;
 	ParseHeader();

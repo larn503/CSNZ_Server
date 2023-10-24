@@ -5,7 +5,7 @@
 class CChannel
 {
 public:
-	CChannel(CChannelServer* server, int idx, std::string channelName, int maxPlayers, std::string loginMsg);
+	CChannel(CChannelServer* server, int id, std::string channelName, int maxPlayers, std::string loginMsg);
 
 	bool UserJoin(CUser* user, bool unhide = false);
 	void UserLeft(CUser* user, bool hide = false);
@@ -23,18 +23,22 @@ public:
 	bool RemoveRoomById(int roomID);
 	bool RemoveUserById(int userID);
 
+	int GetID();
+	std::string GetName();
+	std::vector<CRoom*> GetRooms();
+	std::vector<CUser*> GetUsers();
+
 	CChannelServer* GetParentChannelServer();
-
-	int m_nIndex;
-	std::string m_szName;
-
-	std::vector<CRoom*> m_Rooms;
-	std::vector<CUser*> m_Users;
 
 private:
 	CChannelServer* m_pParentChannelServer;
 
+	int m_nID;
 	int m_nNextRoomID;
 	int m_nMaxPlayers;
+	std::string m_szName;
 	std::string m_LoginMsg;
+
+	std::vector<CRoom*> m_Rooms;
+	std::vector<CUser*> m_Users;
 };

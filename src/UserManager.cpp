@@ -155,14 +155,14 @@ bool CUserManager::OnVersionPacket(CReceivePacket* msg, CExtendedSocket* socket)
 			g_pNetwork->RemoveSocket(socket);
 		}
 
-		if (!socket->data.isGuest)
+		GuestData_s& data = socket->GetGuestData();
+		if (!data.isGuest)
 			g_pPacketManager->SendVersion(socket, 0);
-
-		if (socket->data.isGuest)
+		else
 			SendGuestUserPacket(socket);
 
-		socket->data.isGuest = true;
-		socket->data.launcherVersion = launcherVersion;
+		data.isGuest = true;
+		data.launcherVersion = launcherVersion;
 
 		static char dateStr[30];
 		time_t t = clientBuildTimestamp;
@@ -453,7 +453,7 @@ void CUserManager::SendLoginPacket(CUser* user, const CUserCharacter& character)
 	if (!g_pServerConfig->welcomeMessage.empty())
 		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, g_pServerConfig->welcomeMessage);
 
-	g_pChannelManager->JoinChannel(user, g_pChannelManager->channelServers[0]->index, g_pChannelManager->channelServers[0]->channels[0]->m_nIndex, false);
+	g_pChannelManager->JoinChannel(user, g_pChannelManager->channelServers[0]->GetID(), g_pChannelManager->channelServers[0]->GetChannels()[0]->GetID(), false);
 
 	for (auto& survey : g_pServerConfig->surveys)
 	{

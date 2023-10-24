@@ -14,7 +14,7 @@ public:
 	virtual void SendUMsgSystemReply(CExtendedSocket* socket, int type, std::string msg, std::vector<std::string> additionalText = {}) = 0;
 	virtual void SendUMsgLobbyMessage(CExtendedSocket* socket, std::string senderName, std::string text) = 0; // use SendUMsgChatMessage
 	virtual void SendUMsgNotice(CExtendedSocket* socket, Notice_s& notice, bool unk = 1) = 0;
-	virtual void SendUMsgExpiryNotice(CExtendedSocket* socket, std::vector<int>& expiryItems) = 0;
+	virtual void SendUMsgExpiryNotice(CExtendedSocket* socket, const std::vector<int>& expiryItems) = 0;
 	virtual void SendUMsgRewardNotice(CExtendedSocket* socket, RewardNotice& reward, std::string title = "", std::string description = "", bool inGame = false, bool scen = false) = 0;
 	virtual void SendUMsgRewardSelect(CExtendedSocket* socket, Reward* reward) = 0;
 
@@ -22,8 +22,8 @@ public:
 
 	virtual void SendStatistic(CExtendedSocket* socket) = 0;
 
-	virtual void SendInventoryAdd(CExtendedSocket* socket, std::vector<CUserInventoryItem>& items, int curSlot = 0) = 0;
-	virtual void SendInventoryRemove(CExtendedSocket* socket, std::vector<CUserInventoryItem>& items, bool gameSlot = true) = 0;
+	virtual void SendInventoryAdd(CExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, int curSlot = 0) = 0;
+	virtual void SendInventoryRemove(CExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, bool gameSlot = true) = 0;
 
 	virtual void SendDefaultItems(CExtendedSocket* socket, std::vector<CUserInventoryItem>& items) = 0;
 
@@ -94,7 +94,7 @@ public:
 	virtual void SendLobbyUserJoin(CExtendedSocket* socket, CUser* joinedUser) = 0;
 	virtual void SendLobbyUserLeft(CExtendedSocket* socket, CUser* user) = 0;
 
-	virtual void SendRoomListFull(CExtendedSocket* socket, std::vector<CRoom*>& rooms) = 0;
+	virtual void SendRoomListFull(CExtendedSocket* socket, const std::vector<CRoom*>& rooms) = 0;
 	virtual void SendRoomListAdd(CExtendedSocket* socket, CRoom* room) = 0;
 	virtual void SendRoomListUpdate(CExtendedSocket* socket, CRoom* room) = 0;
 	virtual void SendRoomListRemove(CExtendedSocket* socket, int roomID) = 0;

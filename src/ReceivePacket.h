@@ -6,7 +6,7 @@
 class CReceivePacket
 {
 public:
-	CReceivePacket(Buffer& buf);
+	CReceivePacket(const Buffer& buf);
 
 	bool IsValid();
 	int GetID();
@@ -26,7 +26,7 @@ public:
 	std::vector<unsigned char> ReadArray(int length);
 	bool CanReadBytes(int len);
 	void ParseHeader();
-	void SetBufferAndParse(Buffer& buf);
+	void SetBufferAndParse(const Buffer& buf);
 
 private:
 	// packet header

@@ -9,30 +9,6 @@ CDedicatedServer::CDedicatedServer(CExtendedSocket* socket, int ip, int port)
 	m_iLastMemory = 0;
 
 	g_pUserManager->SendMetadata(socket);
-
-	// I don't think dedi needs all of these data
-	////g_pPacketManager->SendMetadataEncyclopedia(socket);
-	//g_pPacketManager->SendMetadataMaplist(socket);
-	//g_pPacketManager->SendMetadataMatchOption(socket);
-	//g_pPacketManager->SendMetadataClientTable(socket);
-	//g_pPacketManager->SendMetadataWeaponParts(socket);
-	//g_pPacketManager->SendMetadataItemBox(socket, g_pLuckyItemManager->GetItems());
-	//g_pPacketManager->SendMetadataGameModeList(socket);
-	//g_pPacketManager->SendMetadataProgressUnlock(socket);
-	//g_pPacketManager->SendMetadataUnk8(socket);
-	//g_pPacketManager->SendMetadataWeaponPaint(socket);
-	////g_pPacketManager->SendMetadataUnk3(socket);
-	//g_pPacketManager->SendMetadataReinforceItemsExp(socket);
-	//g_pPacketManager->SendMetadataReinforceMaxLvl(socket);
-	//g_pPacketManager->SendMetadataReinforceMaxEXP(socket);
-	//g_pPacketManager->SendMetadataUnk20(socket);
-	//g_pPacketManager->SendMetadataUnk15(socket);
-	//g_pPacketManager->SendMetadataItemExpireTime(socket);
-	////g_pPacketManager->SendMetadataHonorMoneyShop(socket);
-	//g_pPacketManager->SendMetadataScenarioTX_Common(socket);
-	//g_pPacketManager->SendMetadataScenarioTX_Dedi(socket);
-	////g_pPacketManager->SendMetadataShopItemList_Dedi(socket);
-	//g_pPacketManager->SendMetadataZBCompetitive(socket);
 }
 
 void CDedicatedServer::SetRoom(CRoom* room)

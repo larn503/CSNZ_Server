@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 3.20)
-set(PROJECTNAME "CSNZ Server")
+set(PROJECTNAME "CSO Server")
 
 project(PROJECTNAME CXX)
 
+option(CSO_SERVER_USE_GUI "Use QT GUI" OFF)
+option(CSO_SERVER_PUBLIC "Public build" OFF)
+option(CSO_SERVER_PROTECTION "Enable protection" OFF)
+option(CSO_SERVER_DBSQLITE "SQLite database" ON)
+
 add_subdirectory(Thirdparty/KeyValues)
 add_subdirectory(Thirdparty/json)
+
+if (CSO_SERVER_USE_GUI)
+	add_subdirectory(GUI)
+endif()
 
 add_executable(PROJECTNAME)
 
@@ -12,10 +21,11 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "" FOR
 
 target_link_libraries(PROJECTNAME PRIVATE keyvalues)
 target_link_libraries(PROJECTNAME PRIVATE nlohmann_json)
-
-option(CSO_SERVER_PUBLIC "Public build" OFF)
-option(CSO_SERVER_PROTECTION "Enable protection" OFF)
-option(CSO_SERVER_DBSQLITE "SQLite database" ON)
+if (CSO_SERVER_USE_GUI)
+	target_link_libraries(PROJECTNAME PRIVATE gui)
+	qt6_disable_unicode_defines(PROJECTNAME)
+	add_definitions(-DUSE_GUI)
+endif()
 
 target_sources(PROJECTNAME PRIVATE "main.cpp")
 target_sources(PROJECTNAME PRIVATE "ServerInstance.cpp")

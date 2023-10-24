@@ -21,10 +21,10 @@ public:
 	bool IsItemPseudoDefault();
 	bool IsItemPseudoDefault(int itemID);
 	bool IsItemDefaultOrPseudo(int itemID = 0);
-	int GetGameSlot();
+	int GetGameSlot() const;
 	int GetSlot();
 	int GameSlotToSlot(int gameSlot);
-	int GetPartCount();
+	int GetPartCount() const;
 
 	int m_nSlot; // real slot from DB
 	int m_nItemID;

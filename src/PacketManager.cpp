@@ -94,24 +94,24 @@ bool CPacketManager::Init()
 		return false;
 	}
 
-	if (ZipAdd(m_hMapListZip, "MapList.csv", "Data/MapList.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hClientTableZip, "ClientTable.csv", "Data/ClientTable.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hWeaponPartsZip, "weaponparts.csv", "Data/weaponparts.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hMatchingZip, "MatchOption.csv", "Data/MatchOption.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hProgressUnlockZip, "progress_unlock.csv", "Data/progress_unlock.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hGameModeListZip, "GameModeList.csv", "Data/GameModeList.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hReinforceMaxLvlZip, "ReinforceMaxLv.csv", "Data/ReinforceMaxLv.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hReinforceMaxExpZip, "ReinforceMaxEXP.csv", "Data/ReinforceMaxEXP.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hItemExpireTimeZip, "ItemExpireTime.csv", "Data/ItemExpireTime.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hHonorMoneyShopZip, "HonorMoneyShop.csv", "Data/HonorMoneyShop.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hScenarioTX_CommonZip, "scenariotx_common.json", "Data/scenariotx_common.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hScenarioTX_DediZip, "scenariotx_dedi.json", "Data/scenariotx_dedi.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hShopItemList_DediZip, "shopitemlist_dedi.json", "Data/shopitemlist_dedi.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hZBCompetitiveZip, "ZBCompetitive.json", "Data/ZBCompetitive.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hPPSystemZip, "ppsystem.json", "Data/ppsystem.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hItemZip, "Item.csv", "Data/Item.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hCodisDataZip, "CodisData.csv", "Data/CodisData.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hWeaponPropZip, "WeaponProp.json", "Data/WeaponProp.json", 0, ZIP_FILENAME))
+	if (ZipAdd(m_hMapListZip, "MapList.csv", (void*)"Data/MapList.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hClientTableZip, "ClientTable.csv", (void*)"Data/ClientTable.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hWeaponPartsZip, "weaponparts.csv", (void*)"Data/weaponparts.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hMatchingZip, "MatchOption.csv", (void*)"Data/MatchOption.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hProgressUnlockZip, "progress_unlock.csv", (void*)"Data/progress_unlock.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hGameModeListZip, "GameModeList.csv", (void*)"Data/GameModeList.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hReinforceMaxLvlZip, "ReinforceMaxLv.csv", (void*)"Data/ReinforceMaxLv.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hReinforceMaxExpZip, "ReinforceMaxEXP.csv", (void*)"Data/ReinforceMaxEXP.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hItemExpireTimeZip, "ItemExpireTime.csv", (void*)"Data/ItemExpireTime.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hHonorMoneyShopZip, "HonorMoneyShop.csv", (void*)"Data/HonorMoneyShop.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hScenarioTX_CommonZip, "scenariotx_common.json", (void*)"Data/scenariotx_common.json", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hScenarioTX_DediZip, "scenariotx_dedi.json", (void*)"Data/scenariotx_dedi.json", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hShopItemList_DediZip, "shopitemlist_dedi.json", (void*)"Data/shopitemlist_dedi.json", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hZBCompetitiveZip, "ZBCompetitive.json", (void*)"Data/ZBCompetitive.json", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hPPSystemZip, "ppsystem.json", (void*)"Data/ppsystem.json", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hItemZip, "Item.csv", (void*)"Data/Item.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hCodisDataZip, "CodisData.csv", (void*)"Data/CodisData.csv", 0, ZIP_FILENAME)
+		|| ZipAdd(m_hWeaponPropZip, "WeaponProp.json", (void*)"Data/WeaponProp.json", 0, ZIP_FILENAME))
 	{
 		g_pConsole->Error("CPacketManager(): ZipAdd() returned error. Some metadata not loaded\n");
 		return false;
@@ -239,7 +239,7 @@ BinMetadata* CPacketManager::LoadBinaryMetadata(const char* fileName)
 	{
 		fclose(f);
 		delete[] buffer;
-		return false;
+		return NULL;
 	}
 
 	BinMetadata* metadata = new BinMetadata;
@@ -487,7 +487,7 @@ void CPacketManager::SendUMsgNotice(CExtendedSocket* socket, Notice_s& notice, b
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgExpiryNotice(CExtendedSocket* socket, vector<int>& expiryItems)
+void CPacketManager::SendUMsgExpiryNotice(CExtendedSocket* socket, const vector<int>& expiryItems)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -760,15 +760,15 @@ void CPacketManager::SendServerList(CExtendedSocket* socket)
 	msg->WriteUInt8(g_pChannelManager->channelServers.size());
 	for (auto server : g_pChannelManager->channelServers)
 	{
-		msg->WriteUInt8(server->index);
+		msg->WriteUInt8(server->GetID());
 		msg->WriteUInt8(1);
 		msg->WriteUInt8(0);
-		msg->WriteString(server->name);
-		msg->WriteUInt8(server->channels.size());
-		for (auto chn : server->channels)
+		msg->WriteString(server->GetName());
+		msg->WriteUInt8(server->GetChannels().size());
+		for (auto chn : server->GetChannels())
 		{
-			msg->WriteUInt8(chn->m_nIndex);
-			msg->WriteString(chn->m_szName);
+			msg->WriteUInt8(chn->GetID());
+			msg->WriteString(chn->GetName());
 			msg->WriteUInt16(0);
 		}
 	}
@@ -784,7 +784,7 @@ void CPacketManager::SendStatistic(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, vector<CUserInventoryItem>& items, int curSlot)
+void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, const vector<CUserInventoryItem>& items, int curSlot)
 {
 	int itemsToSend = items.size();
 	int itemStart = 0;
@@ -800,7 +800,7 @@ void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, vector<CUserInven
 
 		for (int i = itemStart; i < itemsToSend; i++)
 		{
-			CUserInventoryItem& item = items[i];
+			const CUserInventoryItem& item = items[i];
 			if (curSlot)
 			{
 				buf.writeUInt16_LE(curSlot++);
@@ -887,7 +887,7 @@ void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, vector<CUserInven
 }
 
 // Note: you can remove only 1 item from the vector
-void CPacketManager::SendInventoryRemove(CExtendedSocket* socket, vector<CUserInventoryItem>& items, bool gameSlot)
+void CPacketManager::SendInventoryRemove(CExtendedSocket* socket, const vector<CUserInventoryItem>& items, bool gameSlot)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Inventory);
 	msg->BuildHeader();
@@ -1859,8 +1859,8 @@ void CPacketManager::SendLobbyJoin(CExtendedSocket* socket, CChannel* channel)
 	msg->BuildHeader();
 
 	msg->WriteUInt8(LobbyPacketType::Join);
-	msg->WriteUInt16(channel->m_Users.size());
-	for (auto user : channel->m_Users)
+	msg->WriteUInt16(channel->GetUsers().size());
+	for (auto user : channel->GetUsers())
 	{
 		//	if (user->currentRoom)
 		//	{
@@ -1870,7 +1870,7 @@ void CPacketManager::SendLobbyJoin(CExtendedSocket* socket, CChannel* channel)
 		//	{
 		msg->WriteUInt32(user->GetID());
 		//	}
-		msg->WriteString("TIBE YEBAT'?");
+		msg->WriteString("test_lobby");
 
 		CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
 
@@ -2073,7 +2073,7 @@ void BuildRoomInfo(CSendPacket* msg, CRoom* room, int lFlag, int hFlag)
 	}
 }
 
-void CPacketManager::SendRoomListFull(CExtendedSocket* socket, vector<CRoom*>& rooms)
+void CPacketManager::SendRoomListFull(CExtendedSocket* socket, const vector<CRoom*>& rooms)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::GameMatchRoomList);
 	msg->BuildHeader();
@@ -2089,7 +2089,7 @@ void CPacketManager::SendRoomListFull(CExtendedSocket* socket, vector<CRoom*>& r
 	msg->WriteUInt16(1);
 	msg->WriteUInt8(rooms.size()); // room count
 
-	for (const auto room : rooms)
+	for (auto room : rooms)
 	{
 		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL);
 	}
@@ -2283,8 +2283,8 @@ void CPacketManager::SendSearchRoomNotice(CExtendedSocket* socket, CRoom* room, 
 	CChannel* channel = room->GetParentChannel();
 	CChannelServer* channelServer = channel->GetParentChannelServer();
 
-	msg->WriteUInt8(channelServer->index);
-	msg->WriteUInt8(channel->m_nIndex);
+	msg->WriteUInt8(channelServer->GetID());
+	msg->WriteUInt8(channel->GetID());
 	msg->WriteUInt16(room->GetID());
 
 	// short room info
@@ -2843,9 +2843,9 @@ void CPacketManager::SendRoomInviteUserList(CExtendedSocket* socket, CUser* user
 	msg->WriteUInt8(OutRoomPacketType::UserInviteList);
 
 	CChannel* channel = user->GetCurrentChannel();
-	msg->WriteUInt16(channel->m_Users.size());
+	msg->WriteUInt16(channel->GetUsers().size());
 
-	for (auto u : channel->m_Users)
+	for (auto u : channel->GetUsers())
 	{
 		msg->WriteUInt32(u->GetID());
 

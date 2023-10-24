@@ -83,7 +83,7 @@ public:
 	int GetExpCoefficient();
 	int GetPointsCoefficient();
 	bool IsZombieMode();
-	void SetSaveData(std::vector<unsigned char>& saveData);
+	void SetSaveData(const std::vector<unsigned char>& saveData);
 	std::vector<unsigned char>& GetSaveData();
 	void OnHostChanged(CUser* newHost);
 	void CalculateFirstPlace();

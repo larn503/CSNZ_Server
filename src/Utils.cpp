@@ -30,12 +30,12 @@ void ForceEndServer()
 			if (!channel)
 				continue;
 
-			for (auto sub : channel->channels)
+			for (auto sub : channel->GetChannels())
 			{
 				if (!sub)
 					continue;
 
-				for (auto room : sub->m_Rooms)
+				for (auto room : sub->GetRooms())
 				{
 					if (!room)
 						continue;
@@ -88,7 +88,7 @@ BOOL WriteMiniDump(EXCEPTION_POINTERS* pep, MINIDUMP_TYPE dumpType, const char* 
 		}
 		else
 		{
-			pch = "unknown";
+			strcpy(pch, "unknown");
 		}
 
 		char name[MAX_PATH];

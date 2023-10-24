@@ -110,22 +110,3 @@ private:
 	int m_nID;
 	RoomStatus m_Status;
 };
-
-typedef struct IRoomOptions_s
-{
-	std::string roomName;
-	int gameModeId;
-	int mapId;
-	int winLimit;
-	int killLimit;
-	int startMoney;
-	int forceCamera;
-	int nextMapEnabled;
-	int changeTeams;
-	int enableBots;
-	int difficulty;
-	int respawnTime;
-	int teamBalance;
-	int weaponRestrictions;
-	int hltvEnabled;
-} IRoomOptions;

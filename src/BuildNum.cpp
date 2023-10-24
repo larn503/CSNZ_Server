@@ -1,11 +1,11 @@
 #include <windows.h>
 #include <stdio.h>
 
-char* pdate = __DATE__;
-char* ptime = __TIME__;
+const char* pdate = __DATE__;
+const char* ptime = __TIME__;
 
-char* mon[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-char mond[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+const char* mon[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+const char mond[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 char* build_number(void)
 {

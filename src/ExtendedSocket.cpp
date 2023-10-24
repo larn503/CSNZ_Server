@@ -5,9 +5,8 @@ using namespace std;
 
 CExtendedSocket::CExtendedSocket()
 {
-	memset(&data, 0, sizeof(GuestData_s));
+	memset(&m_GuestData, 0, sizeof(GuestData_s));
 	m_Socket = 0;
-	m_dwTimer = 0;
 	m_nSequence = 0;
 	m_nBytesReceived = 0;
 	m_nBytesSent = 0;
@@ -16,6 +15,15 @@ CExtendedSocket::CExtendedSocket()
 	m_nReadResult = 0;
 	m_nNextExpectedSeq = 1;
 	m_pMsg = NULL;
+}
+
+CExtendedSocket::~CExtendedSocket()
+{
+	if (m_pMsg)
+		delete m_pMsg;
+
+	for (auto msg : m_SendPackets)
+		delete msg;
 }
 
 int CExtendedSocket::GetSeq()
@@ -62,6 +70,7 @@ CReceivePacket* CExtendedSocket::Read()
 			m_nBytesReceived = 0;
 
 		// when a people may incorrect once packet data, might spammed this message forever....
+		
 		m_pMsg = new CReceivePacket(Buffer(packetDataBuf));
 		if (!m_pMsg->IsValid())
 		{
@@ -187,4 +196,49 @@ int CExtendedSocket::Send(CSendPacket* msg, bool forceSend)
 	}
 
 	return result;
+}
+
+void CExtendedSocket::SetSocket(SOCKET socket)
+{
+	m_Socket = socket;
+}
+
+SOCKET CExtendedSocket::GetSocket()
+{
+	return m_Socket;
+}
+
+CReceivePacket* CExtendedSocket::GetMsg()
+{
+	return m_pMsg;
+}
+
+void CExtendedSocket::SetMsg(CReceivePacket* msg)
+{
+	m_pMsg = msg;
+}
+
+int CExtendedSocket::GetReadResult()
+{
+	return m_nReadResult;
+}
+
+int CExtendedSocket::GetBytesReceived()
+{
+	return m_nBytesReceived;
+}
+
+int CExtendedSocket::GetBytesSent()
+{
+	return m_nBytesSent;
+}
+
+std::vector<CSendPacket*> CExtendedSocket::GetPacketsToSend()
+{
+	return m_SendPackets;
+}
+
+GuestData_s& CExtendedSocket::GetGuestData()
+{
+	return m_GuestData;
 }

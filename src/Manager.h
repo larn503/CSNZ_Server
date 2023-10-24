@@ -1,17 +1,36 @@
 #pragma once
 
-#include "main.h"
+#include <vector>
+#include <string>
 
 class IBaseManager
 {
 public:
 	virtual bool Init() = 0;
 	virtual void Shutdown() = 0;
+	virtual std::string GetName() = 0;
 	virtual void OnSecondTick(time_t curTime) = 0;
 	virtual void OnMinuteTick(time_t curTime) = 0;
 	virtual bool ShouldDoSecondTick() = 0;
 	virtual bool ShouldDoMinuteTick() = 0;
 };
+
+class CManager
+{
+public:
+	bool InitAll();
+	void ShutdownAll();
+	void AddManager(IBaseManager* pElem);
+	void RemoveManager(IBaseManager* pElem);
+	IBaseManager* GetManager(const std::string& name);
+	void SecondTick(time_t curTime);
+	void MinuteTick(time_t curTime);
+
+private:
+	std::vector<IBaseManager*> m_List;
+};
+
+extern CManager& Manager();
 
 // Base manager implmentation
 template<class IInterface>
@@ -35,6 +54,7 @@ public:
 	// stub methods
 	virtual bool Init() { return true; }
 	virtual void Shutdown() { printf("Shutdown called, 0x%p\n", this); }
+	virtual std::string GetName() { return ""; }
 	virtual void OnSecondTick(time_t curTime) {}
 	virtual void OnMinuteTick(time_t curTime) {}
 	virtual bool ShouldDoSecondTick() { return m_bSecondTick; }
@@ -47,19 +67,3 @@ private:
 	bool m_bSecondTick;
 	bool m_bMinuteTick;
 };
-
-class CManager
-{
-public:
-	bool InitAll();
-	void ShutdownAll();
-	void AddManager(IBaseManager* pElem);
-	void RemoveManager(IBaseManager* pElem);
-	void SecondTick(time_t curTime);
-	void MinuteTick(time_t curTime);
-
-private:
-	std::vector<IBaseManager*> m_List;
-};
-
-extern CManager& Manager();

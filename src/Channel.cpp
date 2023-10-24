@@ -4,9 +4,9 @@
 
 using namespace std;
 
-CChannel::CChannel(CChannelServer* server, int idx, string channelName, int maxPlayers, string loginMsg)
+CChannel::CChannel(CChannelServer* server, int id, string channelName, int maxPlayers, string loginMsg)
 {
-	m_nIndex = idx;
+	m_nID = id;
 	m_szName = channelName;
 	m_nNextRoomID = 1;
 	m_pParentChannelServer = server;
@@ -206,6 +206,26 @@ bool CChannel::RemoveUserById(int userID)
 	}
 
 	return false;
+}
+
+int CChannel::GetID()
+{
+	return m_nID;
+}
+
+std::string CChannel::GetName()
+{
+	return m_szName;
+}
+
+std::vector<CRoom*> CChannel::GetRooms()
+{
+	return m_Rooms;
+}
+
+std::vector<CUser*> CChannel::GetUsers()
+{
+	return m_Users;
 }
 
 CChannelServer* CChannel::GetParentChannelServer()

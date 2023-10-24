@@ -489,7 +489,7 @@ bool CGameMatch::IsZombieMode()
 }
 	
 
-void CGameMatch::SetSaveData(vector<unsigned char>& saveData)
+void CGameMatch::SetSaveData(const vector<unsigned char>& saveData)
 {
 	m_SaveData = saveData;
 }

@@ -1771,12 +1771,12 @@ void CItemManager::OnNicknameChangeUse(CUser* user, string newNickname)
 
 bool CItemManager::OnDailyRewardsRequest(CUser* user, int requestID)
 {
-	switch (requestID)
-	{
-	default:
+	//switch (requestID)
+	//{
+	//default:
 		g_pConsole->Warn("CItemManager::OnDailyRewardsRequest: unknown request: %d\n", requestID);
-		break;
-	}
+	//	break;
+	//}
 
 	return true;
 }

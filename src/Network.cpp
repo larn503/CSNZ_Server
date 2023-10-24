@@ -205,8 +205,7 @@ CExtendedSocket* CNetwork::AcceptNewClient(unsigned int& id)
 		CExtendedSocket* newSocket = new CExtendedSocket();
 		newSocket->ResetSeq();
 		newSocket->SetIP(ip);
-		newSocket->m_dwTimer = GetTickCount();
-		newSocket->m_Socket = clientSocket;
+		newSocket->SetSocket(clientSocket);
 
 		m_Sessions.push_back(newSocket);
 
@@ -226,7 +225,7 @@ CExtendedSocket* CNetwork::GetExSocketBySocket(SOCKET socket)
 {
 	for (auto s : m_Sessions)
 	{
-		if (s->m_Socket == socket)
+		if (s->GetSocket() == socket)
 			return s;
 	}
 
@@ -237,7 +236,7 @@ void CNetwork::RemoveSocket(CExtendedSocket* socket)
 {
 	m_Sessions.erase(remove(begin(m_Sessions), end(m_Sessions), socket), end(m_Sessions));
 
-	closesocket(socket->m_Socket);
+	closesocket(socket->GetSocket());
 
 	delete socket;
 }

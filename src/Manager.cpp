@@ -1,5 +1,7 @@
 #include "Manager.h"
 
+using namespace std;
+
 CManager& Manager()
 {
 	static CManager x;
@@ -10,7 +12,6 @@ bool CManager::InitAll()
 {
 	for (auto p : m_List)
 	{
-		printf("InitAll: 0x%p\n", p);
 		if (!p->Init())
 			return false;
 	}
@@ -33,7 +34,16 @@ void CManager::AddManager(IBaseManager* pElem)
 
 void CManager::RemoveManager(IBaseManager* pElem)
 {
-	m_List.erase(std::remove(m_List.begin(), m_List.end(), pElem), m_List.end());
+	m_List.erase(remove(m_List.begin(), m_List.end(), pElem), m_List.end());
+}
+
+IBaseManager* CManager::GetManager(const string& name)
+{
+	for (auto p : m_List)
+	{
+		if (p->GetName() == name)
+			return p;
+	}
 }
 
 void CManager::SecondTick(time_t curTime)

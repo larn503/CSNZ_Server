@@ -4,18 +4,27 @@ using namespace std;
 
 CChannelServer::CChannelServer(string serverName, int serverIndex, int totalServers, int numOfChannels)
 {
-	name = FormatServerName(serverName, serverIndex, totalServers);
-	index = serverIndex;
-	nextChannelId = 1;
+	m_Name = FormatServerName(serverName, serverIndex, totalServers);
+	m_nIndex = serverIndex;
+	m_nNextChannelID = 1;
 
-	for (index = 0; index < numOfChannels; index++)
+	for (m_nIndex = 0; m_nIndex < numOfChannels; m_nIndex++)
 	{
-		int newChannelIndex = nextChannelId;
+		int newChannelIndex = m_nNextChannelID;
 		string newChannelName = FormatChannelName(serverName, serverIndex, newChannelIndex);
-		channels.push_back(new CChannel(this, newChannelIndex, newChannelName, 100, ""));
-		nextChannelId++;
+		m_Channels.push_back(new CChannel(this, newChannelIndex, newChannelName, 100, ""));
+		m_nNextChannelID++;
 	}
 }
+
+CChannelServer::~CChannelServer()
+{
+	for (auto channel : m_Channels)
+	{
+		delete channel;
+	}
+}
+
 string CChannelServer::FormatServerName(string serverName, int serverIndex, int totalServers)
 {
 	/*
@@ -54,11 +63,26 @@ string CChannelServer::FormatChannelName(string serverName, int serverIndex, int
 
 CChannel* CChannelServer::GetChannelByIndex(int index)
 {
-	for (auto channel : channels)
+	for (auto channel : m_Channels)
 	{
-		if (channel->m_nIndex == index)
+		if (channel->GetID() == index)
 			return channel;
 	}
 
 	return NULL;
+}
+
+std::vector<CChannel*> CChannelServer::GetChannels()
+{
+	return m_Channels;
+}
+
+std::string CChannelServer::GetName()
+{
+	return m_Name;
+}
+
+int CChannelServer::GetID()
+{
+	return m_nIndex;
 }

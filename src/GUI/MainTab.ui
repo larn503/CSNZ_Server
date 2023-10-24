@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainTab</class>
+ <widget class="QWidget" name="MainTab">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>691</width>
+    <height>460</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>211</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Info</string>
+   </property>
+   <widget class="QLabel" name="ServerStatusLabel">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Server status: %s</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="MemUsageLabel">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>80</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Memory usage: %d</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ClientNumberLabel">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Total connections: %d</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="UptimeLabel">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Uptime: %d</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="RestartBtn">
+   <property name="geometry">
+    <rect>
+     <x>600</x>
+     <y>400</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Restart</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="ConfigEditorBtn">
+   <property name="geometry">
+    <rect>
+     <x>430</x>
+     <y>400</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Config editor</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="SendNoticeBtn">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>400</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Send notice</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -342,7 +342,7 @@ struct RewardNotice
 	int honorPoints;
 	std::vector<RewardItem> items;
 
-	RewardNotice& operator += (RewardNotice& other)
+	RewardNotice& operator += (const RewardNotice& other)
 	{
 		status = other.status;
 		addItemStatus = other.addItemStatus;

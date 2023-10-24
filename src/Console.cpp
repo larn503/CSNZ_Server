@@ -5,6 +5,9 @@
 #else
 #include <unistd.h>
 #endif
+#ifdef USE_GUI
+#include "GUI/IGUI.h"
+#endif
 
 #define MAX_DATE_LEN 9
 
@@ -114,6 +117,10 @@ void CConsole::WriteToConsole(const char* msg)
 		fprintf(file, "%s %s", GetCurrTime(), msg);
 		fclose(file);
 	}
+
+#ifdef USE_GUI
+	GUI()->LogMessage(0, msg);
+#endif
 }
 
 void CConsole::Error(const char* msg, ...)

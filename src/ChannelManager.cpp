@@ -82,7 +82,7 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, CExtendedSocket* socket
 	case InRoomType::UserInviteRequest:
 		return OnUserInviteRequest(msg, user);
 	case InRoomType::RoomListRequest:
-		g_pPacketManager->SendRoomListFull(socket, channelServers[0]->channels[0]->m_Rooms);
+		g_pPacketManager->SendRoomListFull(socket, channelServers[0]->GetChannels()[0]->GetRooms());
 		break;
 	case 27:
 		break;
@@ -138,7 +138,7 @@ void CChannelManager::JoinChannel(CUser* user, int channelServerID, int channelI
 			return;
 		}*/
 
-		g_pConsole->Log("User '%d, %s' joined channel '%s'\n", user->GetID(), user->GetUsername().c_str(), channel->m_szName.c_str());
+		g_pConsole->Log("User '%d, %s' joined channel '%s'\n", user->GetID(), user->GetUsername().c_str(), channel->GetName().c_str());
 
 		user->SetCurrentChannel(channel);
 		user->SetLastChannelServer(channelServer);
@@ -154,7 +154,7 @@ void CChannelManager::JoinChannel(CUser* user, int channelServerID, int channelI
 
 	g_pConsole->Log("User '%d, %s' requested room list successfully, sending...\n", user->GetID(), user->GetUsername().c_str());
 
-	g_pPacketManager->SendRoomListFull(user->GetExtendedSocket(), channel->m_Rooms);
+	g_pPacketManager->SendRoomListFull(user->GetExtendedSocket(), channel->GetRooms());
 }
 
 bool CChannelManager::OnLobbyMessage(CReceivePacket* msg, CExtendedSocket* socket, CUser* user)
@@ -258,7 +258,7 @@ CChannelServer* CChannelManager::GetServerByIndex(int index)
 {
 	for (auto server : this->channelServers)
 	{
-		if (server->index == index)
+		if (server->GetID() == index)
 			return server;
 	}
 

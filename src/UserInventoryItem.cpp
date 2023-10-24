@@ -104,7 +104,7 @@ bool CUserInventoryItem::IsItemDefaultOrPseudo(int itemID)
 	return IsItemDefault(itemID) || IsItemPseudoDefault(itemID);
 }
 
-int CUserInventoryItem::GetGameSlot()
+int CUserInventoryItem::GetGameSlot() const
 {
 	return g_pServerConfig->defUser.defaultItems.size() + m_nSlot;
 }
@@ -119,7 +119,7 @@ int CUserInventoryItem::GameSlotToSlot(int gameSlot)
 	return gameSlot - g_pServerConfig->defUser.defaultItems.size();
 }
 
-int CUserInventoryItem::GetPartCount()
+int CUserInventoryItem::GetPartCount() const
 {
 	int count = 0;
 	if (m_nPartSlot1 != 0)

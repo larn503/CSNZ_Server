@@ -26,6 +26,7 @@ class CExtendedSocket
 {
 public:
 	CExtendedSocket();
+	~CExtendedSocket();
 
 	void SetIP(std::string addr) { m_IP = addr; }
 	void SetHWID(std::vector<unsigned char>& hwid) { m_HWID = hwid; }
@@ -38,14 +39,23 @@ public:
 	int Send(const std::vector<unsigned char>& buffer);
 	int Send(CSendPacket* msg, bool forceSend = false);
 
+	void SetSocket(SOCKET socket);
+	SOCKET GetSocket();
+	void SetMsg(CReceivePacket* msg);
+	CReceivePacket* GetMsg();
+	int GetReadResult();
+	int GetBytesReceived();
+	int GetBytesSent();
+	std::vector<CSendPacket*> GetPacketsToSend();
+	GuestData_s& GetGuestData();
+
+private:
 	SOCKET m_Socket;
-	DWORD m_dwTimer;
+	int m_nSequence;
 	int m_nBytesReceived;
 	int m_nBytesSent;
 
-	GuestData_s data;
-
-	std::vector<CSendPacket*> m_SendPackets;
+	GuestData_s m_GuestData;
 
 	CReceivePacket* m_pMsg;
 	int m_nPacketToReceiveFullSize;
@@ -53,9 +63,7 @@ public:
 	int m_nReadResult;
 	int m_nNextExpectedSeq; // TODO: we need it?
 
-private:
-	int m_nSequence;
-
 	std::string m_IP;
 	std::vector<unsigned char> m_HWID;
+	std::vector<CSendPacket*> m_SendPackets;
 };

@@ -2,6 +2,10 @@
 #include "ServerInstance.h"
 #include "Thread.h"
 
+#ifdef USE_GUI
+#include "GUI/IGUI.h"
+#endif
+
 CConsole* g_pConsole;
 CServerInstance* g_pServerInstance;
 
@@ -19,6 +23,20 @@ void invalid_parameter_function(const wchar_t* expression, const wchar_t* functi
 		g_pConsole->Log(OBFUSCATE("%ls, %ls, %ls, %d, %p\n"), expression, function, file, line, pReserved);
 	}
 }
+
+#ifdef USE_GUI
+void GUIThread()
+{
+	if (!GUI()->Init())
+	{
+		__debugbreak();
+	}
+
+	GUI()->Exec();
+
+	GUI()->Shutdown();
+}
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -39,11 +57,15 @@ int main(int argc, char* argv[])
 	CThread listenThreadTCP(ListenThread);
 	CThread listenThreadUDP(ListenThreadUDP);
 	CThread eventThread(EventThread);
-
 	readConsoleThread.Start();
 	listenThreadTCP.Start();
 	listenThreadUDP.Start();
 	eventThread.Start();
+
+#ifdef USE_GUI
+	CThread qtThread(GUIThread);
+	qtThread.Start();
+#endif
 
 	while (g_pServerInstance->IsServerActive())
 	{
@@ -64,6 +86,10 @@ int main(int argc, char* argv[])
 	listenThreadTCP.Join();
 	listenThreadUDP.Join();
 	eventThread.Join();
+
+#ifdef USE_GUI
+	qtThread.Join();
+#endif
 
 	g_EventCriticalSection.Enter();
 

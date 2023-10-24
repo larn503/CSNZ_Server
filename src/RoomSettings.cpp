@@ -1645,7 +1645,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, CUser* user, int 
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with mutationRestrictSize != 4, mutationRestrictSize: %d\n", user->GetID(), user->GetUsername().c_str(), mutationRestrictSize);
 				highMidFlag &= ~ROOM_HIGHMID_MUTATIONRESTRICT;
 			}
-			else if (!IsMutationRestrictValid(mutationRestrict));
+			else if (!IsMutationRestrictValid(mutationRestrict))
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid mutationRestrict\n", user->GetID(), user->GetUsername().c_str());
 				highMidFlag &= ~ROOM_HIGHMID_MUTATIONRESTRICT;
@@ -1659,7 +1659,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, CUser* user, int 
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with gameModeId that doesn't use mutationLimit, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 				highMidFlag &= ~ROOM_HIGHMID_MUTATIONLIMIT;
 			}
-			else if (!IsMutationLimitValid(mutationLimit));
+			else if (!IsMutationLimitValid(mutationLimit))
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid mutationLimit: %d\n", user->GetID(), user->GetUsername().c_str(), mutationLimit);
 				highMidFlag &= ~ROOM_HIGHMID_MUTATIONLIMIT;

@@ -6,14 +6,19 @@ class CChannelServer
 {
 public:
 	CChannelServer(std::string serverName, int serverIndex, int totalServers, int numOfChannels);
-	CChannel* GetChannelByIndex(int index);
+	~CChannelServer();
 
-	std::string name;
-	int index;
-	std::vector<CChannel*> channels;
+	CChannel* GetChannelByIndex(int index);
+	std::vector<CChannel*> GetChannels();
+	std::string GetName();
+	int GetID();
 
 private:
 	std::string FormatServerName(std::string serverName, int serverIndex, int totalServers);
 	std::string FormatChannelName(std::string serverName, int serverIndex, int channelNumber);
-	int nextChannelId; //228
+
+	int m_nIndex;
+	int m_nNextChannelID;
+	std::vector<CChannel*> m_Channels;
+	std::string m_Name;
 };

@@ -3,6 +3,9 @@
 #include "BuildNum.h"
 #include "CSVTable.h"
 #include "ServerConfig.h"
+#ifdef USE_GUI
+#include "GUI/IGUI.h"
+#endif
 
 using namespace std;
 
@@ -212,9 +215,9 @@ void CServerInstance::OnCommand(string command)
 		// kick user from game
 		for (auto channel : g_pChannelManager->channelServers)
 		{
-			for (auto sub : channel->channels)
+			for (auto sub : channel->GetChannels())
 			{
-				for (auto room : sub->m_Rooms)
+				for (auto room : sub->GetRooms())
 				{
 					g_pConsole->Log("Force ending RoomID: %d game\n", room->GetID());
 					room->EndGame();
@@ -693,13 +696,13 @@ void CServerInstance::ListenTCP()
 
 	for (auto socket : g_pNetwork->m_Sessions)
 	{
-		if (socket->m_SendPackets.size())
-			FD_SET(socket->m_Socket, &g_pNetwork->m_Write_fds);
+		if (socket->GetPacketsToSend().size())
+			FD_SET(socket->GetSocket(), &g_pNetwork->m_Write_fds);
 
-		FD_SET(socket->m_Socket, &g_pNetwork->m_Read_fds);
+		FD_SET(socket->GetSocket(), &g_pNetwork->m_Read_fds);
 
-		if ((int)socket->m_Socket > g_pNetwork->m_nFDmax)
-			g_pNetwork->m_nFDmax = socket->m_Socket;
+		if ((int)socket->GetSocket() > g_pNetwork->m_nFDmax)
+			g_pNetwork->m_nFDmax = socket->GetSocket();
 	}
 
 	struct timeval tv;
@@ -754,11 +757,12 @@ void CServerInstance::ListenTCP()
 				}
 
 				CReceivePacket* msg = s->Read();
-				if (s->m_nReadResult == 0 || s->m_nReadResult == -1)
+				int readResult = s->GetReadResult();
+				if (readResult == 0 || readResult == -1)
 				{
-					int bytesSent = s->m_nBytesSent;
-					int bytesReceived = s->m_nBytesReceived;
-					int socket = s->m_Socket;
+					int bytesSent = s->GetBytesSent();
+					int bytesReceived = s->GetBytesReceived();
+					int socket = s->GetSocket();
 
 					// clean up user
 					CUser* user = g_pUserManager->GetUserBySocket(s);
@@ -778,14 +782,14 @@ void CServerInstance::ListenTCP()
 
 					g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, received: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, WSAGetLastError(), user);
 				}
-				else if (s->m_nReadResult == SOCKET_ERROR)
+				else if (readResult == SOCKET_ERROR)
 				{
 					int wsaResult = WSAGetLastError();
 					if (wsaResult == WSAECONNABORTED || wsaResult == WSAECONNRESET)
 					{
-						int bytesSent = s->m_nBytesSent;
-						int bytesReceived = s->m_nBytesReceived;
-						int socket = s->m_Socket;
+						int bytesSent = s->GetBytesSent();
+						int bytesReceived = s->GetBytesReceived();
+						int socket = s->GetSocket();
 
 						// clean up user
 						CUser* user = g_pUserManager->GetUserBySocket(s);
@@ -821,12 +825,12 @@ void CServerInstance::ListenTCP()
 					Event_s ev;
 					ev.type = SERVER_EVENT_TCP_PACKET;
 					ev.socket = s;
-					ev.msgs.push_back(s->m_pMsg);
+					ev.msgs.push_back(s->GetMsg());
 					g_Events.push_back(ev);
 
 					g_Event.Signal();
 
-					s->m_pMsg = NULL;
+					s->SetMsg(NULL);
 				}
 			}
 		}
@@ -834,18 +838,18 @@ void CServerInstance::ListenTCP()
 		if (FD_ISSET(i, &g_pNetwork->m_Write_fds))
 		{
 			CExtendedSocket* sock = g_pNetwork->GetExSocketBySocket(i);
-			if (sock && sock->m_SendPackets.size())
+			if (sock && sock->GetPacketsToSend().size())
 			{
-				CSendPacket* msg = sock->m_SendPackets[0]; // send only one packet from vector
+				CSendPacket* msg = sock->GetPacketsToSend()[0]; // send only one packet from vector
 				if (sock->Send(msg, true) <= 0)
 				{
-					g_pConsole->Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", WSAGetLastError(), sock->m_SendPackets.size());
+					g_pConsole->Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", WSAGetLastError(), sock->GetPacketsToSend().size());
 					
 					DisconnectClient(sock);
 				}
 				else
 				{
-					sock->m_SendPackets.erase(sock->m_SendPackets.begin());
+					sock->GetPacketsToSend().erase(sock->GetPacketsToSend().begin());
 				}
 			}
 		}
@@ -954,22 +958,6 @@ void CServerInstance::OnEvent()
 			break;
 		case SERVER_EVENT_SECOND_TICK:
 			OnSecondTick();
-			break;
-		}
-	}
-
-	// TODO: remove this?
-	for (auto& ev : g_Events)
-	{
-		switch (ev.type)
-		{
-		case SERVER_EVENT_TCP_PACKET:
-			if (!ev.msgs.size())
-				g_pConsole->Warn("CServerInstance::OnEvent: !ev.msg.size(), memleak\n");
-
-			for (auto packet : ev.msgs)
-				delete packet;
-
 			break;
 		}
 	}
@@ -1096,6 +1084,10 @@ void CServerInstance::OnSecondTick()
 	m_CurrentTime /= 60; // get current time in minutes(last CSO builds use timestamp in minutes)
 
 	UpdateConsoleStatus();
+
+#ifdef USE_GUI
+	GUI()->UpdateInfo(1, g_pNetwork->m_Sessions.size(), 228, 228);
+#endif
 
 	Manager().SecondTick(m_CurrentTime);
 

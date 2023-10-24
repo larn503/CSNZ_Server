@@ -36,7 +36,7 @@ public:
 	void SendUMsgSystemReply(CExtendedSocket* socket, int type, std::string msg, std::vector<std::string> additionalText = {});
 	void SendUMsgLobbyMessage(CExtendedSocket* socket, std::string senderName, std::string text); // use SendUMsgChatMessage
 	void SendUMsgNotice(CExtendedSocket* socket, Notice_s& notice, bool unk = 1);
-	void SendUMsgExpiryNotice(CExtendedSocket* socket, std::vector<int>& expiryItems);
+	void SendUMsgExpiryNotice(CExtendedSocket* socket, const std::vector<int>& expiryItems);
 	void SendUMsgRewardNotice(CExtendedSocket* socket, RewardNotice& reward, std::string title = "", std::string description = "", bool inGame = false, bool scen = false);
 	void SendUMsgRewardSelect(CExtendedSocket* socket, Reward* reward);
 
@@ -44,8 +44,8 @@ public:
 
 	void SendStatistic(CExtendedSocket* socket);
 
-	void SendInventoryAdd(CExtendedSocket* socket, std::vector<CUserInventoryItem>& items, int curSlot = 0);
-	void SendInventoryRemove(CExtendedSocket* socket, std::vector<CUserInventoryItem>& items, bool gameSlot = true);
+	void SendInventoryAdd(CExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, int curSlot = 0);
+	void SendInventoryRemove(CExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, bool gameSlot = true);
 
 	void SendDefaultItems(CExtendedSocket* socket, std::vector<CUserInventoryItem>& items);
 
@@ -116,7 +116,7 @@ public:
 	void SendLobbyUserJoin(CExtendedSocket* socket, CUser* joinedUser);
 	void SendLobbyUserLeft(CExtendedSocket* socket, CUser* user);
 
-	void SendRoomListFull(CExtendedSocket* socket, std::vector<CRoom*>& rooms);
+	void SendRoomListFull(CExtendedSocket* socket, const std::vector<CRoom*>& rooms);
 	void SendRoomListAdd(CExtendedSocket* socket, CRoom* room);
 	void SendRoomListUpdate(CExtendedSocket* socket, CRoom* room);
 	void SendRoomListRemove(CExtendedSocket* socket, int roomID);

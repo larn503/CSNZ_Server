@@ -176,7 +176,6 @@ public:
 
 private:
 	bool CheckForTables();
-	void LoadLastBackup();
 	bool UpgradeDatabase(int& currentDatabaseVer);
 	bool ExecuteOnce();
 

@@ -142,7 +142,6 @@ bool CUserDatabaseSQLite::ExecuteScript(string scriptPath)
 		char* token = strtok(buffer, OBFUSCATE(";"));
 		while (token)
 		{
-			//printf(token);
 			m_Database.exec(token);
 			token = strtok(NULL, OBFUSCATE(";"));
 		}
