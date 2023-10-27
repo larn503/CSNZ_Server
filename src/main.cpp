@@ -33,8 +33,14 @@ void GUIThread()
 	}
 
 	GUI()->Exec();
-
 	GUI()->Shutdown();
+
+	// shutdown the server after closing gui
+	g_EventCriticalSection.Enter();
+
+	g_pServerInstance->SetServerActive(false);
+
+	g_EventCriticalSection.Leave();
 }
 #endif
 
@@ -83,7 +89,7 @@ int main(int argc, char* argv[])
 
 		g_Event.Signal();
 
-		g_EventCriticalSection.Leave();
+		g_EventCriticalSection.Leave();	
 
 		Sleep(1000);
 	}

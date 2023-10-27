@@ -646,7 +646,8 @@ void EventThread()
 	{
 		g_Event.WaitForSignal();
 
-		g_pServerInstance->OnEvent();
+		if (g_pServerInstance->IsServerActive())
+			g_pServerInstance->OnEvent();
 	}
 }
 
@@ -935,6 +936,12 @@ void CServerInstance::ListenUDP()
 void CServerInstance::SetServerActive(bool active)
 {
 	m_bIsServerActive = active;
+
+	if (!m_bIsServerActive)
+	{
+		// wake up event thread
+		g_Event.Signal();
+	}
 }
 
 bool CServerInstance::IsServerActive()
