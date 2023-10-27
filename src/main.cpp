@@ -46,6 +46,11 @@ int main(int argc, char* argv[])
 #ifdef WIN32
 	SetUnhandledExceptionFilter(ExceptionFilter);
 	_set_invalid_parameter_handler(invalid_parameter_function);
+
+#ifdef USE_GUI
+	// hide console when using gui
+	ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
 #endif
 
 	g_pConsole = new CConsole();
