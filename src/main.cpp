@@ -82,6 +82,10 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+#ifdef USE_GUI
+	GUI()->ShowMainWindow();
+#endif
+
 	CThread readConsoleThread(ReadConsoleThread);
 	CThread listenThreadTCP(ListenThread);
 	CThread listenThreadUDP(ListenThreadUDP);

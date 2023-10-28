@@ -23,7 +23,6 @@ bool CGUI::Init()
 	m_pApplication = new QApplication(argc, NULL);
 
 	m_pMainWindow = new CMainWindow();
-	m_pMainWindow->show();
 
 	return true;
 }
@@ -57,4 +56,10 @@ void CGUI::ShowMessageBox(const std::string& title, const std::string& msg, bool
 {
 	if (m_pMainWindow)
 		QMetaObject::invokeMethod(m_pMainWindow, "ShowMessageBox", Q_ARG(const std::string&, title), Q_ARG(const std::string&, msg), Q_ARG(bool, fatalError));
+}
+
+void CGUI::ShowMainWindow()
+{
+	if (m_pMainWindow)
+		QMetaObject::invokeMethod(m_pMainWindow, "show");
 }
