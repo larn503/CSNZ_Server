@@ -10,6 +10,7 @@ CConsole* g_pConsole;
 CServerInstance* g_pServerInstance;
 
 CObjectSync g_Event;
+CObjectSync g_GUIInitEvent;
 std::vector<Event_s> g_Events;
 
 CCriticalSection g_EventCriticalSection;
@@ -31,6 +32,8 @@ void GUIThread()
 	{
 		__debugbreak();
 	}
+
+	g_GUIInitEvent.Signal();
 
 	GUI()->Exec();
 	GUI()->Shutdown();
@@ -59,10 +62,25 @@ int main(int argc, char* argv[])
 #endif
 #endif
 
-	g_pConsole = new CConsole();
+#ifdef USE_GUI
+	CThread qtThread(GUIThread);
+	qtThread.Start();
+#endif
 
+	// wait for gui init before we init the server
+	g_GUIInitEvent.WaitForSignal();
+
+	g_pConsole = new CConsole();
 	g_pServerInstance = new CServerInstance();
-	g_pServerInstance->Init();
+	if (!g_pServerInstance->Init())
+	{
+#ifdef USE_GUI
+		qtThread.Join();
+#endif
+		delete g_pServerInstance;
+		delete g_pConsole;
+		return 1;
+	}
 
 	CThread readConsoleThread(ReadConsoleThread);
 	CThread listenThreadTCP(ListenThread);
@@ -72,11 +90,6 @@ int main(int argc, char* argv[])
 	listenThreadTCP.Start();
 	listenThreadUDP.Start();
 	eventThread.Start();
-
-#ifdef USE_GUI
-	CThread qtThread(GUIThread);
-	qtThread.Start();
-#endif
 
 	while (g_pServerInstance->IsServerActive())
 	{
@@ -112,5 +125,5 @@ int main(int argc, char* argv[])
 	delete g_pServerInstance;
 	delete g_pConsole;
 
-	return 1;
+	return 0;
 }

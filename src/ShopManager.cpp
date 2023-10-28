@@ -122,7 +122,7 @@ bool CShopManager::LoadProducts()
 	}
 	catch (exception& ex)
 	{
-		g_pConsole->Error("CShopManager::LoadProducts: an error occured while parsing Shop.json: %s\n", ex.what());
+		g_pConsole->FatalError("CShopManager::LoadProducts: an error occured while parsing Shop.json: %s\n", ex.what());
 		return false;
 	}
 

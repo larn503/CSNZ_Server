@@ -3,7 +3,7 @@
 class IItemManager : public IBaseManager
 {
 public:
-	virtual void LoadRewards() = 0;
+	virtual bool LoadRewards() = 0;
 	virtual bool KVToJson() = 0;
 	virtual bool OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket) = 0;
 	virtual int AddItem(int userID, CUser* user, int itemId, int count, int duration) = 0;

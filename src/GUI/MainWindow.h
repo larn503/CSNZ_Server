@@ -24,6 +24,9 @@ public:
 	CMainTab* GetMainTab();
 	CConsoleTab* GetConsoleTab();
 
+public slots:
+	void ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError = 0);
+
 protected:
 	void closeEvent(QCloseEvent* event);
 

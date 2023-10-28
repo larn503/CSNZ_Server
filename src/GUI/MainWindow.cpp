@@ -39,6 +39,19 @@ CConsoleTab* CMainWindow::GetConsoleTab()
 	return m_pConsoleTab;
 }
 
+void CMainWindow::ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError)
+{
+	if (fatalError)
+	{
+		QMessageBox::critical(this, QString::fromStdString(title), QString::fromStdString(msg));
+		QApplication::exit();
+	}
+	else
+	{
+		QMessageBox::information(this, QString::fromStdString(title), QString::fromStdString(msg));
+	}
+}
+
 // handle close event to warn user that there are still users on the server
 void CMainWindow::closeEvent(QCloseEvent* event)
 {

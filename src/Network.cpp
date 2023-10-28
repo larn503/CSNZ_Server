@@ -30,7 +30,7 @@ bool CNetwork::ServerInit(void)
 	m_iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (m_iResult != 0)
 	{
-		g_pConsole->Error("WSAStartup() failed with error: %d\n%s\n", m_iResult, WSAGetLastErrorString());
+		g_pConsole->FatalError("WSAStartup() failed with error: %d\n%s\n", m_iResult, WSAGetLastErrorString());
 		return false;
 	}
 
@@ -45,7 +45,7 @@ bool CNetwork::ServerInit(void)
 	m_iResult = getaddrinfo(NULL, g_pServerConfig->tcpPort.c_str(), &hints, &result);
 	if (m_iResult != 0)
 	{
-		g_pConsole->Error("getaddrinfo() failed with error: %d\n%s\n", m_iResult, WSAGetLastErrorString());
+		g_pConsole->FatalError("getaddrinfo() failed with error: %d\n%s\n", m_iResult, WSAGetLastErrorString());
 		WSACleanup();
 		return false;
 	}
@@ -54,7 +54,7 @@ bool CNetwork::ServerInit(void)
 	m_TCPSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (m_TCPSocket == INVALID_SOCKET)
 	{
-		g_pConsole->Error("socket() failed with error: %ld\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("socket() failed with error: %ld\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
 		WSACleanup();
 		return false;
@@ -65,7 +65,7 @@ bool CNetwork::ServerInit(void)
 	m_iResult = ioctlsocket(m_TCPSocket, FIONBIO, &iMode);
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->Error("ioctlsocket() failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("ioctlsocket() failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
 		closesocket(m_TCPSocket);
 		WSACleanup();
 		return false;
@@ -75,7 +75,7 @@ bool CNetwork::ServerInit(void)
 	m_iResult = ::bind(m_TCPSocket, result->ai_addr, (int)result->ai_addrlen);
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->Error("bind failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("bind failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
 		closesocket(m_TCPSocket);
 		WSACleanup();
@@ -89,7 +89,7 @@ bool CNetwork::ServerInit(void)
 	m_iResult = listen(m_TCPSocket, SOMAXCONN);
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->Error("listen() failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("listen() failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
 		closesocket(m_TCPSocket);
 		WSACleanup();
 		return false;
@@ -99,7 +99,7 @@ bool CNetwork::ServerInit(void)
 	m_iResult = setsockopt(m_TCPSocket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBuffer, sizeof(int));
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->Error("setsockopt failed with error %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("setsockopt failed with error %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
 		closesocket(m_TCPSocket);
 		WSACleanup();
 		return false;
@@ -129,14 +129,14 @@ bool CNetwork::UDPInit(void)
 	int iResult = getaddrinfo(NULL, g_pServerConfig->udpPort.c_str(), &hints, &result);
 	if (iResult != 0)
 	{
-		g_pConsole->Error("getaddrinfo() failed with error: %d\n%s\n", iResult, WSAGetLastErrorString());
+		g_pConsole->FatalError("getaddrinfo() failed with error: %d\n%s\n", iResult, WSAGetLastErrorString());
 		WSACleanup();
 	}
 
 	m_UDPSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (m_UDPSocket == INVALID_SOCKET)
 	{
-		g_pConsole->Error("socket() failed with error: %ld\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("socket() failed with error: %ld\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
 		WSACleanup();
 	}
 
@@ -146,7 +146,7 @@ bool CNetwork::UDPInit(void)
 	iResult = ::bind(m_UDPSocket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR)
 	{
-		g_pConsole->Error("bind failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("bind failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
 		closesocket(m_UDPSocket);
 		WSACleanup();

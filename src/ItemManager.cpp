@@ -23,14 +23,17 @@ CItemManager::~CItemManager()
 bool CItemManager::Init()
 {
 	if (!KVToJson())
-		LoadRewards();
+	{
+		if (!LoadRewards())
+			return false;
+	}
 
 	m_pReinforceMaxLvTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxLv.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
 	m_pReinforceMaxExpTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxEXP.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
 
 	if (m_pReinforceMaxLvTable->IsLoadFailed() || m_pReinforceMaxExpTable->IsLoadFailed())
 	{
-		g_pConsole->Error("CItemManager::Init(): couldn't load some csv files. Required csv:\nData/ReinforceMaxLv.csv\nData/ReinforceMaxEXP.csv\n");
+		g_pConsole->FatalError("CItemManager::Init(): couldn't load some csv files. Required csv:\nData/ReinforceMaxLv.csv\nData/ReinforceMaxEXP.csv\n");
 		return false;
 	}
 
@@ -45,7 +48,7 @@ void CItemManager::Shutdown()
 	delete m_pReinforceMaxExpTable;
 }
 
-void CItemManager::LoadRewards()
+bool CItemManager::LoadRewards()
 {
 	try
 	{
@@ -54,15 +57,15 @@ void CItemManager::LoadRewards()
 
 		if (cfg.is_discarded())
 		{
-			g_pConsole->Error("CItemManager::LoadRewards: couldn't load ItemRewards.json.\n");
-			return;
+			g_pConsole->FatalError("CItemManager::LoadRewards: couldn't load ItemRewards.json.\n");
+			return false;
 		}
 
 		int version = cfg.value("Version", 0);
 		if (version != ITEM_REWARDS_VERSION)
 		{
-			g_pConsole->Error("CItemManager::LoadRewards: %d != ITEM_REWARDS_VERSION(%d)\n", version, ITEM_REWARDS_VERSION);
-			return;
+			g_pConsole->FatalError("CItemManager::LoadRewards: %d != ITEM_REWARDS_VERSION(%d)\n", version, ITEM_REWARDS_VERSION);
+			return false;
 		}
 
 		for (auto& iReward : cfg.items())
@@ -158,8 +161,11 @@ void CItemManager::LoadRewards()
 	}
 	catch (exception& ex)
 	{
-		g_pConsole->Error("CItemManager::LoadRewards: an error occured while parsing ItemRewards.json: %s\n", ex.what());
+		g_pConsole->FatalError("CItemManager::LoadRewards: an error occured while parsing ItemRewards.json: %s\n", ex.what());
+		return false;
 	}
+
+	return true;
 }
 
 bool CItemManager::KVToJson()

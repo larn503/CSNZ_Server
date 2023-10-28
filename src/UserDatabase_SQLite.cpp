@@ -22,7 +22,7 @@ try : CBaseManager(), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_REA
 }
 catch (exception& e)
 {
-	g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite(): SQLite exception: %s\n"), e.what());
+	g_pConsole->FatalError(OBFUSCATE("CUserDatabaseSQLite(): SQLite exception: %s\n"), e.what());
 }
 
 bool CUserDatabaseSQLite::Init()
@@ -61,7 +61,7 @@ bool CUserDatabaseSQLite::CheckForTables()
 
 			if (dbVer != LAST_DB_VERSION)
 			{
-				g_pConsole->Error("CUserDatabaseSQLite::CheckForTables: database version mismatch, got: %d, expected: %d\n", dbVer, LAST_DB_VERSION);
+				g_pConsole->FatalError("CUserDatabaseSQLite::CheckForTables: database version mismatch, got: %d, expected: %d\n", dbVer, LAST_DB_VERSION);
 				return false;
 			}
 		}
@@ -69,14 +69,14 @@ bool CUserDatabaseSQLite::CheckForTables()
 		{
 			if (!ExecuteScript(OBFUSCATE("Data/SQL/main.sql")))
 			{
-				g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: failed to execute main SQL script. Server may not work properly\n"));
+				g_pConsole->FatalError(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: failed to execute main SQL script. Server may not work properly\n"));
 				return false;
 			}
 		}
 	}
 	catch (exception& e)
 	{
-		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		g_pConsole->FatalError(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return false;
 	}
 
@@ -91,7 +91,7 @@ bool CUserDatabaseSQLite::UpgradeDatabase(int& currentDatabaseVer)
 	{
 		if (!ExecuteScript(va(OBFUSCATE("Data/SQL/Update_%d.sql"), i + 1)))
 		{
-			g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::UpgradeDatabase: file Update_%d.sql doesn't exist or sql execute returned error, current db ver: %d, last db ver: %d. Script not applied.\n"), i + 1, currentDatabaseVer, LAST_DB_VERSION);
+			g_pConsole->FatalError(OBFUSCATE("CUserDatabaseSQLite::UpgradeDatabase: file Update_%d.sql doesn't exist or sql execute returned error, current db ver: %d, last db ver: %d. Script not applied.\n"), i + 1, currentDatabaseVer, LAST_DB_VERSION);
 			return false;
 		}
 

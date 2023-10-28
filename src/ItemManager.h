@@ -23,7 +23,7 @@ public:
 	virtual bool Init();
 	virtual void Shutdown();
 
-	void LoadRewards();
+	bool LoadRewards();
 	bool KVToJson();
 	bool OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket);
 	int AddItem(int userID, CUser* user, int itemId, int count, int duration);

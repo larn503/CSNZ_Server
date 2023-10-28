@@ -14,6 +14,7 @@ enum OutMode
 {
 	CON_WARNING = 0,
 	CON_ERROR,
+	CON_FATAL_ERROR, // error with msg box
 	CON_LOG
 };
 
@@ -43,6 +44,7 @@ public:
 
 	void Warn(const char* msg, ...);
 	void Error(const char* msg, ...);
+	void FatalError(const char* msg, ...);
 	void Log(const char* msg, ...);
 	void Debug(const char* msg, ...);
 	void SetStatus(const char* status);
@@ -53,7 +55,7 @@ public:
 
 private:
 	void   Write(OutMode mode, const char* msg);
-	void   WriteToConsole(const char* msg);
+	void   WriteToConsole(OutMode mode, const char* msg);
 	void   SetTextColor(TextColor color);
 	const char* GetCurrTime();
 

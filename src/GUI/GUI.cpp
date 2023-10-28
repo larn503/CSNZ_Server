@@ -24,16 +24,16 @@ bool CGUI::Init()
 
 	m_pMainWindow = new CMainWindow();
 	m_pMainWindow->show();
-	
+
 	return true;
 }
 
 void CGUI::Shutdown()
 {
-	delete m_pApplication;
-	m_pApplication = NULL;
 	delete m_pMainWindow;
 	m_pMainWindow = NULL;
+	delete m_pApplication;
+	m_pApplication = NULL;
 }
 
 void CGUI::Exec()
@@ -51,4 +51,10 @@ void CGUI::UpdateInfo(int status, int totalConnections, int uptime, int memoryUs
 {
 	if (m_pMainWindow)
 		QMetaObject::invokeMethod(m_pMainWindow->GetMainTab(), "UpdateInfo", Q_ARG(int, status), Q_ARG(int, totalConnections), Q_ARG(int, uptime), Q_ARG(int, memoryUsage));
+}
+
+void CGUI::ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError)
+{
+	if (m_pMainWindow)
+		QMetaObject::invokeMethod(m_pMainWindow, "ShowMessageBox", Q_ARG(const std::string&, title), Q_ARG(const std::string&, msg), Q_ARG(bool, fatalError));
 }

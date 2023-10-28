@@ -90,6 +90,7 @@ void CConsole::Write(OutMode mode, const char* msg)
 		color = CON_YELLOW;
 		break;
 	case CON_ERROR:
+	case CON_FATAL_ERROR:
 		color = CON_RED;
 		break;
 	case CON_LOG:
@@ -101,26 +102,39 @@ void CConsole::Write(OutMode mode, const char* msg)
 	}
 
 	SetTextColor(color);
-	WriteToConsole(msg);
+	WriteToConsole(mode, msg);
 	SetTextColor(CON_WHITE); //восстанавливаем цвет
 }
 
-void CConsole::WriteToConsole(const char* msg)
+void CConsole::WriteToConsole(OutMode mode, const char* msg)
 {
+	static char buffer[8192];
+	snprintf(buffer, sizeof(buffer), "%s %s", GetCurrTime(), msg);
+
 	// write to console
-	printf("%s %s", GetCurrTime(), msg);
+	printf(buffer);
 
 	FILE* file;
 	fopen_s(&file, m_szServerLogPath, "a+");
 	if (file)
 	{
-		fprintf(file, "%s %s", GetCurrTime(), msg);
+		fprintf(file, buffer);
 		fclose(file);
 	}
 
 #ifdef USE_GUI
-	GUI()->LogMessage(0, msg);
+	GUI()->LogMessage(mode, buffer);
 #endif
+
+	if (mode == CON_FATAL_ERROR)
+	{
+#ifdef USE_GUI
+		GUI()->ShowMessageBox("Critical error", msg, true);
+#elif WIN32
+		MessageBox(NULL, msg, "Critical error", MB_ICONERROR);
+#endif
+	}
+
 }
 
 void CConsole::Error(const char* msg, ...)
@@ -138,6 +152,23 @@ void CConsole::Error(const char* msg, ...)
 	va_end(argptr);
 
 	Write(CON_ERROR, buffer);
+}
+
+void CConsole::FatalError(const char* msg, ...)
+{
+	if ((m_nLogLevel & LOG_ERROR) == 0)
+	{
+		return;
+	}
+
+	va_list argptr;
+	static char buffer[8192];
+
+	va_start(argptr, msg);
+	vsnprintf(buffer, sizeof(buffer), msg, argptr);
+	va_end(argptr);
+
+	Write(CON_FATAL_ERROR, buffer);
 }
 
 void CConsole::Warn(const char* msg, ...)

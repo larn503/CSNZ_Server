@@ -1,4 +1,5 @@
 #include "ConsoleTab.h"
+#include "../Console.h"
 #include <ui_consoletab.h>
 #include <string>
 
@@ -22,15 +23,15 @@ void CConsoleTab::Log(int level, const std::string& msg)
 	// set color for message
 	switch (level)
 	{
-	case 0:
-		m_pUI->History->setTextColor(Qt::black);
-		break;
-	case 1:
+	case CON_ERROR:
+	case CON_FATAL_ERROR:
 		m_pUI->History->setTextColor(Qt::red);
 		break;
-	case 2:
-		m_pUI->History->setTextColor(Qt::blue);
+	case CON_WARNING:
+		m_pUI->History->setTextColor(Qt::yellow);
 		break;
+	default:
+		m_pUI->History->setTextColor(Qt::black);
 	};
 
 	// move to the end and insert text

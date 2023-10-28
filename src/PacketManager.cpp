@@ -90,7 +90,7 @@ bool CPacketManager::Init()
 		|| !m_hHonorMoneyShopZip || !m_hScenarioTX_CommonZip || !m_hScenarioTX_DediZip || !m_hShopItemList_DediZip
 		|| !m_hZBCompetitiveZip || !m_hPPSystemZip || !m_hItemZip || !m_hCodisDataZip || !m_hWeaponPropZip)
 	{
-		g_pConsole->Error("CPacketManager(): CreateZip() returned NULL. Some metadata not loaded\n");
+		g_pConsole->FatalError("CPacketManager(): CreateZip() returned NULL. Some metadata not loaded\n");
 		return false;
 	}
 
@@ -113,7 +113,7 @@ bool CPacketManager::Init()
 		|| ZipAdd(m_hCodisDataZip, "CodisData.csv", (void*)"Data/CodisData.csv", 0, ZIP_FILENAME)
 		|| ZipAdd(m_hWeaponPropZip, "WeaponProp.json", (void*)"Data/WeaponProp.json", 0, ZIP_FILENAME))
 	{
-		g_pConsole->Error("CPacketManager(): ZipAdd() returned error. Some metadata not loaded\n");
+		g_pConsole->FatalError("CPacketManager(): ZipAdd() returned error. Some metadata not loaded\n");
 		return false;
 	}
 
@@ -130,7 +130,7 @@ bool CPacketManager::Init()
 
 	if (!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49)
 	{
-		g_pConsole->Error("Required metadata:\nMetadata_PaintItemList.bin\nMetadata_ReinforceItemsExp.bin\nMetadata_RandomWeaponList.bin\nMetadata_Unk3.bin\nMetadata_Unk8.bin\nMetadata_Unk15.bin\nMetadata_Unk20.bin\nMetadata_Unk31.bin\nMetadata_Unk43.bin\nMetadata_Unk49.bin\n");
+		g_pConsole->FatalError("Required metadata:\nMetadata_PaintItemList.bin\nMetadata_ReinforceItemsExp.bin\nMetadata_RandomWeaponList.bin\nMetadata_Unk3.bin\nMetadata_Unk8.bin\nMetadata_Unk15.bin\nMetadata_Unk20.bin\nMetadata_Unk31.bin\nMetadata_Unk43.bin\nMetadata_Unk49.bin\n");
 		return false;
 	}
 

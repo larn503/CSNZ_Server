@@ -18,6 +18,7 @@ public:
 	// thread safe methods to update GUI
 	virtual void LogMessage(int level, const std::string& msg);
 	virtual void UpdateInfo(int status, int totalConnections, int uptime, int memoryUsage);
+	virtual void ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError = false);
 
 private:
 	QApplication* m_pApplication;

@@ -1296,7 +1296,7 @@ bool CServerConfig::Load()
 	}
 	catch (exception& ex)
 	{
-		g_pConsole->Error("CServerConfig::Load: an error occured while parsing ServerConfig.json: %s\n", ex.what());
+		g_pConsole->FatalError("CServerConfig::Load: an error occured while parsing ServerConfig.json: %s\n", ex.what());
 		return false;
 	}
 
