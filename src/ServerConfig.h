@@ -27,6 +27,7 @@ public:
 	bool checkClientBuild;
 	int allowedClientTimestamp;
 	int allowedLauncherVersion;
+	int maxRegistrationsPerIP;
 	int metadataToSend;
 	DefaultUser defUser;
 	std::vector<Notice_s> notices;

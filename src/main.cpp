@@ -10,7 +10,6 @@ CConsole* g_pConsole;
 CServerInstance* g_pServerInstance;
 
 CObjectSync g_Event;
-CObjectSync g_GUIInitEvent;
 std::vector<Event_s> g_Events;
 
 CCriticalSection g_EventCriticalSection;
@@ -26,6 +25,8 @@ void invalid_parameter_function(const wchar_t* expression, const wchar_t* functi
 }
 
 #ifdef USE_GUI
+CObjectSync g_GUIInitEvent;
+
 void GUIThread()
 {
 	if (!GUI()->Init())

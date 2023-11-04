@@ -34,6 +34,7 @@ CServerConfig::CServerConfig()
 	flockingFlyerType = 0;
 	allowedLauncherVersion = 0;
 	allowedClientTimestamp = 0;
+	maxRegistrationsPerIP = 0;
 }
 
 CServerConfig::~CServerConfig()
@@ -51,6 +52,7 @@ const char* defaultServerConfig = R"(
 	"RestartOnCrash": false,
 	"InventorySlotMax": 3000,
 	"CheckClientBuild": false,
+	"MaxRegistrationsPerIP": 3,
 	"Metadata": {
 		"Maplist": true,
 		"ClientTable": true,
@@ -940,6 +942,7 @@ bool CServerConfig::Load()
 		checkClientBuild = cfg.value("CheckClientBuild", false);
 		allowedClientTimestamp = cfg.value("AllowedClientTimestamp", 0);
 		allowedLauncherVersion = cfg.value("AllowedLauncherVersion", 67);
+		maxRegistrationsPerIP = cfg.value("MaxRegistrationsPerIP", 1);
 		if (cfg.contains("Metadata"))
 		{
 			ordered_json jMetadata = cfg["Metadata"];
@@ -1319,6 +1322,7 @@ void CServerConfig::LoadDefaultConfig(ordered_json& cfg)
 	//cfg["RestartOnCrash"] = false;
 	//cfg["InventorySlotMax"] = 3000;
 	//cfg["CheckClientBuild"] = false;
+	//cfg["MaxRegistrationsPerIP"] = 3;
 
 	//static vector<int> defaultItems{ 175, 459, 460, 8079, 8080, 8138, 358, 136, 137, 25, 305, 138, 26, 306, 27,
 	//	28, 252, 29, 30, 31, 200, 201, 214, 8222, 215, 216, 163, 8115, 390, 391, 40, 41, 42, 43, 44, 49, 50, 51, 52, 53 };

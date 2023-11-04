@@ -10,7 +10,6 @@
 using namespace std;
 
 #define LAST_DB_VERSION 3
-#define MAX_USER_REGISTRATIONS_PER_IP 3
 
 //#define OBFUSCATE(data) (string)AY_OBFUSCATE_KEY(data, 'F')
 #define OBFUSCATE(data) (char*)AY_OBFUSCATE_KEY(data, 'F')
@@ -378,7 +377,7 @@ int CUserDatabaseSQLite::Register(string userName, string password, string ip)
 		{
 			SQLite::Statement query(m_Database, OBFUSCATE("SELECT COUNT(*) FROM User WHERE registerIP = ?"));
 			query.bind(1, ip);
-			if (query.executeStep() && (int)query.getColumn(0) >= MAX_USER_REGISTRATIONS_PER_IP)
+			if (query.executeStep() && (int)query.getColumn(0) >= g_pServerConfig->maxRegistrationsPerIP)
 			{
 				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Register"));
 
