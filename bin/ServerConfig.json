@@ -8,6 +8,7 @@
 	"RestartOnCrash": false,
 	"InventorySlotMax": 3000,
 	"CheckClientBuild": false,
+	"MaxRegistrationsPerIP": 3,
 	"Metadata": {
 		"Maplist": true,
 		"ClientTable": true,
