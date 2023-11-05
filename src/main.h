@@ -48,6 +48,7 @@ typedef UINT_PTR SOCKET;
 
 #include "ServerInstance.h"
 #include "CSVTable.h"
+#include "Common/Thread.h"
 
 extern CConsole* g_pConsole;
 extern class CServerInstance* g_pServerInstance;

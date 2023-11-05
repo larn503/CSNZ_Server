@@ -1,35 +1,16 @@
 #pragma once
 
-void Signal_Break(int n_signal);
-void Signal_Int(int n_signal);
-void ForceEndServer();
-#ifdef _WIN32
-LONG __stdcall ExceptionFilter(EXCEPTION_POINTERS* pep);
-#endif
-uint32_t ip_string_to_int(const std::string& in, bool* const success = nullptr);
-std::string ip_to_string(uint32_t in, bool* const success = nullptr);
-bool isNumber(const std::string& str);
-bool yesOrNo(float probabilityOfYes);
-const char* FormatSeconds(int seconds);
-char* va(const char* format, ...);
 #ifdef WIN32
-const char* WSAGetLastErrorString();
-#endif
-std::vector<std::string> deserialize_array_str(std::string const& csv);
-std::vector<int> deserialize_array_int(std::string const& csv);
-std::vector<unsigned char> deserialize_array_uchar(std::string const& csv);
-std::string serialize_array_str(const std::vector<std::string>& arr);
-std::string serialize_array_int(const std::vector<int>& arr);
-std::string serialize_array_uchar(const std::vector<unsigned char>& arr);
-size_t findCaseInsensitive(std::string data, std::string toSearch, size_t pos = 0);
-size_t findCaseInsensitive(std::string data, std::vector<std::string> toSearch, size_t pos = 0);
-std::vector<std::string> ParseArguments(const char* cmd);
-
-#ifdef _LINUX
+#include <Windows.h>
+#else
 #include <pthread.h>
 #endif
 
-extern CConsole* g_pConsole;
+#ifdef WIN32
+typedef DWORD ThreadId;
+#else
+typedef pthread_t ThreadId;
+#endif
 
 class CObjectSync
 {
@@ -65,15 +46,15 @@ public:
 		switch (dwEvent)
 		{
 		case WAIT_ABANDONED:
-			g_pConsole->Log(OBFUSCATE("CObjectSync: WAIT_ABANDONED: %d\n"), GetLastError());
+			printf("CObjectSync: WAIT_ABANDONED: %d\n");
 			break;
 		case WAIT_OBJECT_0:
 			break;
 		case WAIT_TIMEOUT:
-			g_pConsole->Log(OBFUSCATE("CObjectSync: WAIT_TIMEOUT: %d\n"), GetLastError());
+			printf("CObjectSync: WAIT_TIMEOUT: %d\n", GetLastError());
 			break;
 		case WAIT_FAILED:
-			g_pConsole->Log(OBFUSCATE("CObjectSync: WAIT_FAILED: %d\n"), GetLastError());
+			printf("CObjectSync: WAIT_FAILED: %d\n", GetLastError());
 			break;
 		}
 #elif _LINUX
@@ -167,15 +148,31 @@ private:
 #endif
 };
 
-class Randomer
+typedef void (*Handler)();
+
+ThreadId GetCurrentThreadID();
+
+// Win32/POSIX thread class
+class CThread
 {
-private:
-	std::mt19937 gen;
-	std::uniform_int_distribution<size_t> dis;
 public:
-	inline Randomer(size_t max) : dis(0, max), gen(std::random_device()()) {}
-	inline Randomer(size_t max, unsigned int seed) : dis(0, max), gen(seed) {}
-	inline size_t operator()() { return dis(gen); }
-	// if you want predictable numbers
-	inline void SetSeed(unsigned int seed) { gen.seed(seed); }
+	CThread(const Handler& function);
+	~CThread();
+
+	bool Start();
+	void Join();
+	void Terminate();
+	bool IsAlive();
+	bool IsCurrentThreadSame();
+
+	// threads are non-copyable
+	CThread(const CThread&) = delete;
+	CThread& operator=(const CThread&) = delete;
+
+private:
+	Handler m_Object;
+#ifdef WIN32
+	HANDLE m_hHandle;
+#endif
+	ThreadId m_ID;
 };

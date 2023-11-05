@@ -46,10 +46,10 @@ void CGUI::LogMessage(int level, const std::string& msg)
 		QMetaObject::invokeMethod(m_pMainWindow->GetConsoleTab(), "Log", Q_ARG(int, level), Q_ARG(const std::string&, msg));
 }
 
-void CGUI::UpdateInfo(int status, int totalConnections, int uptime, int memoryUsage)
+void CGUI::UpdateInfo(int status, int totalConnections, int uptime, double memoryUsage)
 {
 	if (m_pMainWindow)
-		QMetaObject::invokeMethod(m_pMainWindow->GetMainTab(), "UpdateInfo", Q_ARG(int, status), Q_ARG(int, totalConnections), Q_ARG(int, uptime), Q_ARG(int, memoryUsage));
+		QMetaObject::invokeMethod(m_pMainWindow->GetMainTab(), "UpdateInfo", Q_ARG(int, status), Q_ARG(int, totalConnections), Q_ARG(int, uptime), Q_ARG(double, memoryUsage));
 }
 
 void CGUI::ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError)

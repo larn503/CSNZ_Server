@@ -16,7 +16,8 @@ public:
 	~CMainTab();
 
 public slots:
-	void UpdateInfo(int status, int totalConnections, int uptime, int memoryUsage);
+	void UpdateInfo(int status, int totalConnections, int uptime, double memoryUsage);
+	void SendNoticeBtnClicked();
 
 private:
 	Ui::MainTab* m_pUI;

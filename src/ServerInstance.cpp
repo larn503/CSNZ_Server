@@ -42,6 +42,7 @@ CServerInstance::CServerInstance()
 	m_bIsServerActive = true;
 	m_CurrentTime = 0;
 	m_pCurrentLocalTime = NULL;
+	m_nUptime = 0;
 }
 
 bool CServerInstance::Init()
@@ -279,10 +280,10 @@ void CServerInstance::OnCommand(string command)
 			return;
 		}
 
-		int userID = atoi(args[1].c_str());
-		int banType = atoi(args[2].c_str());
+		int userID = stoi(args[1]);
+		int banType = stoi(args[2]);
 		string reason = args[3];
-		int term = atoi(args[4].c_str());
+		int term = stoi(args[4]);
 
 		if (!g_pUserDatabase->IsUserExists(userID))
 		{
@@ -321,7 +322,7 @@ void CServerInstance::OnCommand(string command)
 			return;
 		}
 
-		int userID = atoi(args[1].c_str());
+		int userID = stoi(args[1]);
 
 		UserBan ban = {};
 		g_pUserDatabase->GetUserBan(userID, ban);
@@ -343,7 +344,7 @@ void CServerInstance::OnCommand(string command)
 			return;
 		}
 
-		int userID = atoi(args[1].c_str());
+		int userID = stoi(args[1]);
 
 		if (!g_pUserDatabase->IsUserExists(userID))
 		{
@@ -382,7 +383,7 @@ void CServerInstance::OnCommand(string command)
 			return;
 		}
 
-		int userID = atoi(args[1].c_str());
+		int userID = stoi(args[1]);
 
 		if (!g_pUserDatabase->IsUserExists(userID))
 		{
@@ -419,7 +420,7 @@ void CServerInstance::OnCommand(string command)
 			return;
 		}
 
-		int userID = atoi(args[1].c_str());
+		int userID = stoi(args[1]);
 
 		if (!g_pUserDatabase->IsUserExists(userID))
 		{
@@ -529,7 +530,7 @@ void CServerInstance::OnCommand(string command)
 
 		if (isNumber(args[1]))
 		{
-			userID = atoi(args[1].c_str());
+			userID = stoi(args[1]);
 			if (!g_pUserDatabase->IsUserExists(userID))
 				userID = 0;
 		}
@@ -545,16 +546,16 @@ void CServerInstance::OnCommand(string command)
 		}
 
 		if (args.size() >= 3 && isNumber(args[2]))
-			itemID = atoi(args[2].c_str());
+			itemID = stoi(args[2]);
 
 		if (itemID <= 0)
 			return;
 
 		if (args.size() >= 4 && isNumber(args[3]))
-			count = atoi(args[3].c_str());
+			count = stoi(args[3]);
 
 		if (args.size() >= 5 && isNumber(args[4]))
-			duration = atoi(args[4].c_str());
+			duration = stoi(args[4]);
 
 		CUser* user = g_pUserManager->GetUserById(userID);
 		int status = g_pItemManager->AddItem(userID, user, itemID, count, duration); // add permanent item by default
@@ -714,7 +715,7 @@ void CServerInstance::ListenTCP()
 	if (activity == SOCKET_ERROR)
 	{
 		g_pConsole->Error("select() failed with error: %d\n", WSAGetLastError());
-		ForceEndServer();
+		g_pChannelManager->EndAllGames();
 		SetServerActive(false);
 		return;
 	}
@@ -1089,11 +1090,12 @@ void CServerInstance::OnSecondTick()
 	m_CurrentTime = time(NULL);
 	m_pCurrentLocalTime = localtime(&m_CurrentTime);
 	m_CurrentTime /= 60; // get current time in minutes(last CSO builds use timestamp in minutes)
+	m_nUptime++;
 
 	UpdateConsoleStatus();
 
 #ifdef USE_GUI
-	GUI()->UpdateInfo(1, g_pNetwork->m_Sessions.size(), 228, 228);
+	GUI()->UpdateInfo(m_bIsServerActive, g_pNetwork->m_Sessions.size(), m_nUptime, GetMemoryInfo());
 #endif
 
 	Manager().SecondTick(m_CurrentTime);
@@ -1106,25 +1108,26 @@ void CServerInstance::OnSecondTick()
 
 void CServerInstance::OnMinuteTick()
 {
-	g_pConsole->Log("%s\n", GetMemoryInfo());
+	g_pConsole->Log("%s\n", GetMainInfo());
 
 	Manager().MinuteTick(m_CurrentTime);
 }
 
-const char* CServerInstance::GetMemoryInfo()
+double CServerInstance::GetMemoryInfo()
 {
 	PROCESS_MEMORY_COUNTERS pmc;
 	GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
 
-	// fuck math? should we use 1000 or 1024 as kb
-	auto mem = static_cast<double>(pmc.WorkingSetSize);
-	// convert to mb
-	mem /= 1000000;
+	SIZE_T mem = pmc.WorkingSetSize;
+	if (mem >= 10e9)
+		g_pConsole->Warn("[ALERT] Server is using more than 1G of memory.\n");
 
-	if (mem >= 1000)
-		g_pConsole->Error("[ALERT] Server is using more than 1G of memory.\n");
+	return mem / (1024.0 * 1024.0);
+}
 
-	return va("Memory usage: %.2fmb. Connected users: %d. Logged in users: %d.", mem, static_cast<int>(g_pNetwork->m_Sessions.size()), static_cast<int>(g_pUserManager->GetUsers().size()));
+const char* CServerInstance::GetMainInfo()
+{
+	return va("Memory usage: %.02fmb. Connected users: %d. Logged in users: %d.", GetMemoryInfo(), static_cast<int>(g_pNetwork->m_Sessions.size()), static_cast<int>(g_pUserManager->GetUsers().size()));
 }
 
 void CServerInstance::DisconnectClient(CExtendedSocket* socket)
@@ -1143,7 +1146,7 @@ void CServerInstance::DisconnectClient(CExtendedSocket* socket)
 
 void CServerInstance::UpdateConsoleStatus()
 {
-	g_pConsole->SetStatus(GetMemoryInfo());
+	g_pConsole->SetStatus(GetMainInfo());
 	g_pConsole->UpdateStatus();
 }
 

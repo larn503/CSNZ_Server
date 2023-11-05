@@ -50,7 +50,8 @@ public:
 	void UpdateConsoleStatus();
 	time_t GetCurrentTime();
 	tm* GetCurrentLocalTime();
-	const char* GetMemoryInfo();
+	double GetMemoryInfo();
+	const char* GetMainInfo();
 	void DisconnectClient(CExtendedSocket* socket);
 
 private:
@@ -63,6 +64,7 @@ private:
 
 	time_t m_CurrentTime;
 	tm* m_pCurrentLocalTime;
+	time_t m_nUptime;
 };
 
 void ReadConsoleThread();

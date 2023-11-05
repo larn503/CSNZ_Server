@@ -25,7 +25,12 @@ target_sources(gui PRIVATE "SessionTab.cpp")
 target_sources(gui PRIVATE "SessionTab.ui")
 target_sources(gui PRIVATE "RoomListTab.cpp")
 target_sources(gui PRIVATE "RoomListTab.ui")
+target_sources(gui PRIVATE "NoticeDialog.cpp")
+target_sources(gui PRIVATE "NoticeDialog.ui")
+
+target_sources(gui PRIVATE "../Common/Utils.cpp")
 
 target_include_directories(gui PUBLIC
 	"../"
+	"../Common"
 )

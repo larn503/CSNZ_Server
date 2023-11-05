@@ -20,6 +20,7 @@ public:
 
 	class CChannelServer* GetServerByIndex(int index);
 	void JoinChannel(CUser* user, int channelServerID, int channelID, bool transfer);
+	void EndAllGames();
 
 	std::vector<CChannelServer*> channelServers;
 

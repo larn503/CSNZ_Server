@@ -33,7 +33,6 @@ target_sources(PROJECTNAME PRIVATE "ServerConfig.cpp")
 target_sources(PROJECTNAME PRIVATE "Buffer.cpp")
 target_sources(PROJECTNAME PRIVATE "BuildNum.cpp")
 target_sources(PROJECTNAME PRIVATE "Console.cpp")
-target_sources(PROJECTNAME PRIVATE "Utils.cpp")
 target_sources(PROJECTNAME PRIVATE "Thirdparty/XZip.cpp")
 target_sources(PROJECTNAME PRIVATE "User.cpp")
 target_sources(PROJECTNAME PRIVATE "UserInventoryItem.cpp")
@@ -68,9 +67,11 @@ target_sources(PROJECTNAME PRIVATE "ExtendedSocket.cpp")
 target_sources(PROJECTNAME PRIVATE "ReceivePacket.cpp")
 target_sources(PROJECTNAME PRIVATE "SendPacket.cpp")
 target_sources(PROJECTNAME PRIVATE "PacketHelper_FullUserInfo.cpp")
-
-target_sources(PROJECTNAME PRIVATE "Thread.cpp")
 target_sources(PROJECTNAME PRIVATE "Manager.cpp")
+target_sources(PROJECTNAME PRIVATE "CrashDump.cpp")
+
+target_sources(PROJECTNAME PRIVATE "Common/Thread.cpp")
+target_sources(PROJECTNAME PRIVATE "Common/Utils.cpp")
 
 target_include_directories(PROJECTNAME PUBLIC
 	"./"
@@ -78,6 +79,7 @@ target_include_directories(PROJECTNAME PUBLIC
 	"Thirdparty/json/include"
 	"Thirdparty/SQLiteCpp/include"
 	"Thirdparty/KeyValues/include"
+	"Common"
 )
 
 target_precompile_headers(PROJECTNAME PRIVATE main.h)

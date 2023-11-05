@@ -1,6 +1,7 @@
 #include "main.h"
 #include "ServerInstance.h"
 #include "Thread.h"
+#include "CrashDump.h"
 
 #ifdef USE_GUI
 #include "GUI/IGUI.h"
@@ -50,9 +51,6 @@ void GUIThread()
 
 int main(int argc, char* argv[])
 {
-	signal(SIGBREAK, &Signal_Break);
-	signal(SIGINT, &Signal_Int);
-
 #ifdef WIN32
 	SetUnhandledExceptionFilter(ExceptionFilter);
 	_set_invalid_parameter_handler(invalid_parameter_function);
@@ -115,7 +113,6 @@ int main(int argc, char* argv[])
 	listenThreadTCP.Join();
 	listenThreadUDP.Join();
 	eventThread.Join();
-
 #ifdef USE_GUI
 	qtThread.Join();
 #endif

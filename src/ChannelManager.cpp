@@ -157,6 +157,33 @@ void CChannelManager::JoinChannel(CUser* user, int channelServerID, int channelI
 	g_pPacketManager->SendRoomListFull(user->GetExtendedSocket(), channel->GetRooms());
 }
 
+void CChannelManager::EndAllGames()
+{
+	for (auto channel : channelServers)
+	{
+		if (!channel)
+			continue;
+
+		for (auto sub : channel->GetChannels())
+		{
+			if (!sub)
+				continue;
+
+			for (auto room : sub->GetRooms())
+			{
+				if (!room)
+					continue;
+
+				if (room->GetStatus() == STATUS_INGAME)
+				{
+					g_pConsole->Log(OBFUSCATE("Force ending RoomID: %d game match\n"), room->GetID());
+					room->EndGame();
+				}
+			}
+		}
+	}
+}
+
 bool CChannelManager::OnLobbyMessage(CReceivePacket* msg, CExtendedSocket* socket, CUser* user)
 {
 	string message = msg->ReadString();
@@ -664,7 +691,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 			}
 			else if (args[0] == (char*)OBFUSCATE("/status"))
 			{
-				g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, g_pServerInstance->GetMemoryInfo());
+				g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, g_pServerInstance->GetMainInfo());
 
 				return true;
 			}
