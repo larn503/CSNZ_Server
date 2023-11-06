@@ -31,6 +31,8 @@ public:
 		Event_s ev;
 		ev.type = SERVER_EVENT_FUNCTION;
 		ev.funcs.push_back(func);
+
+		m_Events.push_back(ev);
 		m_Object.Signal();
 
 		m_Mutex.Leave();

@@ -18,6 +18,7 @@ public:
 	virtual bool PostInit();
 
 	// thread safe methods to update GUI
+	virtual void Exit();
 	virtual void LogMessage(int level, const std::string& msg);
 	virtual void UpdateInfo(int status, int totalConnections, int uptime, double memoryUsage);
 	virtual void ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError = false);

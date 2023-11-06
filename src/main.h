@@ -82,6 +82,3 @@ extern class CRankManager* g_pRankManager;
 
 extern CEvent g_Event;
 extern CCriticalSection g_ServerCriticalSection;
-//extern CObjectSync g_Event;
-//extern std::vector<struct Event_s> g_Events;
-//extern CCriticalSection g_EventCriticalSection;

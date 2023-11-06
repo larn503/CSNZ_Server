@@ -11,6 +11,7 @@ CServerInstance* g_pServerInstance;
 CEvent g_Event;
 CCriticalSection g_ServerCriticalSection;
 
+#ifdef WIN32
 void invalid_parameter_function(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
 	printf("invalid_parameter_function called\n");
@@ -20,6 +21,20 @@ void invalid_parameter_function(const wchar_t* expression, const wchar_t* functi
 		g_pConsole->Log(OBFUSCATE("%ls, %ls, %ls, %d, %p\n"), expression, function, file, line, pReserved);
 	}
 }
+
+BOOL WINAPI CtrlHandler(DWORD ctrlType)
+{
+	if (ctrlType == CTRL_CLOSE_EVENT)
+	{
+		g_pServerInstance->SetServerActive(false);
+
+		ExitThread(0); // hack to ignore close event
+		return TRUE;
+	}
+
+	return FALSE;
+}
+#endif
 
 #ifdef USE_GUI
 CObjectSync g_GUIInitEvent;
@@ -50,6 +65,7 @@ int main(int argc, char* argv[])
 #ifdef WIN32
 	SetUnhandledExceptionFilter(ExceptionFilter);
 	_set_invalid_parameter_handler(invalid_parameter_function);
+	SetConsoleCtrlHandler(CtrlHandler, TRUE);
 
 #ifdef USE_GUI
 	// hide console when using gui
@@ -102,12 +118,14 @@ int main(int argc, char* argv[])
 		Sleep(1000);
 	}
 
+#ifdef USE_GUI
+	GUI()->Exit();
+	qtThread.Join();
+#endif
+
 	listenThreadTCP.Join();
 	listenThreadUDP.Join();
 	eventThread.Join();
-#ifdef USE_GUI
-	qtThread.Join();
-#endif
 
 	g_ServerCriticalSection.Enter();
 

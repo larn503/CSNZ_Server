@@ -54,6 +54,11 @@ void CGUI::Exec()
 	m_pApplication->exec();
 }
 
+void CGUI::Exit()
+{
+	QMetaObject::invokeMethod(m_pApplication, "exit");
+}
+
 void CGUI::LogMessage(int level, const std::string& msg)
 {
 	if (m_pMainWindow)
