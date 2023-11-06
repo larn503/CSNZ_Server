@@ -11,7 +11,7 @@ using ordered_json = nlohmann::ordered_json;
 
 #define ITEM_BOX_VERSION 1
 
-CLuckyItemManager::CLuckyItemManager() : CBaseManager()
+CLuckyItemManager::CLuckyItemManager() : CBaseManager("LuckyItemManager")
 {
 }
 

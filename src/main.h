@@ -48,7 +48,8 @@ typedef UINT_PTR SOCKET;
 
 #include "ServerInstance.h"
 #include "CSVTable.h"
-#include "Common/Thread.h"
+#include "Thread.h"
+#include "Event.h"
 
 extern CConsole* g_pConsole;
 extern class CServerInstance* g_pServerInstance;
@@ -79,6 +80,8 @@ extern class CDedicatedServerManager* g_pDedicatedServerManager;
 extern class CClanManager* g_pClanManager;
 extern class CRankManager* g_pRankManager;
 
-extern CObjectSync g_Event;
-extern std::vector<struct Event_s> g_Events;
-extern CCriticalSection g_EventCriticalSection;
+extern CEvent g_Event;
+extern CCriticalSection g_ServerCriticalSection;
+//extern CObjectSync g_Event;
+//extern std::vector<struct Event_s> g_Events;
+//extern CCriticalSection g_EventCriticalSection;

@@ -2,20 +2,9 @@
 
 #include <vector>
 #include <string>
+#include "IManager.h"
 
-class IBaseManager
-{
-public:
-	virtual bool Init() = 0;
-	virtual void Shutdown() = 0;
-	virtual std::string GetName() = 0;
-	virtual void OnSecondTick(time_t curTime) = 0;
-	virtual void OnMinuteTick(time_t curTime) = 0;
-	virtual bool ShouldDoSecondTick() = 0;
-	virtual bool ShouldDoMinuteTick() = 0;
-};
-
-class CManager
+class CManager : public IManager
 {
 public:
 	bool InitAll();
@@ -37,8 +26,9 @@ template<class IInterface>
 class CBaseManager : public IInterface
 {
 public:
-	CBaseManager(bool secondTick = false, bool minuteTick = false)
+	CBaseManager(const std::string& name, bool secondTick = false, bool minuteTick = false)
 	{
+		m_Name = name;
 		m_bSecondTick = secondTick;
 		m_bMinuteTick = minuteTick;
 
@@ -54,7 +44,7 @@ public:
 	// stub methods
 	virtual bool Init() { return true; }
 	virtual void Shutdown() { printf("Shutdown called, 0x%p\n", this); }
-	virtual std::string GetName() { return ""; }
+	virtual std::string GetName() { return m_Name; }
 	virtual void OnSecondTick(time_t curTime) {}
 	virtual void OnMinuteTick(time_t curTime) {}
 	virtual bool ShouldDoSecondTick() { return m_bSecondTick; }
@@ -64,6 +54,7 @@ public:
 	void SetSecondTick(bool tick) { m_bSecondTick = tick; }
 
 private:
+	std::string m_Name;
 	bool m_bSecondTick;
 	bool m_bMinuteTick;
 };

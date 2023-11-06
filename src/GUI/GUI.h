@@ -2,6 +2,7 @@
 
 #include "IGUI.h"
 #include "MainWindow.h"
+//#include "../IUserManager.h"
 
 #include <QApplication>
 
@@ -11,9 +12,10 @@ public:
 	CGUI();
 	virtual ~CGUI();
 	
-	virtual bool Init();
+	virtual bool Init(IManager* mgr, IEvent* event);
 	virtual void Shutdown();
 	virtual void Exec();
+	virtual bool PostInit();
 
 	// thread safe methods to update GUI
 	virtual void LogMessage(int level, const std::string& msg);
@@ -25,3 +27,7 @@ private:
 	QApplication* m_pApplication;
 	CMainWindow* m_pMainWindow;
 };
+
+extern IEvent* g_pEvent;
+extern IManager* g_pManager;
+//extern IUserManager* g_pUserManager;

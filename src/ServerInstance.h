@@ -14,20 +14,6 @@
 #include "ClanManager.h"
 #include "RankManager.h"
 
-enum ServerEvent
-{
-	SERVER_EVENT_CONSOLE_COMMAND = 0,
-	SERVER_EVENT_TCP_PACKET = 1,
-	SERVER_EVENT_SECOND_TICK = 2,
-};
-
-struct Event_s
-{
-	int type;
-	std::string cmd;
-	CExtendedSocket* socket;
-	std::vector<CReceivePacket*> msgs;
-};
 
 class CServerInstance
 {
@@ -42,11 +28,12 @@ public:
 	void ListenUDP();
 	void SetServerActive(bool active);
 	bool IsServerActive();
-	void OnCommand(std::string command);
+	void OnCommand(const std::string& command);
 	void OnEvent();
 	void OnPackets(CExtendedSocket* s, std::vector<CReceivePacket*>& msgs);
 	void OnSecondTick();
 	void OnMinuteTick();
+	void OnFunction(std::vector<std::function<void()>>& funcs);
 	void UpdateConsoleStatus();
 	time_t GetCurrentTime();
 	tm* GetCurrentLocalTime();

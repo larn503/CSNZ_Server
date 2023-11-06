@@ -167,7 +167,7 @@ void CServerInstance::UnloadConfigs()
 	delete g_pServerConfig;
 }
 
-void CServerInstance::OnCommand(string command)
+void CServerInstance::OnCommand(const string& command)
 {
 	istringstream iss(command);
 	vector<string> args((istream_iterator<string>(iss)), istream_iterator<string>());
@@ -599,7 +599,7 @@ void CServerInstance::OnCommand(string command)
 	}
 	else if (args[0] == "status")
 	{
-		g_pConsole->Log("%s\n", GetMemoryInfo());
+		g_pConsole->Log("%s\n", GetMainInfo());
 	}
 	else if (args[0] == "sendevent")
 	{
@@ -659,17 +659,11 @@ void ReadConsoleThread()
 		string cmd;
 		getline(cin, cmd);
 
-		g_EventCriticalSection.Enter();
-
 		Event_s ev;
 		ev.cmd = cmd;
 		ev.type = SERVER_EVENT_CONSOLE_COMMAND;
 		ev.socket = NULL;
-		g_Events.push_back(ev);
-
-		g_Event.Signal();
-
-		g_EventCriticalSection.Leave();
+		g_Event.AddEvent(ev);
 	}
 }
 
@@ -724,7 +718,7 @@ void CServerInstance::ListenTCP()
 		return;
 	}
 
-	g_EventCriticalSection.Enter();
+	g_ServerCriticalSection.Enter();
 
 	for (int i = 0; i <= g_pNetwork->m_nFDmax; i++)
 	{
@@ -828,11 +822,9 @@ void CServerInstance::ListenTCP()
 					ev.type = SERVER_EVENT_TCP_PACKET;
 					ev.socket = s;
 					ev.msgs.push_back(s->GetMsg());
-					g_Events.push_back(ev);
-
-					g_Event.Signal();
-
 					s->SetMsg(NULL);
+
+					g_Event.AddEvent(ev);
 				}
 			}
 		}
@@ -857,7 +849,7 @@ void CServerInstance::ListenTCP()
 		}
 	}
 
-	g_EventCriticalSection.Leave();
+	g_ServerCriticalSection.Leave();
 }
 
 void CServerInstance::ListenUDP()
@@ -879,7 +871,7 @@ void CServerInstance::ListenUDP()
 		return;
 	}
 
-	g_EventCriticalSection.Enter();
+	g_ServerCriticalSection.Enter();
 
 	for (int i = 0; i <= g_pNetwork->m_nFDmax_u; i++)
 	{
@@ -931,7 +923,7 @@ void CServerInstance::ListenUDP()
 		}
 	}
 
-	g_EventCriticalSection.Leave();
+	g_ServerCriticalSection.Leave();
 }
 
 void CServerInstance::SetServerActive(bool active)
@@ -952,10 +944,12 @@ bool CServerInstance::IsServerActive()
 
 void CServerInstance::OnEvent()
 {
-	g_EventCriticalSection.Enter();
-
-	for (auto& ev : g_Events)
+	bool empty;
+	Event_s ev = g_Event.GetNextEvent(empty);
+	while (!empty)
 	{
+		g_ServerCriticalSection.Enter();
+
 		switch (ev.type)
 		{
 		case SERVER_EVENT_CONSOLE_COMMAND:
@@ -967,12 +961,15 @@ void CServerInstance::OnEvent()
 		case SERVER_EVENT_SECOND_TICK:
 			OnSecondTick();
 			break;
+		case SERVER_EVENT_FUNCTION:
+			OnFunction(ev.funcs);
+			break; 
 		}
+
+		g_ServerCriticalSection.Leave();
+
+		ev = g_Event.GetNextEvent(empty);
 	}
-
-	g_Events.clear();
-
-	g_EventCriticalSection.Leave();
 }
 
 void CServerInstance::OnPackets(CExtendedSocket* s, vector<CReceivePacket*>& msgs)
@@ -1111,6 +1108,14 @@ void CServerInstance::OnMinuteTick()
 	g_pConsole->Log("%s\n", GetMainInfo());
 
 	Manager().MinuteTick(m_CurrentTime);
+}
+
+void CServerInstance::OnFunction(vector<function<void()>>& funcs)
+{
+	for (auto& func : funcs)
+	{
+		func();
+	}
 }
 
 double CServerInstance::GetMemoryInfo()

@@ -15,7 +15,7 @@ using namespace std;
 #define OBFUSCATE(data) (char*)AY_OBFUSCATE_KEY(data, 'F')
 
 CUserDatabaseSQLite::CUserDatabaseSQLite()
-try : CBaseManager(), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
+try : CBaseManager("UserDatabase"), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {
 	m_bInited = false;
 }

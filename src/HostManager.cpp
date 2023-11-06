@@ -4,7 +4,7 @@
 
 using namespace std;
 
-CHostManager::CHostManager() : CBaseManager()
+CHostManager::CHostManager() : CBaseManager("HostManager")
 {
 }
 

@@ -2,7 +2,7 @@
 
 using namespace std;
 
-CRankManager::CRankManager() : CBaseManager()
+CRankManager::CRankManager() : CBaseManager("RankManager")
 {
 }
 

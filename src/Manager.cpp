@@ -44,6 +44,8 @@ IBaseManager* CManager::GetManager(const string& name)
 		if (p->GetName() == name)
 			return p;
 	}
+
+	return NULL;
 }
 
 void CManager::SecondTick(time_t curTime)

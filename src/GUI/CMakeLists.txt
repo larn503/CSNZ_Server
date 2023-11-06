@@ -27,6 +27,8 @@ target_sources(gui PRIVATE "RoomListTab.cpp")
 target_sources(gui PRIVATE "RoomListTab.ui")
 target_sources(gui PRIVATE "NoticeDialog.cpp")
 target_sources(gui PRIVATE "NoticeDialog.ui")
+target_sources(gui PRIVATE "SelectUserDialog.cpp")
+target_sources(gui PRIVATE "SelectUserDialog.ui")
 
 target_sources(gui PRIVATE "../Common/Utils.cpp")
 

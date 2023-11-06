@@ -1,5 +1,6 @@
 #include "MainTab.h"
 #include "Utils.h"
+#include "NoticeDialog.h"
 
 #include <ui_maintab.h>
 #include <QDateTime.h>
@@ -28,5 +29,6 @@ void CMainTab::UpdateInfo(int status, int totalConnections, int uptime, double m
 
 void CMainTab::SendNoticeBtnClicked()
 {
-
+	CNoticeDialog noticeDialog(this);
+	noticeDialog.exec();
 }

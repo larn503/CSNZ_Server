@@ -27,7 +27,7 @@ enum OutRoomPacketType
 	WeaponSurvey = 35,
 };
 
-CPacketManager::CPacketManager() : CBaseManager()
+CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 {
 	m_hMapListZip = 0;
 	m_hClientTableZip = 0;

@@ -10,7 +10,7 @@ using namespace std;
 
 #define SUPPORTED_CLIENT_BUILD "26.08.23"
 
-CUserManager::CUserManager(int maxPlayers) : CBaseManager(true)
+CUserManager::CUserManager(int maxPlayers) : CBaseManager("UserManager", true)
 {
 	m_Users.reserve(maxPlayers);
 

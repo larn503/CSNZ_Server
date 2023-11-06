@@ -11,19 +11,44 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Choose users</string>
   </property>
   <widget class="QTableWidget" name="UserTable">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>30</y>
-     <width>331</width>
+     <width>341</width>
      <height>271</height>
     </rect>
    </property>
+   <property name="editTriggers">
+    <set>QAbstractItemView::NoEditTriggers</set>
+   </property>
+   <property name="selectionBehavior">
+    <enum>QAbstractItemView::SelectRows</enum>
+   </property>
+   <property name="showGrid">
+    <bool>false</bool>
+   </property>
+   <attribute name="horizontalHeaderHighlightSections">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
+   <column>
+    <property name="text">
+     <string>ID</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>Username</string>
+    </property>
+   </column>
   </widget>
-  <widget class="QPushButton" name="SendNoticeBtn">
+  <widget class="QPushButton" name="ConfirmBtn">
    <property name="geometry">
     <rect>
      <x>590</x>
@@ -65,14 +90,39 @@
   <widget class="QTableWidget" name="SelectedUserTable">
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>410</x>
      <y>30</y>
-     <width>331</width>
+     <width>341</width>
      <height>271</height>
     </rect>
    </property>
+   <property name="editTriggers">
+    <set>QAbstractItemView::NoEditTriggers</set>
+   </property>
+   <property name="selectionBehavior">
+    <enum>QAbstractItemView::SelectRows</enum>
+   </property>
+   <property name="showGrid">
+    <bool>false</bool>
+   </property>
+   <attribute name="horizontalHeaderHighlightSections">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
+   <column>
+    <property name="text">
+     <string>ID</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>Username</string>
+    </property>
+   </column>
   </widget>
-  <widget class="QPushButton" name="SelectBtn">
+  <widget class="QPushButton" name="AddBtn">
    <property name="geometry">
     <rect>
      <x>360</x>
@@ -85,7 +135,7 @@
     <string>&gt;</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="ReturnBtn">
+  <widget class="QPushButton" name="DeleteBtn">
    <property name="geometry">
     <rect>
      <x>360</x>
@@ -101,7 +151,7 @@
   <widget class="QLabel" name="SelectedUserListLabel">
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>410</x>
      <y>10</y>
      <width>331</width>
      <height>16</height>

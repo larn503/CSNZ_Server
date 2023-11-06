@@ -8,7 +8,7 @@ using namespace std;
 
 #define ITEM_REWARDS_VERSION 1
 
-CItemManager::CItemManager() : CBaseManager(true, true)
+CItemManager::CItemManager() : CBaseManager("ItemManager", true, true)
 {
 	m_pReinforceMaxLvTable = NULL;
 	m_pReinforceMaxExpTable = NULL;

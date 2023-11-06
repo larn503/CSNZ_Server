@@ -4,7 +4,7 @@
 
 using namespace std;
 
-CMiniGameManager::CMiniGameManager() : CBaseManager()
+CMiniGameManager::CMiniGameManager() : CBaseManager("MiniGameManager")
 {
 }
 

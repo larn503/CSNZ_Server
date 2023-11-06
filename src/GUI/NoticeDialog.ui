@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Send notice</string>
   </property>
   <widget class="QPlainTextEdit" name="NotificationTextEdit">
    <property name="geometry">
@@ -36,7 +36,7 @@
     <string>Enter notification text (max. 128 characters)</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="ChooseUsersBtn">
+  <widget class="QPushButton" name="SelectUsersBtn">
    <property name="geometry">
     <rect>
      <x>130</x>

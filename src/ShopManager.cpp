@@ -9,7 +9,7 @@ using ordered_json = nlohmann::ordered_json;
 
 #define SHOP_JSON_VERSION 1
 
-CShopManager::CShopManager() : CBaseManager()
+CShopManager::CShopManager() : CBaseManager("ShopManager")
 {
 }
 

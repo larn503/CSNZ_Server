@@ -10,6 +10,9 @@
     <height>460</height>
    </rect>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::TabFocus</enum>
+  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
@@ -82,7 +85,7 @@
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>420</y>
+     <y>410</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -95,7 +98,7 @@
    <property name="geometry">
     <rect>
      <x>600</x>
-     <y>420</y>
+     <y>410</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -108,7 +111,7 @@
    <property name="geometry">
     <rect>
      <x>440</x>
-     <y>420</y>
+     <y>410</y>
      <width>75</width>
      <height>23</height>
     </rect>

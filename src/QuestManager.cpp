@@ -2,7 +2,7 @@
 
 using namespace std;
 
-CQuestManager::CQuestManager() : CBaseManager()
+CQuestManager::CQuestManager() : CBaseManager("QuestManager")
 {
 }
 

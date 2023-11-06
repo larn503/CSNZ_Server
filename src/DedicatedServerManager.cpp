@@ -85,7 +85,7 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, CExtendedSocket* soc
 	return true;
 }
 
-CDedicatedServerManager::CDedicatedServerManager() : CBaseManager()
+CDedicatedServerManager::CDedicatedServerManager() : CBaseManager("DedicatedServerManager")
 {
 }
 

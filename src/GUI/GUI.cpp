@@ -1,8 +1,11 @@
 #include "GUI.h"
 
 static CGUI g_GUI;
-
 IGUI* g_pGUI = NULL;
+
+IEvent* g_pEvent = NULL;
+IManager* g_pManager = NULL;
+//IUserManager* g_pUserManager = NULL;
 
 CGUI::CGUI()
 {
@@ -17,12 +20,23 @@ CGUI::~CGUI()
 	Shutdown();
 }
 
-bool CGUI::Init()
+bool CGUI::Init(IManager* mgr, IEvent* event)
 {
+	g_pManager = mgr;
+	g_pEvent = event;
+
 	int argc = 0;
 	m_pApplication = new QApplication(argc, NULL);
-
 	m_pMainWindow = new CMainWindow();
+
+	return true;
+}
+
+bool CGUI::PostInit()
+{
+	//g_pUserManager = g_pManager->GetManager("UserManager");
+	//if (!g_pUserManager)
+	//	return false;
 
 	return true;
 }

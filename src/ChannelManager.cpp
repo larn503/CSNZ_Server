@@ -9,7 +9,7 @@
 
 using namespace std;
 
-CChannelManager::CChannelManager()
+CChannelManager::CChannelManager() : CBaseManager("ChannelManager")
 {
 	channelServers.push_back(new CChannelServer("Channel server", 1, 1, 1));
 }

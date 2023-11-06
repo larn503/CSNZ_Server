@@ -3,7 +3,7 @@
 
 using namespace std;
 
-CClanManager::CClanManager() : CBaseManager()
+CClanManager::CClanManager() : CBaseManager("ClanManager")
 {
 }
 
