@@ -9,7 +9,7 @@ class CQuestBaseCondition
 public:
 	CQuestBaseCondition(CQuestTask* task, int id);
 
-	virtual bool Event_Internal(CUser* user);
+	virtual bool Event_Internal(IUser* user);
 
 	void SetEventType(int eventType);
 	int GetID();
@@ -26,9 +26,9 @@ class CQuestTask
 public:
 	CQuestTask(CQuest* quest, int id, std::string name, int goal);
 
-	void IncrementCount(CUser* user, int count = 0, bool setForce = false);
-	void Done(CUser* user, UserQuestTaskProgress progress);
-	void ApplyProgress(CUser* user, UserQuestTaskProgress progress);
+	void IncrementCount(IUser* user, int count = 0, bool setForce = false);
+	void Done(IUser* user, UserQuestTaskProgress progress);
+	void ApplyProgress(IUser* user, UserQuestTaskProgress progress);
 	void AddCondition(CQuestBaseCondition* condition);
 
 	void OnMinuteTick(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
@@ -41,16 +41,16 @@ public:
 	void OnMosquitoKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 
-	void OnLevelUpEvent(CUser* user, int level, int newLevel);
-	void OnGameMatchLeave(CUser* user);
+	void OnLevelUpEvent(IUser* user, int level, int newLevel);
+	void OnGameMatchLeave(IUser* user);
 	void OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, int userTeam);
-	void OnUserLogin(CUser* user);
+	void OnUserLogin(IUser* user);
 
 	std::string GetName();
 	int GetID();
 	int GetGoal();
 	CQuest* GetQuest();
-	bool IsFinished(CUser* user);
+	bool IsFinished(IUser* user);
 
 protected:
 	CQuest* m_pQuest;
@@ -82,7 +82,7 @@ public:
 	std::vector<CQuestTask*> GetTasks();
 	std::vector<QuestReward_s> GetRewards();
 
-	void ApplyProgress(CUser* user, UserQuestProgress& progress);
+	void ApplyProgress(IUser* user, UserQuestProgress& progress);
 
 	void OnMinuteTick(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKillEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, GameMatch_KillEvent& killEvent);
@@ -94,12 +94,12 @@ public:
 	void OnMosquitoKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 
-	void OnLevelUpEvent(CUser* user, int level, int newLevel);
-	void OnGameMatchLeave(CUser* user);
+	void OnLevelUpEvent(IUser* user, int level, int newLevel);
+	void OnGameMatchLeave(IUser* user);
 	void OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, int userTeam);
 
-	void OnTaskDone(CUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* task);
-	bool IsAllTaskFinished(CUser* user);
+	void OnTaskDone(IUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* task);
+	bool IsAllTaskFinished(IUser* user);
 
 private:
 	std::string m_szName;
@@ -172,7 +172,7 @@ public:
 	{
 	}
 
-	void OnLevelUpEvent(CUser* user, int level, int newLevel)
+	void OnLevelUpEvent(IUser* user, int level, int newLevel)
 	{
 		if (!CQuestBaseCondition::Event_Internal(user))
 			return;

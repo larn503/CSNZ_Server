@@ -25,35 +25,35 @@ public:
 
 	bool LoadRewards();
 	bool KVToJson();
-	bool OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	int AddItem(int userID, CUser* user, int itemId, int count, int duration);
-	int AddItems(int userID, CUser* user, std::vector<RewardItem>& item);
-	bool RemoveItem(int userID, CUser* user, CUserInventoryItem& item);
-	int UseItem(CUser* user, int slot, int additionalArg = 0, int additionalArg2 = 0);
+	bool OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	int AddItem(int userID, IUser* user, int itemId, int count, int duration);
+	int AddItems(int userID, IUser* user, std::vector<RewardItem>& item);
+	bool RemoveItem(int userID, IUser* user, CUserInventoryItem& item);
+	int UseItem(IUser* user, int slot, int additionalArg = 0, int additionalArg2 = 0);
 	bool CanUseItem(const CUserInventoryItem& item);
-	bool OpenDecoder(CUser* user, int count, int slot);
-	int ExtendItem(int userID, CUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration = false);
-	bool OnDisassembleRequest(CUser* user, CReceivePacket* msg);
-	RewardNotice GiveReward(int userID, CUser* user, int rewardID, int rewardSelectID = 0, bool ignoreClient = false, int randomRepeatCount = 0);
+	bool OpenDecoder(IUser* user, int count, int slot);
+	int ExtendItem(int userID, IUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration = false);
+	bool OnDisassembleRequest(IUser* user, CReceivePacket* msg);
+	RewardNotice GiveReward(int userID, IUser* user, int rewardID, int rewardSelectID = 0, bool ignoreClient = false, int randomRepeatCount = 0);
 
-	void OnUserLogin(CUser* user);
-	void OnNicknameChangeUse(CUser* user, std::string newNickname);
-	void OnRewardSelect(CReceivePacket* msg, CUser* user);
-	void OnCostumeEquip(CUser* user, int slot);
-	bool OnItemUse(CUser* user, CUserInventoryItem& item, int count = 1);
+	void OnUserLogin(IUser* user);
+	void OnNicknameChangeUse(IUser* user, std::string newNickname);
+	void OnRewardSelect(CReceivePacket* msg, IUser* user);
+	void OnCostumeEquip(IUser* user, int slot);
+	bool OnItemUse(IUser* user, CUserInventoryItem& item, int count = 1);
 
 	Reward* GetRewardByID(int rewardID);
 private:
-	bool OnDailyRewardsRequest(CUser* user, int requestId);
-	bool OnEnhancementRequest(CUser* user, CReceivePacket* msg);
-	bool OnWeaponPaintRequest(CUser* user, CReceivePacket* msg);
-	bool OnWeaponPaintSwitchRequest(CUser* user, CReceivePacket* msg);
-	bool OnPartEquipRequest(CUser* user, CReceivePacket* msg);
-	bool OnSwitchInUseRequest(CUser* user, CReceivePacket* msg);
-	bool OnLockItemRequest(CUser* user, CReceivePacket* msg);
+	bool OnDailyRewardsRequest(IUser* user, int requestId);
+	bool OnEnhancementRequest(IUser* user, CReceivePacket* msg);
+	bool OnWeaponPaintRequest(IUser* user, CReceivePacket* msg);
+	bool OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg);
+	bool OnPartEquipRequest(IUser* user, CReceivePacket* msg);
+	bool OnSwitchInUseRequest(IUser* user, CReceivePacket* msg);
+	bool OnLockItemRequest(IUser* user, CReceivePacket* msg);
 
 	// enhance funcs
-	void InsertExp(CUser* user, CUserInventoryItem& targetItem, std::vector<CUserInventoryItem>& items);
+	void InsertExp(IUser* user, CUserInventoryItem& targetItem, std::vector<CUserInventoryItem>& items);
 
 	std::vector<Reward> m_Rewards;
 

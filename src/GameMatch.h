@@ -26,7 +26,7 @@ public:
 
 	CUserInventoryItem* GetItem(int itemID);
 
-	CUser* m_pUser;
+	IUser* m_pUser;
 	int m_nScore;
 	int m_nKills;
 	int m_nDeaths;
@@ -57,35 +57,35 @@ public:
 class CGameMatch
 {
 public:
-	CGameMatch(CRoom* room, int gameMode, int mapID);
+	CGameMatch(IRoom* room, int gameMode, int mapID);
 	~CGameMatch();
 
-	void Connect(CUser* user);
-	void Disconnect(CUser* user);
-	CGameMatchUserStat* GetGameUserStat(CUser* user);
+	void Connect(IUser* user);
+	void Disconnect(IUser* user);
+	CGameMatchUserStat* GetGameUserStat(IUser* user);
 
 	// ingame events
-	void OnUpdateScore(CUser* user, int score);
-	void OnUpdateKillCounter(CUser* user, int kills);
-	void OnUpdateDeathCounter(CUser* user, int deaths);
+	void OnUpdateScore(IUser* user, int score);
+	void OnUpdateKillCounter(IUser* user, int kills);
+	void OnUpdateDeathCounter(IUser* user, int deaths);
 	void OnUpdateWinCounter(int ctWinCount, int tWinCount);
-	void OnUpdateClass(CUser* user, int classItemID);
+	void OnUpdateClass(IUser* user, int classItemID);
 	void OnGameMatchEnd();
-	void OnKillEvent(CUser* user, GameMatch_KillEvent& killEvent);
-	void OnBombExplode(CUser* user);
-	void OnBombDefuse(CUser* user);
-	void OnHostageEscape(CUser* user);
-	void OnMonsterKill(CUser* user, int monsterType);
-	void OnDropBoxPickup(CUser* user, int rewardID);
-	void OnMosquitoKill(CUser* user);
-	void OnKiteKill(CUser* user);
+	void OnKillEvent(IUser* user, GameMatch_KillEvent& killEvent);
+	void OnBombExplode(IUser* user);
+	void OnBombDefuse(IUser* user);
+	void OnHostageEscape(IUser* user);
+	void OnMonsterKill(IUser* user, int monsterType);
+	void OnDropBoxPickup(IUser* user, int rewardID);
+	void OnMosquitoKill(IUser* user);
+	void OnKiteKill(IUser* user);
 
 	int GetExpCoefficient();
 	int GetPointsCoefficient();
 	bool IsZombieMode();
 	void SetSaveData(const std::vector<unsigned char>& saveData);
 	std::vector<unsigned char>& GetSaveData();
-	void OnHostChanged(CUser* newHost);
+	void OnHostChanged(IUser* newHost);
 	void CalculateFirstPlace();
 	void CalculateGameResult();
 	void ApplyGameResult();
@@ -106,5 +106,5 @@ public:
 private:
 	int m_nSecondCounter;
 
-	CRoom* m_pParentRoom;
+	IRoom* m_pParentRoom;
 };

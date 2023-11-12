@@ -5,24 +5,25 @@
 #include "UserInventoryItem.h"
 #include "Channel.h"
 #include "Definitions.h"
+#include "IUser.h"
 
-class CUser
+class CUser : public IUser
 {
 public:
-	CUser(CExtendedSocket* socket, int userID, std::string userName);
+	CUser(IExtendedSocket* socket, int userID, const std::string& userName);
 	~CUser();
 
 	void SetCurrentChannel(CChannel* channel);
 	void SetLastChannelServer(CChannelServer* channelServer);
 	void SetStatus(UserStatus newStatus);
-	void SetCurrentRoom(CRoom* room);
+	void SetCurrentRoom(IRoom* room);
 	void SetRoomData(CRoomUser* roomUser);
 
 	UserNetworkConfig_s GetNetworkConfig();
-	CExtendedSocket* GetExtendedSocket();
+	IExtendedSocket* GetExtendedSocket();
 	CChannel* GetCurrentChannel();
 	CChannelServer* GetLastChannelServer();
-	CRoom* GetCurrentRoom();
+	IRoom* GetCurrentRoom();
 	CRoomUser* GetRoomData();
 	UserStatus GetStatus();
 	int GetUptime();
@@ -35,7 +36,7 @@ public:
 
 	int UpdateHolepunch(int portId, int localPort, int externalPort);
 	void UpdateClientUserInfo(int flag, CUserCharacter character);
-	void UpdateGameName(std::string gameName);
+	void UpdateGameName(const std::string& gameName);
 	int UpdatePoints(int64_t points);
 	void UpdateCash(int64_t cash);
 	void UpdateHonorPoints(int honorPoints);
@@ -50,7 +51,7 @@ public:
 	void UpdateAchievementList(int titleID);
 	void UpdateClan(int clanID);
 	void UpdateTournament(int tournament);
-	int UpdateBanList(std::string gameName, bool remove = false);
+	int UpdateBanList(const std::string& gameName, bool remove = false);
 	void UpdateBanSettings(int settings);
 	void UpdateNameplate(int nameplateID);
 	void UpdateZbRespawnEffect(int zbRespawnEffect);
@@ -61,15 +62,15 @@ public:
 	void OnTick();
 
 	bool IsCharacterExists();
-	bool CreateCharacter(std::string gameName);
+	bool CreateCharacter(const std::string& gameName);
 
 private:
-	CExtendedSocket* m_pSocket;
+	IExtendedSocket* m_pSocket;
 
 	// network data
 	UserNetworkConfig_s m_NetworkData;
 
-	CRoom* m_pCurrentRoom;
+	IRoom* m_pCurrentRoom;
 	CRoomUser* m_pRoomData;
 	CChannel* m_pCurrentChannel;
 	CChannelServer* m_pLastChannelServer;

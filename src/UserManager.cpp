@@ -18,7 +18,7 @@ CUserManager::CUserManager(int maxPlayers) : CBaseManager("UserManager", true)
 		m_DefaultItems.push_back(CUserInventoryItem(i, g_pServerConfig->defUser.defaultItems[i], 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0));
 }
 
-bool CUserManager::OnLoginPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
@@ -36,7 +36,7 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	{
 		g_pConsole->Log("Client (%s) disconnected from the server due to banned HWID\n", socket->GetIP().c_str());
 
-		CUser* user = g_pUserManager->GetUserBySocket(socket);
+		IUser* user = g_pUserManager->GetUserBySocket(socket);
 		if (user)
 		{
 			g_pUserManager->RemoveUser(user);
@@ -52,11 +52,11 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnUdpPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnUdpPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -96,11 +96,11 @@ bool CUserManager::OnUdpPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnOptionPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnOptionPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -125,7 +125,7 @@ bool CUserManager::OnOptionPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnVersionPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnVersionPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
@@ -148,7 +148,7 @@ bool CUserManager::OnVersionPacket(CReceivePacket* msg, CExtendedSocket* socket)
 			// TODO: get HWID by ip
 			//g_pUserDatabase->SuspectAddAction(socket->GetIP(), 1);
 #endif
-			CUser* user = GetUserBySocket(socket);
+			IUser* user = GetUserBySocket(socket);
 			if (user)
 				RemoveUser(user);
 
@@ -176,11 +176,11 @@ bool CUserManager::OnVersionPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnFavoritePacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnFavoritePacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -203,7 +203,7 @@ bool CUserManager::OnFavoritePacket(CReceivePacket* msg, CExtendedSocket* socket
 	return false;
 }
 
-bool CUserManager::OnFavoriteSetFastBuy(CReceivePacket* msg, CUser* user)
+bool CUserManager::OnFavoriteSetFastBuy(CReceivePacket* msg, IUser* user)
 {
 	vector<int> fastBuyItems;
 	int fastBuySlot = msg->ReadInt8();
@@ -220,7 +220,7 @@ bool CUserManager::OnFavoriteSetFastBuy(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, CUser* user)
+bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 {
 	int bookmarkSlot = msg->ReadUInt8();
 	int itemID = msg->ReadUInt16();
@@ -236,7 +236,7 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-void CUserManager::SendUserInventory(CUser* user)
+void CUserManager::SendUserInventory(IUser* user)
 {
 	vector<CUserInventoryItem> items;
 	g_pUserDatabase->GetInventoryItems(user->GetID(), items);
@@ -245,7 +245,7 @@ void CUserManager::SendUserInventory(CUser* user)
 	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
 }
 
-bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, CUser* user)
+bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 {
 	int loadoutID = 0;
 	int itemID = 0;
@@ -331,7 +331,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CUserManager::OnFavoriteSetBuyMenu(CReceivePacket* msg, CUser* user)
+bool CUserManager::OnFavoriteSetBuyMenu(CReceivePacket* msg, IUser* user)
 {
 	int subMenuID = msg->ReadUInt8();
 	int subMenuSlot = msg->ReadUInt8();
@@ -356,7 +356,7 @@ bool CUserManager::OnFavoriteSetBuyMenu(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-int CUserManager::ChangeUserNickname(CUser* user, string newNickname, bool createCharacter)
+int CUserManager::ChangeUserNickname(IUser* user, const string& newNickname, bool createCharacter)
 {
 	if (newNickname.size() < 4)
 		return -1;
@@ -394,16 +394,16 @@ vector<CUserInventoryItem>& CUserManager::GetDefaultInventoryItems()
 	return m_DefaultItems;
 }
 
-void CUserManager::SendGuestUserPacket(CExtendedSocket* socket)
+void CUserManager::SendGuestUserPacket(IExtendedSocket* socket)
 {
 	g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Welcome to the CSN:S server. Enter /login <username> <password> to login to your account."));
 	g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("If you don't have an account enter /register <username> <password>"));
 	g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Server developers: Jusic, Hardee, NekoMeow, Smilex_Gamer, xRiseless. Our Discord: https://discord.gg/EvUAY6D"));
 }
 
-void CUserManager::SendLoginPacket(CUser* user, const CUserCharacter& character)
+void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 {
-	CExtendedSocket* socket = user->GetExtendedSocket();
+	IExtendedSocket* socket = user->GetExtendedSocket();
 
 	g_pPacketManager->SendUserStart(socket, user->GetID(), user->GetUsername(), character.gameName, true);
 	g_pPacketManager->SendUserUpdateInfo(socket, user, character);
@@ -412,7 +412,7 @@ void CUserManager::SendLoginPacket(CUser* user, const CUserCharacter& character)
 	if (characterExtended.config.size())
 		g_pPacketManager->SendOption(socket, characterExtended.config);
 
-	std::vector<string> banList;
+	vector<string> banList;
 	g_pUserDatabase->GetBanList(user->GetID(), banList);
 	g_pPacketManager->SendBanList(socket, banList);
 
@@ -466,7 +466,7 @@ void CUserManager::SendLoginPacket(CUser* user, const CUserCharacter& character)
 	g_pPacketManager->SendLeaguePacket(socket);
 }
 
-void CUserManager::SendMetadata(CExtendedSocket* socket)
+void CUserManager::SendMetadata(IExtendedSocket* socket)
 {
 	int flag = g_pServerConfig->metadataToSend;
 	if (flag & kMetadataFlag_MapList)
@@ -535,7 +535,7 @@ void CUserManager::SendMetadata(CExtendedSocket* socket)
 		g_pPacketManager->SendMetadataRandomWeaponList(socket);
 }
 
-void CUserManager::SendUserLoadout(CUser* user)
+void CUserManager::SendUserLoadout(IUser* user)
 {
 	CUserLoadout loadout = {};
 	g_pUserDatabase->GetLoadouts(user->GetID(), loadout);
@@ -559,7 +559,7 @@ void CUserManager::SendUserLoadout(CUser* user)
 	g_pPacketManager->SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 }
 
-void CUserManager::SendUserNotices(CUser* user)
+void CUserManager::SendUserNotices(IUser* user)
 {
 	for (auto& notice : g_pServerConfig->notices)
 	{
@@ -567,13 +567,13 @@ void CUserManager::SendUserNotices(CUser* user)
 	}
 }
 
-bool CUserManager::OnCharacterPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnCharacterPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
 	string name = msg->ReadString();
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 
 	int replyCode = ChangeUserNickname(user, name, true);
 	switch (replyCode)
@@ -610,11 +610,11 @@ bool CUserManager::OnCharacterPacket(CReceivePacket* msg, CExtendedSocket* socke
 	return true;
 }
 
-bool CUserManager::OnUserMessage(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnUserMessage(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 
 	int type = msg->ReadUInt8();
 	switch (type)
@@ -645,11 +645,11 @@ bool CUserManager::OnUserMessage(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -691,19 +691,19 @@ void CUserManager::OnSecondTick(time_t curTime)
 		u->OnTick();
 }
 
-void CUserManager::SendNoticeMessageToAll(string msg)
+void CUserManager::SendNoticeMessageToAll(const string& msg)
 {
 	for (auto u : m_Users)
 		g_pPacketManager->SendUMsgNoticeMessageInChat(u->GetExtendedSocket(), msg);
 }
 
-void CUserManager::SendNoticeMsgBoxToAll(string msg)
+void CUserManager::SendNoticeMsgBoxToAll(const string& msg)
 {
 	for (auto u : m_Users)
 		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(u->GetExtendedSocket(), msg);
 }
 
-int CUserManager::LoginUser(CExtendedSocket* socket, string userName, string password)
+int CUserManager::LoginUser(IExtendedSocket* socket, const string& userName, const string& password)
 {
 	UserBan ban = {};
 	int userID = g_pUserDatabase->Login(userName, password, socket, ban, NULL);
@@ -738,7 +738,7 @@ int CUserManager::LoginUser(CExtendedSocket* socket, string userName, string pas
 		return LOGIN_USER_ALREADY_LOGGED_IN_UUID;
 	}
 
-	CUser* newUser = AddUser(socket, userID, userName);
+	IUser* newUser = AddUser(socket, userID, userName);
 	if (!newUser)
 	{
 		g_pConsole->Log("Login failed (code: %d)\n", LOGIN_SERVER_IS_FULL); // -5 (user limit)
@@ -787,7 +787,7 @@ int CUserManager::LoginUser(CExtendedSocket* socket, string userName, string pas
 	return LOGIN_OK;
 }
 
-int CUserManager::RegisterUser(CExtendedSocket* socket, string userName, string password)
+int CUserManager::RegisterUser(IExtendedSocket* socket, const string& userName, const string& password)
 {
 	if (password.size() < 5 || password.size() > 15 || password.find_first_not_of("0123456789") == string::npos)
 		return REGISTER_PASSWORD_WRONG;
@@ -806,9 +806,9 @@ int CUserManager::RegisterUser(CExtendedSocket* socket, string userName, string 
 	return regResult;
 }
 
-void CUserManager::DisconnectUser(CUser* user)
+void CUserManager::DisconnectUser(IUser* user)
 {
-	CExtendedSocket* socket = user->GetExtendedSocket();
+	IExtendedSocket* socket = user->GetExtendedSocket();
 	RemoveUser(user);
 
 	g_pNetwork->RemoveSocket(socket);
@@ -822,7 +822,7 @@ void CUserManager::DisconnectAllFromServer()
 	}
 }
 
-CUser* CUserManager::AddUser(CExtendedSocket* socket, int userID, string userName)
+IUser* CUserManager::AddUser(IExtendedSocket* socket, int userID, const string& userName)
 {
 	if ((int)m_Users.size() >= g_pServerConfig->maxPlayers)
 		return NULL;
@@ -833,7 +833,7 @@ CUser* CUserManager::AddUser(CExtendedSocket* socket, int userID, string userNam
 	return newUser;
 }
 
-CUser* CUserManager::GetUserById(int userId)
+IUser* CUserManager::GetUserById(int userId)
 {
 	for (auto u : m_Users)
 	{
@@ -844,7 +844,7 @@ CUser* CUserManager::GetUserById(int userId)
 	return NULL;
 }
 
-CUser* CUserManager::GetUserBySocket(CExtendedSocket* socket)
+IUser* CUserManager::GetUserBySocket(IExtendedSocket* socket)
 {
 	for (auto u : m_Users)
 	{
@@ -855,7 +855,7 @@ CUser* CUserManager::GetUserBySocket(CExtendedSocket* socket)
 	return NULL;
 }
 
-CUser* CUserManager::GetUserByUsername(string username)
+IUser* CUserManager::GetUserByUsername(const string& username)
 {
 	for (auto u : m_Users)
 	{
@@ -868,14 +868,14 @@ CUser* CUserManager::GetUserByUsername(string username)
 	return NULL;
 }
 
-CUser* CUserManager::GetUserByNickname(string nickname)
+IUser* CUserManager::GetUserByNickname(const string& nickname)
 {
 	int userID = g_pUserDatabase->IsUserExists(nickname, false);
 
 	return GetUserById(userID);
 }
 
-void CUserManager::RemoveUser(CUser* user)
+void CUserManager::RemoveUser(IUser* user)
 {
 	for (auto u : m_Users)
 	{
@@ -903,7 +903,7 @@ void CUserManager::RemoveUserById(int userId)
 	}
 }
 
-void CUserManager::RemoveUserBySocket(CExtendedSocket* socket)
+void CUserManager::RemoveUserBySocket(IExtendedSocket* socket)
 {
 	for (auto u : m_Users)
 	{
@@ -917,9 +917,9 @@ void CUserManager::RemoveUserBySocket(CExtendedSocket* socket)
 	}
 }
 
-void CUserManager::CleanUpUser(CUser* user)
+void CUserManager::CleanUpUser(IUser* user)
 {
-	CRoom* room = user->GetCurrentRoom();
+	IRoom* room = user->GetCurrentRoom();
 	if (room)
 		room->RemoveUser(user);
 
@@ -930,16 +930,16 @@ void CUserManager::CleanUpUser(CUser* user)
 	user->SetCurrentChannel(NULL);
 }
 
-std::vector<CUser*> CUserManager::GetUsers()
+std::vector<IUser*> CUserManager::GetUsers()
 {
 	return m_Users;
 }
 
-bool CUserManager::OnReportPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnReportPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 #if 0
-	CUser* user = GetUserByUuid(socket->GetUUID());
+	IUser* user = GetUserByUuid(socket->GetUUID());
 	if (user == NULL)
 		return false;
 
@@ -970,11 +970,11 @@ bool CUserManager::OnReportPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnAlarmPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnAlarmPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 	{
 		return false;
@@ -991,11 +991,11 @@ bool CUserManager::OnAlarmPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnUserSurveyPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnUserSurveyPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -1019,11 +1019,11 @@ bool CUserManager::OnUserSurveyPacket(CReceivePacket* msg, CExtendedSocket* sock
 	return true;
 }
 
-bool CUserManager::OnBanPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnBanPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -1047,11 +1047,11 @@ bool CUserManager::OnBanPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnMessengerPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnMessengerPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -1077,11 +1077,11 @@ bool CUserManager::OnMessengerPacket(CReceivePacket* msg, CExtendedSocket* socke
 	return true;
 }
 
-bool CUserManager::OnAddonPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnAddonPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -1095,11 +1095,11 @@ bool CUserManager::OnAddonPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CUserManager::OnLeaguePacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CUserManager::OnLeaguePacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = GetUserBySocket(socket);
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -1117,7 +1117,7 @@ bool CUserManager::OnLeaguePacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, CUser* user)
+void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 {
 	UserSurveyAnswer answer;
 	int surveyID = msg->ReadUInt32();
@@ -1188,7 +1188,7 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, CUser* user)
 	g_pPacketManager->SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_OK);
 }
 
-void CUserManager::OnBanAddNicknameRequest(CReceivePacket* msg, CUser* user)
+void CUserManager::OnBanAddNicknameRequest(CReceivePacket* msg, IUser* user)
 {
 	string gameName = msg->ReadString();
 
@@ -1213,7 +1213,7 @@ void CUserManager::OnBanAddNicknameRequest(CReceivePacket* msg, CUser* user)
 	}
 }
 
-void CUserManager::OnBanRemoveNicknameRequest(CReceivePacket* msg, CUser* user)
+void CUserManager::OnBanRemoveNicknameRequest(CReceivePacket* msg, IUser* user)
 {
 	string gameName = msg->ReadString();
 
@@ -1232,7 +1232,7 @@ void CUserManager::OnBanRemoveNicknameRequest(CReceivePacket* msg, CUser* user)
 	}
 }
 
-void CUserManager::OnBanSettingsRequest(CReceivePacket* msg, CUser* user)
+void CUserManager::OnBanSettingsRequest(CReceivePacket* msg, IUser* user)
 {
 	int settings = msg->ReadUInt8();
 

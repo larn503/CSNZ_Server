@@ -4,7 +4,7 @@
 
 using namespace std;
 
-CChannel::CChannel(CChannelServer* server, int id, string channelName, int maxPlayers, string loginMsg)
+CChannel::CChannel(CChannelServer* server, int id, const std::string& channelName, int maxPlayers, const std::string& loginMsg)
 {
 	m_nID = id;
 	m_szName = channelName;
@@ -16,7 +16,7 @@ CChannel::CChannel(CChannelServer* server, int id, string channelName, int maxPl
 	m_Users.reserve(maxPlayers);
 }
 
-bool CChannel::UserJoin(CUser* user, bool unhide)
+bool CChannel::UserJoin(IUser* user, bool unhide)
 {
 	if (unhide)
 	{
@@ -59,7 +59,7 @@ bool CChannel::UserJoin(CUser* user, bool unhide)
 	return true;
 }
 
-void CChannel::UserLeft(CUser* user, bool hide)
+void CChannel::UserLeft(IUser* user, bool hide)
 {
 	if (user->GetCurrentRoom() && !hide)
 	{
@@ -92,12 +92,12 @@ void CChannel::SendFullUpdateRoomList()
 	}
 }
 
-void CChannel::SendFullUpdateRoomList(CUser* user)
+void CChannel::SendFullUpdateRoomList(IUser* user)
 {
 	g_pPacketManager->SendRoomListFull(user->GetExtendedSocket(), m_Rooms);
 }
 
-void CChannel::SendUpdateRoomList(CRoom* room)
+void CChannel::SendUpdateRoomList(IRoom* room)
 {
 	for (auto u : m_Users)
 	{
@@ -108,7 +108,7 @@ void CChannel::SendUpdateRoomList(CRoom* room)
 	}
 }
 
-void CChannel::SendAddRoomToRoomList(CRoom* room)
+void CChannel::SendAddRoomToRoomList(IRoom* room)
 {
 	for (auto u : m_Users)
 	{
@@ -130,7 +130,7 @@ void CChannel::SendRemoveFromRoomList(int roomId)
 	}
 }
 
-void CChannel::SendLobbyMessageToAllUser(string senderName, string msg)
+void CChannel::SendLobbyMessageToAllUser(const std::string& senderName, const std::string& msg)
 {
 	for (auto u : m_Users)
 	{
@@ -138,7 +138,7 @@ void CChannel::SendLobbyMessageToAllUser(string senderName, string msg)
 	}
 }
 
-void CChannel::UpdateUserInfo(CUser* user, const CUserCharacter& character)
+void CChannel::UpdateUserInfo(IUser* user, const CUserCharacter& character)
 {
 	for (auto u : m_Users)
 	{
@@ -146,7 +146,7 @@ void CChannel::UpdateUserInfo(CUser* user, const CUserCharacter& character)
 	}
 }
 
-void CChannel::OnEmptyRoomCallback(CRoom* room)
+void CChannel::OnEmptyRoomCallback(IRoom* room)
 {
 	if (!RemoveRoomById(room->GetID()))
 		g_pConsole->Log(OBFUSCATE("CChannel::OnEmptyRoomCallback: couldn't find room with %d ID. Room will remain in channel room list\n"), room->GetID());
@@ -154,7 +154,7 @@ void CChannel::OnEmptyRoomCallback(CRoom* room)
 	delete room;
 }
 
-CRoom* CChannel::GetRoomById(int id)
+IRoom* CChannel::GetRoomById(int id)
 {
 	for (auto room : m_Rooms)
 	{
@@ -164,7 +164,7 @@ CRoom* CChannel::GetRoomById(int id)
 	return NULL;
 }
 
-CUser* CChannel::GetUserById(int userId)
+IUser* CChannel::GetUserById(int userId)
 {
 	for (auto user : m_Users)
 	{
@@ -174,7 +174,7 @@ CUser* CChannel::GetUserById(int userId)
 	return NULL;
 }
 
-CRoom* CChannel::CreateRoom(CUser* host, CRoomSettings* settings)
+IRoom* CChannel::CreateRoom(IUser* host, CRoomSettings* settings)
 {
 	m_Rooms.push_back(new CRoom(m_nNextRoomID++, host, this, settings));
 	return m_Rooms[m_Rooms.size() - 1];
@@ -218,12 +218,12 @@ std::string CChannel::GetName()
 	return m_szName;
 }
 
-std::vector<CRoom*> CChannel::GetRooms()
+std::vector<IRoom*> CChannel::GetRooms()
 {
 	return m_Rooms;
 }
 
-std::vector<CUser*> CChannel::GetUsers()
+std::vector<IUser*> CChannel::GetUsers()
 {
 	return m_Users;
 }

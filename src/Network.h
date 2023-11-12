@@ -21,9 +21,9 @@ public:
 
 	static int SendMessage(SOCKET curSocket, const char* message, int messageSize);
 	static int ReceiveMessage(SOCKET curSocket, char* buffer, int bufSize);
-	CExtendedSocket* AcceptNewClient(unsigned int& id);
-	CExtendedSocket* GetExSocketBySocket(SOCKET socket);
-	void RemoveSocket(CExtendedSocket* socket);
+	IExtendedSocket* AcceptNewClient(unsigned int& id);
+	IExtendedSocket* GetExSocketBySocket(SOCKET socket);
+	void RemoveSocket(IExtendedSocket* socket);
 
 	SOCKET m_TCPSocket;
 	SOCKET m_UDPSocket;
@@ -38,5 +38,5 @@ public:
 
 	int m_iResult;
 
-	std::vector<CExtendedSocket*> m_Sessions;
+	std::vector<IExtendedSocket*> m_Sessions;
 };

@@ -76,10 +76,10 @@ int main(int argc, char* argv[])
 #ifdef USE_GUI
 	CThread qtThread(GUIThread);
 	qtThread.Start();
-#endif
 
 	// wait for gui init before we init the server
 	g_GUIInitEvent.WaitForSignal();
+#endif
 
 	g_pConsole = new CConsole();
 	g_pServerInstance = new CServerInstance();
@@ -94,7 +94,14 @@ int main(int argc, char* argv[])
 	}
 
 #ifdef USE_GUI
-	GUI()->PostInit();
+	if (!GUI()->PostInit(g_pServerInstance))
+	{
+		qtThread.Join();
+		delete g_pServerInstance;
+		delete g_pConsole;
+		return 1;
+	}
+
 	GUI()->ShowMainWindow();
 #endif
 
@@ -109,11 +116,7 @@ int main(int argc, char* argv[])
 
 	while (g_pServerInstance->IsServerActive())
 	{
-		Event_s ev;
-		ev.type = SERVER_EVENT_SECOND_TICK;
-		ev.socket = NULL;
-
-		g_Event.AddEvent(ev);
+		g_Event.AddEventSecondTick();
 
 		Sleep(1000);
 	}

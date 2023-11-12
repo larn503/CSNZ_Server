@@ -5,8 +5,10 @@
 #define UDP_HOLEPUNCHER2_PACKET_SIGNATURE = 'X';
 #define UDP_HOLEPUNCHER3_PACKET_SIGNATURE = '`';
 
-#include <vector>
 #include "UserLoadout.h"
+
+#include <string>
+#include <vector>
 
 #define CSO_24_HOURS_IN_MINUTES 1440
 #define CSO_24_HOURS_IN_SECONDS 86400
@@ -1014,6 +1016,29 @@ class CUserQuestStats
 	int dailyMissionsCleared;
 };
 
+// UserSession table + some additional info from usercharacter
+struct UserSession
+{
+	int userID;
+	std::string userName;
+	std::string gameName;
+	std::string ip;
+	int status;
+	int uptime;
+};
+
+// like UserSession struct but server-side (without accessing db)
+struct Session
+{
+	int clientID;
+	int userID;
+	std::string userName;
+	std::string ip;
+	int status;
+	int uptime;
+	int roomID;
+};
+
 enum ClanPacketType
 {
 	RequestClanList = 0,
@@ -1124,7 +1149,7 @@ struct ClanUser
 	int userID;
 	std::string userName;
 	CUserCharacter character;
-	class CUser* user;
+	class IUser* user;
 	int memberGrade;
 };
 struct ClanUserJoinRequest

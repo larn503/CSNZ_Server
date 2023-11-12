@@ -11,64 +11,64 @@ public:
 
 	virtual void OnSecondTick(time_t curTime);
 
-	bool OnLoginPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUdpPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnOptionPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnVersionPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnFavoritePacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnCharacterPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUserMessage(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUpdateInfoPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnReportPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnAlarmPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUserSurveyPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnBanPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnMessengerPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnAddonPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnLeaguePacket(CReceivePacket* msg, CExtendedSocket* socket);
+	bool OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUdpPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnOptionPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnVersionPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnFavoritePacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnCharacterPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUserMessage(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnReportPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnAlarmPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUserSurveyPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnBanPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnMessengerPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnAddonPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnLeaguePacket(CReceivePacket* msg, IExtendedSocket* socket);
 
-	void SendNoticeMessageToAll(std::string msg);
-	void SendNoticeMsgBoxToAll(std::string msg);
+	void SendNoticeMessageToAll(const std::string& msg);
+	void SendNoticeMsgBoxToAll(const std::string& msg);
 
-	int LoginUser(CExtendedSocket* socket, std::string userName, std::string password);
-	int RegisterUser(CExtendedSocket* socket, std::string userName, std::string password);
-	void DisconnectUser(CUser* user);
+	int LoginUser(IExtendedSocket* socket, const std::string& userName, const std::string& password);
+	int RegisterUser(IExtendedSocket* socket, const std::string& userName, const std::string& password);
+	void DisconnectUser(IUser* user);
 	void DisconnectAllFromServer();
-	CUser* AddUser(CExtendedSocket* socket, int userID, std::string userName);
-	CUser* GetUserById(int userId);
-	CUser* GetUserBySocket(CExtendedSocket* socket);
-	CUser* GetUserByUsername(std::string username);
-	CUser* GetUserByNickname(std::string userName);
-	void RemoveUser(CUser* user);
+	IUser* AddUser(IExtendedSocket* socket, int userID, const std::string& userName);
+	IUser* GetUserById(int userId);
+	IUser* GetUserBySocket(IExtendedSocket* socket);
+	IUser* GetUserByUsername(const std::string& username);
+	IUser* GetUserByNickname(const std::string& nickname);
+	void RemoveUser(IUser* user);
 	void RemoveUserById(int userId);
-	void RemoveUserBySocket(CExtendedSocket* socket);
-	void CleanUpUser(CUser* user);
+	void RemoveUserBySocket(IExtendedSocket* socket);
+	void CleanUpUser(IUser* user);
 
-	std::vector<CUser*> GetUsers();
+	std::vector<IUser*> GetUsers();
 
-	int ChangeUserNickname(CUser* user, std::string newNickname, bool createCharacter = false);
+	int ChangeUserNickname(IUser* user, const std::string& newNickname, bool createCharacter = false);
 
 	std::vector<CUserInventoryItem>& GetDefaultInventoryItems();
 
-	void SendMetadata(CExtendedSocket* socket);
+	void SendMetadata(IExtendedSocket* socket);
 
 private:
-	void SendGuestUserPacket(CExtendedSocket* socket);
-	void SendLoginPacket(CUser* user, const CUserCharacter& character);
-	void SendUserInventory(CUser* user);
-	void SendUserLoadout(CUser* user);
-	void SendUserNotices(CUser* user);
-	bool OnFavoriteSetLoadout(CReceivePacket* msg, CUser* user);
-	bool OnFavoriteSetBuyMenu(CReceivePacket* msg, CUser* user);
-	bool OnFavoriteSetFastBuy(CReceivePacket* msg, CUser* user);
-	bool OnFavoriteSetBookmark(CReceivePacket* msg, CUser* user);
+	void SendGuestUserPacket(IExtendedSocket* socket);
+	void SendLoginPacket(IUser* user, const CUserCharacter& character);
+	void SendUserInventory(IUser* user);
+	void SendUserLoadout(IUser* user);
+	void SendUserNotices(IUser* user);
+	bool OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user);
+	bool OnFavoriteSetBuyMenu(CReceivePacket* msg, IUser* user);
+	bool OnFavoriteSetFastBuy(CReceivePacket* msg, IUser* user);
+	bool OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user);
 
-	void OnUserSurveyAnswerRequest(CReceivePacket* msg, CUser* user);
+	void OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user);
 
-	void OnBanAddNicknameRequest(CReceivePacket* msg, CUser* user);
-	void OnBanRemoveNicknameRequest(CReceivePacket* msg, CUser* user);
-	void OnBanSettingsRequest(CReceivePacket* msg, CUser* user);
+	void OnBanAddNicknameRequest(CReceivePacket* msg, IUser* user);
+	void OnBanRemoveNicknameRequest(CReceivePacket* msg, IUser* user);
+	void OnBanSettingsRequest(CReceivePacket* msg, IUser* user);
 
-	std::vector<CUser*> m_Users;
+	std::vector<IUser*> m_Users;
 	std::vector<CUserInventoryItem> m_DefaultItems;
 };

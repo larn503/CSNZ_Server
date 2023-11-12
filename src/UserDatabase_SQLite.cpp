@@ -225,7 +225,7 @@ bool CUserDatabaseSQLite::ExecuteOnce()
 
 // creates a new session for user
 // returns > 0 == userID, 0 == database error, -1 == no such user or not in restore list, -2 == user already logged in, -4 == user banned
-int CUserDatabaseSQLite::Login(string userName, string password, CExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData)
+int CUserDatabaseSQLite::Login(const string& userName, const string& password, IExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData)
 {
 	try
 	{
@@ -276,7 +276,7 @@ int CUserDatabaseSQLite::Login(string userName, string password, CExtendedSocket
 		queryGetUserSession.bind(1, userID);
 		if (queryGetUserSession.executeStep())
 		{
-			CUser* user = g_pUserManager->GetUserById(userID);
+			IUser* user = g_pUserManager->GetUserById(userID);
 			if (user)
 			{
 				g_pUserManager->DisconnectUser(user);
@@ -354,7 +354,7 @@ int CUserDatabaseSQLite::AddToRestoreList(int userID, int channelServerID, int c
 
 // creates a new user
 // returns 0 == database error, 1 on success, -1 == user with the same username already exists, -4 == ip limit
-int CUserDatabaseSQLite::Register(string userName, string password, string ip)
+int CUserDatabaseSQLite::Register(const string& userName, const string& password, const string& ip)
 {
 	try
 	{
@@ -403,6 +403,39 @@ int CUserDatabaseSQLite::Register(string userName, string password, string ip)
 	catch (exception& e)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::Register: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
+// get info about all sessions
+// returns 0 == database error, 1 on success
+int CUserDatabaseSQLite::GetUserSessions(std::vector<UserSession>& sessions)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, "SELECT UserSession.userID, UserSession.ip, UserSession.sessionTime, User.userName, UserCharacter.gameName "
+			"FROM UserSession "
+			"INNER JOIN User "
+			"ON UserSession.userID = User.userID "
+			"INNER JOIN UserCharacter "
+			"ON UserSession.userID = UserCharacter.userID");
+		while (query.executeStep())
+		{
+			UserSession session;
+			session.userID = query.getColumn(0);
+			session.ip = query.getColumn(1).getString();
+			session.uptime = query.getColumn(2);
+			//session.roomID = query.getColumn(3);
+			session.userName = query.getColumn(3).getString();
+			session.gameName = query.getColumn(4).getString();
+			sessions.push_back(session);
+		}
+	}
+	catch (exception& e)
+	{
+		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::GetUserSessions: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -477,7 +510,7 @@ void CUserDatabaseSQLite::PrintUserList()
 	}
 }
 
-void CUserDatabaseSQLite::LoadBackup(string backupDate)
+void CUserDatabaseSQLite::LoadBackup(const string& backupDate)
 {
 	try
 	{
@@ -535,7 +568,7 @@ void CUserDatabaseSQLite::ResetQuestEvent(int eventID)
 	}
 }
 
-void CUserDatabaseSQLite::WriteUserStatistic(string fdate, string sdate)
+void CUserDatabaseSQLite::WriteUserStatistic(const string& fdate, const string& sdate)
 {
 	try
 	{
@@ -1113,7 +1146,7 @@ int CUserDatabaseSQLite::UpdateUserData(int userID, CUserData data)
 
 // creates user character
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::CreateCharacter(int userID, string gameName)
+int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 {
 	try
 	{
@@ -2040,7 +2073,7 @@ int CUserDatabaseSQLite::GetFastBuy(int userID, vector<CUserFastBuy>& fastBuy)
 
 // updates user fast buy
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::UpdateFastBuy(int userID, int slot, string name, vector<int> items)
+int CUserDatabaseSQLite::UpdateFastBuy(int userID, int slot, const string& name, const vector<int>& items)
 {
 	try
 	{
@@ -3491,7 +3524,7 @@ int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 
 		SQLite::Transaction transaction(m_Database);
 		{
-			CUser* user = g_pUserManager->GetUserById(clanCfg.masterUserID);
+			IUser* user = g_pUserManager->GetUserById(clanCfg.masterUserID);
 			if (!user->UpdatePoints(-100000))
 			{
 				return 0;
@@ -4683,7 +4716,7 @@ int CUserDatabaseSQLite::UpdateClan(int userID, int flag, Clan_s clan)
 	return 1;
 }
 
-int CUserDatabaseSQLite::UpdateClanMemberGrade(int userID, string targetUserName, int newGrade, ClanUser& targetMember)
+int CUserDatabaseSQLite::UpdateClanMemberGrade(int userID, const string& targetUserName, int newGrade, ClanUser& targetMember)
 {
 	try
 	{
@@ -4721,7 +4754,7 @@ int CUserDatabaseSQLite::UpdateClanMemberGrade(int userID, string targetUserName
 	return 1;
 }
 
-int CUserDatabaseSQLite::ClanReject(int userID, string userName)
+int CUserDatabaseSQLite::ClanReject(int userID, const string& userName)
 {
 	try
 	{
@@ -4762,7 +4795,7 @@ int CUserDatabaseSQLite::ClanRejectAll(int userID)
 	return 1;
 }
 
-int CUserDatabaseSQLite::ClanApprove(int userID, string userName)
+int CUserDatabaseSQLite::ClanApprove(int userID, const string& userName)
 {
 	try
 	{
@@ -4832,7 +4865,7 @@ int CUserDatabaseSQLite::IsClanWithMarkExists(int markID)
 	return 1;
 }
 
-int CUserDatabaseSQLite::ClanInvite(int userID, string gameName, CUser*& destUser, int& clanID)
+int CUserDatabaseSQLite::ClanInvite(int userID, const string& gameName, IUser*& destUser, int& clanID)
 {
 	try
 	{
@@ -4904,7 +4937,7 @@ int CUserDatabaseSQLite::ClanInvite(int userID, string gameName, CUser*& destUse
 	return 1;
 }
 
-int CUserDatabaseSQLite::ClanKick(int userID, string userName)
+int CUserDatabaseSQLite::ClanKick(int userID, const string& userName)
 {
 	try
 	{
@@ -4963,7 +4996,7 @@ int CUserDatabaseSQLite::ClanKick(int userID, string userName)
 	return 1;
 }
 
-int CUserDatabaseSQLite::ClanMasterDelegate(int userID, string userName)
+int CUserDatabaseSQLite::ClanMasterDelegate(int userID, const string& userName)
 {
 	try
 	{
@@ -5005,7 +5038,7 @@ int CUserDatabaseSQLite::ClanMasterDelegate(int userID, string userName)
 	return 1;
 }
 
-int CUserDatabaseSQLite::IsClanExists(string clanName)
+int CUserDatabaseSQLite::IsClanExists(const string& clanName)
 {
 	int clanID = 0;
 	try
@@ -5196,7 +5229,7 @@ int CUserDatabaseSQLite::IsUserExists(int userID)
 
 // checks if user exists
 // returns 0 == database error or user does not exists, > 0 == userID
-int CUserDatabaseSQLite::IsUserExists(string userName, bool searchByUserName)
+int CUserDatabaseSQLite::IsUserExists(const string& userName, bool searchByUserName)
 {
 	int userID = 0;
 	try
@@ -5282,7 +5315,7 @@ void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 				CUserInventoryItem item(query.getColumn(1), query.getColumn(2), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0);
 				int userID = query.getColumn(0);
 
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				if (user)
 				{
 					g_pPacketManager->SendUMsgExpiryNotice(user->GetExtendedSocket(), vector<int>{ item.m_nItemID });
@@ -5445,7 +5478,7 @@ void CUserDatabaseSQLite::OnDayTick()
 			while (query.executeStep())
 			{
 				int userID = query.getColumn(0);
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				if (user)
 				{
 					g_pConsole->Log(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: TODO: fix user client-side quest update\n"));
@@ -5531,7 +5564,7 @@ void CUserDatabaseSQLite::OnWeekTick()
 			while (query.executeStep())
 			{
 				int userID = query.getColumn(0);
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				if (user)
 				{
 					g_pConsole->Warn(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: TODO: fix user client-side quest update\n"));
@@ -5614,7 +5647,7 @@ vector<int> CUserDatabaseSQLite::GetUsers(int lastLoginTime)
 	return users;
 }
 
-int CUserDatabaseSQLite::UpdateIPBanList(string ip, bool remove)
+int CUserDatabaseSQLite::UpdateIPBanList(const string& ip, bool remove)
 {
 	try
 	{
@@ -5660,7 +5693,7 @@ vector<string> CUserDatabaseSQLite::GetIPBanList()
 	return ip;
 }
 
-bool CUserDatabaseSQLite::IsIPBanned(string ip)
+bool CUserDatabaseSQLite::IsIPBanned(const string& ip)
 {
 	try
 	{
@@ -5754,7 +5787,7 @@ chrono::high_resolution_clock::time_point CUserDatabaseSQLite::ExecCalcStart()
 	return chrono::high_resolution_clock::now();
 }
 
-void CUserDatabaseSQLite::ExecCalcEnd(chrono::high_resolution_clock::time_point startTime, string funcName)
+void CUserDatabaseSQLite::ExecCalcEnd(chrono::high_resolution_clock::time_point startTime, const string& funcName)
 {
 	auto end = chrono::high_resolution_clock::now();
 	auto duration = chrono::duration_cast<chrono::milliseconds>(end - startTime).count();

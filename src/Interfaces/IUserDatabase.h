@@ -1,14 +1,22 @@
 #pragma once
 
-#include "UserInventoryItem.h"
-#include "UserFastBuy.h"
+#include <string>
+#include <vector>
+
+#include "IManager.h"
+#include "Definitions.h"
+
+class IExtendedSocket;
+class CUserInventoryItem;
+class CUserFastBuy;
 
 class IUserDatabase : public IBaseManager
 {
 public:
-	virtual int Login(std::string userName, std::string password, CExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData) = 0;
+	virtual int Login(const std::string& userName, const std::string& password, IExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData) = 0;
 	virtual int AddToRestoreList(int userID, int channelServerID, int channelID) = 0;
-	virtual int Register(std::string userName, std::string password, std::string ip) = 0;
+	virtual int Register(const std::string& userName, const std::string& password, const std::string& ip) = 0;
+	virtual int GetUserSessions(std::vector<UserSession>& sessions) = 0;
 	virtual int DropSession(int userID) = 0;
 	virtual int DropSessions() = 0;
 
@@ -23,7 +31,7 @@ public:
 	virtual int IsInventoryFull(int userID) = 0;
 	virtual int GetUserData(int userID, CUserData& data) = 0;
 	virtual int UpdateUserData(int userID, CUserData data) = 0;
-	virtual int CreateCharacter(int userID, std::string gameName) = 0;
+	virtual int CreateCharacter(int userID, const std::string& gameName) = 0;
 	virtual int DeleteCharacter(int userID) = 0;
 	virtual int GetCharacter(int userID, CUserCharacter& character) = 0;
 	virtual int UpdateCharacter(int userID, CUserCharacter& character) = 0;
@@ -34,7 +42,7 @@ public:
 	virtual int GetLoadouts(int userID, CUserLoadout& loadout) = 0;
 	virtual int UpdateLoadout(int userID, int loadoutID, int slot, int itemID) = 0;
 	virtual int GetFastBuy(int userID, std::vector<CUserFastBuy>& fastBuy) = 0;
-	virtual int UpdateFastBuy(int userID, int slot, std::string name, std::vector<int> items) = 0;
+	virtual int UpdateFastBuy(int userID, int slot, const std::string& name, const std::vector<int>& items) = 0;
 	virtual int GetBuyMenu(int userID, std::vector<CUserBuyMenu>& buyMenu) = 0;
 	virtual int UpdateBuyMenu(int userID, int subMenuID, int subMenuSlot, int itemID) = 0;
 	virtual int GetBookmark(int userID, std::vector<int>& bookmark) = 0;
@@ -104,15 +112,15 @@ public:
 	virtual int GetClan(int userID, int flag, Clan_s& clan) = 0;
 	virtual int GetClanMember(int userID, ClanUser& clanUser) = 0;
 	virtual int UpdateClan(int userID, int flag, Clan_s clan) = 0;
-	virtual int UpdateClanMemberGrade(int userID, std::string userName, int newGrade, ClanUser& targetMember) = 0;
-	virtual int ClanReject(int userID, std::string userName) = 0;
+	virtual int UpdateClanMemberGrade(int userID, const std::string& userName, int newGrade, ClanUser& targetMember) = 0;
+	virtual int ClanReject(int userID, const std::string& userName) = 0;
 	virtual int ClanRejectAll(int userID) = 0;
-	virtual int ClanApprove(int userID, std::string userName) = 0;
+	virtual int ClanApprove(int userID, const std::string& userName) = 0;
 	virtual int IsClanWithMarkExists(int markID) = 0;
-	virtual int ClanInvite(int userID, std::string gameName, CUser*& destUser, int& clanID) = 0;
-	virtual int ClanKick(int userID, std::string userName) = 0;
-	virtual int ClanMasterDelegate(int userID, std::string userName) = 0;
-	virtual int IsClanExists(std::string clanName) = 0;
+	virtual int ClanInvite(int userID, const std::string& gameName, IUser*& destUser, int& clanID) = 0;
+	virtual int ClanKick(int userID, const std::string& userName) = 0;
+	virtual int ClanMasterDelegate(int userID, const std::string& userName) = 0;
+	virtual int IsClanExists(const std::string& clanName) = 0;
 
 	// quest event related
 	virtual int GetQuestEventProgress(int userID, int questID, UserQuestProgress& questProgress) = 0;
@@ -122,7 +130,7 @@ public:
 	virtual bool IsQuestEventTaskFinished(int userID, int questID, int taskID) = 0;
 
 	virtual int IsUserExists(int userID) = 0;
-	virtual int IsUserExists(std::string userName, bool searchByUserName = true) = 0;
+	virtual int IsUserExists(const std::string& userName, bool searchByUserName = true) = 0;
 
 	// suspect system
 	virtual int SuspectAddAction(std::vector<unsigned char>& hwid, int actionID) = 0;
@@ -135,9 +143,9 @@ public:
 	virtual std::map<int, UserBan> GetUserBanList() = 0;
 	virtual std::vector<int> GetUsers(int lastLoginTime = 0) = 0;
 
-	virtual int UpdateIPBanList(std::string ip, bool remove = false) = 0;
+	virtual int UpdateIPBanList(const std::string& ip, bool remove = false) = 0;
 	virtual std::vector<std::string> GetIPBanList() = 0;
-	virtual bool IsIPBanned(std::string ip) = 0;
+	virtual bool IsIPBanned(const std::string& ip) = 0;
 
 	virtual int UpdateHWIDBanList(std::vector<unsigned char>& hwid, bool remove = false) = 0;
 	virtual std::vector<std::vector<unsigned char>> GetHWIDBanList() = 0;

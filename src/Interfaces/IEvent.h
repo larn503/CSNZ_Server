@@ -12,22 +12,24 @@ enum ServerEvent
 	SERVER_EVENT_FUNCTION = 3,
 };
 
-// TODO: remove
-class CExtendedSocket;
+class IExtendedSocket;
 class CReceivePacket;
 
 struct Event_s
 {
 	int type;
 	std::string cmd;
-	CExtendedSocket* socket;
-	std::vector<CReceivePacket*> msgs;
-	std::vector<std::function<void()>> funcs;
+	IExtendedSocket* socket;
+	CReceivePacket* msg;
+	std::function<void()> func;
 };
 
 class IEvent
 {
 public:
 	virtual void AddEvent(const Event_s& ev) = 0;
+	virtual void AddEventConsoleCommand(const std::string& cmd) = 0;
+	virtual void AddEventPacket(IExtendedSocket* socket, CReceivePacket* packet) = 0;
+	virtual void AddEventSecondTick() = 0;
 	virtual void AddEventFunction(const std::function<void()>& func) = 0;
 };

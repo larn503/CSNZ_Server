@@ -23,6 +23,7 @@ public:
 	
 	CMainTab* GetMainTab();
 	CConsoleTab* GetConsoleTab();
+	CSessionTab* GetSessionTab();
 
 public slots:
 	void ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError = 0);

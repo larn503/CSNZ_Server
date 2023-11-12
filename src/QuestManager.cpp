@@ -61,11 +61,11 @@ vector<CQuest*>& CQuestManager::GetQuests()
 	return m_Quests;
 }
 
-void CQuestManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
+void CQuestManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -87,11 +87,11 @@ void CQuestManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	};
 }
 
-void CQuestManager::OnTitlePacket(CReceivePacket* msg, CExtendedSocket* socket)
+void CQuestManager::OnTitlePacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -217,7 +217,7 @@ void CQuestManager::OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMat
 	}
 }
 
-void CQuestManager::OnLevelUpEvent(CUser* user, int level, int newLevel)
+void CQuestManager::OnLevelUpEvent(IUser* user, int level, int newLevel)
 {
 	for (auto quest : m_Quests)
 	{
@@ -243,7 +243,7 @@ void CQuestManager::OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* ga
 	}
 }
 
-void CQuestManager::OnGameMatchLeave(CUser* user, vector<UserQuestProgress>& questsProgress, vector<UserQuestProgress>& questsEventsProgress)
+void CQuestManager::OnGameMatchLeave(IUser* user, vector<UserQuestProgress>& questsProgress, vector<UserQuestProgress>& questsEventsProgress)
 {
 	for (auto questProgress : questsProgress)
 	{
@@ -264,7 +264,7 @@ void CQuestManager::OnGameMatchLeave(CUser* user, vector<UserQuestProgress>& que
 	}
 }
 
-void CQuestManager::OnUserLogin(CUser* user)
+void CQuestManager::OnUserLogin(IUser* user)
 {
 	for (auto quest : m_EventQuests)
 	{
@@ -272,7 +272,7 @@ void CQuestManager::OnUserLogin(CUser* user)
 	}
 }
 
-void CQuestManager::OnQuestTaskFinished(CUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* task, CQuest* quest)
+void CQuestManager::OnQuestTaskFinished(IUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* task, CQuest* quest)
 {
 	if (!quest->IsAllTaskFinished(user))
 		return;
@@ -286,7 +286,7 @@ void CQuestManager::OnQuestTaskFinished(CUser* user, UserQuestTaskProgress& task
 	OnQuestFinished(user, quest, questProgress);
 }
 
-void CQuestManager::OnQuestEventTaskFinished(CUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task, CQuestEvent* quest)
+void CQuestManager::OnQuestEventTaskFinished(IUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task, CQuestEvent* quest)
 {
 	g_pItemManager->GiveReward(user->GetID(), user, task->GetRewardID());
 
@@ -300,7 +300,7 @@ void CQuestManager::OnQuestEventTaskFinished(CUser* user, UserQuestTaskProgress&
 	questProgress.status = UserQuestStatus::QUEST_DONE;
 }
 
-void CQuestManager::OnQuestFinished(CUser* user, CQuest* quest, UserQuestProgress& questProgress)
+void CQuestManager::OnQuestFinished(IUser* user, CQuest* quest, UserQuestProgress& questProgress)
 {
 	if (quest->GetType() == QuestType::QUEST_HONOR)
 	{
@@ -337,7 +337,7 @@ void CQuestManager::OnQuestFinished(CUser* user, CQuest* quest, UserQuestProgres
 	g_pConsole->Log(OBFUSCATE("[User '%s'] completed quest %d, %s, room id: %d\n"), user->GetLogName(), quest->GetID(), quest->GetName().c_str(), user->GetCurrentRoom() ? user->GetCurrentRoom()->GetID() : 0);
 }
 
-void CQuestManager::OnReceiveReward(CUser* user, int rewardID, int questID)
+void CQuestManager::OnReceiveReward(IUser* user, int rewardID, int questID)
 {
 	CQuest* quest = GetQuest(questID);
 	if (!quest)
@@ -365,7 +365,7 @@ void CQuestManager::OnReceiveReward(CUser* user, int rewardID, int questID)
 	g_pPacketManager->SendQuestUpdateQuestStat(user->GetExtendedSocket(), 1, character.honorPoints, stat); // update honor stat
 }
 
-void CQuestManager::OnSpecialMissionRequest(CUser* user, CReceivePacket* msg)
+void CQuestManager::OnSpecialMissionRequest(IUser* user, CReceivePacket* msg)
 {
 	int questID = msg->ReadUInt16();
 	int unk = msg->ReadUInt16();
@@ -386,7 +386,7 @@ void CQuestManager::OnSpecialMissionRequest(CUser* user, CReceivePacket* msg)
 	g_pConsole->Log(OBFUSCATE("[User '%s'] CQuestManager::OnSpecialMissionRequest: %d\n"), user->GetLogName(), questID);
 }
 
-void CQuestManager::OnSetFavouriteRequest(CUser* user, CReceivePacket* msg)
+void CQuestManager::OnSetFavouriteRequest(IUser* user, CReceivePacket* msg)
 {
 	int questID = msg->ReadUInt32();
 	bool favourite = msg->ReadUInt8();
@@ -402,7 +402,7 @@ void CQuestManager::OnSetFavouriteRequest(CUser* user, CReceivePacket* msg)
 	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 }
 
-void CQuestManager::OnTitleSetPrefixRequest(CUser* user, CReceivePacket* msg)
+void CQuestManager::OnTitleSetPrefixRequest(IUser* user, CReceivePacket* msg)
 {
 	int titleID = msg->ReadInt16();
 	if (titleID != 0)
@@ -420,7 +420,7 @@ void CQuestManager::OnTitleSetPrefixRequest(CUser* user, CReceivePacket* msg)
 	user->UpdatePrefix(titleID);
 }
 
-void CQuestManager::OnTitleListSetRequest(CUser* user, CReceivePacket* msg)
+void CQuestManager::OnTitleListSetRequest(IUser* user, CReceivePacket* msg)
 {
 	int slot = msg->ReadInt8();
 	int titleID = msg->ReadInt16();
@@ -437,7 +437,7 @@ void CQuestManager::OnTitleListSetRequest(CUser* user, CReceivePacket* msg)
 	user->UpdateTitles(slot, titleID);
 }
 
-void CQuestManager::OnTitleListRemoveRequest(CUser* user, CReceivePacket* msg)
+void CQuestManager::OnTitleListRemoveRequest(IUser* user, CReceivePacket* msg)
 {
 	int slot = msg->ReadInt8();
 	if (slot >= 5)

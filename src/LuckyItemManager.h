@@ -14,7 +14,7 @@ public:
 	virtual void Shutdown();
 
 	void LoadLuckyItems();
-	int OpenItemBox(CUser* user, int itemBox, int itemBoxOpenCount);
+	int OpenItemBox(IUser* user, int itemBox, int itemBoxOpenCount);
 	std::vector<ItemBox*>& GetItemBoxes();
 	std::vector<ItemBoxItem>& GetItems();
 	ItemBox* GetItemBoxByItemId(int itemId);

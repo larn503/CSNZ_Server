@@ -1,6 +1,13 @@
 #include "ConsoleTab.h"
 #include "../Console.h"
+#include "GUI.h"
+#include "IEvent.h"
+
 #include <ui_consoletab.h>
+#include <QKeyEvent>
+#include <QStringListModel>
+#include <QAbstractItemView>
+
 #include <string>
 
 CConsoleTab::CConsoleTab(QWidget* parent) : QWidget(parent)
@@ -8,13 +15,24 @@ CConsoleTab::CConsoleTab(QWidget* parent) : QWidget(parent)
 	m_pUI = new Ui::ConsoleTab();
 	m_pUI->setupUi(this);
 
+	m_pCommandHistory = new QCompleter();
+
+	// completer example
+	QStringList cmdList = { "senddick", "sendnotice" };
+	m_pCommandList = new QCompleter(cmdList);
+	m_pUI->Entry->setCompleter(m_pCommandList);
+
+	m_pUI->Entry->installEventFilter(this);
+
 	connect(m_pUI->SubmitBtn, &QPushButton::clicked, this, &CConsoleTab::SubmitClicked);
-	connect(m_pUI->Entry, SIGNAL(textChanged(const QString&)), this, SLOT(TextChanged(const QString&)));
+	connect(m_pUI->Entry, SIGNAL(textEdited(const QString&)), this, SLOT(TextChanged(const QString&)));
 }
 
 CConsoleTab::~CConsoleTab()
 {
 	delete m_pUI;
+	delete m_pCommandHistory;
+	delete m_pCommandList;
 }
 
 // prints log message to console
@@ -44,10 +62,59 @@ void CConsoleTab::Log(int level, const std::string& msg)
 
 void CConsoleTab::SubmitClicked()
 {
+	QString text = m_pUI->Entry->text();
 
+	g_pEvent->AddEventConsoleCommand(text.toStdString());
+
+	// update command history list
+	QStringListModel* model = (QStringListModel*)(m_pCommandHistory->model());
+	if (!model)
+		model = new QStringListModel();
+
+	QStringList list = model->stringList();
+	if (!list.contains(text))
+		list.append(text);
+
+	model->setStringList(list);
+	m_pCommandHistory->setModel(model);
+
+	m_pUI->Entry->clear();
 }
 
 void CConsoleTab::TextChanged(const QString& text)
 {
-	// TODO: command suggestions (handle text changing and find way to get command list)
+	// change completer back to m_pCommandList
+	if (m_pUI->Entry->completer() != m_pCommandList)
+		m_pUI->Entry->setCompleter(m_pCommandList);
+}
+
+bool CConsoleTab::eventFilter(QObject* obj, QEvent* event)
+{
+	if (event->type() == QEvent::KeyPress)
+	{
+		if (obj == m_pUI->Entry)
+		{
+			// catch enter/return key pressed
+			QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+			if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return)
+			{
+				SubmitClicked();
+			}
+			else if (keyEvent->key() == Qt::Key_Down || keyEvent->key() == Qt::Key_Up)
+			{
+				// show input history
+				QAbstractItemView* a = m_pUI->Entry->completer()->popup();
+
+				// if no command list, show last commands
+				if (!m_pCommandList->popup()->isVisible()) 
+				{
+					if (m_pUI->Entry->completer() != m_pCommandHistory)
+						m_pUI->Entry->setCompleter(m_pCommandHistory);
+
+					m_pCommandHistory->complete();
+				}
+			}
+		}
+	}
+	return QObject::eventFilter(obj, event);
 }

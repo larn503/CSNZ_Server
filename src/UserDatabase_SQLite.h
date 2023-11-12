@@ -6,7 +6,7 @@
 #include "Manager.h"
 #include "IUserDatabase.h"
 
-class CUser;
+class IUser;
 class CUserInventory;
 class CUserInventoryItem;
 class CUserLoadout;
@@ -26,9 +26,10 @@ public:
 
 	bool ExecuteScript(std::string scriptPath);
 
-	int Login(std::string userName, std::string password, CExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData);
+	int Login(const std::string& userName, const std::string& password, IExtendedSocket* socket, UserBan& ban, UserRestoreData* restoreData);
 	int AddToRestoreList(int userID, int channelServerID, int channelID);
-	int Register(std::string userName, std::string password, std::string ip);
+	int Register(const std::string& userName, const std::string& password, const std::string& ip);
+	int GetUserSessions(std::vector<UserSession>& sessions);
 	int DropSession(int userID);
 	int DropSessions();
 
@@ -43,7 +44,7 @@ public:
 	int IsInventoryFull(int userID);
 	int GetUserData(int userID, CUserData& data);
 	int UpdateUserData(int userID, CUserData data);
-	int CreateCharacter(int userID, std::string gameName);
+	int CreateCharacter(int userID, const std::string& gameName);
 	int DeleteCharacter(int userID);
 	int GetCharacter(int userID, CUserCharacter& character);
 	int UpdateCharacter(int userID, CUserCharacter& character);
@@ -54,7 +55,7 @@ public:
 	int GetLoadouts(int userID, CUserLoadout& loadout);
 	int UpdateLoadout(int userID, int loadoutID, int slot, int itemID);
 	int GetFastBuy(int userID, std::vector<CUserFastBuy>& fastBuy);
-	int UpdateFastBuy(int userID, int slot, std::string name, std::vector<int> items);
+	int UpdateFastBuy(int userID, int slot, const std::string& name, const std::vector<int>& items);
 	int GetBuyMenu(int userID, std::vector<CUserBuyMenu>& buyMenu);
 	int UpdateBuyMenu(int userID, int subMenuID, int subMenuSlot, int itemID);
 	int GetBookmark(int userID, std::vector<int>& bookmark);
@@ -124,15 +125,15 @@ public:
 	int GetClan(int userID, int flag, Clan_s& clan);
 	int GetClanMember(int userID, ClanUser& clanUser);
 	int UpdateClan(int userID, int flag, Clan_s clan);
-	int UpdateClanMemberGrade(int userID, std::string userName, int newGrade, ClanUser& targetMember);
-	int ClanReject(int userID, std::string userName);
+	int UpdateClanMemberGrade(int userID, const std::string& userName, int newGrade, ClanUser& targetMember);
+	int ClanReject(int userID, const std::string& userName);
 	int ClanRejectAll(int userID);
-	int ClanApprove(int userID, std::string userName);
+	int ClanApprove(int userID, const std::string& userName);
 	int IsClanWithMarkExists(int markID);
-	int ClanInvite(int userID, std::string gameName, CUser*& destUser, int& clanID);
-	int ClanKick(int userID, std::string userName);
-	int ClanMasterDelegate(int userID, std::string userName);
-	int IsClanExists(std::string clanName);
+	int ClanInvite(int userID, const std::string& gameName, IUser*& destUser, int& clanID);
+	int ClanKick(int userID, const std::string& userName);
+	int ClanMasterDelegate(int userID, const std::string& userName);
+	int IsClanExists(const std::string& clanName);
 
 	// quest event related
 	int GetQuestEventProgress(int userID, int questID, UserQuestProgress& questProgress);
@@ -142,7 +143,7 @@ public:
 	bool IsQuestEventTaskFinished(int userID, int questID, int taskID);
 
 	int IsUserExists(int userID);
-	int IsUserExists(std::string userName, bool searchByUserName = true);
+	int IsUserExists(const std::string&, bool searchByUserName = true);
 
 	// suspect system
 	int SuspectAddAction(std::vector<unsigned char>& hwid, int actionID);
@@ -155,9 +156,9 @@ public:
 	std::map<int, UserBan> GetUserBanList();
 	std::vector<int> GetUsers(int lastLoginTime = 0);
 
-	int UpdateIPBanList(std::string ip, bool remove = false);
+	int UpdateIPBanList(const std::string& ip, bool remove = false);
 	std::vector<std::string> GetIPBanList();
-	bool IsIPBanned(std::string ip);
+	bool IsIPBanned(const std::string& ip);
 
 	int UpdateHWIDBanList(std::vector<unsigned char>& hwid, bool remove = false);
 	std::vector<std::vector<unsigned char>> GetHWIDBanList();
@@ -165,11 +166,11 @@ public:
 
 	void PrintUserList();
 
-	void LoadBackup(std::string backupDate);
+	void LoadBackup(const std::string& backupDate);
 	void PrintBackupList();
 	void ResetQuestEvent(int eventID);
 
-	void WriteUserStatistic(std::string fdate, std::string sdate);
+	void WriteUserStatistic(const std::string& fdate, const std::string& sdate);
 
 	SQLite::Transaction CreateTransaction();
 	bool CommitTransaction(SQLite::Transaction& trans);
@@ -180,7 +181,7 @@ private:
 	bool ExecuteOnce();
 
 	std::chrono::high_resolution_clock::time_point ExecCalcStart();
-	void ExecCalcEnd(std::chrono::high_resolution_clock::time_point startTime, std::string funcName);
+	void ExecCalcEnd(std::chrono::high_resolution_clock::time_point startTime, const std::string& funcName);
 
 	SQLite::Database m_Database;
 	bool m_bInited;

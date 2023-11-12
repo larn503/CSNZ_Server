@@ -186,7 +186,7 @@ int CNetwork::ReceiveMessage(SOCKET curSocket, char* buffer, int bufSize)
 	return recv(curSocket, buffer, bufSize, 0);
 }
 
-CExtendedSocket* CNetwork::AcceptNewClient(unsigned int& id)
+IExtendedSocket* CNetwork::AcceptNewClient(unsigned int& id)
 {
 	SOCKADDR_IN addr;
 	int addrlen = sizeof(addr);
@@ -202,7 +202,7 @@ CExtendedSocket* CNetwork::AcceptNewClient(unsigned int& id)
 		char ip[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &(addr.sin_addr), ip, INET_ADDRSTRLEN);
 
-		CExtendedSocket* newSocket = new CExtendedSocket();
+		CExtendedSocket* newSocket = new CExtendedSocket(id);
 		newSocket->ResetSeq();
 		newSocket->SetIP(ip);
 		newSocket->SetSocket(clientSocket);
@@ -221,7 +221,7 @@ CExtendedSocket* CNetwork::AcceptNewClient(unsigned int& id)
 	return NULL;
 }
 
-CExtendedSocket* CNetwork::GetExSocketBySocket(SOCKET socket)
+IExtendedSocket* CNetwork::GetExSocketBySocket(SOCKET socket)
 {
 	for (auto s : m_Sessions)
 	{
@@ -232,7 +232,7 @@ CExtendedSocket* CNetwork::GetExSocketBySocket(SOCKET socket)
 	return NULL;
 }
 
-void CNetwork::RemoveSocket(CExtendedSocket* socket)
+void CNetwork::RemoveSocket(IExtendedSocket* socket)
 {
 	m_Sessions.erase(remove(begin(m_Sessions), end(m_Sessions), socket), end(m_Sessions));
 

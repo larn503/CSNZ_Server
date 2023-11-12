@@ -3,9 +3,10 @@
 
 using namespace std;
 
-CExtendedSocket::CExtendedSocket()
+CExtendedSocket::CExtendedSocket(unsigned int id)
 {
 	memset(&m_GuestData, 0, sizeof(GuestData_s));
+	m_nID = id;
 	m_Socket = 0;
 	m_nSequence = 0;
 	m_nBytesReceived = 0;
@@ -196,6 +197,11 @@ int CExtendedSocket::Send(CSendPacket* msg, bool forceSend)
 	}
 
 	return result;
+}
+
+int CExtendedSocket::GetID()
+{
+	return m_nID;
 }
 
 void CExtendedSocket::SetSocket(SOCKET socket)

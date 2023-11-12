@@ -170,7 +170,7 @@ CUserInventoryItem* CGameMatchUserStat::GetItem(int itemID)
 	return NULL;
 }
 
-CGameMatch::CGameMatch(CRoom* room, int gameMode, int mapID)
+CGameMatch::CGameMatch(IRoom* room, int gameMode, int mapID)
 {
 	m_pParentRoom = room;
 	m_nGameMode = gameMode;
@@ -190,7 +190,7 @@ CGameMatch::~CGameMatch()
 	}
 }
 
-void CGameMatch::Connect(CUser* user)
+void CGameMatch::Connect(IUser* user)
 {
 	if (GetGameUserStat(user) == NULL)
 	{
@@ -201,7 +201,7 @@ void CGameMatch::Connect(CUser* user)
 	}
 }
 
-void CGameMatch::Disconnect(CUser* user)
+void CGameMatch::Disconnect(IUser* user)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (stat)
@@ -213,12 +213,12 @@ void CGameMatch::Disconnect(CUser* user)
 	}
 }
 
-bool GameMatchUserStatCompare(CGameMatchUserStat* gameStat, CUser* user)
+bool GameMatchUserStatCompare(CGameMatchUserStat* gameStat, IUser* user)
 {
 	return gameStat->m_pUser == user;
 }
 
-CGameMatchUserStat* CGameMatch::GetGameUserStat(CUser* user)
+CGameMatchUserStat* CGameMatch::GetGameUserStat(IUser* user)
 {
 	vector<CGameMatchUserStat*>::iterator it = find_if(m_UserStats.begin(), m_UserStats.end(), bind(GameMatchUserStatCompare, placeholders::_1, user));
 
@@ -241,7 +241,7 @@ CGameMatchUserStat* CGameMatch::GetGameUserStat(CUser* user)
 	}
 }
 
-void CGameMatch::OnUpdateScore(CUser* user, int score)
+void CGameMatch::OnUpdateScore(IUser* user, int score)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 
@@ -251,7 +251,7 @@ void CGameMatch::OnUpdateScore(CUser* user, int score)
 	}
 }
 
-void CGameMatch::OnUpdateKillCounter(CUser* user, int kills)
+void CGameMatch::OnUpdateKillCounter(IUser* user, int kills)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 
@@ -261,7 +261,7 @@ void CGameMatch::OnUpdateKillCounter(CUser* user, int kills)
 	}
 }
 
-void CGameMatch::OnUpdateDeathCounter(CUser* user, int deaths)
+void CGameMatch::OnUpdateDeathCounter(IUser* user, int deaths)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 
@@ -271,7 +271,7 @@ void CGameMatch::OnUpdateDeathCounter(CUser* user, int deaths)
 	}
 }
 
-void CGameMatch::OnKillEvent(CUser* user, GameMatch_KillEvent& killEvent)
+void CGameMatch::OnKillEvent(IUser* user, GameMatch_KillEvent& killEvent)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -328,7 +328,7 @@ void CGameMatch::OnUpdateWinCounter(int ctWinCount, int tWinCount)
 	//UpdateRoundWinCount(ctWinCount, tWinCount);
 }
 
-void CGameMatch::OnUpdateClass(CUser* user, int classItemID)
+void CGameMatch::OnUpdateClass(IUser* user, int classItemID)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 
@@ -338,7 +338,7 @@ void CGameMatch::OnUpdateClass(CUser* user, int classItemID)
 	}
 }
 
-void CGameMatch::OnBombExplode(CUser* user)
+void CGameMatch::OnBombExplode(IUser* user)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -347,7 +347,7 @@ void CGameMatch::OnBombExplode(CUser* user)
 	g_pQuestManager->OnBombExplode(stat, this);
 }
 
-void CGameMatch::OnBombDefuse(CUser* user)
+void CGameMatch::OnBombDefuse(IUser* user)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -356,7 +356,7 @@ void CGameMatch::OnBombDefuse(CUser* user)
 	g_pQuestManager->OnBombDefuse(stat, this);
 }
 
-void CGameMatch::OnHostageEscape(CUser* user)
+void CGameMatch::OnHostageEscape(IUser* user)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -365,7 +365,7 @@ void CGameMatch::OnHostageEscape(CUser* user)
 	g_pQuestManager->OnHostageEscape(stat, this);
 }
 
-void CGameMatch::OnMonsterKill(CUser* user, int monsterType)
+void CGameMatch::OnMonsterKill(IUser* user, int monsterType)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -374,7 +374,7 @@ void CGameMatch::OnMonsterKill(CUser* user, int monsterType)
 	g_pQuestManager->OnMonsterKill(stat, this, monsterType);
 }
 
-void CGameMatch::OnDropBoxPickup(CUser* user, int rewardID)
+void CGameMatch::OnDropBoxPickup(IUser* user, int rewardID)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -398,7 +398,7 @@ void CGameMatch::OnDropBoxPickup(CUser* user, int rewardID)
 		g_pPacketManager->SendUMsgSystemReply(user->GetExtendedSocket(), SystemReply_Red, OBFUSCATE("EVT_SCENARIO_ITEM_POINT_REWARD"), vector<string> {to_string(notice.points)});
 }
 
-void CGameMatch::OnMosquitoKill(CUser* user)
+void CGameMatch::OnMosquitoKill(IUser* user)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -407,7 +407,7 @@ void CGameMatch::OnMosquitoKill(CUser* user)
 	g_pQuestManager->OnMosquitoKill(stat, this);
 }
 
-void CGameMatch::OnKiteKill(CUser* user)
+void CGameMatch::OnKiteKill(IUser* user)
 {
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (!stat)
@@ -499,7 +499,7 @@ vector<unsigned char>& CGameMatch::GetSaveData()
 	return m_SaveData;
 }
 
-void CGameMatch::OnHostChanged(CUser* newHost)
+void CGameMatch::OnHostChanged(IUser* newHost)
 {
 	for (auto userStat : m_UserStats)
 	{
@@ -528,7 +528,7 @@ void CGameMatch::CalculateGameResult()
 
 	for (auto stat : m_UserStats)
 	{
-		CUser* user = stat->m_pUser;
+		IUser* user = stat->m_pUser;
 
 		// calc exp
 		stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills : expCoef;
@@ -613,7 +613,7 @@ void CGameMatch::ApplyGameResult()
 {
 	for (auto stat : m_UserStats)
 	{
-		CUser* user = stat->m_pUser;
+		IUser* user = stat->m_pUser;
 
 		int totalExp = stat->m_nExpEarned + stat->m_nBonusExpEarned;
 		user->UpdateExp(totalExp);

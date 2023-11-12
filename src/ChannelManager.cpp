@@ -14,11 +14,11 @@ CChannelManager::CChannelManager() : CBaseManager("ChannelManager")
 	channelServers.push_back(new CChannelServer("Channel server", 1, 1, 1));
 }
 
-bool CChannelManager::OnChannelListPacket(CExtendedSocket* socket)
+bool CChannelManager::OnChannelListPacket(IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user == NULL)
 	{
 		g_pPacketManager->SendServerList(socket);
@@ -47,11 +47,11 @@ bool CChannelManager::OnChannelListPacket(CExtendedSocket* socket)
 	return true;
 }
 
-bool CChannelManager::OnRoomRequest(CReceivePacket* msg, CExtendedSocket* socket)
+bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -96,11 +96,11 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, CExtendedSocket* socket
 	return true;
 }
 
-bool CChannelManager::OnRoomListPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CChannelManager::OnRoomListPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (!user)
 	{
 		return false;
@@ -114,7 +114,7 @@ bool CChannelManager::OnRoomListPacket(CReceivePacket* msg, CExtendedSocket* soc
 	return true;
 }
 
-void CChannelManager::JoinChannel(CUser* user, int channelServerID, int channelID, bool transfer)
+void CChannelManager::JoinChannel(IUser* user, int channelServerID, int channelID, bool transfer)
 {
 	CChannelServer* channelServer = GetServerByIndex(channelServerID);
 	CChannel* channel = NULL;
@@ -184,7 +184,7 @@ void CChannelManager::EndAllGames()
 	}
 }
 
-bool CChannelManager::OnLobbyMessage(CReceivePacket* msg, CExtendedSocket* socket, CUser* user)
+bool CChannelManager::OnLobbyMessage(CReceivePacket* msg, IExtendedSocket* socket, IUser* user)
 {
 	string message = msg->ReadString();
 
@@ -210,17 +210,17 @@ bool CChannelManager::OnLobbyMessage(CReceivePacket* msg, CExtendedSocket* socke
 	return true;
 }
 
-bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, CUser* userSender)
+bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, IUser* userSender)
 {
 	if (userSender == NULL)
 		return false;
 
-	CExtendedSocket* socket = userSender->GetExtendedSocket();
+	IExtendedSocket* socket = userSender->GetExtendedSocket();
 
 	string userNameDest = msg->ReadString();
 	string message = msg->ReadString();
 
-	CUser* userDest = g_pUserManager->GetUserByNickname(userNameDest);
+	IUser* userDest = g_pUserManager->GetUserByNickname(userNameDest);
 	if (!userDest)
 	{
 		// send no user reply
@@ -261,7 +261,7 @@ bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, CUser* userSender)
 	return true;
 }
 
-bool CChannelManager::OnRoomUserMessage(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnRoomUserMessage(CReceivePacket* msg, IUser* user)
 {
 	if (user == NULL || user->GetCurrentRoom() == NULL)
 		return false;
@@ -271,7 +271,7 @@ bool CChannelManager::OnRoomUserMessage(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnRoomTeamUserMessage(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnRoomTeamUserMessage(CReceivePacket* msg, IUser* user)
 {
 	if (user == NULL || user->GetCurrentRoom() == NULL)
 		return false;
@@ -292,7 +292,7 @@ CChannelServer* CChannelManager::GetServerByIndex(int index)
 	return NULL;
 }
 
-bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, string message)
+bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, const string& message)
 {
 	vector<string> args = ParseArguments(message.c_str());
 	if (args.size() == 0 || args[0][0] != '/') // all lobby commands starts with '/' character
@@ -527,7 +527,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 						return true;
 				}
 
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				int status = g_pItemManager->AddItem(userID, user, itemID, count, duration); // add permanent item by default
 				switch (status)
 				{
@@ -667,9 +667,10 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 			}
 			else if (args[0] == (char*)OBFUSCATE("/sendnotice") && args.size() >= 2)
 			{
-				message.erase(0, strlen(OBFUSCATE("/sendnotice ")));
-
-				g_pUserManager->SendNoticeMsgBoxToAll(message);
+				string text = message;
+				text.erase(0, strlen(OBFUSCATE("/sendnotice ")));
+				
+				g_pUserManager->SendNoticeMsgBoxToAll(text);
 
 				return true;
 			}
@@ -724,7 +725,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 				ban.reason = reason;
 				ban.term = term * CSO_24_HOURS_IN_MINUTES + g_pServerInstance->GetCurrentTime();
 
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				if (user)
 				{
 					// disconnect user right now
@@ -759,7 +760,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 					return true;
 				}
 
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				if (user)
 				{
 					g_pUserManager->DisconnectUser(user);
@@ -789,7 +790,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 					return true;
 				}
 
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				if (user)
 				{
 					g_pUserManager->DisconnectUser(user);
@@ -927,7 +928,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 						return false;
 					}
 
-					CRoom* room = channel->CreateRoom(user, roomSettings);
+					IRoom* room = channel->CreateRoom(user, roomSettings);
 				}
 
 				return true;
@@ -980,7 +981,7 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 					return true;
 				}
 
-				CUser* userDest = g_pUserManager->GetUserById(userID);
+				IUser* userDest = g_pUserManager->GetUserById(userID);
 				if (userDest)
 				{
 					userDest->UpdatePoints(points);
@@ -1089,10 +1090,10 @@ bool CChannelManager::OnCommandHandler(CExtendedSocket* socket, CUser* user, str
 	return false;
 }
 
-bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 {
 	// don't allow the user to create a new room while in another one
-	CRoom* room = user->GetCurrentRoom();
+	IRoom* room = user->GetCurrentRoom();
 	if (room)
 	{
 		g_pConsole->Warn("User '%d, %s' tried to create a new room, but he is already playing in other room, curRoomId: %d\n", user->GetID(), user->GetUsername().c_str(), room->GetID());
@@ -1113,7 +1114,7 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, CUser* user)
 		return false;
 	}
 
-	CRoom* newRoom = channel->CreateRoom(user, roomSettings);
+	IRoom* newRoom = channel->CreateRoom(user, roomSettings);
 
 	user->SetCurrentRoom(newRoom);
 
@@ -1127,7 +1128,7 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 {
 	int unk = msg->ReadUInt8();
 	int roomID = msg->ReadUInt16();
@@ -1146,7 +1147,7 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, CUser* user)
 		return false;
 	}
 
-	CRoom* room = channel->GetRoomById(roomID);
+	IRoom* room = channel->GetRoomById(roomID);
 	if (room == NULL)
 	{
 		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_CLOSED"));
@@ -1210,9 +1211,9 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnSetTeamRequest(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnSetTeamRequest(CReceivePacket* msg, IUser* user)
 {
-	CRoom* currentRoom = user->GetCurrentRoom();
+	IRoom* currentRoom = user->GetCurrentRoom();
 	if (currentRoom == NULL)
 	{
 		g_pConsole->Warn("User '%d, %s' tried to change room settings, but he isn't in room\n", user->GetID(), user->GetUsername().c_str());
@@ -1240,9 +1241,9 @@ bool CChannelManager::OnSetTeamRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnLeaveRoomRequest(CUser* user)
+bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 {
-	CRoom* currentRoom = user->GetCurrentRoom();
+	IRoom* currentRoom = user->GetCurrentRoom();
 	CChannel* currentChannel = user->GetCurrentChannel();
 
 	if (currentRoom == NULL || currentChannel == NULL)
@@ -1286,9 +1287,9 @@ bool CChannelManager::OnLeaveRoomRequest(CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnToggleReadyRequest(CUser* user)
+bool CChannelManager::OnToggleReadyRequest(IUser* user)
 {
-	CRoom* room = user->GetCurrentRoom();
+	IRoom* room = user->GetCurrentRoom();
 	if (room == NULL)
 	{
 		g_pConsole->Warn("User '%d, %s' tried to toggle ready status\n", user->GetID(), user->GetUsername().c_str());
@@ -1308,9 +1309,9 @@ bool CChannelManager::OnToggleReadyRequest(CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnConnectionFailure(CUser* user)
+bool CChannelManager::OnConnectionFailure(IUser* user)
 {
-	CRoom* room = user->GetCurrentRoom();
+	IRoom* room = user->GetCurrentRoom();
 	if (room == NULL)
 	{
 		return false;
@@ -1321,7 +1322,7 @@ bool CChannelManager::OnConnectionFailure(CUser* user)
 		return false;
 	}
 
-	CUser* hostUser = room->GetHostUser();
+	IUser* hostUser = room->GetHostUser();
 	if (hostUser == NULL)
 	{
 		return false;
@@ -1361,9 +1362,9 @@ bool CChannelManager::OnConnectionFailure(CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnGameStartRequest(CUser* user)
+bool CChannelManager::OnGameStartRequest(IUser* user)
 {
-	CRoom* currentRoom = user->GetCurrentRoom();
+	IRoom* currentRoom = user->GetCurrentRoom();
 	CChannel* currentChannel = user->GetCurrentChannel();
 	if (currentRoom == NULL || currentChannel == NULL)
 	{
@@ -1395,9 +1396,9 @@ bool CChannelManager::OnGameStartRequest(CUser* user)
 	return false;
 }
 
-bool CChannelManager::OnCloseResultRequest(CUser* user)
+bool CChannelManager::OnCloseResultRequest(IUser* user)
 {
-	CRoom* room = user->GetCurrentRoom();
+	IRoom* room = user->GetCurrentRoom();
 	if (room == NULL)
 		return false;
 
@@ -1406,9 +1407,9 @@ bool CChannelManager::OnCloseResultRequest(CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, IUser* user)
 {
-	CRoom* currentRoom = user->GetCurrentRoom();
+	IRoom* currentRoom = user->GetCurrentRoom();
 	CChannel* currentChannel = user->GetCurrentChannel();
 	if (currentRoom == NULL)
 	{
@@ -1461,7 +1462,7 @@ bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, IUser* user)
 {
 	string inviteMsg = msg->ReadString();
 	int userCount = msg->ReadUInt16();
@@ -1469,7 +1470,7 @@ bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, CUser* user)
 	{
 		string userGameName = msg->ReadString();
 
-		CUser* destUser = g_pUserManager->GetUserByNickname(userGameName);
+		IUser* destUser = g_pUserManager->GetUserByNickname(userGameName);
 		if (!destUser)
 		{
 			// user does not exists
@@ -1493,9 +1494,9 @@ bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, CUser* user)
+bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 {
-	CRoom* currentRoom = user->GetCurrentRoom();
+	IRoom* currentRoom = user->GetCurrentRoom();
 	if (currentRoom == NULL)
 	{
 		return false;

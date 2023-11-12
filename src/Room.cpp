@@ -6,7 +6,7 @@
 
 using namespace std;
 
-CRoom::CRoom(int roomId, CUser* hostUser, CChannel* channel, CRoomSettings* settings)
+CRoom::CRoom(int roomId, IUser* hostUser, CChannel* channel, CRoomSettings* settings)
 {
 	m_nID = roomId;
 	m_pHostUser = hostUser;
@@ -60,9 +60,9 @@ bool CRoom::HasPassword()
 	return m_pSettings->password.empty() != 1;
 }
 
-bool CRoom::HasUser(CUser* user)
+bool CRoom::HasUser(IUser* user)
 {
-	vector<CUser*>::iterator it = find(m_Users.begin(), m_Users.end(), user);
+	vector<IUser*>::iterator it = find(m_Users.begin(), m_Users.end(), user);
 	if (it != m_Users.end())
 	{
 		return true;
@@ -73,7 +73,7 @@ bool CRoom::HasUser(CUser* user)
 	}
 }
 
-void CRoom::AddUser(CUser* user)
+void CRoom::AddUser(IUser* user)
 {
 	if (m_Users.size() <= 0) // make new user host if there are no users in room
 	{
@@ -86,7 +86,7 @@ void CRoom::AddUser(CUser* user)
 	user->SetStatus(UserStatus::STATUS_INROOM);
 }
 
-void CRoom::RemoveUser(CUser* targetUser)
+void CRoom::RemoveUser(IUser* targetUser)
 {
 	m_Users.erase(remove(begin(m_Users), end(m_Users), targetUser), end(m_Users));
 
@@ -103,7 +103,7 @@ RoomTeamNum CRoom::FindDesirableTeamNum()
 	return RoomTeamNum::Unassigned;
 }
 
-RoomTeamNum CRoom::GetUserTeam(CUser* user)
+RoomTeamNum CRoom::GetUserTeam(IUser* user)
 {
 	if (!HasUser(user))
 	{
@@ -142,12 +142,12 @@ int CRoom::GetNumOfReadyPlayers()
 	return 0;
 }
 
-RoomReadyStatus CRoom::GetUserReadyStatus(CUser* user)
+RoomReadyStatus CRoom::GetUserReadyStatus(IUser* user)
 {
 	return RoomReadyStatus::READY_STATUS_NO;
 }
 
-RoomReadyStatus CRoom::IsUserReady(CUser* user)
+RoomReadyStatus CRoom::IsUserReady(IUser* user)
 {
 	if (!HasUser(user))
 	{
@@ -163,19 +163,19 @@ bool CRoom::IsRoomReady()
 	return false;
 }
 
-bool CRoom::IsUserIngame(CUser* user)
+bool CRoom::IsUserIngame(IUser* user)
 {
 	return user->GetStatus() == STATUS_PLAYING;
 }
 
-void CRoom::SetUserIngame(CUser* user, bool inGame)
+void CRoom::SetUserIngame(IUser* user, bool inGame)
 {
 	user->SetStatus(inGame ? UserStatus::STATUS_PLAYING : UserStatus::STATUS_INROOM);
 	user->GetRoomData()->m_bIsIngame = inGame;
 	user->GetRoomData()->m_Ready = inGame ? RoomReadyStatus::READY_STATUS_INGAME : RoomReadyStatus::READY_STATUS_NO;
 }
 
-void CRoom::SetUserToTeam(CUser* user, RoomTeamNum newTeam)
+void CRoom::SetUserToTeam(IUser* user, RoomTeamNum newTeam)
 {
 	if (!HasUser(user))
 	{
@@ -186,7 +186,7 @@ void CRoom::SetUserToTeam(CUser* user, RoomTeamNum newTeam)
 	user->GetRoomData()->m_Team = newTeam;
 }
 
-RoomReadyStatus CRoom::ToggleUserReadyStatus(CUser* user)
+RoomReadyStatus CRoom::ToggleUserReadyStatus(IUser* user)
 {
 	if (!HasUser(user))
 	{
@@ -229,7 +229,7 @@ void CRoom::SetStatus(RoomStatus newStatus)
 	m_pSettings->statusSymbol = newStatus == RoomStatus::STATUS_INGAME ? 3 : 0;
 }
 
-void CRoom::SendJoinNewRoom(CUser* user)
+void CRoom::SendJoinNewRoom(IUser* user)
 {
 	g_pPacketManager->SendRoomCreateAndJoin(user->GetExtendedSocket(), this);
 }
@@ -461,7 +461,7 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	}
 }
 
-void CRoom::OnUserMessage(CReceivePacket* msg, CUser* user)
+void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 {
 	string message = msg->ReadString();
 
@@ -563,7 +563,7 @@ void CRoom::OnUserMessage(CReceivePacket* msg, CUser* user)
 	}
 }
 
-void CRoom::OnUserTeamMessage(CReceivePacket* msg, CUser* user)
+void CRoom::OnUserTeamMessage(CReceivePacket* msg, IUser* user)
 {
 	string message = msg->ReadString();
 	int userTeam = GetUserTeam(user);
@@ -595,7 +595,7 @@ void CRoom::OnGameStart()
 	}
 }
 
-void CRoom::KickUser(CUser* user)
+void CRoom::KickUser(IUser* user)
 {
 	m_KickedUsers.push_back(user->GetID());
 
@@ -605,22 +605,22 @@ void CRoom::KickUser(CUser* user)
 	}
 }
 
-void CRoom::VoteKick(CUser* user, bool kick)
+void CRoom::VoteKick(IUser* user, bool kick)
 {
 	g_pConsole->Warn("CRoom::VoteKick: not implemented!\n");
 }
 
-void CRoom::SendRoomSettings(CUser* user)
+void CRoom::SendRoomSettings(IUser* user)
 {
 	g_pPacketManager->SendRoomUpdateSettings(user->GetExtendedSocket(), m_pSettings);
 }
 
-void CRoom::SendUpdateRoomSettings(CUser* user, CRoomSettings* settings, int lowFlag, int lowMidFlag, int highMidFlag, int highFlag)
+void CRoom::SendUpdateRoomSettings(IUser* user, CRoomSettings* settings, int lowFlag, int lowMidFlag, int highMidFlag, int highFlag)
 {
 	g_pPacketManager->SendRoomUpdateSettings(user->GetExtendedSocket(), settings, lowFlag, lowMidFlag, highMidFlag, highFlag);
 }
 
-void CRoom::SendRoomUsersReadyStatus(CUser* user)
+void CRoom::SendRoomUsersReadyStatus(IUser* user)
 {
 	for (auto u : m_Users)
 	{
@@ -636,7 +636,7 @@ void CRoom::SendReadyStatusToAll()
 	}
 }
 
-void CRoom::SendReadyStatusToAll(CUser* user)
+void CRoom::SendReadyStatusToAll(IUser* user)
 {
 	for (auto u : m_Users)
 	{
@@ -644,12 +644,12 @@ void CRoom::SendReadyStatusToAll(CUser* user)
 	}
 }
 
-void CRoom::SendNewUser(CUser* user, CUser* newUser)
+void CRoom::SendNewUser(IUser* user, IUser* newUser)
 {
 	g_pPacketManager->SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, RoomTeamNum::CounterTerrorist);
 }
 
-void CRoom::SendUserReadyStatus(CUser* user, CUser* player)
+void CRoom::SendUserReadyStatus(IUser* user, IUser* player)
 {
 	if (player->GetRoomData() == NULL)
 	{
@@ -659,7 +659,7 @@ void CRoom::SendUserReadyStatus(CUser* user, CUser* player)
 	g_pPacketManager->SendRoomSetPlayerReady(user->GetExtendedSocket(), player, player->GetRoomData()->m_Ready);
 }
 
-void CRoom::SendConnectHost(CUser* user, CUser* host)
+void CRoom::SendConnectHost(IUser* user, IUser* host)
 {
 	//g_pPacketManager->SendUDPHostData(user->GetExtendedSocket(), true, host->GetData()->userId, host->GetNetworkConfig().m_szExternalIpAddress, host->GetNetworkConfig().m_nExternalServerPort);
 	if (g_pServerConfig->room.connectingMethod)
@@ -676,13 +676,13 @@ void CRoom::SendConnectHost(CUser* user, CUser* host)
 	}
 }
 
-void CRoom::SendGuestData(CUser* host, CUser* guest)
+void CRoom::SendGuestData(IUser* host, IUser* guest)
 {
 	//CPacket_UDP hostData(host->m_pSocket);
 	//hostData.Send(hostData.Build(0, guest->m_pData->userId, guest->externalIpAddress, 27015));
 }
 
-void CRoom::SendStartMatch(CUser* host)
+void CRoom::SendStartMatch(IUser* host)
 {
 	if (g_pServerConfig->room.connectingMethod)
 	{
@@ -708,17 +708,17 @@ void CRoom::SendStartMatch(CUser* host)
 
 }
 
-void CRoom::SendCloseResultWindow(CUser* user)
+void CRoom::SendCloseResultWindow(IUser* user)
 {
 	g_pPacketManager->SendHostLeaveResultWindow(user->GetExtendedSocket());
 }
 
-void CRoom::SendTeamChange(CUser* user, CUser* player, RoomTeamNum newTeamNum)
+void CRoom::SendTeamChange(IUser* user, IUser* player, RoomTeamNum newTeamNum)
 {
 	g_pPacketManager->SendRoomSetUserTeam(user->GetExtendedSocket(), player, newTeamNum);
 }
 
-void CRoom::SendGameEnd(CUser* user)
+void CRoom::SendGameEnd(IUser* user)
 {
 	g_pPacketManager->SendHostStop(user->GetExtendedSocket());
 	g_pPacketManager->SendRoomGameResult(user->GetExtendedSocket(), this, m_pGameMatch);
@@ -730,22 +730,22 @@ void CRoom::SendGameEnd(CUser* user)
 	}
 }
 
-void CRoom::SendUserMessage(string senderName, string msg, CUser* user)
+void CRoom::SendUserMessage(const string& senderName, const string& msg, IUser* user)
 {
 	g_pPacketManager->SendUMsgRoomMessage(user->GetExtendedSocket(), senderName, msg);
 }
 
-void CRoom::SendRoomStatus(CUser* user)
+void CRoom::SendRoomStatus(IUser* user)
 {
 	g_pPacketManager->SendRoomUpdateSettings(user->GetExtendedSocket(), m_pSettings, ROOM_LOW_STATUS, ROOM_LOWMID_STATUSSYMBOL);
 }
 
-void CRoom::SendPlayerLeaveIngame(CUser* user)
+void CRoom::SendPlayerLeaveIngame(IUser* user)
 {
 	g_pPacketManager->SendRoomPlayerLeaveIngame(user->GetExtendedSocket());
 }
 
-void CRoom::OnUserRemoved(CUser* user)
+void CRoom::OnUserRemoved(IUser* user)
 {
 	if (m_pGameMatch)
 	{
@@ -769,7 +769,7 @@ void CRoom::OnUserRemoved(CUser* user)
 	user->SetStatus(UserStatus::STATUS_MENU);
 }
 
-void CRoom::SendRemovedUser(CUser* deletedUser)
+void CRoom::SendRemovedUser(IUser* deletedUser)
 {
 	for (auto u : m_Users)
 	{
@@ -777,7 +777,7 @@ void CRoom::SendRemovedUser(CUser* deletedUser)
 	}
 }
 
-void CRoom::UpdateHost(CUser* newHost)
+void CRoom::UpdateHost(IUser* newHost)
 {
 	m_pHostUser = newHost;
 
@@ -884,7 +884,7 @@ void CRoom::HostStartGame()
 		g_pConsole->Log("Host '%s' started room match (RID: %d, IP: %s, port: %d)\n", m_pHostUser->GetUsername().c_str(), m_nID, m_pHostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), m_pHostUser->GetNetworkConfig().m_nExternalServerPort);
 }
 
-void CRoom::UserGameJoin(CUser* user)
+void CRoom::UserGameJoin(IUser* user)
 {
 	SetUserIngame(user, true);
 	SendGuestData(m_pHostUser, user);
@@ -950,12 +950,12 @@ int CRoom::GetID()
 	return m_nID;
 }
 
-CUser* CRoom::GetHostUser()
+IUser* CRoom::GetHostUser()
 {
 	return m_pHostUser;
 }
 
-vector<CUser*> CRoom::GetUsers()
+vector<IUser*> CRoom::GetUsers()
 {
 	return m_Users;
 }

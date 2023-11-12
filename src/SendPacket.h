@@ -7,7 +7,7 @@
 class CSendPacket
 {
 public:
-	CSendPacket(CExtendedSocket* socket, int packetID);
+	CSendPacket(IExtendedSocket* socket, int packetID);
 	~CSendPacket();
 
 	std::vector<unsigned char> SetPacketLength();
@@ -34,6 +34,6 @@ public:
 	int m_nPacketID;
 	int m_nSequence;
 
-	CExtendedSocket* m_pSocket;
+	IExtendedSocket* m_pSocket;
 	Buffer m_OutStream;
 };

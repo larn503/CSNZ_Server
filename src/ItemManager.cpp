@@ -352,11 +352,11 @@ bool CItemManager::KVToJson()
 	return true;
 }
 
-bool CItemManager::OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (!user)
 	{
 		return false;
@@ -585,7 +585,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int duration)
+int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int duration)
 {
 	int itemStatus = 1;
 	int itemInUse = 1;
@@ -844,7 +844,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 
 	if (itemID == 8357) // superRoom
 	{
-		CRoom* currentRoom = user->GetCurrentRoom();
+		IRoom* currentRoom = user->GetCurrentRoom();
 		if (currentRoom != NULL)
 		{
 			if (user == currentRoom->GetHostUser()) // it's the room host, so add the superRoom flag
@@ -865,7 +865,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 	}
 	else if (itemID == 439) // BigHeadEvent
 	{
-		CRoom* currentRoom = user->GetCurrentRoom();
+		IRoom* currentRoom = user->GetCurrentRoom();
 		if (currentRoom != NULL)
 		{
 			if (user == currentRoom->GetHostUser()) // it's the room host, so add the sd flag
@@ -888,7 +888,7 @@ int CItemManager::AddItem(int userID, CUser* user, int itemID, int count, int du
 	return ITEM_ADD_SUCCESS;
 }
 
-int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
+int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 {
 	vector<CUserInventoryItem> updatedItems;
 
@@ -1172,7 +1172,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 
 		if (itemID == 8357) // superRoom
 		{
-			CRoom* currentRoom = user->GetCurrentRoom();
+			IRoom* currentRoom = user->GetCurrentRoom();
 			if (currentRoom != NULL)
 			{
 				if (user == currentRoom->GetHostUser()) // it's the room host, so add the superRoom flag
@@ -1193,7 +1193,7 @@ int CItemManager::AddItems(int userID, CUser* user, vector<RewardItem>& items)
 		}
 		else if (itemID == 439) // BigHeadEvent
 		{
-			CRoom* currentRoom = user->GetCurrentRoom();
+			IRoom* currentRoom = user->GetCurrentRoom();
 			if (currentRoom != NULL)
 			{
 				if (user == currentRoom->GetHostUser()) // it's the room host, so add the sd flag
@@ -1233,7 +1233,7 @@ bool CItemManager::CanUseItem(const CUserInventoryItem& item)
 	return item.m_nCount != 0 && item.m_nStatus == 0;
 }
 
-int CItemManager::UseItem(CUser* user, int slot, int additionalArg, int additionalArg2)
+int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int additionalArg2)
 {
 	CUserInventoryItem item;
 	if (!g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item))
@@ -1326,7 +1326,7 @@ int CItemManager::UseItem(CUser* user, int slot, int additionalArg, int addition
 	return ITEM_USE_SUCCESS;
 }
 
-bool CItemManager::OnItemUse(CUser* user, CUserInventoryItem& item, int count)
+bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 {
 	if (item.m_nCount <= 0 || item.m_nCount < count)
 	{
@@ -1366,7 +1366,7 @@ bool CItemManager::OnItemUse(CUser* user, CUserInventoryItem& item, int count)
 }
 
 
-bool CItemManager::RemoveItem(int userID, CUser* user, CUserInventoryItem& item)
+bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 {
 	if (item.IsItemDefaultOrPseudo())
 	{
@@ -1401,7 +1401,7 @@ bool CItemManager::RemoveItem(int userID, CUser* user, CUserInventoryItem& item)
 
 	if (item.m_nItemID == 8357) // superRoom
 	{
-		CRoom* currentRoom = user->GetCurrentRoom();
+		IRoom* currentRoom = user->GetCurrentRoom();
 		if (currentRoom != NULL)
 		{
 			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the superRoom flag
@@ -1423,7 +1423,7 @@ bool CItemManager::RemoveItem(int userID, CUser* user, CUserInventoryItem& item)
 	}
 	else if (item.m_nItemID == 439) // BigHeadEvent
 	{
-		CRoom* currentRoom = user->GetCurrentRoom();
+		IRoom* currentRoom = user->GetCurrentRoom();
 		if (currentRoom != NULL)
 		{
 			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the sd flag
@@ -1449,7 +1449,7 @@ bool CItemManager::RemoveItem(int userID, CUser* user, CUserInventoryItem& item)
 	}
 	else if (item.m_nItemID == 112) // C4Sound
 	{
-		CRoom* currentRoom = user->GetCurrentRoom();
+		IRoom* currentRoom = user->GetCurrentRoom();
 		if (currentRoom != NULL)
 		{
 			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the c4Timer flag
@@ -1531,7 +1531,7 @@ bool CItemManager::RemoveItem(int userID, CUser* user, CUserInventoryItem& item)
 	return true;
 }
 
-bool CItemManager::OpenDecoder(CUser* user, int count, int slot)
+bool CItemManager::OpenDecoder(IUser* user, int count, int slot)
 {
 	int status = UseItem(user, slot, count);
 
@@ -1541,7 +1541,7 @@ bool CItemManager::OpenDecoder(CUser* user, int count, int slot)
 	return true;
 }
 
-int CItemManager::ExtendItem(int userID, CUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration)
+int CItemManager::ExtendItem(int userID, IUser* user, CUserInventoryItem& item, int newExpiryDate, bool duration)
 {
 	if (item.m_nExpiryDate == 0)
 		return 0; // can't extend permanent item
@@ -1574,7 +1574,7 @@ int CItemManager::ExtendItem(int userID, CUser* user, CUserInventoryItem& item, 
 	return 1;
 }
 
-bool CItemManager::OnDisassembleRequest(CUser* user, CReceivePacket* msg)
+bool CItemManager::OnDisassembleRequest(IUser* user, CReceivePacket* msg)
 {
 	int count = msg->ReadUInt8();
 	int unk = msg->ReadUInt8();
@@ -1614,7 +1614,7 @@ Reward* CItemManager::GetRewardByID(int rewardID)
 	return NULL;
 }
 
-RewardNotice CItemManager::GiveReward(int userID, CUser* user, int rewardID, int rewardSelectID, bool ignoreClient, int randomRepeatCount)
+RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int rewardSelectID, bool ignoreClient, int randomRepeatCount)
 {
 	RewardNotice rewardNotice;
 	rewardNotice.rewardId = 0;
@@ -1748,7 +1748,7 @@ RewardNotice CItemManager::GiveReward(int userID, CUser* user, int rewardID, int
 	return rewardNotice;
 }
 
-void CItemManager::OnNicknameChangeUse(CUser* user, string newNickname)
+void CItemManager::OnNicknameChangeUse(IUser* user, string newNickname)
 {
 	vector<CUserInventoryItem> items;
 	g_pUserDatabase->GetInventoryItemsByID(user->GetID(), 65/*nickname changer*/, items);
@@ -1775,7 +1775,7 @@ void CItemManager::OnNicknameChangeUse(CUser* user, string newNickname)
 	}
 }
 
-bool CItemManager::OnDailyRewardsRequest(CUser* user, int requestID)
+bool CItemManager::OnDailyRewardsRequest(IUser* user, int requestID)
 {
 	//switch (requestID)
 	//{
@@ -1787,7 +1787,7 @@ bool CItemManager::OnDailyRewardsRequest(CUser* user, int requestID)
 	return true;
 }
 
-void CItemManager::InsertExp(CUser* user, CUserInventoryItem& targetItem, vector<CUserInventoryItem>& items)
+void CItemManager::InsertExp(IUser* user, CUserInventoryItem& targetItem, vector<CUserInventoryItem>& items)
 {
 	if (!items.empty())
 	{
@@ -1865,7 +1865,7 @@ int GetEnhanceLevel(vector<int>& itemEnhanceAttributes)
 	return itemEnhLevel;
 }
 
-bool CItemManager::OnEnhancementRequest(CUser* user, CReceivePacket* msg)
+bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 {
 	int requestID = msg->ReadUInt8();
 
@@ -2314,7 +2314,7 @@ bool CItemManager::OnEnhancementRequest(CUser* user, CReceivePacket* msg)
 	return true;
 }
 
-bool CItemManager::OnWeaponPaintRequest(CUser* user, CReceivePacket* msg)
+bool CItemManager::OnWeaponPaintRequest(IUser* user, CReceivePacket* msg)
 {
 	int weaponSlot = msg->ReadUInt16();
 	int paintSlot = msg->ReadUInt16();
@@ -2357,7 +2357,7 @@ bool CItemManager::OnWeaponPaintRequest(CUser* user, CReceivePacket* msg)
 	return true;
 }
 
-bool CItemManager::OnWeaponPaintSwitchRequest(CUser* user, CReceivePacket* msg)
+bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 {
 	int weaponSlot = msg->ReadUInt16();
 	int paintID = msg->ReadUInt16();
@@ -2399,7 +2399,7 @@ bool CItemManager::OnWeaponPaintSwitchRequest(CUser* user, CReceivePacket* msg)
 	return true;
 }
 
-bool CItemManager::OnPartEquipRequest(CUser* user, CReceivePacket* msg)
+bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 {
 	int type = msg->ReadUInt8();
 	switch (type)
@@ -2488,7 +2488,7 @@ bool CItemManager::OnPartEquipRequest(CUser* user, CReceivePacket* msg)
 	return true;
 }
 
-bool CItemManager::OnSwitchInUseRequest(CUser* user, CReceivePacket* msg)
+bool CItemManager::OnSwitchInUseRequest(IUser* user, CReceivePacket* msg)
 {
 	int newInUse = msg->ReadUInt8();
 	int slot = msg->ReadUInt16();
@@ -2529,7 +2529,7 @@ bool CItemManager::OnSwitchInUseRequest(CUser* user, CReceivePacket* msg)
 	return true;
 }
 
-bool CItemManager::OnLockItemRequest(CUser* user, CReceivePacket* msg)
+bool CItemManager::OnLockItemRequest(IUser* user, CReceivePacket* msg)
 {
 	int newLockStatus = msg->ReadUInt8();
 	int slot = msg->ReadUInt16();
@@ -2553,7 +2553,7 @@ bool CItemManager::OnLockItemRequest(CUser* user, CReceivePacket* msg)
 	return true;
 }
 
-void CItemManager::OnUserLogin(CUser* user)
+void CItemManager::OnUserLogin(IUser* user)
 {
 	vector<int> rewardsNotices;
 	g_pUserDatabase->GetRewardNotices(user->GetID(), rewardsNotices);
@@ -2579,7 +2579,7 @@ void CItemManager::OnUserLogin(CUser* user)
 	}
 }
 
-void CItemManager::OnRewardSelect(CReceivePacket* msg, CUser* user)
+void CItemManager::OnRewardSelect(CReceivePacket* msg, IUser* user)
 {
 	if (!user)
 	{
@@ -2592,7 +2592,7 @@ void CItemManager::OnRewardSelect(CReceivePacket* msg, CUser* user)
 	GiveReward(user->GetID(), user, rewardID, rewardSelectID);
 }
 
-void CItemManager::OnCostumeEquip(CUser* user, int gameSlot)
+void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 {
 	CUserInventoryItem item;
 	g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(gameSlot), item);

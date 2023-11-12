@@ -4,7 +4,7 @@
 
 using namespace std;
 
-CUser::CUser(CExtendedSocket* sock, int userID, string userName)
+CUser::CUser(IExtendedSocket* sock, int userID, const std::string& userName)
 {
 	m_pCurrentRoom = NULL;
 	m_pCurrentChannel = NULL;
@@ -60,7 +60,7 @@ void CUser::SetStatus(UserStatus newStatus)
 	m_Status = newStatus;
 }
 
-void CUser::SetCurrentRoom(CRoom* room)
+void CUser::SetCurrentRoom(IRoom* room)
 {
 	m_pCurrentRoom = room;
 }
@@ -75,7 +75,7 @@ UserNetworkConfig_s CUser::GetNetworkConfig()
 	return m_NetworkData;
 }
 
-CExtendedSocket* CUser::GetExtendedSocket()
+IExtendedSocket* CUser::GetExtendedSocket()
 {
 	return m_pSocket;
 }
@@ -90,7 +90,7 @@ CChannelServer* CUser::GetLastChannelServer()
 	return m_pLastChannelServer;
 }
 
-CRoom* CUser::GetCurrentRoom()
+IRoom* CUser::GetCurrentRoom()
 {
 	return m_pCurrentRoom;
 }
@@ -187,7 +187,7 @@ void CUser::UpdateClientUserInfo(int flag, CUserCharacter character)
 	g_pPacketManager->SendUserUpdateInfo(m_pSocket, this, character);
 }
 
-void CUser::UpdateGameName(string gameName)
+void CUser::UpdateGameName(const string& gameName)
 {
 	CUserCharacter character;
 	character.gameName = gameName;
@@ -370,7 +370,7 @@ void CUser::UpdateTournament(int tournament)
 	UpdateClientUserInfo(UFLAG_TOURNAMENT, character);
 }
 
-int CUser::UpdateBanList(string gameName, bool remove)
+int CUser::UpdateBanList(const string& gameName, bool remove)
 {
 	int result = g_pUserDatabase->UpdateBanList(m_nID, gameName, remove);
 
@@ -487,7 +487,7 @@ bool CUser::IsCharacterExists()
 	return true;
 }
 
-bool CUser::CreateCharacter(string gameName)
+bool CUser::CreateCharacter(const string& gameName)
 {
 	int result = g_pUserDatabase->CreateCharacter(m_nID, gameName);
 	if (result <= 0)

@@ -1,11 +1,14 @@
 #include "GUI.h"
+#include "IManager.h"
 
 static CGUI g_GUI;
 IGUI* g_pGUI = NULL;
 
 IEvent* g_pEvent = NULL;
 IManager* g_pManager = NULL;
-//IUserManager* g_pUserManager = NULL;
+IServerInstance* g_pServerInstance = NULL;
+IUserManager* g_pUserManager = NULL;
+IUserDatabase* g_pUserDatabase = NULL;
 
 CGUI::CGUI()
 {
@@ -32,11 +35,28 @@ bool CGUI::Init(IManager* mgr, IEvent* event)
 	return true;
 }
 
-bool CGUI::PostInit()
+bool CGUI::PostInit(IServerInstance* srv)
 {
-	//g_pUserManager = g_pManager->GetManager("UserManager");
-	//if (!g_pUserManager)
-	//	return false;
+	g_pServerInstance = srv;
+	if (!g_pServerInstance)
+	{
+		ShowMessageBox("Fatal Error", "Could not get ServerInstance interface", true);
+		return false;
+	}
+
+	g_pUserManager = (IUserManager*)g_pManager->GetManager("UserManager");
+	if (!g_pUserManager)
+	{
+		ShowMessageBox("Fatal Error", "Could not get UserManager interface", true);
+		return false;
+	}
+
+	g_pUserDatabase = (IUserDatabase*)g_pManager->GetManager("UserDatabase");
+	if (!g_pUserManager)
+	{
+		ShowMessageBox("Fatal Error", "Could not get UserDatabase interface", true);
+		return false;
+	}
 
 	return true;
 }
@@ -51,7 +71,7 @@ void CGUI::Shutdown()
 
 void CGUI::Exec()
 {
-	m_pApplication->exec();
+	int result = m_pApplication->exec();
 }
 
 void CGUI::Exit()
@@ -81,4 +101,10 @@ void CGUI::ShowMainWindow()
 {
 	if (m_pMainWindow)
 		QMetaObject::invokeMethod(m_pMainWindow, "show");
+}
+
+void CGUI::OnSessionListUpdated(const std::vector<Session>& sessions)
+{
+	if (m_pMainWindow)
+		QMetaObject::invokeMethod(m_pMainWindow->GetSessionTab(), "OnSessionListUpdated", Q_ARG(const std::vector<Session>&, sessions));
 }

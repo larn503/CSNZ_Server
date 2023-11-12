@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IRoom.h"
 #include "RoomSettings.h"
 #include "ReceivePacket.h"
 #include "Definitions.h"
@@ -10,7 +11,7 @@ class CDedicatedServer; // TODO: fix includes
 class CRoomUser
 {
 public:
-	CRoomUser(CUser* user, RoomTeamNum team, RoomReadyStatus ready)
+	CRoomUser(IUser* user, RoomTeamNum team, RoomReadyStatus ready)
 	{
 		m_bIsIngame = false;
 		m_pUser = user;
@@ -18,77 +19,77 @@ public:
 		m_Ready = ready;
 	}
 
-	CUser* m_pUser;
+	IUser* m_pUser;
 	RoomTeamNum m_Team;
 	RoomReadyStatus m_Ready;
 	bool m_bIsIngame;
 };
 
-class CRoom
+class CRoom : public IRoom
 {
 public:
-	CRoom(int roomId, CUser* hostUser, class CChannel* channel, CRoomSettings* settings);
+	CRoom(int roomId, IUser* hostUser, class CChannel* channel, CRoomSettings* settings);
 	~CRoom();
 
 	int GetNumOfPlayers();
 	int GetFreeSlots();
 	bool HasFreeSlots();
 	bool HasPassword();
-	bool HasUser(CUser* user);
-	void AddUser(CUser* user);
+	bool HasUser(IUser* user);
+	void AddUser(IUser* user);
 	enum RoomTeamNum FindDesirableTeamNum();
-	enum RoomTeamNum GetUserTeam(CUser* user);
+	enum RoomTeamNum GetUserTeam(IUser* user);
 	int GetNumOfReadyRealPlayers();
 	int GetNumOfRealCts();
 	int GetNumOfRealTerrorists();
 	int GetNumOfReadyPlayers();
-	enum RoomReadyStatus GetUserReadyStatus(CUser* user);
-	RoomReadyStatus IsUserReady(CUser* user);
+	enum RoomReadyStatus GetUserReadyStatus(IUser* user);
+	RoomReadyStatus IsUserReady(IUser* user);
 	bool IsRoomReady();
-	bool IsUserIngame(CUser* user);
-	void SetUserIngame(CUser* user, bool inGame);
-	void RemoveUser(CUser* targetUser);
-	void RemoveUserById(int userId);
-	void SetUserToTeam(CUser* user, RoomTeamNum newTeam);
+	bool IsUserIngame(IUser* user);
+	void SetUserIngame(IUser* user, bool inGame);
+	void RemoveUser(IUser* targetUser);
+	//void RemoveUserById(int userId);
+	void SetUserToTeam(IUser* user, RoomTeamNum newTeam);
 	enum RoomStatus GetStatus();
 	void SetStatus(RoomStatus newStatus);
-	enum RoomReadyStatus ToggleUserReadyStatus(CUser* user);
+	enum RoomReadyStatus ToggleUserReadyStatus(IUser* user);
 	void ResetStatusIngameUsers();
-	bool CanStartGame();
-	void OnUserRemoved(CUser* user);
-	void SendRemovedUser(CUser* deletedUser);
-	void UpdateHost(CUser* newHost);
+	//bool CanStartGame();
+	void OnUserRemoved(IUser* user);
+	void SendRemovedUser(IUser* deletedUser);
+	void UpdateHost(IUser* newHost);
 	void HostStartGame();
-	void UserGameJoin(CUser* user);
+	void UserGameJoin(IUser* user);
 	void EndGame();
 	bool FindAndUpdateNewHost();
 	void UpdateSettings(CRoomSettings& newSettings);
-	void OnUserMessage(CReceivePacket* msg, CUser* user);
-	void OnUserTeamMessage(CReceivePacket* msg, CUser* user);
+	void OnUserMessage(CReceivePacket* msg, IUser* user);
+	void OnUserTeamMessage(CReceivePacket* msg, IUser* user);
 	void OnGameStart();
-	void KickUser(CUser* user);
-	void VoteKick(CUser* user, bool kick);
-	void SendJoinNewRoom(CUser* user);
-	void SendRoomSettings(CUser* user);
-	void SendUpdateRoomSettings(CUser* user, CRoomSettings* settings, int lowFlag, int lowMidFlag, int highMidFlag, int highFlag);
-	void SendRoomUsersReadyStatus(CUser* user);
+	void KickUser(IUser* user);
+	void VoteKick(IUser* user, bool kick);
+	void SendJoinNewRoom(IUser* user);
+	void SendRoomSettings(IUser* user);
+	void SendUpdateRoomSettings(IUser* user, CRoomSettings* settings, int lowFlag, int lowMidFlag, int highMidFlag, int highFlag);
+	void SendRoomUsersReadyStatus(IUser* user);
 	void SendReadyStatusToAll();
-	void SendReadyStatusToAll(CUser* user);
-	void SendNewUser(CUser* user, CUser* newUser);
-	void SendUserReadyStatus(CUser* user, CUser* player);
-	void SendConnectHost(CUser* user, CUser* host);
-	void SendGuestData(CUser* host, CUser* guest);
-	void SendStartMatch(CUser* host);
-	void SendCloseResultWindow(CUser* user);
-	void SendTeamChange(CUser* user, CUser* player, RoomTeamNum newTeamNum);
-	void SendGameEnd(CUser* user);
-	void SendUserMessage(std::string senderName, std::string msg, CUser* user);
-	void SendRoomStatus(CUser* user);
-	void SendPlayerLeaveIngame(CUser* user);
+	void SendReadyStatusToAll(IUser* user);
+	void SendNewUser(IUser* user, IUser* newUser);
+	void SendUserReadyStatus(IUser* user, IUser* player);
+	void SendConnectHost(IUser* user, IUser* host);
+	void SendGuestData(IUser* host, IUser* guest);
+	void SendStartMatch(IUser* host);
+	void SendCloseResultWindow(IUser* user);
+	void SendTeamChange(IUser* user, IUser* player, RoomTeamNum newTeamNum);
+	void SendGameEnd(IUser* user);
+	void SendUserMessage(const std::string& senderName, const std::string& msg, IUser* user);
+	void SendRoomStatus(IUser* user);
+	void SendPlayerLeaveIngame(IUser* user);
 
 	int GetID();
-	CUser* GetHostUser();
-	std::vector<CUser*> GetUsers();
+	IUser* GetHostUser();
+	std::vector<IUser*> GetUsers();
 	CRoomSettings* GetSettings();
 	CGameMatch* GetGameMatch();
 	CChannel* GetParentChannel();
@@ -98,10 +99,10 @@ public:
 	void SetServer(CDedicatedServer* server);
 
 private:
-	CUser* m_pHostUser;
+	IUser* m_pHostUser;
 	class CChannel* m_pParentChannel;
 	CRoomSettings* m_pSettings;
-	std::vector<CUser*> m_Users;
+	std::vector<IUser*> m_Users;
 	CGameMatch* m_pGameMatch;
 	std::vector<int> m_KickedUsers;
 

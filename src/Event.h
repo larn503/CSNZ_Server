@@ -18,24 +18,49 @@ public:
 	{
 		m_Mutex.Enter();
 
+		if (m_Events.size() >= 50)
+			__debugbreak();
+
 		m_Events.push_back(ev);
 		m_Object.Signal();
 
 		m_Mutex.Leave();
 	}
 
+	virtual void AddEventConsoleCommand(const std::string& cmd)
+	{
+		Event_s ev;
+		ev.type = SERVER_EVENT_CONSOLE_COMMAND;
+		ev.cmd = cmd;
+
+		AddEvent(ev);
+	}
+
+	virtual void AddEventPacket(IExtendedSocket* socket, CReceivePacket* packet)
+	{
+		Event_s ev;
+		ev.type = SERVER_EVENT_TCP_PACKET;
+		ev.msg = packet;
+		ev.socket = socket;
+
+		AddEvent(ev);
+	}
+
+	virtual void AddEventSecondTick()
+	{
+		Event_s ev;
+		ev.type = SERVER_EVENT_SECOND_TICK;
+
+		AddEvent(ev);
+	}
+
 	virtual void AddEventFunction(const std::function<void()>& func)
 	{
-		m_Mutex.Enter();
-
 		Event_s ev;
 		ev.type = SERVER_EVENT_FUNCTION;
-		ev.funcs.push_back(func);
+		ev.func = func;
 
-		m_Events.push_back(ev);
-		m_Object.Signal();
-
-		m_Mutex.Leave();
+		AddEvent(ev);
 	}
 
 	Event_s GetNextEvent(bool& empty)

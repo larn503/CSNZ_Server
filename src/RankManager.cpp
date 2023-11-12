@@ -6,14 +6,14 @@ CRankManager::CRankManager() : CBaseManager("RankManager")
 {
 }
 
-bool CRankManager::OnRankPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CRankManager::OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
 #ifdef PUBLIC_RELEASE
 	g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Rank system is not implemented"));
 #else
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -214,7 +214,7 @@ bool CRankManager::OnRankPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CRankManager::OnRankInfoRequest(CReceivePacket* msg, CUser* user)
+bool CRankManager::OnRankInfoRequest(CReceivePacket* msg, IUser* user)
 {
 	std::string userName = msg->ReadString();
 
@@ -231,7 +231,7 @@ bool CRankManager::OnRankInfoRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CRankManager::OnRankInRoomRequest(CReceivePacket* msg, CUser* user)
+bool CRankManager::OnRankInRoomRequest(CReceivePacket* msg, IUser* user)
 {
 	int userID = msg->ReadUInt8();
 
@@ -248,7 +248,7 @@ bool CRankManager::OnRankInRoomRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CRankManager::OnRankSearchNicknameRequest(CReceivePacket* msg, CUser* user)
+bool CRankManager::OnRankSearchNicknameRequest(CReceivePacket* msg, IUser* user)
 {
 	std::string nickname = msg->ReadString();
 
@@ -272,14 +272,14 @@ bool CRankManager::OnRankSearchNicknameRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CRankManager::OnRankLeagueRequest(CReceivePacket* msg, CUser* user)
+bool CRankManager::OnRankLeagueRequest(CReceivePacket* msg, IUser* user)
 {
 	//g_pPacketManager->SendRankLeague(user->GetExtendedSocket());
 
 	return true;
 }
 
-bool CRankManager::OnRankUserInfoRequest(CReceivePacket* msg, CUser* user)
+bool CRankManager::OnRankUserInfoRequest(CReceivePacket* msg, IUser* user)
 {
 	int userID = msg->ReadUInt32();
 

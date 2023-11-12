@@ -210,7 +210,7 @@ void CPacketManager::Shutdown()
 	}
 }
 
-CSendPacket* CPacketManager::CreatePacket(CExtendedSocket* socket, int msgID)
+CSendPacket* CPacketManager::CreatePacket(IExtendedSocket* socket, int msgID)
 {
 	return new CSendPacket(socket, msgID);
 }
@@ -249,7 +249,7 @@ BinMetadata* CPacketManager::LoadBinaryMetadata(const char* fileName)
 	return metadata;
 }
 
-void CPacketManager::SendUMsgNoticeMsgBoxToUuid(CExtendedSocket* socket, string text)
+void CPacketManager::SendUMsgNoticeMsgBoxToUuid(IExtendedSocket* socket, const string& text)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -258,7 +258,7 @@ void CPacketManager::SendUMsgNoticeMsgBoxToUuid(CExtendedSocket* socket, string 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgNoticeMessageInChat(CExtendedSocket* socket, string text)
+void CPacketManager::SendUMsgNoticeMessageInChat(IExtendedSocket* socket, const string& text)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -267,7 +267,7 @@ void CPacketManager::SendUMsgNoticeMessageInChat(CExtendedSocket* socket, string
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgChatMessage(CExtendedSocket* socket, int type, string gameName, string text, bool from)
+void CPacketManager::SendUMsgChatMessage(IExtendedSocket* socket, int type, const string& gameName, const string& text, bool from)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -284,7 +284,7 @@ void CPacketManager::SendUMsgChatMessage(CExtendedSocket* socket, int type, stri
 	socket->Send(msg);
 }
 
-/*void CPacketManager::SendUMsgNoticeMsgBoxToUuid(CExtendedSocket* socket, string text)
+/*void CPacketManager::SendUMsgNoticeMsgBoxToUuid(IExtendedSocket* socket, const string& text)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -293,7 +293,7 @@ void CPacketManager::SendUMsgChatMessage(CExtendedSocket* socket, int type, stri
 	socket->Send(msg);
 }*/
 
-void CPacketManager::SendUMsgWhisperMessage(CExtendedSocket* socket, string text, string destName, CUser* user, int type)
+void CPacketManager::SendUMsgWhisperMessage(IExtendedSocket* socket, const string& text, const string& destName, IUser* user, int type)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -306,7 +306,7 @@ void CPacketManager::SendUMsgWhisperMessage(CExtendedSocket* socket, string text
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgRoomMessage(CExtendedSocket* socket, string senderName, string text)
+void CPacketManager::SendUMsgRoomMessage(IExtendedSocket* socket, const string& senderName, const string& text)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -318,7 +318,7 @@ void CPacketManager::SendUMsgRoomMessage(CExtendedSocket* socket, string senderN
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgRoomTeamMessage(CExtendedSocket* socket, string senderName, string text)
+void CPacketManager::SendUMsgRoomTeamMessage(IExtendedSocket* socket, const string& senderName, const string& text)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -330,7 +330,7 @@ void CPacketManager::SendUMsgRoomTeamMessage(CExtendedSocket* socket, string sen
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgSystemReply(CExtendedSocket* socket, int type, string replyMsg, vector<string> additionalText)
+void CPacketManager::SendUMsgSystemReply(IExtendedSocket* socket, int type, const string& replyMsg, const vector<string>& additionalText)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -346,7 +346,7 @@ void CPacketManager::SendUMsgSystemReply(CExtendedSocket* socket, int type, stri
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgLobbyMessage(CExtendedSocket* socket, string senderName, string text)
+void CPacketManager::SendUMsgLobbyMessage(IExtendedSocket* socket, const string& senderName, const string& text)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -469,7 +469,7 @@ unsigned char rawData4[1290] = {
 	0x76, 0x65, 0x6E, 0x74, 0x2E, 0x00
 };
 
-void CPacketManager::SendUMsgNotice(CExtendedSocket* socket, Notice_s& notice, bool openDailyRewardsDialogOnClose)
+void CPacketManager::SendUMsgNotice(IExtendedSocket* socket, const Notice_s& notice, bool openDailyRewardsDialogOnClose)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -487,7 +487,7 @@ void CPacketManager::SendUMsgNotice(CExtendedSocket* socket, Notice_s& notice, b
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgExpiryNotice(CExtendedSocket* socket, const vector<int>& expiryItems)
+void CPacketManager::SendUMsgExpiryNotice(IExtendedSocket* socket, const vector<int>& expiryItems)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -504,7 +504,7 @@ void CPacketManager::SendUMsgExpiryNotice(CExtendedSocket* socket, const vector<
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgRewardNotice(CExtendedSocket* socket, RewardNotice& reward, string title, string description, bool inGame, bool scen)
+void CPacketManager::SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, string title, string description, bool inGame, bool scen)
 {
 	string titleMsg;
 	string text;
@@ -714,7 +714,7 @@ void CPacketManager::SendUMsgRewardNotice(CExtendedSocket* socket, RewardNotice&
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgRewardSelect(CExtendedSocket* socket, Reward* reward)
+void CPacketManager::SendUMsgRewardSelect(IExtendedSocket* socket, Reward* reward)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
@@ -753,7 +753,7 @@ void CPacketManager::SendUMsgRewardSelect(CExtendedSocket* socket, Reward* rewar
 	socket->Send(msg);
 }
 
-void CPacketManager::SendServerList(CExtendedSocket* socket)
+void CPacketManager::SendServerList(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::ServerList);
 	msg->BuildHeader();
@@ -775,7 +775,7 @@ void CPacketManager::SendServerList(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendStatistic(CExtendedSocket* socket)
+void CPacketManager::SendStatistic(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Statistic);
 	msg->BuildHeader();
@@ -784,7 +784,7 @@ void CPacketManager::SendStatistic(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, const vector<CUserInventoryItem>& items, int curSlot)
+void CPacketManager::SendInventoryAdd(IExtendedSocket* socket, const vector<CUserInventoryItem>& items, int curSlot)
 {
 	int itemsToSend = items.size();
 	int itemStart = 0;
@@ -887,7 +887,7 @@ void CPacketManager::SendInventoryAdd(CExtendedSocket* socket, const vector<CUse
 }
 
 // Note: you can remove only 1 item from the vector
-void CPacketManager::SendInventoryRemove(CExtendedSocket* socket, const vector<CUserInventoryItem>& items, bool gameSlot)
+void CPacketManager::SendInventoryRemove(IExtendedSocket* socket, const vector<CUserInventoryItem>& items, bool gameSlot)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Inventory);
 	msg->BuildHeader();
@@ -901,7 +901,7 @@ void CPacketManager::SendInventoryRemove(CExtendedSocket* socket, const vector<C
 	socket->Send(msg);
 }
 
-void CPacketManager::SendVersion(CExtendedSocket* socket, int result)
+void CPacketManager::SendVersion(IExtendedSocket* socket, int result)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Version);
 	msg->BuildHeader();
@@ -909,7 +909,7 @@ void CPacketManager::SendVersion(CExtendedSocket* socket, int result)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUserStart(CExtendedSocket* socket, int userID, string userName, string gameName, bool firstConnect)
+void CPacketManager::SendUserStart(IExtendedSocket* socket, int userID, const string& userName, const string& gameName, bool firstConnect)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UserStart);
 	msg->BuildHeader();
@@ -923,7 +923,7 @@ void CPacketManager::SendUserStart(CExtendedSocket* socket, int userID, string u
 	socket->Send(msg);
 }
 
-void CPacketManager::SendOption(CExtendedSocket* socket, vector<unsigned char>& config)
+void CPacketManager::SendOption(IExtendedSocket* socket, vector<unsigned char>& config)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Option);
 	msg->BuildHeader();
@@ -937,7 +937,7 @@ void CPacketManager::SendOption(CExtendedSocket* socket, vector<unsigned char>& 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendOptionUnk(CExtendedSocket* socket)
+void CPacketManager::SendOptionUnk(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Option);
 	msg->BuildHeader();
@@ -948,7 +948,7 @@ void CPacketManager::SendOptionUnk(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendOptionUnk2(CExtendedSocket* socket)
+void CPacketManager::SendOptionUnk2(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Option);
 	msg->BuildHeader();
@@ -958,7 +958,7 @@ void CPacketManager::SendOptionUnk2(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendOptionUnk3(CExtendedSocket* socket)
+void CPacketManager::SendOptionUnk3(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Option);
 	msg->BuildHeader();
@@ -970,7 +970,7 @@ void CPacketManager::SendOptionUnk3(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataMaplist(CExtendedSocket* socket)
+void CPacketManager::SendMetadataMaplist(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -989,7 +989,7 @@ void CPacketManager::SendMetadataMaplist(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataClientTable(CExtendedSocket* socket)
+void CPacketManager::SendMetadataClientTable(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1008,7 +1008,7 @@ void CPacketManager::SendMetadataClientTable(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataWeaponParts(CExtendedSocket* socket)
+void CPacketManager::SendMetadataWeaponParts(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1027,7 +1027,7 @@ void CPacketManager::SendMetadataWeaponParts(CExtendedSocket* socket)
 }
 
 // unused
-void CPacketManager::SendMetadataModelist(CExtendedSocket* socket)
+void CPacketManager::SendMetadataModelist(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1040,7 +1040,7 @@ void CPacketManager::SendMetadataModelist(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataMatchOption(CExtendedSocket* socket)
+void CPacketManager::SendMetadataMatchOption(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1059,7 +1059,7 @@ void CPacketManager::SendMetadataMatchOption(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataProgressUnlock(CExtendedSocket* socket)
+void CPacketManager::SendMetadataProgressUnlock(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1078,7 +1078,7 @@ void CPacketManager::SendMetadataProgressUnlock(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk8(CExtendedSocket* socket)
+void CPacketManager::SendMetadataUnk8(IExtendedSocket* socket)
 {
 	if (!m_pUnk8)
 		return;
@@ -1091,7 +1091,7 @@ void CPacketManager::SendMetadataUnk8(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataWeaponPaint(CExtendedSocket* socket)
+void CPacketManager::SendMetadataWeaponPaint(IExtendedSocket* socket)
 {
 	if (!m_pPaintItemList)
 		return;
@@ -1104,7 +1104,7 @@ void CPacketManager::SendMetadataWeaponPaint(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk3(CExtendedSocket* socket)
+void CPacketManager::SendMetadataUnk3(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1114,7 +1114,7 @@ void CPacketManager::SendMetadataUnk3(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataItemBox(CExtendedSocket* socket, vector<ItemBoxItem>& items)
+void CPacketManager::SendMetadataItemBox(IExtendedSocket* socket, const vector<ItemBoxItem>& items)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1149,7 +1149,7 @@ void CPacketManager::SendMetadataItemBox(CExtendedSocket* socket, vector<ItemBox
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataEncyclopedia(CExtendedSocket* socket)
+void CPacketManager::SendMetadataEncyclopedia(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1159,7 +1159,7 @@ void CPacketManager::SendMetadataEncyclopedia(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataGameModeList(CExtendedSocket* socket)
+void CPacketManager::SendMetadataGameModeList(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1178,7 +1178,7 @@ void CPacketManager::SendMetadataGameModeList(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataReinforceMaxLvl(CExtendedSocket* socket)
+void CPacketManager::SendMetadataReinforceMaxLvl(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1197,7 +1197,7 @@ void CPacketManager::SendMetadataReinforceMaxLvl(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataReinforceMaxEXP(CExtendedSocket* socket)
+void CPacketManager::SendMetadataReinforceMaxEXP(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1216,7 +1216,7 @@ void CPacketManager::SendMetadataReinforceMaxEXP(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataReinforceItemsExp(CExtendedSocket* socket)
+void CPacketManager::SendMetadataReinforceItemsExp(IExtendedSocket* socket)
 {
 	if (!m_pReinforceItemsExp)
 		return;
@@ -1229,7 +1229,7 @@ void CPacketManager::SendMetadataReinforceItemsExp(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataItemExpireTime(CExtendedSocket* socket)
+void CPacketManager::SendMetadataItemExpireTime(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1248,7 +1248,7 @@ void CPacketManager::SendMetadataItemExpireTime(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk20(CExtendedSocket* socket)
+void CPacketManager::SendMetadataUnk20(IExtendedSocket* socket)
 {
 	if (!m_pUnk20)
 		return;
@@ -1261,7 +1261,7 @@ void CPacketManager::SendMetadataUnk20(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk15(CExtendedSocket* socket)
+void CPacketManager::SendMetadataUnk15(IExtendedSocket* socket)
 {
 	if (!m_pUnk15)
 		return;
@@ -1274,7 +1274,7 @@ void CPacketManager::SendMetadataUnk15(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataRandomWeaponList(CExtendedSocket* socket)
+void CPacketManager::SendMetadataRandomWeaponList(IExtendedSocket* socket)
 {
 	if (!m_pRandomWeaponList)
 		return;
@@ -1321,7 +1321,7 @@ void CPacketManager::SendMetadataRandomWeaponList(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataHash(CExtendedSocket* socket)
+void CPacketManager::SendMetadataHash(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1331,7 +1331,7 @@ void CPacketManager::SendMetadataHash(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk31(CExtendedSocket* socket)
+void CPacketManager::SendMetadataUnk31(IExtendedSocket* socket)
 {
 	if (!m_pUnk31)
 		return;
@@ -1344,7 +1344,7 @@ void CPacketManager::SendMetadataUnk31(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataHonorMoneyShop(CExtendedSocket* socket)
+void CPacketManager::SendMetadataHonorMoneyShop(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1363,7 +1363,7 @@ void CPacketManager::SendMetadataHonorMoneyShop(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataScenarioTX_Common(CExtendedSocket* socket)
+void CPacketManager::SendMetadataScenarioTX_Common(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1382,7 +1382,7 @@ void CPacketManager::SendMetadataScenarioTX_Common(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataScenarioTX_Dedi(CExtendedSocket* socket)
+void CPacketManager::SendMetadataScenarioTX_Dedi(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1401,7 +1401,7 @@ void CPacketManager::SendMetadataScenarioTX_Dedi(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataShopItemList_Dedi(CExtendedSocket* socket)
+void CPacketManager::SendMetadataShopItemList_Dedi(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1420,7 +1420,7 @@ void CPacketManager::SendMetadataShopItemList_Dedi(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataZBCompetitive(CExtendedSocket* socket)
+void CPacketManager::SendMetadataZBCompetitive(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1439,7 +1439,7 @@ void CPacketManager::SendMetadataZBCompetitive(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk43(CExtendedSocket* socket)
+void CPacketManager::SendMetadataUnk43(IExtendedSocket* socket)
 {
 	if (!m_pUnk43)
 		return;
@@ -1452,7 +1452,7 @@ void CPacketManager::SendMetadataUnk43(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk49(CExtendedSocket* socket)
+void CPacketManager::SendMetadataUnk49(IExtendedSocket* socket)
 {
 	if (!m_pUnk49)
 		return;
@@ -1465,7 +1465,7 @@ void CPacketManager::SendMetadataUnk49(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataWeaponProp(CExtendedSocket* socket)
+void CPacketManager::SendMetadataWeaponProp(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1484,7 +1484,7 @@ void CPacketManager::SendMetadataWeaponProp(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataPPSystem(CExtendedSocket* socket)
+void CPacketManager::SendMetadataPPSystem(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1503,7 +1503,7 @@ void CPacketManager::SendMetadataPPSystem(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataCodisData(CExtendedSocket* socket)
+void CPacketManager::SendMetadataCodisData(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1522,7 +1522,7 @@ void CPacketManager::SendMetadataCodisData(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataItem(CExtendedSocket* socket)
+void CPacketManager::SendMetadataItem(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
@@ -1541,7 +1541,7 @@ void CPacketManager::SendMetadataItem(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendGameMatchInfo(CExtendedSocket* socket)
+void CPacketManager::SendGameMatchInfo(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::GameMatch);
 	msg->BuildHeader();
@@ -1578,7 +1578,7 @@ void CPacketManager::SendGameMatchInfo(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendGameMatchUnk(CExtendedSocket* socket)
+void CPacketManager::SendGameMatchUnk(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::GameMatch);
 	msg->BuildHeader();
@@ -1592,7 +1592,7 @@ void CPacketManager::SendGameMatchUnk(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendGameMatchUnk9(CExtendedSocket* socket)
+void CPacketManager::SendGameMatchUnk9(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::GameMatch);
 	msg->BuildHeader();
@@ -1607,7 +1607,7 @@ void CPacketManager::SendGameMatchUnk9(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendReply(CExtendedSocket* socket, int type)
+void CPacketManager::SendReply(IExtendedSocket* socket, int type)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Reply);
 	msg->BuildHeader();
@@ -1666,7 +1666,7 @@ unsigned char rawData3[4] = {
 	0x08, 0x00, 0x00, 0x01
 };
 
-void CPacketManager::SendItemUnk1(CExtendedSocket* socket)
+void CPacketManager::SendItemUnk1(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1675,7 +1675,7 @@ void CPacketManager::SendItemUnk1(CExtendedSocket* socket)
 
 	socket->Send(msg);
 }
-void CPacketManager::SendItemUnk3(CExtendedSocket* socket)
+void CPacketManager::SendItemUnk3(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1685,7 +1685,7 @@ void CPacketManager::SendItemUnk3(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemEquipTattoo(CExtendedSocket* socket)
+void CPacketManager::SendItemEquipTattoo(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1695,7 +1695,7 @@ void CPacketManager::SendItemEquipTattoo(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemDailyRewardsUpdate(CExtendedSocket* socket, UserDailyRewards& dailyRewards)
+void CPacketManager::SendItemDailyRewardsUpdate(IExtendedSocket* socket, const UserDailyRewards& dailyRewards)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1719,7 +1719,7 @@ void CPacketManager::SendItemDailyRewardsUpdate(CExtendedSocket* socket, UserDai
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemDailyRewardsSpinResult(CExtendedSocket* socket, RewardItem& item)
+void CPacketManager::SendItemDailyRewardsSpinResult(IExtendedSocket* socket, const RewardItem& item)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1736,7 +1736,7 @@ void CPacketManager::SendItemDailyRewardsSpinResult(CExtendedSocket* socket, Rew
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemOpenDecoderResult(CExtendedSocket* socket, ItemBoxOpenResult& result)
+void CPacketManager::SendItemOpenDecoderResult(IExtendedSocket* socket, const ItemBoxOpenResult& result)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1767,7 +1767,7 @@ void CPacketManager::SendItemOpenDecoderResult(CExtendedSocket* socket, ItemBoxO
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemOpenDecoderErrorReply(CExtendedSocket* socket, ItemBoxError code)
+void CPacketManager::SendItemOpenDecoderErrorReply(IExtendedSocket* socket, ItemBoxError code)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	string text;
@@ -1798,7 +1798,7 @@ void CPacketManager::SendItemOpenDecoderErrorReply(CExtendedSocket* socket, Item
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemEnhanceResult(CExtendedSocket* socket, EnhResult& result)
+void CPacketManager::SendItemEnhanceResult(IExtendedSocket* socket, const EnhResult& result)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1819,7 +1819,7 @@ void CPacketManager::SendItemEnhanceResult(CExtendedSocket* socket, EnhResult& r
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemWeaponPaintReply(CExtendedSocket* socket)
+void CPacketManager::SendItemWeaponPaintReply(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1831,7 +1831,7 @@ void CPacketManager::SendItemWeaponPaintReply(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemPartCheck(CExtendedSocket* socket, int slot, int partNum)
+void CPacketManager::SendItemPartCheck(IExtendedSocket* socket, int slot, int partNum)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 	msg->BuildHeader();
@@ -1844,7 +1844,7 @@ void CPacketManager::SendItemPartCheck(CExtendedSocket* socket, int slot, int pa
 	socket->Send(msg);
 }
 
-void CPacketManager::SendItemGachapon(CExtendedSocket* socket, int gachaponItem)
+void CPacketManager::SendItemGachapon(IExtendedSocket* socket, int gachaponItem)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
 
@@ -1853,7 +1853,7 @@ void CPacketManager::SendItemGachapon(CExtendedSocket* socket, int gachaponItem)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendLobbyJoin(CExtendedSocket* socket, CChannel* channel)
+void CPacketManager::SendLobbyJoin(IExtendedSocket* socket, CChannel* channel)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Lobby);
 	msg->BuildHeader();
@@ -1880,7 +1880,7 @@ void CPacketManager::SendLobbyJoin(CExtendedSocket* socket, CChannel* channel)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendLobbyUserJoin(CExtendedSocket* socket, CUser* joinedUser)
+void CPacketManager::SendLobbyUserJoin(IExtendedSocket* socket, IUser* joinedUser)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Lobby);
 	msg->BuildHeader();
@@ -1897,7 +1897,7 @@ void CPacketManager::SendLobbyUserJoin(CExtendedSocket* socket, CUser* joinedUse
 	socket->Send(msg);
 }
 
-void CPacketManager::SendLobbyUserLeft(CExtendedSocket* socket, CUser* user)
+void CPacketManager::SendLobbyUserLeft(IExtendedSocket* socket, IUser* user)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Lobby);
 	msg->BuildHeader();
@@ -1908,7 +1908,7 @@ void CPacketManager::SendLobbyUserLeft(CExtendedSocket* socket, CUser* user)
 	socket->Send(msg);
 }
 
-void BuildRoomInfo(CSendPacket* msg, CRoom* room, int lFlag, int hFlag)
+void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 {
 	msg->WriteUInt8(0);
 	msg->WriteUInt32(room->GetID());
@@ -2073,7 +2073,7 @@ void BuildRoomInfo(CSendPacket* msg, CRoom* room, int lFlag, int hFlag)
 	}
 }
 
-void CPacketManager::SendRoomListFull(CExtendedSocket* socket, const vector<CRoom*>& rooms)
+void CPacketManager::SendRoomListFull(IExtendedSocket* socket, const vector<IRoom*>& rooms)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::GameMatchRoomList);
 	msg->BuildHeader();
@@ -2097,7 +2097,7 @@ void CPacketManager::SendRoomListFull(CExtendedSocket* socket, const vector<CRoo
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomListAdd(CExtendedSocket* socket, CRoom* room)
+void CPacketManager::SendRoomListAdd(IExtendedSocket* socket, IRoom* room)
 {
 	/*CSendPacket* msg = CreatePacket(socket, PacketId::GameMatchRoomList);
 	msg->BuildHeader();
@@ -2110,7 +2110,7 @@ void CPacketManager::SendRoomListAdd(CExtendedSocket* socket, CRoom* room)
 */
 }
 
-void CPacketManager::SendRoomListUpdate(CExtendedSocket* socket, CRoom* room)
+void CPacketManager::SendRoomListUpdate(IExtendedSocket* socket, IRoom* room)
 {
 	/*CSendPacket* msg = CreatePacket(socket, PacketId::GameMatchRoomList);
 	msg->BuildHeader();
@@ -2123,7 +2123,7 @@ void CPacketManager::SendRoomListUpdate(CExtendedSocket* socket, CRoom* room)
 */
 }
 
-void CPacketManager::SendRoomListRemove(CExtendedSocket* socket, int roomID)
+void CPacketManager::SendRoomListRemove(IExtendedSocket* socket, int roomID)
 {
 	/*CSendPacket* msg = CreatePacket(socket, PacketId::GameMatchRoomList);
 	msg->BuildHeader();
@@ -2135,7 +2135,7 @@ void CPacketManager::SendRoomListRemove(CExtendedSocket* socket, int roomID)
 */
 }
 
-void CPacketManager::SendShopUpdate(CExtendedSocket* socket, const vector<Product>& products)
+void CPacketManager::SendShopUpdate(IExtendedSocket* socket, const vector<Product>& products)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Shop);
 	msg->BuildHeader();
@@ -2170,7 +2170,7 @@ void CPacketManager::SendShopUpdate(CExtendedSocket* socket, const vector<Produc
 	socket->Send(msg);
 }
 
-void CPacketManager::SendShopReply(CExtendedSocket* socket, int replyCode)
+void CPacketManager::SendShopReply(IExtendedSocket* socket, int replyCode)
 {
 	string replyMsg;
 
@@ -2203,7 +2203,7 @@ void CPacketManager::SendShopReply(CExtendedSocket* socket, int replyCode)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendShopBuyProductReply(CExtendedSocket* socket, int replyCode)
+void CPacketManager::SendShopBuyProductReply(IExtendedSocket* socket, int replyCode)
 {
 	string replyMsg;
 
@@ -2237,7 +2237,7 @@ void CPacketManager::SendShopBuyProductReply(CExtendedSocket* socket, int replyC
 	socket->Send(msg);
 }
 
-void CPacketManager::SendShopRecommendedProducts(CExtendedSocket* socket, const vector<vector<int>>& products)
+void CPacketManager::SendShopRecommendedProducts(IExtendedSocket* socket, const vector<vector<int>>& products)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Shop);
 	msg->BuildHeader();
@@ -2258,7 +2258,7 @@ void CPacketManager::SendShopRecommendedProducts(CExtendedSocket* socket, const 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendShopPopularProducts(CExtendedSocket* socket, const vector<int>& products)
+void CPacketManager::SendShopPopularProducts(IExtendedSocket* socket, const vector<int>& products)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Shop);
 	msg->BuildHeader();
@@ -2273,7 +2273,7 @@ void CPacketManager::SendShopPopularProducts(CExtendedSocket* socket, const vect
 	socket->Send(msg);
 }
 
-void CPacketManager::SendSearchRoomNotice(CExtendedSocket* socket, CRoom* room, string invitersGameName, string inviteMsg)
+void CPacketManager::SendSearchRoomNotice(IExtendedSocket* socket, IRoom* room, const string& invitersGameName, const string& inviteMsg)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::SearchRoom);
 	msg->BuildHeader();
@@ -2308,7 +2308,7 @@ void CPacketManager::SendSearchRoomNotice(CExtendedSocket* socket, CRoom* room, 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUserUpdateInfo(CExtendedSocket* socket, CUser* user, const CUserCharacter& character)
+void CPacketManager::SendUserUpdateInfo(IExtendedSocket* socket, IUser* user, const CUserCharacter& character)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UserInfo);
 	msg->BuildHeader();
@@ -2320,7 +2320,7 @@ void CPacketManager::SendUserUpdateInfo(CExtendedSocket* socket, CUser* user, co
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUserSurvey(CExtendedSocket* socket, Survey& survey)
+void CPacketManager::SendUserSurvey(IExtendedSocket* socket, const Survey& survey)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UserSurvey);
 	msg->BuildHeader();
@@ -2355,7 +2355,7 @@ void CPacketManager::SendUserSurvey(CExtendedSocket* socket, Survey& survey)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUserSurveyReply(CExtendedSocket* socket, int result)
+void CPacketManager::SendUserSurveyReply(IExtendedSocket* socket, int result)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UserSurvey);
 	msg->BuildHeader();
@@ -2687,7 +2687,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 }
 
-void CPacketManager::SendRoomCreateAndJoin(CExtendedSocket* socket, CRoom* roomInfo)
+void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2732,7 +2732,7 @@ void CPacketManager::SendRoomCreateAndJoin(CExtendedSocket* socket, CRoom* roomI
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomPlayerJoin(CExtendedSocket* socket, CUser* user, RoomTeamNum num)
+void CPacketManager::SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, RoomTeamNum num)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2764,7 +2764,7 @@ void CPacketManager::SendRoomPlayerJoin(CExtendedSocket* socket, CUser* user, Ro
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomUpdateSettings(CExtendedSocket* socket, CRoomSettings* newSettings, int low, int lowMid, int highMid, int high)
+void CPacketManager::SendRoomUpdateSettings(IExtendedSocket* socket, CRoomSettings* newSettings, int low, int lowMid, int highMid, int high)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2776,7 +2776,7 @@ void CPacketManager::SendRoomUpdateSettings(CExtendedSocket* socket, CRoomSettin
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomSetUserTeam(CExtendedSocket* socket, CUser* user, int teamNum)
+void CPacketManager::SendRoomSetUserTeam(IExtendedSocket* socket, IUser* user, int teamNum)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2789,7 +2789,7 @@ void CPacketManager::SendRoomSetUserTeam(CExtendedSocket* socket, CUser* user, i
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomSetPlayerReady(CExtendedSocket* socket, CUser* user, RoomReadyStatus readyStatus)
+void CPacketManager::SendRoomSetPlayerReady(IExtendedSocket* socket, IUser* user, RoomReadyStatus readyStatus)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2802,7 +2802,7 @@ void CPacketManager::SendRoomSetPlayerReady(CExtendedSocket* socket, CUser* user
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomSetHost(CExtendedSocket* socket, CUser* user)
+void CPacketManager::SendRoomSetHost(IExtendedSocket* socket, IUser* user)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2814,7 +2814,7 @@ void CPacketManager::SendRoomSetHost(CExtendedSocket* socket, CUser* user)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomPlayerLeave(CExtendedSocket* socket, int userId)
+void CPacketManager::SendRoomPlayerLeave(IExtendedSocket* socket, int userId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2825,7 +2825,7 @@ void CPacketManager::SendRoomPlayerLeave(CExtendedSocket* socket, int userId)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomPlayerLeaveIngame(CExtendedSocket* socket)
+void CPacketManager::SendRoomPlayerLeaveIngame(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2835,7 +2835,7 @@ void CPacketManager::SendRoomPlayerLeaveIngame(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomInviteUserList(CExtendedSocket* socket, CUser* user)
+void CPacketManager::SendRoomInviteUserList(IExtendedSocket* socket, IUser* user)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2858,7 +2858,7 @@ void CPacketManager::SendRoomInviteUserList(CExtendedSocket* socket, CUser* user
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomGameResult(CExtendedSocket* socket, CRoom* room, CGameMatch* match)
+void CPacketManager::SendRoomGameResult(IExtendedSocket* socket, IRoom* room, CGameMatch* match)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -2879,7 +2879,7 @@ void CPacketManager::SendRoomGameResult(CExtendedSocket* socket, CRoom* room, CG
 
 	for (auto stat : match->m_UserStats)
 	{
-		CUser* user = stat->m_pUser;
+		IUser* user = stat->m_pUser;
 
 		//int totalExp = stat->m_nExpEarned + stat->m_nBonusExpEarned + uData->exp;
 
@@ -3117,7 +3117,7 @@ void CPacketManager::SendRoomGameResult(CExtendedSocket* socket, CRoom* room, CG
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomKick(CExtendedSocket* socket, int userID)
+void CPacketManager::SendRoomKick(IExtendedSocket* socket, int userID)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -3129,7 +3129,7 @@ void CPacketManager::SendRoomKick(CExtendedSocket* socket, int userID)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomInitiateVoteKick(CExtendedSocket* socket, int userID, int destUserID, int reason)
+void CPacketManager::SendRoomInitiateVoteKick(IExtendedSocket* socket, int userID, int destUserID, int reason)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -3143,7 +3143,7 @@ void CPacketManager::SendRoomInitiateVoteKick(CExtendedSocket* socket, int userI
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomVoteKickResult(CExtendedSocket* socket, bool kick, int userID, int reason)
+void CPacketManager::SendRoomVoteKickResult(IExtendedSocket* socket, bool kick, int userID, int reason)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -3164,7 +3164,7 @@ void CPacketManager::SendRoomVoteKickResult(CExtendedSocket* socket, bool kick, 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomWeaponSurvey(CExtendedSocket* socket, vector<int>& weapons)
+void CPacketManager::SendRoomWeaponSurvey(IExtendedSocket* socket, const vector<int>& weapons)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -3180,7 +3180,7 @@ void CPacketManager::SendRoomWeaponSurvey(CExtendedSocket* socket, vector<int>& 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendDefaultItems(CExtendedSocket* socket, vector<CUserInventoryItem>& items)
+void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUserInventoryItem>& items)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Inventory_DefaultItems);
 	msg->BuildHeader();
@@ -3242,7 +3242,7 @@ void CPacketManager::SendDefaultItems(CExtendedSocket* socket, vector<CUserInven
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostOnItemUse(CExtendedSocket* socket, int userId, int itemId)
+void CPacketManager::SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3253,7 +3253,7 @@ void CPacketManager::SendHostOnItemUse(CExtendedSocket* socket, int userId, int 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostServerJoin(CExtendedSocket* socket, int ipAddress, bool bigEndian, int port, int userId)
+void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, bool bigEndian, int port, int userId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3264,7 +3264,7 @@ void CPacketManager::SendHostServerJoin(CExtendedSocket* socket, int ipAddress, 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostStop(CExtendedSocket* socket)
+void CPacketManager::SendHostStop(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3272,7 +3272,7 @@ void CPacketManager::SendHostStop(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostLeaveResultWindow(CExtendedSocket* socket)
+void CPacketManager::SendHostLeaveResultWindow(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3280,7 +3280,7 @@ void CPacketManager::SendHostLeaveResultWindow(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostUserInventory(CExtendedSocket* socket, int userId, vector<CUserInventoryItem>& items)
+void CPacketManager::SendHostUserInventory(IExtendedSocket* socket, int userId, const vector<CUserInventoryItem>& items)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3314,7 +3314,7 @@ void CPacketManager::SendHostUserInventory(CExtendedSocket* socket, int userId, 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostGameStart(CExtendedSocket* socket, int userId)
+void CPacketManager::SendHostGameStart(IExtendedSocket* socket, int userId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3327,7 +3327,7 @@ void CPacketManager::SendHostGameStart(CExtendedSocket* socket, int userId)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostZBAddon(CExtendedSocket* socket, int userID, vector<int>& addons)
+void CPacketManager::SendHostZBAddon(IExtendedSocket* socket, int userID, const vector<int>& addons)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3344,7 +3344,7 @@ void CPacketManager::SendHostZBAddon(CExtendedSocket* socket, int userID, vector
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostJoin(CExtendedSocket* socket, int hostID)
+void CPacketManager::SendHostJoin(IExtendedSocket* socket, int hostID)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3365,7 +3365,7 @@ void CPacketManager::SendHostJoin(CExtendedSocket* socket, int hostID)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostFlyerFlock(CExtendedSocket* socket, int type)
+void CPacketManager::SendHostFlyerFlock(IExtendedSocket* socket, int type)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3383,7 +3383,7 @@ void CPacketManager::SendHostFlyerFlock(CExtendedSocket* socket, int type)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostAdBalloon(CExtendedSocket* socket)
+void CPacketManager::SendHostAdBalloon(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3396,7 +3396,7 @@ void CPacketManager::SendHostAdBalloon(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostRestart(CExtendedSocket* socket, int newHostUserID, bool host, CGameMatch* match)
+void CPacketManager::SendHostRestart(IExtendedSocket* socket, int newHostUserID, bool host, CGameMatch* match)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
@@ -3424,14 +3424,14 @@ void CPacketManager::SendHostRestart(CExtendedSocket* socket, int newHostUserID,
 	socket->Send(msg);
 }
 
-void CPacketManager::SendCharacter(CExtendedSocket* socket)
+void CPacketManager::SendCharacter(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Character);
 	msg->BuildHeader();
 	socket->Send(msg);
 }
 
-void CPacketManager::SendEventAdd(CExtendedSocket* socket, int eventsFlag)
+void CPacketManager::SendEventAdd(IExtendedSocket* socket, int eventsFlag)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Event);
 	msg->BuildHeader();
@@ -3440,7 +3440,7 @@ void CPacketManager::SendEventAdd(CExtendedSocket* socket, int eventsFlag)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendEventUnk(CExtendedSocket* socket)
+void CPacketManager::SendEventUnk(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Event);
 	msg->BuildHeader();
@@ -3449,7 +3449,7 @@ void CPacketManager::SendEventUnk(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendEventUnk2(CExtendedSocket* socket)
+void CPacketManager::SendEventUnk2(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Event);
 	msg->BuildHeader();
@@ -3458,7 +3458,7 @@ void CPacketManager::SendEventUnk2(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMiniGameBingoUpdate(CExtendedSocket* socket, UserBingo& bingo, vector<UserBingoSlot>& slots, vector<UserBingoPrizeSlot>& prizes)
+void CPacketManager::SendMiniGameBingoUpdate(IExtendedSocket* socket, const UserBingo& bingo, const vector<UserBingoSlot>& slots, const vector<UserBingoPrizeSlot>& prizes)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::MiniGame);
 	msg->BuildHeader();
@@ -3466,13 +3466,13 @@ void CPacketManager::SendMiniGameBingoUpdate(CExtendedSocket* socket, UserBingo&
 	msg->WriteUInt8(0); // bingo
 	msg->WriteUInt8(0); // update desk
 	msg->WriteUInt8(slots.size());
-	for (auto &slot : slots)
+	for (const auto &slot : slots)
 	{
 		msg->WriteUInt8(slot.number);
 		msg->WriteUInt8(slot.opened);
 	}
 	msg->WriteUInt8(prizes.size());
-	for (auto &prize : prizes)
+	for (const auto &prize : prizes)
 	{
 		msg->WriteUInt16(prize.item.itemID);
 		msg->WriteUInt8(prize.item.count);
@@ -3483,7 +3483,7 @@ void CPacketManager::SendMiniGameBingoUpdate(CExtendedSocket* socket, UserBingo&
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMiniGameWeaponReleaseUpdate(CExtendedSocket* socket, WeaponReleaseConfig& cfg, vector<UserWeaponReleaseRow>& rows, vector<UserWeaponReleaseCharacter>& characters, int totalCount)
+void CPacketManager::SendMiniGameWeaponReleaseUpdate(IExtendedSocket* socket, const WeaponReleaseConfig& cfg, const vector<UserWeaponReleaseRow>& rows, const vector<UserWeaponReleaseCharacter>& characters, int totalCount)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::MiniGame);
 	msg->BuildHeader();
@@ -3496,7 +3496,7 @@ void CPacketManager::SendMiniGameWeaponReleaseUpdate(CExtendedSocket* socket, We
 	for (auto& row : cfg.rows)
 	{
 		auto rowIt = find_if(rows.begin(), rows.end(),
-			[row](UserWeaponReleaseRow& progressRow) { return progressRow.id == row.item.itemID; });
+			[row](const UserWeaponReleaseRow& progressRow) { return progressRow.id == row.item.itemID; });
 
 		msg->WriteUInt16(row.item.itemID);
 		msg->WriteUInt8(row.item.count);
@@ -3520,7 +3520,7 @@ void CPacketManager::SendMiniGameWeaponReleaseUpdate(CExtendedSocket* socket, We
 		msg->WriteUInt8(character);
 
 		auto characterIt = find_if(characters.begin(), characters.end(),
-			[character](UserWeaponReleaseCharacter& progressCharacter) { return progressCharacter.character == character; });
+			[character](const UserWeaponReleaseCharacter& progressCharacter) { return progressCharacter.character == character; });
 		if (characterIt != characters.end())
 		{
 			msg->WriteUInt8(characterIt->count);
@@ -3536,7 +3536,7 @@ void CPacketManager::SendMiniGameWeaponReleaseUpdate(CExtendedSocket* socket, We
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMiniGameWeaponReleaseSetCharacter(CExtendedSocket* socket, int status, int weaponSlot, int slot, int character, int charLeft)
+void CPacketManager::SendMiniGameWeaponReleaseSetCharacter(IExtendedSocket* socket, int status, int weaponSlot, int slot, int character, int charLeft)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::MiniGame);
 	msg->BuildHeader();
@@ -3557,7 +3557,7 @@ void CPacketManager::SendMiniGameWeaponReleaseSetCharacter(CExtendedSocket* sock
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMiniGameWeaponReleaseUnk2(CExtendedSocket* socket)
+void CPacketManager::SendMiniGameWeaponReleaseUnk2(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::MiniGame);
 	msg->BuildHeader();
@@ -3571,7 +3571,7 @@ void CPacketManager::SendMiniGameWeaponReleaseUnk2(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMiniGameWeaponReleaseIGNotice(CExtendedSocket* socket, char character)
+void CPacketManager::SendMiniGameWeaponReleaseIGNotice(IExtendedSocket* socket, char character)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::MiniGame);
 	msg->BuildHeader();
@@ -3584,32 +3584,32 @@ void CPacketManager::SendMiniGameWeaponReleaseIGNotice(CExtendedSocket* socket, 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendQuests(CExtendedSocket* socket, int userID, vector<CQuest*>& quests, vector<UserQuestProgress>& questsProgress, int infoFlag, int taskFlag, int rewardFlag, int statFlag)
+void CPacketManager::SendQuests(IExtendedSocket* socket, int userID, const vector<CQuest*>& quests, const vector<UserQuestProgress>& questsProgress, int infoFlag, int taskFlag, int rewardFlag, int statFlag)
 {
 	g_pConsole->Warn("SendQuests TODO: reverse\n");
 }
 
-void CPacketManager::SendQuestUpdateMainInfo(CExtendedSocket* socket, int flag, CQuest* quest, UserQuestProgress& questProgress)
+void CPacketManager::SendQuestUpdateMainInfo(IExtendedSocket* socket, int flag, CQuest* quest, const UserQuestProgress& questProgress)
 {
 	g_pConsole->Warn("SendQuestUpdateMainInfo TODO: reverse\n");
 }
 
-void CPacketManager::SendQuestUpdateTaskInfo(CExtendedSocket* socket, int flag, int questID, CQuestTask* task, UserQuestTaskProgress& taskProgress)
+void CPacketManager::SendQuestUpdateTaskInfo(IExtendedSocket* socket, int flag, int questID, CQuestTask* task, const UserQuestTaskProgress& taskProgress)
 {
 	g_pConsole->Warn("SendQuestUpdateTaskInfo TODO: reverse\n");
 }
 
-void CPacketManager::SendQuestUpdateRewardInfo(CExtendedSocket* socket, int flag, int questID, QuestReward_s& reward)
+void CPacketManager::SendQuestUpdateRewardInfo(IExtendedSocket* socket, int flag, int questID, const QuestReward_s& reward)
 {
 	g_pConsole->Warn("SendQuestUpdateRewardInfo TODO: reverse\n");
 }
 
-void CPacketManager::SendQuestUpdateQuestStat(CExtendedSocket* socket, int flag, int honorPoints, UserQuestStat& stat)
+void CPacketManager::SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag, int honorPoints, const UserQuestStat& stat)
 {
 	g_pConsole->Warn("SendQuestUpdateQuestStat TODO: reverse\n");
 }
 
-void CPacketManager::SendFavoriteLoadout(CExtendedSocket* socket, int characterItemID, int currentLoadout, CUserLoadout& loadouts)
+void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const CUserLoadout& loadouts)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
@@ -3631,7 +3631,7 @@ void CPacketManager::SendFavoriteLoadout(CExtendedSocket* socket, int characterI
 	socket->Send(msg);
 }
 
-void CPacketManager::SendFavoriteFastBuy(CExtendedSocket* socket, vector<CUserFastBuy>& fastbuy)
+void CPacketManager::SendFavoriteFastBuy(IExtendedSocket* socket, const vector<CUserFastBuy>& fastbuy)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
@@ -3654,7 +3654,7 @@ void CPacketManager::SendFavoriteFastBuy(CExtendedSocket* socket, vector<CUserFa
 	socket->Send(msg);
 }
 
-void CPacketManager::SendFavoriteBuyMenu(CExtendedSocket* socket, vector<CUserBuyMenu>& buyMenu)
+void CPacketManager::SendFavoriteBuyMenu(IExtendedSocket* socket, const vector<CUserBuyMenu>& buyMenu)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
@@ -3688,7 +3688,7 @@ void CPacketManager::SendFavoriteBuyMenu(CExtendedSocket* socket, vector<CUserBu
 	socket->Send(msg);
 }
 
-void CPacketManager::SendFavoriteBookmark(CExtendedSocket* socket, vector<int>& bookmark)
+void CPacketManager::SendFavoriteBookmark(IExtendedSocket* socket, const vector<int>& bookmark)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
@@ -4708,7 +4708,7 @@ unsigned char rawData[12011] = {
 	0x65, 0x78, 0x70, 0x6C, 0x6F, 0x72, 0x65, 0x4C, 0x61, 0x62, 0x00
 };
 
-void CPacketManager::SendAlarm(CExtendedSocket* socket, vector<Notice_s>& notices)
+void CPacketManager::SendAlarm(IExtendedSocket* socket, const vector<Notice_s>& notices)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Alarm);
 	msg->BuildHeader();
@@ -5638,7 +5638,7 @@ unsigned char Questunk1[10419] = {
 	0x01, 0x00, 0x00
 };
 
-void CPacketManager::SendQuestUnk1(CExtendedSocket* socket)
+void CPacketManager::SendQuestUnk1(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Quest);
 	msg->BuildHeader();
@@ -5653,7 +5653,7 @@ unsigned char Questunk11[17] = {
 	0x00, 0x00, 0x00, 0x00, 0x01
 };
 
-void CPacketManager::SendQuestUnk11(CExtendedSocket* socket)
+void CPacketManager::SendQuestUnk11(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Quest);
 	msg->BuildHeader();
@@ -5667,7 +5667,7 @@ unsigned char Questunk12[11] = {
 	0x0C, 0xDE, 0x07, 0x00, 0x00, 0x01, 0x09, 0x64, 0x00, 0x00, 0x00
 };
 
-void CPacketManager::SendQuestUnk12(CExtendedSocket* socket)
+void CPacketManager::SendQuestUnk12(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Quest);
 	msg->BuildHeader();
@@ -5682,7 +5682,7 @@ unsigned char Questunk13[14] = {
 	0x00, 0x01
 };
 
-void CPacketManager::SendQuestUnk13(CExtendedSocket* socket)
+void CPacketManager::SendQuestUnk13(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Quest);
 	msg->BuildHeader();
@@ -5692,7 +5692,7 @@ void CPacketManager::SendQuestUnk13(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUpdateInfoNicknameChangeReply(CExtendedSocket* socket, int replyCode)
+void CPacketManager::SendUpdateInfoNicknameChangeReply(IExtendedSocket* socket, int replyCode)
 {
 	string msgText;
 	CSendPacket* msg = CreatePacket(socket, PacketId::UpdateInfo);
@@ -5738,7 +5738,7 @@ void CPacketManager::SendUpdateInfoNicknameChangeReply(CExtendedSocket* socket, 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendTitle(CExtendedSocket* socket, int id)
+void CPacketManager::SendTitle(IExtendedSocket* socket, int id)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Title);
 	msg->BuildHeader();
@@ -5749,7 +5749,7 @@ void CPacketManager::SendTitle(CExtendedSocket* socket, int id)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUDPHostData(CExtendedSocket* socket, bool host, int userID, string ipAddress, int port)
+void CPacketManager::SendUDPHostData(IExtendedSocket* socket, bool host, int userID, const string& ipAddress, int port)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Udp);
 	msg->BuildHeader();
@@ -5763,7 +5763,7 @@ void CPacketManager::SendUDPHostData(CExtendedSocket* socket, bool host, int use
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostServerStop(CExtendedSocket* socket)
+void CPacketManager::SendHostServerStop(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::HostServer);
 	msg->BuildHeader();
@@ -5773,7 +5773,7 @@ void CPacketManager::SendHostServerStop(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void BuildClanChronicle(CSendPacket* msg, vector<ClanChronicle>& chronicle)
+void BuildClanChronicle(CSendPacket* msg, const vector<ClanChronicle>& chronicle)
 {
 	msg->WriteUInt32(chronicle.size());
 	for (auto& chr : chronicle)
@@ -5789,7 +5789,7 @@ void BuildClanChronicle(CSendPacket* msg, vector<ClanChronicle>& chronicle)
 	}
 }
 
-void BuildClanStorage(CSendPacket* msg, vector<RewardItem>& items)
+void BuildClanStorage(CSendPacket* msg, const vector<RewardItem>& items)
 {
 	msg->WriteUInt16(items.size());
 	for (auto& item : items)
@@ -5814,7 +5814,7 @@ void BuildClanStorage(CSendPacket* msg, vector<RewardItem>& items)
 	}
 }
 
-void BuildClanInfo(CSendPacket* msg, Clan_s& clan)
+void BuildClanInfo(CSendPacket* msg, const Clan_s& clan)
 {
 	msg->WriteUInt32(clan.id);
 	msg->WriteString(clan.name);
@@ -5879,7 +5879,7 @@ void BuildClanInfo(CSendPacket* msg, Clan_s& clan)
 }
 
 
-void CPacketManager::SendClanList(CExtendedSocket* socket, vector<ClanList_s>& clans, int pageID, int pageMax)
+void CPacketManager::SendClanList(IExtendedSocket* socket, const vector<ClanList_s>& clans, int pageID, int pageMax)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -5909,7 +5909,7 @@ void CPacketManager::SendClanList(CExtendedSocket* socket, vector<ClanList_s>& c
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanInfo(CExtendedSocket* socket, Clan_s& clan)
+void CPacketManager::SendClanInfo(IExtendedSocket* socket, const Clan_s& clan)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -5921,7 +5921,7 @@ void CPacketManager::SendClanInfo(CExtendedSocket* socket, Clan_s& clan)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanReply(CExtendedSocket* socket, int replyID, int replyCode, const char* errStr)
+void CPacketManager::SendClanReply(IExtendedSocket* socket, int replyID, int replyCode, const char* errStr)
 {
 	// test reply?
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
@@ -5935,7 +5935,7 @@ void CPacketManager::SendClanReply(CExtendedSocket* socket, int replyID, int rep
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanJoinReply(CExtendedSocket* socket, int replyCode, const char* errStr)
+void CPacketManager::SendClanJoinReply(IExtendedSocket* socket, int replyCode, const char* errStr)
 {
 	// test reply?
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
@@ -5951,7 +5951,7 @@ void CPacketManager::SendClanJoinReply(CExtendedSocket* socket, int replyCode, c
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanCreateUserList(CExtendedSocket* socket, vector<ClanUser>& users)
+void CPacketManager::SendClanCreateUserList(IExtendedSocket* socket, const vector<ClanUser>& users)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -5972,7 +5972,7 @@ void CPacketManager::SendClanCreateUserList(CExtendedSocket* socket, vector<Clan
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanUpdateUserList(CExtendedSocket* socket, ClanUser& user, bool remove)
+void CPacketManager::SendClanUpdateUserList(IExtendedSocket* socket, const ClanUser& user, bool remove)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -5996,7 +5996,7 @@ void CPacketManager::SendClanUpdateUserList(CExtendedSocket* socket, ClanUser& u
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanStoragePage(CExtendedSocket* socket, ClanStoragePage& clanStoragePage)
+void CPacketManager::SendClanStoragePage(IExtendedSocket* socket, const ClanStoragePage& clanStoragePage)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6011,7 +6011,7 @@ void CPacketManager::SendClanStoragePage(CExtendedSocket* socket, ClanStoragePag
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanStorageHistory(CExtendedSocket* socket)
+void CPacketManager::SendClanStorageHistory(IExtendedSocket* socket)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6032,7 +6032,7 @@ void CPacketManager::SendClanStorageHistory(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanStorageAccessGrade(CExtendedSocket* socket, vector<int>& accessGrade)
+void CPacketManager::SendClanStorageAccessGrade(IExtendedSocket* socket, const vector<int>& accessGrade)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6048,7 +6048,7 @@ void CPacketManager::SendClanStorageAccessGrade(CExtendedSocket* socket, vector<
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanStorageReply(CExtendedSocket* socket, int replyCode, const char* errStr)
+void CPacketManager::SendClanStorageReply(IExtendedSocket* socket, int replyCode, const char* errStr)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6065,7 +6065,7 @@ void CPacketManager::SendClanStorageReply(CExtendedSocket* socket, int replyCode
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanCreateMemberUserList(CExtendedSocket* socket, vector<ClanUser>& users)
+void CPacketManager::SendClanCreateMemberUserList(IExtendedSocket* socket, const vector<ClanUser>& users)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6092,7 +6092,7 @@ void CPacketManager::SendClanCreateMemberUserList(CExtendedSocket* socket, vecto
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanUpdateMemberUserList(CExtendedSocket* socket, ClanUser& user, bool remove)
+void CPacketManager::SendClanUpdateMemberUserList(IExtendedSocket* socket, const ClanUser& user, bool remove)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6122,7 +6122,7 @@ void CPacketManager::SendClanUpdateMemberUserList(CExtendedSocket* socket, ClanU
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanCreateJoinUserList(CExtendedSocket* socket, vector<ClanUserJoinRequest>& users)
+void CPacketManager::SendClanCreateJoinUserList(IExtendedSocket* socket, const vector<ClanUserJoinRequest>& users)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6151,7 +6151,7 @@ void CPacketManager::SendClanCreateJoinUserList(CExtendedSocket* socket, vector<
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanUpdateJoinUserList(CExtendedSocket* socket, ClanUserJoinRequest& user, bool remove)
+void CPacketManager::SendClanUpdateJoinUserList(IExtendedSocket* socket, const ClanUserJoinRequest& user, bool remove)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6183,7 +6183,7 @@ void CPacketManager::SendClanUpdateJoinUserList(CExtendedSocket* socket, ClanUse
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanDeleteJoinUserList(CExtendedSocket* socket)
+void CPacketManager::SendClanDeleteJoinUserList(IExtendedSocket* socket)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6194,7 +6194,7 @@ void CPacketManager::SendClanDeleteJoinUserList(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanUpdate(CExtendedSocket* socket, int type, int memberGrade, Clan_s& clan)
+void CPacketManager::SendClanUpdate(IExtendedSocket* socket, int type, int memberGrade, const Clan_s& clan)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6271,7 +6271,7 @@ void CPacketManager::SendClanUpdate(CExtendedSocket* socket, int type, int membe
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanUpdateNotice(CExtendedSocket* socket, Clan_s& clan)
+void CPacketManager::SendClanUpdateNotice(IExtendedSocket* socket, const Clan_s& clan)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6666,7 +6666,7 @@ unsigned char markColor2[2250] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-void CPacketManager::SendClanMarkColor(CExtendedSocket* socket)
+void CPacketManager::SendClanMarkColor(IExtendedSocket* socket)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6690,7 +6690,7 @@ void CPacketManager::SendClanMarkColor(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanMarkReply(CExtendedSocket* socket, int replyCode, const char* errStr)
+void CPacketManager::SendClanMarkReply(IExtendedSocket* socket, int replyCode, const char* errStr)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6709,7 +6709,7 @@ void CPacketManager::SendClanMarkReply(CExtendedSocket* socket, int replyCode, c
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanInvite(CExtendedSocket* socket, string inviterGameName, int clanID)
+void CPacketManager::SendClanInvite(IExtendedSocket* socket, const string& inviterGameName, int clanID)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6722,7 +6722,7 @@ void CPacketManager::SendClanInvite(CExtendedSocket* socket, string inviterGameN
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanMasterDelegate(CExtendedSocket* socket)
+void CPacketManager::SendClanMasterDelegate(IExtendedSocket* socket)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6735,7 +6735,7 @@ void CPacketManager::SendClanMasterDelegate(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanKick(CExtendedSocket* socket)
+void CPacketManager::SendClanKick(IExtendedSocket* socket)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6747,7 +6747,7 @@ void CPacketManager::SendClanKick(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendClanChatMessage(CExtendedSocket* socket, string gameName, string message)
+void CPacketManager::SendClanChatMessage(IExtendedSocket* socket, const string& gameName, const string& message)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Clan);
 	msg->BuildHeader();
@@ -6759,7 +6759,7 @@ void CPacketManager::SendClanChatMessage(CExtendedSocket* socket, string gameNam
 	socket->Send(msg);
 }
 
-void CPacketManager::SendBanList(CExtendedSocket* socket, vector<string>& banList)
+void CPacketManager::SendBanList(IExtendedSocket* socket, const vector<string>& banList)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Ban);
 	msg->BuildHeader();
@@ -6772,7 +6772,7 @@ void CPacketManager::SendBanList(CExtendedSocket* socket, vector<string>& banLis
 	socket->Send(msg);
 }
 
-void CPacketManager::SendBanUpdateList(CExtendedSocket* socket, string gameName, bool remove)
+void CPacketManager::SendBanUpdateList(IExtendedSocket* socket, const string& gameName, bool remove)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Ban);
 	msg->BuildHeader();
@@ -6781,7 +6781,7 @@ void CPacketManager::SendBanUpdateList(CExtendedSocket* socket, string gameName,
 	socket->Send(msg);
 }
 
-void CPacketManager::SendBanSettings(CExtendedSocket* socket, int settings)
+void CPacketManager::SendBanSettings(IExtendedSocket* socket, int settings)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Ban);
 	msg->BuildHeader();
@@ -6790,7 +6790,7 @@ void CPacketManager::SendBanSettings(CExtendedSocket* socket, int settings)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendBanMaxSize(CExtendedSocket* socket, int maxSize)
+void CPacketManager::SendBanMaxSize(IExtendedSocket* socket, int maxSize)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Ban);
 	msg->BuildHeader();
@@ -6799,7 +6799,7 @@ void CPacketManager::SendBanMaxSize(CExtendedSocket* socket, int maxSize)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMessengerUserInfo(CExtendedSocket* socket, int userID, CUserCharacter& character)
+void CPacketManager::SendMessengerUserInfo(IExtendedSocket* socket, int userID, const CUserCharacter& character)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Messenger);
 	msg->BuildHeader();
@@ -6815,7 +6815,7 @@ void CPacketManager::SendMessengerUserInfo(CExtendedSocket* socket, int userID, 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRankReply(CExtendedSocket* socket, int replyCode)
+void CPacketManager::SendRankReply(IExtendedSocket* socket, int replyCode)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Rank);
 	msg->BuildHeader();
@@ -6824,7 +6824,7 @@ void CPacketManager::SendRankReply(CExtendedSocket* socket, int replyCode)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRankUserInfo(CExtendedSocket* socket, int userID, CUserCharacter& character)
+void CPacketManager::SendRankUserInfo(IExtendedSocket* socket, int userID, const CUserCharacter& character)
 {
 	CSendPacket* msg = g_pPacketManager->CreatePacket(socket, PacketId::Rank);
 	msg->BuildHeader();
@@ -6852,7 +6852,7 @@ void CPacketManager::SendRankUserInfo(CExtendedSocket* socket, int userID, CUser
 	socket->Send(msg);
 }
 
-void CPacketManager::SendAddonPacket(CExtendedSocket* socket, vector<int>& addons)
+void CPacketManager::SendAddonPacket(IExtendedSocket* socket, const vector<int>& addons)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Addon);
 	msg->BuildHeader();
@@ -6866,7 +6866,7 @@ void CPacketManager::SendAddonPacket(CExtendedSocket* socket, vector<int>& addon
 	socket->Send(msg);
 }
 
-void CPacketManager::SendLeaguePacket(CExtendedSocket* socket)
+void CPacketManager::SendLeaguePacket(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::League);
 	msg->BuildHeader();
@@ -6886,7 +6886,7 @@ void CPacketManager::SendLeaguePacket(CExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendLeagueGaugePacket(CExtendedSocket* socket, int gameModeId)
+void CPacketManager::SendLeagueGaugePacket(IExtendedSocket* socket, int gameModeId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::League);
 	msg->BuildHeader();

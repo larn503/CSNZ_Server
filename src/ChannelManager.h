@@ -10,32 +10,32 @@ class CChannelManager : public CBaseManager<IChannelManager>
 public:
 	CChannelManager();
 
-	bool OnChannelListPacket(CExtendedSocket* socket);
-	bool OnRoomRequest(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnRoomListPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnLobbyMessage(CReceivePacket* msg, CExtendedSocket* socket, CUser* user);
-	bool OnWhisperMessage(CReceivePacket* msg, CUser* user);
-	bool OnRoomUserMessage(CReceivePacket* msg, CUser* user);
-	bool OnRoomTeamUserMessage(CReceivePacket* msg, CUser* user);
+	bool OnChannelListPacket(IExtendedSocket* socket);
+	bool OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnRoomListPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnLobbyMessage(CReceivePacket* msg, IExtendedSocket* socket, IUser* user);
+	bool OnWhisperMessage(CReceivePacket* msg, IUser* user);
+	bool OnRoomUserMessage(CReceivePacket* msg, IUser* user);
+	bool OnRoomTeamUserMessage(CReceivePacket* msg, IUser* user);
 
 	class CChannelServer* GetServerByIndex(int index);
-	void JoinChannel(CUser* user, int channelServerID, int channelID, bool transfer);
+	void JoinChannel(IUser* user, int channelServerID, int channelID, bool transfer);
 	void EndAllGames();
 
 	std::vector<CChannelServer*> channelServers;
 
 private:
-	bool OnCommandHandler(CExtendedSocket* socket, CUser* user, std::string message);
+	bool OnCommandHandler(IExtendedSocket* socket, IUser* user, const std::string& message);
 
-	bool OnNewRoomRequest(CReceivePacket* msg, CUser* user);
-	bool OnJoinRoomRequest(CReceivePacket* msg, CUser* user);
-	bool OnLeaveRoomRequest(CUser* user);
-	bool OnToggleReadyRequest(CUser* user);
-	bool OnConnectionFailure(CUser* user);
-	bool OnGameStartRequest(CUser* user);
-	bool OnCloseResultRequest(CUser* user);
-	bool OnRoomUpdateSettings(CReceivePacket* msg, CUser* user);
-	bool OnSetTeamRequest(CReceivePacket* msg, CUser* user);
-	bool OnUserInviteRequest(CReceivePacket* msg, CUser* user);
-	bool OnRoomSetZBAddonRequest(CReceivePacket* msg, CUser* user);
+	bool OnNewRoomRequest(CReceivePacket* msg, IUser* user);
+	bool OnJoinRoomRequest(CReceivePacket* msg, IUser* user);
+	bool OnLeaveRoomRequest(IUser* user);
+	bool OnToggleReadyRequest(IUser* user);
+	bool OnConnectionFailure(IUser* user);
+	bool OnGameStartRequest(IUser* user);
+	bool OnCloseResultRequest(IUser* user);
+	bool OnRoomUpdateSettings(CReceivePacket* msg, IUser* user);
+	bool OnSetTeamRequest(CReceivePacket* msg, IUser* user);
+	bool OnUserInviteRequest(CReceivePacket* msg, IUser* user);
+	bool OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user);
 };

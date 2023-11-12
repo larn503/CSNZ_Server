@@ -1,6 +1,10 @@
 #include "NoticeDialog.h"
 #include "SelectUserDialog.h"
 
+#include "GUI.h"
+#include "IUserManager.h"
+#include "IEvent.h"
+
 #include <ui_noticedialog.h>
 #include <QMessageBox>
 
@@ -37,15 +41,20 @@ void CNoticeDialog::SendClicked()
 		return;
 	}
 
+	std::string str = text.toStdString();
+	g_pEvent->AddEventFunction([str]()
+		{
+			g_pUserManager->SendNoticeMsgBoxToAll(str);
+		});
+
 	close();
 }
 
 void CNoticeDialog::SelectUsersClicked()
 {
-	CSelectUserDialog selectUserDialog(this/*, m_SelectedUsers*/);
-	selectUserDialog.exec();
-
-	m_SelectedUsers = selectUserDialog.GetSelectedUsers();
+	CSelectUserDialog selectUserDialog(this, m_SelectedUsers);
+	if (selectUserDialog.exec() == 1)
+		m_SelectedUsers = selectUserDialog.GetSelectedUsers();
 }
 
 void CNoticeDialog::TextChanged()

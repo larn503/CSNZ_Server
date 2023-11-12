@@ -1,6 +1,7 @@
 #pragma once
 
-#include "main.h"
+#include <vector>
+#include <map>
 
 class CUserLoadout
 {
@@ -15,6 +16,10 @@ public:
 class CUserBuyMenu
 {
 public:
+	CUserBuyMenu()
+	{
+	}
+
 	CUserBuyMenu(std::vector<int>& slots)
 	{
 		items = slots;

@@ -80,6 +80,7 @@ target_include_directories(PROJECTNAME PUBLIC
 	"Thirdparty/SQLiteCpp/include"
 	"Thirdparty/KeyValues/include"
 	"Common"
+	"Interfaces"
 )
 
 target_precompile_headers(PROJECTNAME PRIVATE main.h)

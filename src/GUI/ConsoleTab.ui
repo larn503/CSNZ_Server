@@ -45,10 +45,10 @@
     <string>Submit</string>
    </property>
    <property name="autoDefault">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="default">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QLineEdit" name="Entry">

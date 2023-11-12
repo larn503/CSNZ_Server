@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IServerInstance.h"
+
 #include "ExtendedSocket.h"
 #include "PacketManager.h"
 #include "UserManager.h"
@@ -14,8 +16,7 @@
 #include "ClanManager.h"
 #include "RankManager.h"
 
-
-class CServerInstance
+class CServerInstance : public IServerInstance
 {
 public:
 	CServerInstance();
@@ -30,16 +31,18 @@ public:
 	bool IsServerActive();
 	void OnCommand(const std::string& command);
 	void OnEvent();
-	void OnPackets(CExtendedSocket* s, std::vector<CReceivePacket*>& msgs);
+	void OnPackets(IExtendedSocket* s, CReceivePacket* msg);
 	void OnSecondTick();
 	void OnMinuteTick();
-	void OnFunction(std::vector<std::function<void()>>& funcs);
+	void OnFunction(std::function<void()>& func);
 	void UpdateConsoleStatus();
-	time_t GetCurrentTime();
-	tm* GetCurrentLocalTime();
-	double GetMemoryInfo();
-	const char* GetMainInfo();
-	void DisconnectClient(CExtendedSocket* socket);
+	virtual time_t GetCurrentTime();
+	virtual tm* GetCurrentLocalTime();
+	virtual double GetMemoryInfo();
+	virtual const char* GetMainInfo();
+	virtual void DisconnectClient(IExtendedSocket* socket);
+	virtual std::vector<IExtendedSocket*> GetSessions();
+	virtual IExtendedSocket* GetSocketByID(unsigned int id);
 
 private:
 	unsigned int m_nNextClientIndex;

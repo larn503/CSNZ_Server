@@ -11,7 +11,7 @@ class CQuestEventBaseCondition
 public:
 	CQuestEventBaseCondition(CQuestEventTask* task, int id, int goal);
 
-	virtual bool Event_Internal(CUser* user);
+	virtual bool Event_Internal(IUser* user);
 
 	void SetEventType(int eventType);
 	int GetID();
@@ -30,12 +30,12 @@ class CQuestEventTask
 public:
 	CQuestEventTask(CQuestEvent* quest, int id, int goal);
 
-	void IncrementCount(CUser* user, int count = 0, bool setForce = false);
-	void Done(CUser* user, UserQuestTaskProgress& progress);
+	void IncrementCount(IUser* user, int count = 0, bool setForce = false);
+	void Done(IUser* user, UserQuestTaskProgress& progress);
 	void SetNotice(int goal, std::string userMsg);
 	void SetRewardID(int rewardID);
 	void AddCondition(CQuestEventBaseCondition* condition);
-	void ApplyProgress(CUser* user, UserQuestTaskProgress& progress);
+	void ApplyProgress(IUser* user, UserQuestTaskProgress& progress);
 
 	void OnMinuteTick(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKillEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, GameMatch_KillEvent& killEvent);
@@ -47,10 +47,10 @@ public:
 	void OnMosquitoKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 
-	void OnLevelUpEvent(CUser* user, int level, int newLevel);
-	void OnGameMatchLeave(CUser* user);
+	void OnLevelUpEvent(IUser* user, int level, int newLevel);
+	void OnGameMatchLeave(IUser* user);
 	void OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, int userTeam);
-	void OnUserLogin(CUser* user);
+	void OnUserLogin(IUser* user);
 
 	int GetID();
 	int GetGoal();
@@ -58,7 +58,7 @@ public:
 	std::string GetNoticeUserMsg();
 	int GetRewardID();
 	CQuestEvent* GetQuest();
-	bool IsFinished(CUser* user);
+	bool IsFinished(IUser* user);
 
 protected:
 	CQuestEvent* m_pQuest;
@@ -82,7 +82,7 @@ public:
 	CQuestEventTask* GetTask(int id);
 	std::vector<CQuestEventTask*>& GetTasks();
 
-	void ApplyProgress(CUser* user, UserQuestProgress& progress);
+	void ApplyProgress(IUser* user, UserQuestProgress& progress);
 
 	void OnMinuteTick(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKillEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, GameMatch_KillEvent& killEvent);
@@ -94,13 +94,13 @@ public:
 	void OnMosquitoKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 
-	void OnLevelUpEvent(CUser* user, int level, int newLevel);
-	void OnGameMatchLeave(CUser* user);
+	void OnLevelUpEvent(IUser* user, int level, int newLevel);
+	void OnGameMatchLeave(IUser* user);
 	void OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, int userTeam);
-	void OnUserLogin(CUser* user);
+	void OnUserLogin(IUser* user);
 
-	void OnTaskDone(CUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task);
-	bool IsAllTaskFinished(CUser* user);
+	void OnTaskDone(IUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task);
+	bool IsAllTaskFinished(IUser* user);
 
 private:
 	int m_nID;
@@ -110,7 +110,7 @@ private:
 class CQuestEventBaseConditionGameMatch : public CQuestEventBaseCondition
 {
 public:
-	CQuestEventBaseConditionGameMatch(CQuestEventTask* task, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseCondition(task, id, goal)
+	CQuestEventBaseConditionGameMatch(CQuestEventTask* task, int id, int goal, bool temp, std::vector<int> gameModes, const std::vector<int>& maps, int playerCount) : CQuestEventBaseCondition(task, id, goal)
 	{
 		m_GameModes = gameModes;
 		m_Maps = maps;
@@ -175,7 +175,7 @@ public:
 	{
 	}
 
-	void OnLevelUpEvent(CUser* user, int level, int newLevel)
+	void OnLevelUpEvent(IUser* user, int level, int newLevel)
 	{
 		if (!CQuestEventBaseCondition::Event_Internal(user))
 			return;
@@ -400,7 +400,7 @@ public:
 	{
 	}
 
-	void OnUserLogin(CUser* user)
+	void OnUserLogin(IUser* user)
 	{
 		if (!CQuestEventBaseCondition::Event_Internal(user))
 			return;

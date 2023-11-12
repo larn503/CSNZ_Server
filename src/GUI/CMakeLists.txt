@@ -35,4 +35,5 @@ target_sources(gui PRIVATE "../Common/Utils.cpp")
 target_include_directories(gui PUBLIC
 	"../"
 	"../Common"
+	"../Interfaces"
 )

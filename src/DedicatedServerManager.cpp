@@ -1,6 +1,6 @@
 #include "DedicatedServerManager.h"
 
-CDedicatedServer::CDedicatedServer(CExtendedSocket* socket, int ip, int port)
+CDedicatedServer::CDedicatedServer(IExtendedSocket* socket, int ip, int port)
 {
 	m_pSocket = socket;
 	m_iIP = ip;
@@ -11,7 +11,7 @@ CDedicatedServer::CDedicatedServer(CExtendedSocket* socket, int ip, int port)
 	g_pUserManager->SendMetadata(socket);
 }
 
-void CDedicatedServer::SetRoom(CRoom* room)
+void CDedicatedServer::SetRoom(IRoom* room)
 {
 	m_pRoom = room;
 }
@@ -21,12 +21,12 @@ void CDedicatedServer::SetMemoryUsage(int memShift)
 	m_iLastMemory = memShift << 20;
 }
 
-CExtendedSocket* CDedicatedServer::GetSocket()
+IExtendedSocket* CDedicatedServer::GetSocket()
 {
 	return m_pSocket;
 }
 
-CRoom* CDedicatedServer::GetRoom()
+IRoom* CDedicatedServer::GetRoom()
 {
 	return m_pRoom;
 }
@@ -46,7 +46,7 @@ int CDedicatedServer::GetPort()
 	return m_iPort;
 }
 
-bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
@@ -103,7 +103,7 @@ void CDedicatedServerManager::Shutdown()
 		g_pPacketManager->SendHostServerStop(s->GetSocket());
 }
 
-CDedicatedServer* CDedicatedServerManager::GetAvailableServerFromPools(CRoom* room)
+CDedicatedServer* CDedicatedServerManager::GetAvailableServerFromPools(IRoom* room)
 {
 	std::lock_guard<std::mutex> lg(hMutex);
 
@@ -136,7 +136,7 @@ void CDedicatedServerManager::AddServer(CDedicatedServer* server)
 	vServerPools.push_back(server);
 }
 
-CDedicatedServer* CDedicatedServerManager::GetServerBySocket(CExtendedSocket* socket)
+CDedicatedServer* CDedicatedServerManager::GetServerBySocket(IExtendedSocket* socket)
 {
 	std::lock_guard<std::mutex> lg(hMutex);
 
@@ -147,13 +147,13 @@ CDedicatedServer* CDedicatedServerManager::GetServerBySocket(CExtendedSocket* so
 	return NULL;
 }
 
-void CDedicatedServerManager::RemoveServer(CExtendedSocket* socket)
+void CDedicatedServerManager::RemoveServer(IExtendedSocket* socket)
 {
 	CDedicatedServer* server = GetServerBySocket(socket);
 	if (!server)
 		return;
 
-	CRoom* room = server->GetRoom();
+	IRoom* room = server->GetRoom();
 	if (room)
 		room->SetServer(NULL);
 

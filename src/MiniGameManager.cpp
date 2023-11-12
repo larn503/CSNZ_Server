@@ -8,11 +8,11 @@ CMiniGameManager::CMiniGameManager() : CBaseManager("MiniGameManager")
 {
 }
 
-void CMiniGameManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
+void CMiniGameManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (!user)
 		return;
 
@@ -31,7 +31,7 @@ void CMiniGameManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	}
 }
 
-void CMiniGameManager::WeaponReleaseAddCharacter(CUser* user, char charID, int count)
+void CMiniGameManager::WeaponReleaseAddCharacter(IUser* user, char charID, int count)
 {
 	UserWeaponReleaseCharacter character;
 	character.character = charID;
@@ -40,7 +40,7 @@ void CMiniGameManager::WeaponReleaseAddCharacter(CUser* user, char charID, int c
 	g_pUserDatabase->UpdateWeaponReleaseCharacter(user->GetID(), character);
 }
 
-void CMiniGameManager::OnBingoRequest(CReceivePacket* msg, CUser* user)
+void CMiniGameManager::OnBingoRequest(CReceivePacket* msg, IUser* user)
 {
 	int requestID = msg->ReadInt8();
 	switch (requestID)
@@ -62,7 +62,7 @@ void CMiniGameManager::OnBingoRequest(CReceivePacket* msg, CUser* user)
 	}
 }
 
-bool CMiniGameManager::BingoInitDesk(CUser* user, UserBingo& bingo)
+bool CMiniGameManager::BingoInitDesk(IUser* user, UserBingo& bingo)
 {
 	if (bingo.status != UserBingoStatus::BINGO_UNINITIALIZED)
 		return false;
@@ -169,7 +169,7 @@ bool CMiniGameManager::BingoInitDesk(CUser* user, UserBingo& bingo)
 	return true;
 }
 
-void CMiniGameManager::OnBingoUpdateRequest(CUser* user)
+void CMiniGameManager::OnBingoUpdateRequest(IUser* user)
 {
 	UserBingo bingo = {};
 	g_pUserDatabase->GetBingoProgress(user->GetID(), bingo);
@@ -197,7 +197,7 @@ UserBingoSlot* GetSlotByNum(vector<UserBingoSlot>& bingo, int num)
 	return NULL;
 }
 
-bool CMiniGameManager::BingoOpenRandomNumber(CUser* user, UserBingo& bingo)
+bool CMiniGameManager::BingoOpenRandomNumber(IUser* user, UserBingo& bingo)
 {
 	/*if (!bingo.canPlay)
 		return false;
@@ -296,7 +296,7 @@ bool CMiniGameManager::BingoOpenRandomNumber(CUser* user, UserBingo& bingo)
 	return true;
 }
 
-void CMiniGameManager::OnBingoResetRequest(CUser* user)
+void CMiniGameManager::OnBingoResetRequest(IUser* user)
 {
 	/*UserBingo bingo = {};
 	g_pUserDatabase->GetBingoProgress(user->GetID(), bingo);
@@ -306,7 +306,7 @@ void CMiniGameManager::OnBingoResetRequest(CUser* user)
 	BingoInitDesk(user, bingo);*/
 }
 
-void CMiniGameManager::OnBingoShuffleRequest(CUser* user)
+void CMiniGameManager::OnBingoShuffleRequest(IUser* user)
 {
 	/*UserBingo bingo = {};
 	g_pUserDatabase->GetBingoProgress(user->GetID(), bingo);
@@ -346,7 +346,7 @@ void CMiniGameManager::OnBingoShuffleRequest(CUser* user)
 }
 
 
-void CMiniGameManager::OnWeaponReleaseRequest(CReceivePacket* msg, CUser* user)
+void CMiniGameManager::OnWeaponReleaseRequest(CReceivePacket* msg, IUser* user)
 {
 	int requestID = msg->ReadUInt8();
 	switch (requestID)
@@ -365,7 +365,7 @@ void CMiniGameManager::OnWeaponReleaseRequest(CReceivePacket* msg, CUser* user)
 	}
 }
 
-void CMiniGameManager::SendWeaponReleaseUpdate(CUser* user)
+void CMiniGameManager::SendWeaponReleaseUpdate(IUser* user)
 {
 	vector<UserWeaponReleaseCharacter> characters;
 	vector<UserWeaponReleaseRow> rows;
@@ -377,7 +377,7 @@ void CMiniGameManager::SendWeaponReleaseUpdate(CUser* user)
 	g_pPacketManager->SendMiniGameWeaponReleaseUpdate(user->GetExtendedSocket(), g_pServerConfig->weaponRelease, rows, characters, totalCharacterCount);
 }
 
-void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, CUser* user)
+void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, IUser* user)
 {
 	int weaponSlot = msg->ReadUInt8();
 	int slot = msg->ReadUInt8();
@@ -469,7 +469,7 @@ void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, C
 	g_pPacketManager->SendMiniGameWeaponReleaseSetCharacter(user->GetExtendedSocket(), lastChar ? 2 : 0, weaponSlot, slot, character.character, character.count - 1);
 }
 
-void CMiniGameManager::OnWeaponReleaseGetJokerRequest(CUser* user)
+void CMiniGameManager::OnWeaponReleaseGetJokerRequest(IUser* user)
 {
 
 }

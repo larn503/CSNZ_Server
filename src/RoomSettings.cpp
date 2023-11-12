@@ -1073,7 +1073,7 @@ void CRoomSettings::LoadZbCompetitiveSettings(int gameModeId)
 	mutationLimit = gameModeId == 45 ? 40 : 0;
 }
 
-void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, CUser* user, int changeFlag)
+void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int changeFlag)
 {
 	if (lowFlag & ROOM_LOW_UNK)
 		lowFlag &= ~ROOM_LOW_UNK;
@@ -1817,7 +1817,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, CUser* user, int 
 	}
 }
 
-bool CRoomSettings::CheckSettings(CUser* user)
+bool CRoomSettings::CheckSettings(IUser* user)
 {
 	if (!(lowFlag & ROOM_LOW_ROOMNAME && lowFlag & ROOM_LOW_PASSWORD && lowFlag & ROOM_LOW_GAMEMODEID && lowFlag & ROOM_LOW_MAPID && lowFlag & ROOM_LOW_MAXPLAYERS && lowFlag & ROOM_LOW_WINLIMIT && lowFlag & ROOM_LOW_KILLLIMIT))
 	{
@@ -1986,7 +1986,7 @@ bool CRoomSettings::CheckSettings(CUser* user)
 	return true;
 }
 
-bool CRoomSettings::CheckNewSettings(CUser* user, CRoomSettings* roomSettings)
+bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 {
 	if (lowFlag & ROOM_LOW_GAMEMODEID && gameModeId != roomSettings->gameModeId)
 	{

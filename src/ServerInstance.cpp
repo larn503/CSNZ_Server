@@ -136,8 +136,6 @@ bool CServerInstance::Init()
 
 CServerInstance::~CServerInstance()
 {
-	// TODO: test ShutdownSystems
-
 	delete g_pNetwork;
 	delete g_pPacketManager;
 	delete g_pUserDatabase;
@@ -169,6 +167,8 @@ void CServerInstance::UnloadConfigs()
 
 void CServerInstance::OnCommand(const string& command)
 {
+	g_pConsole->Log("Command: %s\n", command.c_str());
+
 	istringstream iss(command);
 	vector<string> args((istream_iterator<string>(iss)), istream_iterator<string>());
 
@@ -299,7 +299,7 @@ void CServerInstance::OnCommand(const string& command)
 		ban.reason = reason;
 		ban.term = term * CSO_24_HOURS_IN_MINUTES + g_pServerInstance->GetCurrentTime(); // convert days to minutes
 
-		CUser* user = g_pUserManager->GetUserById(userID);
+		IUser* user = g_pUserManager->GetUserById(userID);
 		if (g_pUserDatabase->UpdateUserBan(userID, ban) > 0)
 		{
 			if (user)
@@ -356,7 +356,7 @@ void CServerInstance::OnCommand(const string& command)
 		data.flag = UDATA_FLAG_LASTHWID;
 		if (g_pUserDatabase->GetUserData(userID, data) > 0)
 		{
-			CUser* user = g_pUserManager->GetUserById(userID);
+			IUser* user = g_pUserManager->GetUserById(userID);
 			if (user)
 				g_pUserManager->DisconnectUser(user);
 
@@ -395,7 +395,7 @@ void CServerInstance::OnCommand(const string& command)
 		data.flag = UDATA_FLAG_LASTIP;
 		if (g_pUserDatabase->GetUserData(userID, data) > 0)
 		{
-			CUser* user = g_pUserManager->GetUserById(userID);
+			IUser* user = g_pUserManager->GetUserById(userID);
 			if (user)
 				g_pUserManager->DisconnectUser(user);
 
@@ -557,7 +557,7 @@ void CServerInstance::OnCommand(const string& command)
 		if (args.size() >= 5 && isNumber(args[4]))
 			duration = stoi(args[4]);
 
-		CUser* user = g_pUserManager->GetUserById(userID);
+		IUser* user = g_pUserManager->GetUserById(userID);
 		int status = g_pItemManager->AddItem(userID, user, itemID, count, duration); // add permanent item by default
 		switch (status)
 		{
@@ -605,13 +605,13 @@ void CServerInstance::OnCommand(const string& command)
 	{
 		int num = stoi(args[1]);
 
-		CUser* user = g_pUserManager->GetUserById(1);
+		IUser* user = g_pUserManager->GetUserById(1);
 
 		g_pPacketManager->SendEventAdd(user->GetExtendedSocket(), num);
 	}
 	else if (args[0] == "sendevent2")
 	{
-		CUser* user = g_pUserManager->GetUserById(1);
+		IUser* user = g_pUserManager->GetUserById(1);
 
 		vector<UserWeaponReleaseCharacter> characters;
 		vector<UserWeaponReleaseRow> rows;
@@ -624,7 +624,7 @@ void CServerInstance::OnCommand(const string& command)
 	}
 	else if (args[0] == "sendinventory")
 	{
-		CUser* user = g_pUserManager->GetUserById(1);
+		IUser* user = g_pUserManager->GetUserById(1);
 
 		vector<CUserInventoryItem> items;
 		g_pUserDatabase->GetInventoryItems(user->GetID(), items);
@@ -659,11 +659,9 @@ void ReadConsoleThread()
 		string cmd;
 		getline(cin, cmd);
 
-		Event_s ev;
-		ev.cmd = cmd;
-		ev.type = SERVER_EVENT_CONSOLE_COMMAND;
-		ev.socket = NULL;
-		g_Event.AddEvent(ev);
+		// TODO: ignore empty line?
+
+		g_Event.AddEventConsoleCommand(cmd);
 	}
 }
 
@@ -726,7 +724,7 @@ void CServerInstance::ListenTCP()
 		{
 			if (i == g_pNetwork->m_TCPSocket) // accept new client
 			{
-				CExtendedSocket* sock = g_pNetwork->AcceptNewClient(m_nNextClientIndex);
+				IExtendedSocket* sock = g_pNetwork->AcceptNewClient(m_nNextClientIndex);
 				if (!sock)
 				{
 					Sleep(100);
@@ -746,7 +744,7 @@ void CServerInstance::ListenTCP()
 			}
 			else // data from client
 			{
-				CExtendedSocket* s = g_pNetwork->GetExSocketBySocket(i);
+				IExtendedSocket* s = g_pNetwork->GetExSocketBySocket(i);
 				if (!s)
 				{
 					continue;
@@ -761,7 +759,7 @@ void CServerInstance::ListenTCP()
 					int socket = s->GetSocket();
 
 					// clean up user
-					CUser* user = g_pUserManager->GetUserBySocket(s);
+					IUser* user = g_pUserManager->GetUserBySocket(s);
 					int userID = 0;
 					string userName = "NULL";
 					if (user)
@@ -788,7 +786,7 @@ void CServerInstance::ListenTCP()
 						int socket = s->GetSocket();
 
 						// clean up user
-						CUser* user = g_pUserManager->GetUserBySocket(s);
+						IUser* user = g_pUserManager->GetUserBySocket(s);
 						int userID = 0;
 						string userName = "NULL";
 						if (user)
@@ -818,20 +816,15 @@ void CServerInstance::ListenTCP()
 				}
 				else
 				{
-					Event_s ev;
-					ev.type = SERVER_EVENT_TCP_PACKET;
-					ev.socket = s;
-					ev.msgs.push_back(s->GetMsg());
+					g_Event.AddEventPacket(s, s->GetMsg());
 					s->SetMsg(NULL);
-
-					g_Event.AddEvent(ev);
 				}
 			}
 		}
 
 		if (FD_ISSET(i, &g_pNetwork->m_Write_fds))
 		{
-			CExtendedSocket* sock = g_pNetwork->GetExSocketBySocket(i);
+			IExtendedSocket* sock = g_pNetwork->GetExSocketBySocket(i);
 			if (sock && sock->GetPacketsToSend().size())
 			{
 				CSendPacket* msg = sock->GetPacketsToSend()[0]; // send only one packet from vector
@@ -899,7 +892,7 @@ void CServerInstance::ListenUDP()
 				string localIpAddress = ip_to_string(longAddr);
 				short port = buf.readUInt16_LE();
 
-				CUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_pUserManager->GetUserById(userID);
 				if (!user)
 				{
 					return;
@@ -956,13 +949,13 @@ void CServerInstance::OnEvent()
 			OnCommand(ev.cmd);
 			break;
 		case SERVER_EVENT_TCP_PACKET:
-			OnPackets(ev.socket, ev.msgs);
+			OnPackets(ev.socket, ev.msg);
 			break;
 		case SERVER_EVENT_SECOND_TICK:
 			OnSecondTick();
 			break;
 		case SERVER_EVENT_FUNCTION:
-			OnFunction(ev.funcs);
+			OnFunction(ev.func);
 			break; 
 		}
 
@@ -972,7 +965,7 @@ void CServerInstance::OnEvent()
 	}
 }
 
-void CServerInstance::OnPackets(CExtendedSocket* s, vector<CReceivePacket*>& msgs)
+void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 {
 	if (find(g_pNetwork->m_Sessions.begin(), g_pNetwork->m_Sessions.end(), s) == g_pNetwork->m_Sessions.end())
 	{
@@ -980,103 +973,100 @@ void CServerInstance::OnPackets(CExtendedSocket* s, vector<CReceivePacket*>& msg
 		return;
 	}
 
-	for (auto msg : msgs)
+	switch (msg->GetID())
 	{
-		switch (msg->GetID())
-		{
-		case PacketId::Version:
-			g_pUserManager->OnVersionPacket(msg, s);
-			break;
-		case PacketId::Transfer:
-			g_pUserManager->OnCharacterPacket(msg, s);
-			break;
-		case PacketId::Login:
-			g_pUserManager->OnLoginPacket(msg, s);
-			break;
-		case PacketId::RequestChannels:
-			g_pChannelManager->OnChannelListPacket(s);
-			break;
-		case PacketId::RequestRoomList:
-			g_pChannelManager->OnRoomListPacket(msg, s);
-			break;
-		case PacketId::Room:
-			g_pChannelManager->OnRoomRequest(msg, s);
-			break;
-		case PacketId::Shop:
-			g_pShopManager->OnShopPacket(msg, s);
-			break;
-		case PacketId::UMsg:
-			g_pUserManager->OnUserMessage(msg, s);
-			break;
-		case PacketId::Host:
-			g_pHostManager->OnPacket(msg, s);
-			break;
-		case PacketId::Favorite:
-			g_pUserManager->OnFavoritePacket(msg, s);
-			break;
-		case PacketId::Option:
-			g_pUserManager->OnOptionPacket(msg, s);
-			break;
-		case PacketId::Udp:
-			g_pUserManager->OnUdpPacket(msg, s);
-			break;
-		case PacketId::Item:
-			g_pItemManager->OnItemPacket(msg, s);
-			break;
-		case PacketId::MiniGame:
-			g_pMiniGameManager->OnPacket(msg, s);
-			break;
-		case PacketId::MileageBingo:
-			break;
-		case PacketId::UpdateInfo:
-			g_pUserManager->OnUpdateInfoPacket(msg, s);
-			break;
-		case PacketId::Clan:
-			g_pClanManager->OnPacket(msg, s);
-			break;
-		case PacketId::Statistic:
-			g_pPacketManager->SendStatistic(s);
-			break;
-		case PacketId::Rank:
-			g_pRankManager->OnRankPacket(msg, s);
-			break;
-		case PacketId::Hack:
-			//printf("shit");
-			break;
-		case PacketId::Report:
-			g_pUserManager->OnReportPacket(msg, s);
-			break;
-		case PacketId::Alarm:
-			g_pUserManager->OnAlarmPacket(msg, s);
-			break;
-		case PacketId::Quest:
-			g_pQuestManager->OnPacket(msg, s);
-			break;
-		case PacketId::Title:
-			g_pQuestManager->OnTitlePacket(msg, s);
-			break;
-		case PacketId::HostServer:
-			g_pDedicatedServerManager->OnPacket(msg, s);
-			break;
-		case PacketId::Messenger:
-			g_pUserManager->OnMessengerPacket(msg, s);
-			break;
-		case PacketId::UserSurvey:
-			g_pUserManager->OnUserSurveyPacket(msg, s);
-			break;
-		case PacketId::Addon:
-			g_pUserManager->OnAddonPacket(msg, s);
-			break;
-		case PacketId::Ban:
-			g_pUserManager->OnBanPacket(msg, s);
-			break;
-		case PacketId::League:
-			g_pUserManager->OnLeaguePacket(msg, s);
-			break;
-		default:
-			g_pConsole->Warn("Unimplemented packet: %d\n", msg->GetID());
-			break;
-		}
+	case PacketId::Version:
+		g_pUserManager->OnVersionPacket(msg, s);
+		break;
+	case PacketId::Transfer:
+		g_pUserManager->OnCharacterPacket(msg, s);
+		break;
+	case PacketId::Login:
+		g_pUserManager->OnLoginPacket(msg, s);
+		break;
+	case PacketId::RequestChannels:
+		g_pChannelManager->OnChannelListPacket(s);
+		break;
+	case PacketId::RequestRoomList:
+		g_pChannelManager->OnRoomListPacket(msg, s);
+		break;
+	case PacketId::Room:
+		g_pChannelManager->OnRoomRequest(msg, s);
+		break;
+	case PacketId::Shop:
+		g_pShopManager->OnShopPacket(msg, s);
+		break;
+	case PacketId::UMsg:
+		g_pUserManager->OnUserMessage(msg, s);
+		break;
+	case PacketId::Host:
+		g_pHostManager->OnPacket(msg, s);
+		break;
+	case PacketId::Favorite:
+		g_pUserManager->OnFavoritePacket(msg, s);
+		break;
+	case PacketId::Option:
+		g_pUserManager->OnOptionPacket(msg, s);
+		break;
+	case PacketId::Udp:
+		g_pUserManager->OnUdpPacket(msg, s);
+		break;
+	case PacketId::Item:
+		g_pItemManager->OnItemPacket(msg, s);
+		break;
+	case PacketId::MiniGame:
+		g_pMiniGameManager->OnPacket(msg, s);
+		break;
+	case PacketId::MileageBingo:
+		break;
+	case PacketId::UpdateInfo:
+		g_pUserManager->OnUpdateInfoPacket(msg, s);
+		break;
+	case PacketId::Clan:
+		g_pClanManager->OnPacket(msg, s);
+		break;
+	case PacketId::Statistic:
+		g_pPacketManager->SendStatistic(s);
+		break;
+	case PacketId::Rank:
+		g_pRankManager->OnRankPacket(msg, s);
+		break;
+	case PacketId::Hack:
+		//printf("shit");
+		break;
+	case PacketId::Report:
+		g_pUserManager->OnReportPacket(msg, s);
+		break;
+	case PacketId::Alarm:
+		g_pUserManager->OnAlarmPacket(msg, s);
+		break;
+	case PacketId::Quest:
+		g_pQuestManager->OnPacket(msg, s);
+		break;
+	case PacketId::Title:
+		g_pQuestManager->OnTitlePacket(msg, s);
+		break;
+	case PacketId::HostServer:
+		g_pDedicatedServerManager->OnPacket(msg, s);
+		break;
+	case PacketId::Messenger:
+		g_pUserManager->OnMessengerPacket(msg, s);
+		break;
+	case PacketId::UserSurvey:
+		g_pUserManager->OnUserSurveyPacket(msg, s);
+		break;
+	case PacketId::Addon:
+		g_pUserManager->OnAddonPacket(msg, s);
+		break;
+	case PacketId::Ban:
+		g_pUserManager->OnBanPacket(msg, s);
+		break;
+	case PacketId::League:
+		g_pUserManager->OnLeaguePacket(msg, s);
+		break;
+	default:
+		g_pConsole->Warn("Unimplemented packet: %d\n", msg->GetID());
+		break;
 	}
 }
 
@@ -1110,12 +1100,9 @@ void CServerInstance::OnMinuteTick()
 	Manager().MinuteTick(m_CurrentTime);
 }
 
-void CServerInstance::OnFunction(vector<function<void()>>& funcs)
+void CServerInstance::OnFunction(function<void()>& func)
 {
-	for (auto& func : funcs)
-	{
-		func();
-	}
+	func();
 }
 
 double CServerInstance::GetMemoryInfo()
@@ -1135,9 +1122,9 @@ const char* CServerInstance::GetMainInfo()
 	return va("Memory usage: %.02fmb. Connected users: %d. Logged in users: %d.", GetMemoryInfo(), static_cast<int>(g_pNetwork->m_Sessions.size()), static_cast<int>(g_pUserManager->GetUsers().size()));
 }
 
-void CServerInstance::DisconnectClient(CExtendedSocket* socket)
+void CServerInstance::DisconnectClient(IExtendedSocket* socket)
 {
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user)
 	{
 		g_pUserManager->DisconnectUser(user);
@@ -1147,6 +1134,20 @@ void CServerInstance::DisconnectClient(CExtendedSocket* socket)
 		g_pDedicatedServerManager->RemoveServer(socket);
 		g_pNetwork->RemoveSocket(socket);
 	}
+}
+
+std::vector<IExtendedSocket*> CServerInstance::GetSessions()
+{
+	return g_pNetwork->m_Sessions;
+}
+
+IExtendedSocket* CServerInstance::GetSocketByID(unsigned int id)
+{
+	for (auto s : g_pNetwork->m_Sessions)
+		if (s->GetID() == id)
+			return s;
+
+	return NULL;
 }
 
 void CServerInstance::UpdateConsoleStatus()

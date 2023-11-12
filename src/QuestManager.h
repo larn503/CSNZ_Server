@@ -19,8 +19,8 @@ public:
 	void LoadEventQuests();
 	void LoadClanQuests();
 	std::vector<CQuest*>& GetQuests();
-	void OnPacket(CReceivePacket* msg, CExtendedSocket* socket);
-	void OnTitlePacket(CReceivePacket* msg, CExtendedSocket* socket);
+	void OnPacket(CReceivePacket* msg, IExtendedSocket* socket);
+	void OnTitlePacket(CReceivePacket* msg, IExtendedSocket* socket);
 
 	void OnMatchMinuteTick(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 
@@ -33,20 +33,20 @@ public:
 	void OnMosquitoKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 	void OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch);
 
-	void OnLevelUpEvent(CUser* user, int level, int newLevel);
+	void OnLevelUpEvent(IUser* user, int level, int newLevel);
 	void OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch, int userTeam);
-	void OnGameMatchLeave(CUser* user, std::vector<UserQuestProgress>& questProgress, std::vector<UserQuestProgress>& questsEventsProgress);
-	void OnUserLogin(CUser* user);
+	void OnGameMatchLeave(IUser* user, std::vector<UserQuestProgress>& questProgress, std::vector<UserQuestProgress>& questsEventsProgress);
+	void OnUserLogin(IUser* user);
 
-	void OnQuestTaskFinished(CUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* task, CQuest* quest);
-	void OnQuestEventTaskFinished(CUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task, CQuestEvent* quest);
-	void OnQuestFinished(CUser* user, CQuest* quest, UserQuestProgress& questProgress);
-	void OnReceiveReward(CUser* user, int rewardID, int questID);
-	void OnSpecialMissionRequest(CUser* user, CReceivePacket* msg);
-	void OnSetFavouriteRequest(CUser* user, CReceivePacket* msg);
-	void OnTitleSetPrefixRequest(CUser* user, CReceivePacket* msg);
-	void OnTitleListSetRequest(CUser* user, CReceivePacket* msg);
-	void OnTitleListRemoveRequest(CUser* user, CReceivePacket* msg);
+	void OnQuestTaskFinished(IUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* task, CQuest* quest);
+	void OnQuestEventTaskFinished(IUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task, CQuestEvent* quest);
+	void OnQuestFinished(IUser* user, CQuest* quest, UserQuestProgress& questProgress);
+	void OnReceiveReward(IUser* user, int rewardID, int questID);
+	void OnSpecialMissionRequest(IUser* user, CReceivePacket* msg);
+	void OnSetFavouriteRequest(IUser* user, CReceivePacket* msg);
+	void OnTitleSetPrefixRequest(IUser* user, CReceivePacket* msg);
+	void OnTitleListSetRequest(IUser* user, CReceivePacket* msg);
+	void OnTitleListRemoveRequest(IUser* user, CReceivePacket* msg);
 
 	CQuest* GetQuest(int questID);
 	CQuestEvent* GetEventQuest(int questID);

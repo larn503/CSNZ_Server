@@ -8,25 +8,25 @@ class CMiniGameManager : public CBaseManager<IMiniGameManager>
 public:
 	CMiniGameManager();
 
-	void OnPacket(CReceivePacket* msg, CExtendedSocket* socket);
+	void OnPacket(CReceivePacket* msg, IExtendedSocket* socket);
 
-	void WeaponReleaseAddCharacter(CUser* user, char charID, int count);
+	void WeaponReleaseAddCharacter(IUser* user, char charID, int count);
 
-	void SendWeaponReleaseUpdate(CUser* user);
+	void SendWeaponReleaseUpdate(IUser* user);
 
-	void OnBingoUpdateRequest(CUser* user);
+	void OnBingoUpdateRequest(IUser* user);
 
 private:
 	// bingo
-	void OnBingoRequest(CReceivePacket* msg, CUser* user);
-	void OnBingoResetRequest(CUser* user);
-	void OnBingoShuffleRequest(CUser* user);
+	void OnBingoRequest(CReceivePacket* msg, IUser* user);
+	void OnBingoResetRequest(IUser* user);
+	void OnBingoShuffleRequest(IUser* user);
 
-	bool BingoInitDesk(CUser* user, UserBingo& bingo);
-	bool BingoOpenRandomNumber(CUser* user, UserBingo& bingo);
+	bool BingoInitDesk(IUser* user, UserBingo& bingo);
+	bool BingoOpenRandomNumber(IUser* user, UserBingo& bingo);
 
 	// weapon release
-	void OnWeaponReleaseRequest(CReceivePacket* msg, CUser* user);
-	void OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, CUser* user);
-	void OnWeaponReleaseGetJokerRequest(CUser* user);
+	void OnWeaponReleaseRequest(CReceivePacket* msg, IUser* user);
+	void OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, IUser* user);
+	void OnWeaponReleaseGetJokerRequest(IUser* user);
 };

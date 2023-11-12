@@ -25,214 +25,214 @@ public:
 	virtual bool Init();
 	virtual void Shutdown();
 
-	CSendPacket* CreatePacket(CExtendedSocket* socket, int msgID);
+	CSendPacket* CreatePacket(IExtendedSocket* socket, int msgID);
 
-	void SendUMsgNoticeMsgBoxToUuid(CExtendedSocket* socket, std::string text);
-	void SendUMsgNoticeMessageInChat(CExtendedSocket* socket, std::string text);
-	void SendUMsgChatMessage(CExtendedSocket* socket, int type, std::string gameName, std::string text, bool from = false);
-	void SendUMsgWhisperMessage(CExtendedSocket* socket, std::string msg, std::string destName, CUser* user, int type); // use SendUMsgChatMessage
-	void SendUMsgRoomMessage(CExtendedSocket* socket, std::string senderName, std::string text); // use SendUMsgChatMessage
-	void SendUMsgRoomTeamMessage(CExtendedSocket* socket, std::string senderName, std::string text); // use SendUMsgChatMessage
-	void SendUMsgSystemReply(CExtendedSocket* socket, int type, std::string msg, std::vector<std::string> additionalText = {});
-	void SendUMsgLobbyMessage(CExtendedSocket* socket, std::string senderName, std::string text); // use SendUMsgChatMessage
-	void SendUMsgNotice(CExtendedSocket* socket, Notice_s& notice, bool unk = 1);
-	void SendUMsgExpiryNotice(CExtendedSocket* socket, const std::vector<int>& expiryItems);
-	void SendUMsgRewardNotice(CExtendedSocket* socket, RewardNotice& reward, std::string title = "", std::string description = "", bool inGame = false, bool scen = false);
-	void SendUMsgRewardSelect(CExtendedSocket* socket, Reward* reward);
+	void SendUMsgNoticeMsgBoxToUuid(IExtendedSocket* socket, const std::string& text);
+	void SendUMsgNoticeMessageInChat(IExtendedSocket* socket, const std::string& text);
+	void SendUMsgChatMessage(IExtendedSocket* socket, int type, const std::string& gameName, const std::string& text, bool from = false);
+	void SendUMsgWhisperMessage(IExtendedSocket* socket, const std::string& msg, const std::string& destName, IUser* user, int type); // use SendUMsgChatMessage
+	void SendUMsgRoomMessage(IExtendedSocket* socket, const std::string& senderName, const std::string& text); // use SendUMsgChatMessage
+	void SendUMsgRoomTeamMessage(IExtendedSocket* socket, const std::string& senderName, const std::string& text); // use SendUMsgChatMessage
+	void SendUMsgSystemReply(IExtendedSocket* socket, int type, const std::string& msg, const std::vector<std::string>& additionalText = {});
+	void SendUMsgLobbyMessage(IExtendedSocket* socket, const std::string& senderName, const std::string& text); // use SendUMsgChatMessage
+	void SendUMsgNotice(IExtendedSocket* socket, const Notice_s& notice, bool unk = 1);
+	void SendUMsgExpiryNotice(IExtendedSocket* socket, const std::vector<int>& expiryItems);
+	void SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, std::string title = "", std::string description = "", bool inGame = false, bool scen = false);
+	void SendUMsgRewardSelect(IExtendedSocket* socket, Reward* reward);
 
-	void SendServerList(CExtendedSocket* socket);
+	void SendServerList(IExtendedSocket* socket);
 
-	void SendStatistic(CExtendedSocket* socket);
+	void SendStatistic(IExtendedSocket* socket);
 
-	void SendInventoryAdd(CExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, int curSlot = 0);
-	void SendInventoryRemove(CExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, bool gameSlot = true);
+	void SendInventoryAdd(IExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, int curSlot = 0);
+	void SendInventoryRemove(IExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, bool gameSlot = true);
 
-	void SendDefaultItems(CExtendedSocket* socket, std::vector<CUserInventoryItem>& items);
+	void SendDefaultItems(IExtendedSocket* socket, const std::vector<CUserInventoryItem>& items);
 
-	void SendVersion(CExtendedSocket* socket, int result);
+	void SendVersion(IExtendedSocket* socket, int result);
 
-	void SendUserStart(CExtendedSocket* socket, int userID, std::string userName, std::string gameName, bool firstConnect);
-	void SendUserUpdateInfo(CExtendedSocket* socket, CUser* user, const CUserCharacter& character);
-	void SendUserSurvey(CExtendedSocket* socket, Survey& survey);
-	void SendUserSurveyReply(CExtendedSocket* socket, int result);
+	void SendUserStart(IExtendedSocket* socket, int userID, const std::string& userName, const std::string& gameName, bool firstConnect);
+	void SendUserUpdateInfo(IExtendedSocket* socket, IUser* user, const CUserCharacter& character);
+	void SendUserSurvey(IExtendedSocket* socket, const Survey& survey);
+	void SendUserSurveyReply(IExtendedSocket* socket, int result);
 
-	void SendOption(CExtendedSocket* socket, std::vector<unsigned char>& config);
-	void SendOptionUnk(CExtendedSocket* socket);
-	void SendOptionUnk2(CExtendedSocket* socket);
-	void SendOptionUnk3(CExtendedSocket* socket);
+	void SendOption(IExtendedSocket* socket, std::vector<unsigned char>& config);
+	void SendOptionUnk(IExtendedSocket* socket);
+	void SendOptionUnk2(IExtendedSocket* socket);
+	void SendOptionUnk3(IExtendedSocket* socket);
 
-	void SendMetadataMaplist(CExtendedSocket* socket);
-	void SendMetadataClientTable(CExtendedSocket* socket);
-	void SendMetadataWeaponParts(CExtendedSocket* socket);
-	void SendMetadataModelist(CExtendedSocket* socket);
-	void SendMetadataMatchOption(CExtendedSocket* socket);
-	void SendMetadataItemBox(CExtendedSocket* socket, std::vector<ItemBoxItem>& items);
-	void SendMetadataEncyclopedia(CExtendedSocket* socket);
-	void SendMetadataGameModeList(CExtendedSocket* socket);
-	void SendMetadataReinforceMaxLvl(CExtendedSocket* socket);
-	void SendMetadataReinforceMaxEXP(CExtendedSocket* socket);
-	void SendMetadataUnk8(CExtendedSocket* socket);
-	void SendMetadataProgressUnlock(CExtendedSocket* socket);
-	void SendMetadataWeaponPaint(CExtendedSocket* socket);
-	void SendMetadataUnk3(CExtendedSocket* socket);
-	void SendMetadataReinforceItemsExp(CExtendedSocket* socket);
-	void SendMetadataItemExpireTime(CExtendedSocket* socket);
-	void SendMetadataUnk20(CExtendedSocket* socket);
-	void SendMetadataUnk15(CExtendedSocket* socket);
-	void SendMetadataRandomWeaponList(CExtendedSocket* socket);
-	void SendMetadataHash(CExtendedSocket* socket);
-	void SendMetadataUnk31(CExtendedSocket* socket);
-	void SendMetadataHonorMoneyShop(CExtendedSocket* socket);
-	void SendMetadataScenarioTX_Common(CExtendedSocket* socket);
-	void SendMetadataScenarioTX_Dedi(CExtendedSocket* socket);
-	void SendMetadataShopItemList_Dedi(CExtendedSocket* socket);
-	void SendMetadataZBCompetitive(CExtendedSocket* socket);
-	void SendMetadataUnk43(CExtendedSocket* socket);
-	void SendMetadataUnk49(CExtendedSocket* socket);
-	void SendMetadataWeaponProp(CExtendedSocket* socket);
-	void SendMetadataPPSystem(CExtendedSocket* socket);
-	void SendMetadataCodisData(CExtendedSocket* socket);
-	void SendMetadataItem(CExtendedSocket* socket);
+	void SendMetadataMaplist(IExtendedSocket* socket);
+	void SendMetadataClientTable(IExtendedSocket* socket);
+	void SendMetadataWeaponParts(IExtendedSocket* socket);
+	void SendMetadataModelist(IExtendedSocket* socket);
+	void SendMetadataMatchOption(IExtendedSocket* socket);
+	void SendMetadataItemBox(IExtendedSocket* socket, const std::vector<ItemBoxItem>& items);
+	void SendMetadataEncyclopedia(IExtendedSocket* socket);
+	void SendMetadataGameModeList(IExtendedSocket* socket);
+	void SendMetadataReinforceMaxLvl(IExtendedSocket* socket);
+	void SendMetadataReinforceMaxEXP(IExtendedSocket* socket);
+	void SendMetadataUnk8(IExtendedSocket* socket);
+	void SendMetadataProgressUnlock(IExtendedSocket* socket);
+	void SendMetadataWeaponPaint(IExtendedSocket* socket);
+	void SendMetadataUnk3(IExtendedSocket* socket);
+	void SendMetadataReinforceItemsExp(IExtendedSocket* socket);
+	void SendMetadataItemExpireTime(IExtendedSocket* socket);
+	void SendMetadataUnk20(IExtendedSocket* socket);
+	void SendMetadataUnk15(IExtendedSocket* socket);
+	void SendMetadataRandomWeaponList(IExtendedSocket* socket);
+	void SendMetadataHash(IExtendedSocket* socket);
+	void SendMetadataUnk31(IExtendedSocket* socket);
+	void SendMetadataHonorMoneyShop(IExtendedSocket* socket);
+	void SendMetadataScenarioTX_Common(IExtendedSocket* socket);
+	void SendMetadataScenarioTX_Dedi(IExtendedSocket* socket);
+	void SendMetadataShopItemList_Dedi(IExtendedSocket* socket);
+	void SendMetadataZBCompetitive(IExtendedSocket* socket);
+	void SendMetadataUnk43(IExtendedSocket* socket);
+	void SendMetadataUnk49(IExtendedSocket* socket);
+	void SendMetadataWeaponProp(IExtendedSocket* socket);
+	void SendMetadataPPSystem(IExtendedSocket* socket);
+	void SendMetadataCodisData(IExtendedSocket* socket);
+	void SendMetadataItem(IExtendedSocket* socket);
 
-	void SendGameMatchInfo(CExtendedSocket* socket);
-	void SendGameMatchUnk(CExtendedSocket* socket);
-	void SendGameMatchUnk9(CExtendedSocket* socket);
+	void SendGameMatchInfo(IExtendedSocket* socket);
+	void SendGameMatchUnk(IExtendedSocket* socket);
+	void SendGameMatchUnk9(IExtendedSocket* socket);
 
-	void SendReply(CExtendedSocket* socket, int type);
+	void SendReply(IExtendedSocket* socket, int type);
 
-	void SendItemUnk1(CExtendedSocket* socket);
-	void SendItemUnk3(CExtendedSocket* socket);
-	void SendItemEquipTattoo(CExtendedSocket* socket);
-	void SendItemDailyRewardsUpdate(CExtendedSocket* socket, UserDailyRewards& dailyRewards);
-	void SendItemDailyRewardsSpinResult(CExtendedSocket* socket, RewardItem& item);
-	void SendItemOpenDecoderResult(CExtendedSocket* socket, ItemBoxOpenResult& result);
-	void SendItemOpenDecoderErrorReply(CExtendedSocket* socket, ItemBoxError code);
-	void SendItemEnhanceResult(CExtendedSocket* socket, EnhResult& result);
-	void SendItemWeaponPaintReply(CExtendedSocket* socket);
-	void SendItemPartCheck(CExtendedSocket* socket, int slot, int partNum);
-	void SendItemGachapon(CExtendedSocket* socket, int gachaponItem);
+	void SendItemUnk1(IExtendedSocket* socket);
+	void SendItemUnk3(IExtendedSocket* socket);
+	void SendItemEquipTattoo(IExtendedSocket* socket);
+	void SendItemDailyRewardsUpdate(IExtendedSocket* socket, const UserDailyRewards& dailyRewards);
+	void SendItemDailyRewardsSpinResult(IExtendedSocket* socket, const RewardItem& item);
+	void SendItemOpenDecoderResult(IExtendedSocket* socket, const ItemBoxOpenResult& result);
+	void SendItemOpenDecoderErrorReply(IExtendedSocket* socket, ItemBoxError code);
+	void SendItemEnhanceResult(IExtendedSocket* socket, const EnhResult& result);
+	void SendItemWeaponPaintReply(IExtendedSocket* socket);
+	void SendItemPartCheck(IExtendedSocket* socket, int slot, int partNum);
+	void SendItemGachapon(IExtendedSocket* socket, int gachaponItem);
 
-	void SendLobbyJoin(CExtendedSocket* socket, CChannel* channel);
-	void SendLobbyUserJoin(CExtendedSocket* socket, CUser* joinedUser);
-	void SendLobbyUserLeft(CExtendedSocket* socket, CUser* user);
+	void SendLobbyJoin(IExtendedSocket* socket, CChannel* channel);
+	void SendLobbyUserJoin(IExtendedSocket* socket, IUser* joinedUser);
+	void SendLobbyUserLeft(IExtendedSocket* socket, IUser* user);
 
-	void SendRoomListFull(CExtendedSocket* socket, const std::vector<CRoom*>& rooms);
-	void SendRoomListAdd(CExtendedSocket* socket, CRoom* room);
-	void SendRoomListUpdate(CExtendedSocket* socket, CRoom* room);
-	void SendRoomListRemove(CExtendedSocket* socket, int roomID);
+	void SendRoomListFull(IExtendedSocket* socket, const std::vector<IRoom*>& rooms);
+	void SendRoomListAdd(IExtendedSocket* socket, IRoom* room);
+	void SendRoomListUpdate(IExtendedSocket* socket, IRoom* room);
+	void SendRoomListRemove(IExtendedSocket* socket, int roomID);
 
-	void SendShopUpdate(CExtendedSocket* socket, const std::vector<Product>& products);
-	void SendShopBuyProductReply(CExtendedSocket* socket, int replyCode);
-	void SendShopReply(CExtendedSocket* socket, int replyCode);
-	void SendShopRecommendedProducts(CExtendedSocket* socket, const std::vector<std::vector<int>>& products);
-	void SendShopPopularProducts(CExtendedSocket* socket, const std::vector<int>& products);
+	void SendShopUpdate(IExtendedSocket* socket, const std::vector<Product>& products);
+	void SendShopBuyProductReply(IExtendedSocket* socket, int replyCode);
+	void SendShopReply(IExtendedSocket* socket, int replyCode);
+	void SendShopRecommendedProducts(IExtendedSocket* socket, const std::vector<std::vector<int>>& products);
+	void SendShopPopularProducts(IExtendedSocket* socket, const std::vector<int>& products);
 	
-	void SendSearchRoomNotice(CExtendedSocket* socket, CRoom* room, std::string invitersGameName, std::string inviteMsg);
+	void SendSearchRoomNotice(IExtendedSocket* socket, IRoom* room, const std::string& invitersGameName, const std::string& inviteMsg);
 
-	void SendRoomCreateAndJoin(CExtendedSocket* socket, CRoom* roomInfo);
-	void SendRoomPlayerJoin(CExtendedSocket* socket, CUser* user, RoomTeamNum num);
-	void SendRoomUpdateSettings(CExtendedSocket* socket, CRoomSettings* newSettings, int low = 0, int lowMid = 0, int highMid = 0, int high = 0);
-	void SendRoomSetUserTeam(CExtendedSocket* socket, CUser* user, int teamNum);
-	void SendRoomSetPlayerReady(CExtendedSocket* socket, CUser* user, RoomReadyStatus readyStatus);
-	void SendRoomSetHost(CExtendedSocket* socket, CUser* user);
-	void SendRoomPlayerLeave(CExtendedSocket* socket, int userId);
-	void SendRoomPlayerLeaveIngame(CExtendedSocket* socket);
-	void SendRoomInviteUserList(CExtendedSocket* socket, CUser* user);
-	void SendRoomGameResult(CExtendedSocket* socket, CRoom* room, CGameMatch* match);
-	void SendRoomKick(CExtendedSocket* socket, int userID);
-	void SendRoomInitiateVoteKick(CExtendedSocket* socket, int userID, int destUserID, int reason);
-	void SendRoomVoteKickResult(CExtendedSocket* socket, bool kick, int userID, int reason);
-	void SendRoomWeaponSurvey(CExtendedSocket* socket, std::vector<int>& weapons);
+	void SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo);
+	void SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, RoomTeamNum num);
+	void SendRoomUpdateSettings(IExtendedSocket* socket, CRoomSettings* newSettings, int low = 0, int lowMid = 0, int highMid = 0, int high = 0);
+	void SendRoomSetUserTeam(IExtendedSocket* socket, IUser* user, int teamNum);
+	void SendRoomSetPlayerReady(IExtendedSocket* socket, IUser* user, RoomReadyStatus readyStatus);
+	void SendRoomSetHost(IExtendedSocket* socket, IUser* user);
+	void SendRoomPlayerLeave(IExtendedSocket* socket, int userId);
+	void SendRoomPlayerLeaveIngame(IExtendedSocket* socket);
+	void SendRoomInviteUserList(IExtendedSocket* socket, IUser* user);
+	void SendRoomGameResult(IExtendedSocket* socket, IRoom* room, CGameMatch* match);
+	void SendRoomKick(IExtendedSocket* socket, int userID);
+	void SendRoomInitiateVoteKick(IExtendedSocket* socket, int userID, int destUserID, int reason);
+	void SendRoomVoteKickResult(IExtendedSocket* socket, bool kick, int userID, int reason);
+	void SendRoomWeaponSurvey(IExtendedSocket* socket, const std::vector<int>& weapons);
 	
-	void SendHostOnItemUse(CExtendedSocket* socket, int userId, int itemId);
-	void SendHostServerJoin(CExtendedSocket* socket, int ipAddress, bool bigEndian, int port, int userId);
-	void SendHostStop(CExtendedSocket* socket);
-	void SendHostLeaveResultWindow(CExtendedSocket* socket);
-	void SendHostUserInventory(CExtendedSocket* socket, int userId, std::vector<CUserInventoryItem>& items);
-	void SendHostGameStart(CExtendedSocket* socket, int userId);
-	void SendHostZBAddon(CExtendedSocket* socket, int userID, std::vector<int>& addons);
-	void SendHostJoin(CExtendedSocket* socket, int hostID);
-	void SendHostFlyerFlock(CExtendedSocket* socket, int type);
-	void SendHostAdBalloon(CExtendedSocket* socket);
-	void SendHostRestart(CExtendedSocket* socket, int newHostUserID, bool host, CGameMatch* match);
+	void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId);
+	void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, bool bigEndian, int port, int userId);
+	void SendHostStop(IExtendedSocket* socket);
+	void SendHostLeaveResultWindow(IExtendedSocket* socket);
+	void SendHostUserInventory(IExtendedSocket* socket, int userId, const std::vector<CUserInventoryItem>& items);
+	void SendHostGameStart(IExtendedSocket* socket, int userId);
+	void SendHostZBAddon(IExtendedSocket* socket, int userID, const std::vector<int>& addons);
+	void SendHostJoin(IExtendedSocket* socket, int hostID);
+	void SendHostFlyerFlock(IExtendedSocket* socket, int type);
+	void SendHostAdBalloon(IExtendedSocket* socket);
+	void SendHostRestart(IExtendedSocket* socket, int newHostUserID, bool host, CGameMatch* match);
 
-	void SendCharacter(CExtendedSocket* socket);
+	void SendCharacter(IExtendedSocket* socket);
 
-	void SendEventAdd(CExtendedSocket* socket, int eventsFlag);
-	void SendEventUnk(CExtendedSocket* socket);
-	void SendEventUnk2(CExtendedSocket* socket);
+	void SendEventAdd(IExtendedSocket* socket, int eventsFlag);
+	void SendEventUnk(IExtendedSocket* socket);
+	void SendEventUnk2(IExtendedSocket* socket);
 
-	void SendMiniGameBingoUpdate(CExtendedSocket* socket, UserBingo& bingo, std::vector<UserBingoSlot>& slots, std::vector<UserBingoPrizeSlot>& prizes);
-	void SendMiniGameWeaponReleaseUpdate(CExtendedSocket* socket, WeaponReleaseConfig& cfg, std::vector<UserWeaponReleaseRow>& rows, std::vector<UserWeaponReleaseCharacter>& characters, int totalCount);
-	void SendMiniGameWeaponReleaseSetCharacter(CExtendedSocket* socket, int status, int weaponSlot, int slot, int character, int charLeft);
-	void SendMiniGameWeaponReleaseUnk2(CExtendedSocket* socket);
-	void SendMiniGameWeaponReleaseIGNotice(CExtendedSocket* socket, char character);
+	void SendMiniGameBingoUpdate(IExtendedSocket* socket, const UserBingo& bingo, const std::vector<UserBingoSlot>& slots, const std::vector<UserBingoPrizeSlot>& prizes);
+	void SendMiniGameWeaponReleaseUpdate(IExtendedSocket* socket, const WeaponReleaseConfig& cfg, const std::vector<UserWeaponReleaseRow>& rows, const std::vector<UserWeaponReleaseCharacter>& characters, int totalCount);
+	void SendMiniGameWeaponReleaseSetCharacter(IExtendedSocket* socket, int status, int weaponSlot, int slot, int character, int charLeft);
+	void SendMiniGameWeaponReleaseUnk2(IExtendedSocket* socket);
+	void SendMiniGameWeaponReleaseIGNotice(IExtendedSocket* socket, char character);
 
-	void SendQuests(CExtendedSocket* socket, int userID, std::vector<CQuest*>& quests, std::vector<UserQuestProgress>& questsProgress, int infoFlag = 0xFFFF, int taskFlag = 0xFF, int rewardFlag = 0xFF, int statFlag = 0xFFFF);
-	//void SendQuestUnk(CExtendedSocket* socket);
-	void SendQuestUpdateMainInfo(CExtendedSocket* socket, int flag, CQuest* quest, UserQuestProgress& questProgress);
-	void SendQuestUpdateTaskInfo(CExtendedSocket* socket, int flag, int questID, CQuestTask* task, UserQuestTaskProgress& taskProgress);
-	void SendQuestUpdateRewardInfo(CExtendedSocket* socket, int flag, int questID, QuestReward_s& reward);
-	void SendQuestUpdateQuestStat(CExtendedSocket* socket, int flag, int honorPoints, UserQuestStat& stat);
+	void SendQuests(IExtendedSocket* socket, int userID, const std::vector<CQuest*>& quests, const std::vector<UserQuestProgress>& questsProgress, int infoFlag = 0xFFFF, int taskFlag = 0xFF, int rewardFlag = 0xFF, int statFlag = 0xFFFF);
+	//void SendQuestUnk(IExtendedSocket* socket);
+	void SendQuestUpdateMainInfo(IExtendedSocket* socket, int flag, CQuest* quest, const UserQuestProgress& questProgress);
+	void SendQuestUpdateTaskInfo(IExtendedSocket* socket, int flag, int questID, CQuestTask* task, const UserQuestTaskProgress& taskProgress);
+	void SendQuestUpdateRewardInfo(IExtendedSocket* socket, int flag, int questID, const QuestReward_s& reward);
+	void SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag, int honorPoints, const UserQuestStat& stat);
 
-	void SendFavoriteLoadout(CExtendedSocket* socket, int characterItemID, int currentLoadout, CUserLoadout& loadouts);
-	void SendFavoriteFastBuy(CExtendedSocket* socket, std::vector<CUserFastBuy>& fastbuy);
-	void SendFavoriteBuyMenu(CExtendedSocket* socket, std::vector<CUserBuyMenu>& buyMenu);
-	void SendFavoriteBookmark(CExtendedSocket* socket, std::vector<int>& bookmark);
+	void SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const CUserLoadout& loadouts);
+	void SendFavoriteFastBuy(IExtendedSocket* socket, const std::vector<CUserFastBuy>& fastbuy);
+	void SendFavoriteBuyMenu(IExtendedSocket* socket, const std::vector<CUserBuyMenu>& buyMenu);
+	void SendFavoriteBookmark(IExtendedSocket* socket, const std::vector<int>& bookmark);
 
-	void SendAlarm(CExtendedSocket* socket, std::vector<Notice_s>& notices);
+	void SendAlarm(IExtendedSocket* socket, const std::vector<Notice_s>& notices);
 
-	void SendQuestUnk1(CExtendedSocket* socket);
-	void SendQuestUnk11(CExtendedSocket* socket);
-	void SendQuestUnk12(CExtendedSocket* socket);
-	void SendQuestUnk13(CExtendedSocket* socket);
+	void SendQuestUnk1(IExtendedSocket* socket);
+	void SendQuestUnk11(IExtendedSocket* socket);
+	void SendQuestUnk12(IExtendedSocket* socket);
+	void SendQuestUnk13(IExtendedSocket* socket);
 
-	void SendUpdateInfoNicknameChangeReply(CExtendedSocket* socket, int replyCode);
+	void SendUpdateInfoNicknameChangeReply(IExtendedSocket* socket, int replyCode);
 
-	void SendTitle(CExtendedSocket* socket, int id);
+	void SendTitle(IExtendedSocket* socket, int id);
 
-	void SendUDPHostData(CExtendedSocket* socket, bool host, int userID, std::string ipAddress, int port);
+	void SendUDPHostData(IExtendedSocket* socket, bool host, int userID, const std::string& ipAddress, int port);
 
-	void SendHostServerStop(CExtendedSocket* socket);
+	void SendHostServerStop(IExtendedSocket* socket);
 
-	void SendClanList(CExtendedSocket* socket, std::vector<ClanList_s>& clans, int pageID, int pageMax);
-	void SendClanInfo(CExtendedSocket* socket, Clan_s& clan);
-	void SendClanReply(CExtendedSocket* socket, int replyID, int replyCode, const char* errStr);
-	void SendClanJoinReply(CExtendedSocket* socket, int replyCode, const char* errStr);
-	void SendClanCreateUserList(CExtendedSocket* socket, std::vector<ClanUser>& users);
-	void SendClanUpdateUserList(CExtendedSocket* socket, ClanUser& user, bool remove = false);
-	void SendClanStoragePage(CExtendedSocket* socket, ClanStoragePage& clanStoragePage);
-	void SendClanStorageHistory(CExtendedSocket* socket);
-	void SendClanStorageAccessGrade(CExtendedSocket* socket, std::vector<int>& accessGrade);
-	void SendClanStorageReply(CExtendedSocket* socket, int replyCode, const char* errStr);
-	void SendClanCreateMemberUserList(CExtendedSocket* socket, std::vector<ClanUser>& users);
-	void SendClanUpdateMemberUserList(CExtendedSocket* socket, ClanUser& user, bool remove = false);
-	void SendClanCreateJoinUserList(CExtendedSocket* socket, std::vector<ClanUserJoinRequest>& users);
-	void SendClanUpdateJoinUserList(CExtendedSocket* socket, ClanUserJoinRequest& user, bool remove = false);
-	void SendClanDeleteJoinUserList(CExtendedSocket* socket);
-	void SendClanUpdate(CExtendedSocket* socket, int type, int memberGrade, Clan_s& clan);
-	void SendClanUpdateNotice(CExtendedSocket* socket, Clan_s& clan);
-	void SendClanMarkColor(CExtendedSocket* socket);
-	void SendClanMarkReply(CExtendedSocket* socket, int replyCode, const char* errStr);
-	void SendClanInvite(CExtendedSocket* socket, std::string inviterGameName, int clanID);
-	void SendClanMasterDelegate(CExtendedSocket* socket);
-	void SendClanKick(CExtendedSocket* socket);
-	void SendClanChatMessage(CExtendedSocket* socket, std::string gameName, std::string message);
+	void SendClanList(IExtendedSocket* socket, const std::vector<ClanList_s>& clans, int pageID, int pageMax);
+	void SendClanInfo(IExtendedSocket* socket, const Clan_s& clan);
+	void SendClanReply(IExtendedSocket* socket, int replyID, int replyCode, const char* errStr);
+	void SendClanJoinReply(IExtendedSocket* socket, int replyCode, const char* errStr);
+	void SendClanCreateUserList(IExtendedSocket* socket, const std::vector<ClanUser>& users);
+	void SendClanUpdateUserList(IExtendedSocket* socket, const ClanUser& user, bool remove = false);
+	void SendClanStoragePage(IExtendedSocket* socket, const ClanStoragePage& clanStoragePage);
+	void SendClanStorageHistory(IExtendedSocket* socket);
+	void SendClanStorageAccessGrade(IExtendedSocket* socket, const std::vector<int>& accessGrade);
+	void SendClanStorageReply(IExtendedSocket* socket, int replyCode, const char* errStr);
+	void SendClanCreateMemberUserList(IExtendedSocket* socket, const std::vector<ClanUser>& users);
+	void SendClanUpdateMemberUserList(IExtendedSocket* socket, const ClanUser& user, bool remove = false);
+	void SendClanCreateJoinUserList(IExtendedSocket* socket, const std::vector<ClanUserJoinRequest>& users);
+	void SendClanUpdateJoinUserList(IExtendedSocket* socket, const ClanUserJoinRequest& user, bool remove = false);
+	void SendClanDeleteJoinUserList(IExtendedSocket* socket);
+	void SendClanUpdate(IExtendedSocket* socket, int type, int memberGrade, const Clan_s& clan);
+	void SendClanUpdateNotice(IExtendedSocket* socket, const Clan_s& clan);
+	void SendClanMarkColor(IExtendedSocket* socket);
+	void SendClanMarkReply(IExtendedSocket* socket, int replyCode, const char* errStr);
+	void SendClanInvite(IExtendedSocket* socket, const std::string& inviterGameName, int clanID);
+	void SendClanMasterDelegate(IExtendedSocket* socket);
+	void SendClanKick(IExtendedSocket* socket);
+	void SendClanChatMessage(IExtendedSocket* socket, const std::string& gameName, const std::string& message);
 
-	void SendBanList(CExtendedSocket* socket, std::vector<std::string>& banList);
-	void SendBanUpdateList(CExtendedSocket* socket, std::string gameName, bool remove = false);
-	void SendBanSettings(CExtendedSocket* socket, int settings);
-	void SendBanMaxSize(CExtendedSocket* socket, int maxSize);
+	void SendBanList(IExtendedSocket* socket, const std::vector<std::string>& banList);
+	void SendBanUpdateList(IExtendedSocket* socket, const std::string& gameName, bool remove = false);
+	void SendBanSettings(IExtendedSocket* socket, int settings);
+	void SendBanMaxSize(IExtendedSocket* socket, int maxSize);
 
-	void SendMessengerUserInfo(CExtendedSocket* socket, int userID, CUserCharacter& character);
+	void SendMessengerUserInfo(IExtendedSocket* socket, int userID, const CUserCharacter& character);
 
-	void SendRankReply(CExtendedSocket* socket, int replyCode);
-	void SendRankUserInfo(CExtendedSocket* socket, int userID, CUserCharacter& character);
+	void SendRankReply(IExtendedSocket* socket, int replyCode);
+	void SendRankUserInfo(IExtendedSocket* socket, int userID, const CUserCharacter& character);
 
-	void SendAddonPacket(CExtendedSocket* socket, std::vector<int>& addons);
+	void SendAddonPacket(IExtendedSocket* socket, const std::vector<int>& addons);
 
-	void SendLeaguePacket(CExtendedSocket* socket);
-	void SendLeagueGaugePacket(CExtendedSocket* socket, int gameModeId);
+	void SendLeaguePacket(IExtendedSocket* socket);
+	void SendLeagueGaugePacket(IExtendedSocket* socket, int gameModeId);
 
 private:
 	BinMetadata* LoadBinaryMetadata(const char* fileName);

@@ -2,7 +2,10 @@
 
 #include "IGUI.h"
 #include "MainWindow.h"
-//#include "../IUserManager.h"
+#undef slots // undef keyword to avoid conflict 
+//#include "IUserManager.h"
+//#include "IUserDatabase.h"
+#define slots Q_SLOTS
 
 #include <QApplication>
 
@@ -13,9 +16,9 @@ public:
 	virtual ~CGUI();
 	
 	virtual bool Init(IManager* mgr, IEvent* event);
+	virtual bool PostInit(IServerInstance* srv);
 	virtual void Shutdown();
 	virtual void Exec();
-	virtual bool PostInit();
 
 	// thread safe methods to update GUI
 	virtual void Exit();
@@ -23,6 +26,7 @@ public:
 	virtual void UpdateInfo(int status, int totalConnections, int uptime, double memoryUsage);
 	virtual void ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError = false);
 	virtual void ShowMainWindow();
+	virtual void OnSessionListUpdated(const std::vector<Session>& sessions);
 
 private:
 	QApplication* m_pApplication;
@@ -31,4 +35,6 @@ private:
 
 extern IEvent* g_pEvent;
 extern IManager* g_pManager;
-//extern IUserManager* g_pUserManager;
+extern IServerInstance* g_pServerInstance;
+extern class IUserManager* g_pUserManager;
+extern class IUserDatabase* g_pUserDatabase;

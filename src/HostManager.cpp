@@ -8,13 +8,13 @@ CHostManager::CHostManager() : CBaseManager("HostManager")
 {
 }
 
-bool CHostManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : (user != NULL ? user->GetCurrentRoom() : NULL);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : (user != NULL ? user->GetCurrentRoom() : NULL);
 
 	if (room == NULL)
 		return false;
@@ -143,21 +143,21 @@ bool CHostManager::OnSaveData(CReceivePacket* msg, CGameMatch* gamematch)
 	return true;
 }
 
-bool CHostManager::OnSetUserInventory(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadUInt32();
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -191,21 +191,21 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, CExtendedSocket* sock
 	return true;
 }
 
-bool CHostManager::OnUseInGameItem(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUseInGameItem(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadUInt32();
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -226,7 +226,7 @@ bool CHostManager::OnUseInGameItem(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CHostManager::OnFlyerFlockRequest(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnFlyerFlockRequest(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	// TODO: rewrite
 	string type = msg->ReadString();
@@ -236,21 +236,21 @@ bool CHostManager::OnFlyerFlockRequest(CReceivePacket* msg, CExtendedSocket* soc
 	return true;
 }
 
-bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadUInt32();
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -295,21 +295,21 @@ bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, CExtendedSocket* sock
 	return true;
 }
 
-bool CHostManager::OnKillEvent(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnKillEvent(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int killerUserID = msg->ReadInt32();
-	CUser* destUser = g_pUserManager->GetUserById(killerUserID);
+	IUser* destUser = g_pUserManager->GetUserById(killerUserID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -333,21 +333,21 @@ bool CHostManager::OnKillEvent(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -361,21 +361,21 @@ bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, CExtendedSocket* soc
 	return true;
 }
 
-bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -389,7 +389,7 @@ bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, CExtendedSocket* so
 	return true;
 }
 
-bool CHostManager::OnUpdateWinCounter(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUpdateWinCounter(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int ter = msg->ReadInt8();
 	int ct = msg->ReadInt8();
@@ -407,21 +407,21 @@ bool CHostManager::OnUpdateWinCounter(CReceivePacket* msg, CExtendedSocket* sock
 	return true;
 }
 
-bool CHostManager::OnUpdateScore(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUpdateScore(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -434,23 +434,23 @@ bool CHostManager::OnUpdateScore(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CHostManager::OnGameEvent(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int type = msg->ReadUInt8();
 	int userID = msg->ReadUInt32();
 
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -509,21 +509,21 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CHostManager::OnUpdateClass(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUpdateClass(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	CUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_pUserManager->GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
 
-	CRoom* destRoom = destUser->GetCurrentRoom();
+	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom == NULL)
 		return false;
 
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -536,17 +536,17 @@ bool CHostManager::OnUpdateClass(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CHostManager::OnZbsResult(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	g_pConsole->Warn("CHostManager::OnZbsResult\n");
 
 	return true;
 }
 
-bool CHostManager::OnGameEnd(CExtendedSocket* socket)
+bool CHostManager::OnGameEnd(IExtendedSocket* socket)
 {
 	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
 
 	g_pConsole->Log("Room (RID: %d) ending game\n", room->GetID());
 
@@ -555,7 +555,7 @@ bool CHostManager::OnGameEnd(CExtendedSocket* socket)
 	return true;
 }
 
-void CHostManager::OnHostChanged(CUser* gameMatchUser, CUser* newHost, CGameMatch* match)
+void CHostManager::OnHostChanged(IUser* gameMatchUser, IUser* newHost, CGameMatch* match)
 {
 	g_pPacketManager->SendHostRestart(gameMatchUser->GetExtendedSocket(), newHost->GetID(), gameMatchUser == newHost ? true : false, match);
 
@@ -564,7 +564,7 @@ void CHostManager::OnHostChanged(CUser* gameMatchUser, CUser* newHost, CGameMatc
 		g_pPacketManager->SendHostServerJoin(gameMatchUser->GetExtendedSocket(), ip_string_to_int(newHost->GetNetworkConfig().m_szExternalIpAddress), false, newHost->GetNetworkConfig().m_nExternalServerPort, gameMatchUser->GetID());
 }
 
-bool CHostManager::OnUserWeapon(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUserWeapon(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int id = msg->ReadUInt32();
 	int pri = msg->ReadUInt16();
@@ -575,7 +575,7 @@ bool CHostManager::OnUserWeapon(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CHostManager::OnUserSpawn(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnUserSpawn(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int id = msg->ReadUInt32();
 	auto x = msg->ReadFloat();
@@ -586,7 +586,7 @@ bool CHostManager::OnUserSpawn(CReceivePacket* msg, CExtendedSocket* socket)
 }
 
 // everytime round will trigger(new round, round restart)
-bool CHostManager::OnRoundStart(CReceivePacket* msg, CExtendedSocket* socket)
+bool CHostManager::OnRoundStart(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	// idk why, but something for logging i think
 

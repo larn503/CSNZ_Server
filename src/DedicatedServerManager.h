@@ -6,20 +6,20 @@
 class CDedicatedServer
 {
 public:
-	CDedicatedServer(CExtendedSocket* s, int ip, int port);
+	CDedicatedServer(IExtendedSocket* s, int ip, int port);
 
-	void SetRoom(CRoom* room);
+	void SetRoom(IRoom* room);
 	void SetMemoryUsage(int memShift);
 
-	CExtendedSocket* GetSocket();
-	CRoom* GetRoom();
+	IExtendedSocket* GetSocket();
+	IRoom* GetRoom();
 	int GetMemoryUsage();
 	int GetIP();
 	int GetPort();
 
 private:
-	CExtendedSocket* m_pSocket;
-	CRoom* m_pRoom;
+	IExtendedSocket* m_pSocket;
+	IRoom* m_pRoom;
 
 	int m_iLastMemory;
 	int m_iIP;
@@ -34,14 +34,14 @@ public:
 
 	virtual void Shutdown();
 
-	bool OnPacket(CReceivePacket* msg, CExtendedSocket* socket);
+	bool OnPacket(CReceivePacket* msg, IExtendedSocket* socket);
 
 	void AddServer(CDedicatedServer* server);
 
-	CDedicatedServer* GetAvailableServerFromPools(CRoom* room);
+	CDedicatedServer* GetAvailableServerFromPools(IRoom* room);
 	bool IsPoolAvailable();
-	CDedicatedServer* GetServerBySocket(CExtendedSocket* socket);
-	void RemoveServer(CExtendedSocket* socket);
+	CDedicatedServer* GetServerBySocket(IExtendedSocket* socket);
+	void RemoveServer(IExtendedSocket* socket);
 
 private:
 	std::mutex hMutex;

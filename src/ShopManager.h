@@ -14,9 +14,9 @@ public:
 
 	bool LoadProducts();
 
-	void OnShopPacket(CReceivePacket* msg, CExtendedSocket* socket);
+	void OnShopPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	void GetProductBySubId(int productId, Product& product, SubProduct& subProduct);
-	bool BuyProduct(CUser* user, int productTypeId, int productId);
+	bool BuyProduct(IUser* user, int productTypeId, int productId);
 	
 	const std::vector<Product>& GetProducts();
 	const std::vector<std::vector<int>>& GetRecommendedProducts();

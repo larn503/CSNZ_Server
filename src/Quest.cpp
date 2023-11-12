@@ -9,7 +9,7 @@ CQuestBaseCondition::CQuestBaseCondition(CQuestTask* task, int id)
 	m_nID = id;
 }
 
-bool CQuestBaseCondition::Event_Internal(CUser* user)
+bool CQuestBaseCondition::Event_Internal(IUser* user)
 {
 	UserQuestTaskProgress progress = {};
 	if (g_pUserDatabase->GetQuestTaskProgress(user->GetID(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), progress) <= 0)
@@ -45,7 +45,7 @@ CQuestTask::CQuestTask(CQuest* quest, int id, string name, int goal)
 	m_nGoal = goal;
 }
 
-void CQuestTask::IncrementCount(CUser* user, int count, bool setForce)
+void CQuestTask::IncrementCount(IUser* user, int count, bool setForce)
 {
 	UserQuestTaskProgress progress = {};
 	if (g_pUserDatabase->GetQuestTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
@@ -75,7 +75,7 @@ void CQuestTask::IncrementCount(CUser* user, int count, bool setForce)
 	}
 }
 
-void CQuestTask::Done(CUser* user, UserQuestTaskProgress progress)
+void CQuestTask::Done(IUser* user, UserQuestTaskProgress progress)
 {
 	m_pQuest->OnTaskDone(user, progress, this);
 }
@@ -181,7 +181,7 @@ void CQuestTask::OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch)
 	}
 }
 
-void CQuestTask::OnLevelUpEvent(CUser* user, int level, int newLevel)
+void CQuestTask::OnLevelUpEvent(IUser* user, int level, int newLevel)
 {
 	for (auto condition : m_Conditions)
 	{
@@ -193,7 +193,7 @@ void CQuestTask::OnLevelUpEvent(CUser* user, int level, int newLevel)
 	}
 }
 
-void CQuestTask::OnGameMatchLeave(CUser* user)
+void CQuestTask::OnGameMatchLeave(IUser* user)
 {
 
 }
@@ -210,7 +210,7 @@ void CQuestTask::OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameM
 	}
 }
 
-void CQuestTask::OnUserLogin(CUser* user)
+void CQuestTask::OnUserLogin(IUser* user)
 {
 	/*for (auto condition : m_Conditions)
 	{
@@ -222,7 +222,7 @@ void CQuestTask::OnUserLogin(CUser* user)
 	}*/
 }
 
-void CQuestTask::ApplyProgress(CUser* user, UserQuestTaskProgress progress)
+void CQuestTask::ApplyProgress(IUser* user, UserQuestTaskProgress progress)
 {
 	if (g_pUserDatabase->UpdateQuestTaskProgress(user->GetID(), m_pQuest->GetID(), progress) <= 0)
 		return;
@@ -250,7 +250,7 @@ CQuest* CQuestTask::GetQuest()
 	return m_pQuest;
 }
 
-bool CQuestTask::IsFinished(CUser* user)
+bool CQuestTask::IsFinished(IUser* user)
 {
 	if (!g_pUserDatabase->IsQuestTaskFinished(user->GetID(), m_pQuest->GetID(), m_nID))
 		return false;
@@ -352,7 +352,7 @@ vector<QuestReward_s> CQuest::GetRewards()
 	return m_Rewards;
 }
 
-void CQuest::ApplyProgress(CUser* user, UserQuestProgress& progress)
+void CQuest::ApplyProgress(IUser* user, UserQuestProgress& progress)
 {
 	for (auto& taskProgress : progress.tasks)
 	{
@@ -428,7 +428,7 @@ void CQuest::OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch)
 	}
 }
 
-void CQuest::OnLevelUpEvent(CUser* user, int level, int newLevel)
+void CQuest::OnLevelUpEvent(IUser* user, int level, int newLevel)
 {
 	for (auto task : m_Tasks)
 	{
@@ -436,7 +436,7 @@ void CQuest::OnLevelUpEvent(CUser* user, int level, int newLevel)
 	}
 }
 
-void CQuest::OnGameMatchLeave(CUser* user)
+void CQuest::OnGameMatchLeave(IUser* user)
 {
 
 }
@@ -449,12 +449,12 @@ void CQuest::OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch
 	}
 }
 
-void CQuest::OnTaskDone(CUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* doneTask)
+void CQuest::OnTaskDone(IUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* doneTask)
 {
 	g_pQuestManager->OnQuestTaskFinished(user, taskProgress, doneTask, this);
 }
 
-bool CQuest::IsAllTaskFinished(CUser* user)
+bool CQuest::IsAllTaskFinished(IUser* user)
 {
 	for (auto task : m_Tasks)
 	{

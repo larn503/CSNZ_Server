@@ -1,24 +1,22 @@
 #include "SelectUserDialog.h"
+#include "GUI.h"
+#include "IUserDatabase.h"
+
 #include <ui_selectuserdialog.h>
 
-CSelectUserDialog::CSelectUserDialog(QWidget* parent) : QDialog(parent)
+CSelectUserDialog::CSelectUserDialog(QWidget* parent, const std::vector<int>& users) : QDialog(parent)
 {
 	m_pUI = new Ui::SelectUserDialog();
 	m_pUI->setupUi(this);
 	
+	m_SelectedUsers = users;
+
 	connect(m_pUI->CancelBtn, SIGNAL(clicked()), this, SLOT(close()));
 	connect(m_pUI->ConfirmBtn, SIGNAL(clicked()), this, SLOT(SelectClicked()));
 	connect(m_pUI->AddBtn, SIGNAL(clicked()), this, SLOT(AddUserClicked()));
 	connect(m_pUI->DeleteBtn, SIGNAL(clicked()), this, SLOT(DeleteUserClicked()));
 
-	// test
-	m_pUI->UserTable->insertRow(0);
-	m_pUI->UserTable->setItem(0, 0, new QTableWidgetItem("1"));
-	m_pUI->UserTable->setItem(0, 1, new QTableWidgetItem("test1"));
-
-	m_pUI->UserTable->insertRow(1);
-	m_pUI->UserTable->setItem(1, 0, new QTableWidgetItem("2"));
-	m_pUI->UserTable->setItem(1, 1, new QTableWidgetItem("test2"));
+	InitUserList();
 }
 
 CSelectUserDialog::~CSelectUserDialog()
@@ -31,14 +29,37 @@ std::vector<int> CSelectUserDialog::GetSelectedUsers()
 	return m_SelectedUsers;
 }
 
+void CSelectUserDialog::InitUserList()
+{
+	std::vector<UserSession> sessions;
+	if (g_pUserDatabase->GetUserSessions(sessions) <= 0)
+		GUI()->ShowMessageBox("Error", "something went wrong");
+
+	int userListCounter = 0, selectedUserCounter = 0;
+	for (auto session : sessions)
+	{
+		if (std::find(m_SelectedUsers.begin(), m_SelectedUsers.end(), session.userID) != m_SelectedUsers.end())
+		{
+			// add to selected list
+			m_pUI->SelectedUserTable->insertRow(selectedUserCounter);
+			m_pUI->SelectedUserTable->setItem(selectedUserCounter, 0, new QTableWidgetItem(QString::number(session.userID)));
+			m_pUI->SelectedUserTable->setItem(selectedUserCounter, 1, new QTableWidgetItem(session.userName.c_str()));
+			selectedUserCounter++;
+		}
+		else
+		{
+			m_pUI->UserTable->insertRow(userListCounter);
+			m_pUI->UserTable->setItem(userListCounter, 0, new QTableWidgetItem(QString::number(session.userID)));
+			m_pUI->UserTable->setItem(userListCounter, 1, new QTableWidgetItem(session.userName.c_str()));
+			userListCounter++;
+		}
+	}
+}
+
 void CSelectUserDialog::SelectClicked()
 {
-	for (int i = 0; i < m_pUI->SelectedUserTable->rowCount(); i++)
-	{
-		m_SelectedUsers.push_back(m_pUI->SelectedUserTable->item(i, 0)->text().toInt()); // userID
-	}
-
 	close();
+	setResult(1); // set flag that we can read selected user table
 }
 
 void CSelectUserDialog::AddUserClicked()
@@ -61,6 +82,10 @@ void CSelectUserDialog::AddUserClicked()
 
 			m_pUI->SelectedUserTable->setItem(m_pUI->SelectedUserTable->rowCount() - 1, j, new QTableWidgetItem(item->text()));
 		}
+
+		// update selected users vector
+		int userid = m_pUI->UserTable->item(idx.row(), 0)->text().toInt();
+		m_SelectedUsers.push_back(userid);
 
 		m_pUI->UserTable->removeRow(idx.row());
 		selected = selections->selectedRows();
@@ -88,6 +113,10 @@ void CSelectUserDialog::DeleteUserClicked()
 
 			m_pUI->UserTable->setItem(m_pUI->UserTable->rowCount() - 1, j, new QTableWidgetItem(item->text()));
 		}
+
+		// update selected users vector
+		int userid = m_pUI->SelectedUserTable->item(idx.row(), 0)->text().toInt();
+		m_SelectedUsers.erase(std::remove(m_SelectedUsers.begin(), m_SelectedUsers.end(), userid), m_SelectedUsers.end());
 
 		m_pUI->SelectedUserTable->removeRow(idx.row());
 		selected = selections->selectedRows();

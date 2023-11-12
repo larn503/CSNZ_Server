@@ -2,7 +2,7 @@
 
 using namespace std;
 
-CSendPacket::CSendPacket(CExtendedSocket* socket, int packetID)
+CSendPacket::CSendPacket(IExtendedSocket* socket, int packetID)
 {
 	m_pSocket = socket;
 	m_nPacketID = packetID;

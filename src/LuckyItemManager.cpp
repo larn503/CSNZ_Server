@@ -213,7 +213,7 @@ ItemBox* CLuckyItemManager::GetItemBoxByItemId(int itemId)
 	return NULL;
 }
 
-int CLuckyItemManager::OpenItemBox(CUser* user, int itemBoxID, int itemBoxOpenCount)
+int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCount)
 {
 	ItemBox* itemBox = GetItemBoxByItemId(itemBoxID);
 	if (!itemBox || itemBox->itemId == 0)

@@ -12,10 +12,11 @@ class CSelectUserDialog : public QDialog
 	Q_OBJECT
 
 public:
-	CSelectUserDialog(QWidget* parent = nullptr);
+	CSelectUserDialog(QWidget* parent, const std::vector<int>& users);
 	~CSelectUserDialog();
 
 	std::vector<int> GetSelectedUsers();
+	void InitUserList();
 
 public slots:
 	void SelectClicked();

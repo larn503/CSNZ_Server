@@ -255,11 +255,11 @@ bool CShopManager::KVToJson()
 	return true;
 }
 
-void CShopManager::OnShopPacket(CReceivePacket* msg, CExtendedSocket* socket)
+void CShopManager::OnShopPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -288,7 +288,7 @@ void CShopManager::GetProductBySubId(int productId, Product& product, SubProduct
 	}
 }
 
-bool CShopManager::BuyProduct(CUser* user, int productTypeId, int productId)
+bool CShopManager::BuyProduct(IUser* user, int productTypeId, int productId)
 {
 	Product product = {};
 	SubProduct subProduct = {};

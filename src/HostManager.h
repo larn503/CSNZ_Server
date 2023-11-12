@@ -8,25 +8,25 @@ class CHostManager : public CBaseManager<IHostManager>
 public:
 	CHostManager();
 
-	bool OnPacket(CReceivePacket* msg, CExtendedSocket* socket);
+	bool OnPacket(CReceivePacket* msg, IExtendedSocket* socket);
 
-	void OnHostChanged(CUser* gameMatchUser, CUser* newHost, CGameMatch* match);
+	void OnHostChanged(IUser* gameMatchUser, IUser* newHost, CGameMatch* match);
 private:
 	bool OnSaveData(CReceivePacket* msg, CGameMatch* gamematch);
-	bool OnSetUserInventory(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUseInGameItem(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnFlyerFlockRequest(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUpdateUserStatus(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnKillEvent(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUpdateKillCounter(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUpdateDeathCounter(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUpdateWinCounter(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUpdateScore(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnGameEvent(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUpdateClass(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnZbsResult(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnGameEnd(CExtendedSocket* socket);
-	bool OnUserWeapon(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnUserSpawn(CReceivePacket* msg, CExtendedSocket* socket);
-	bool OnRoundStart(CReceivePacket* msg, CExtendedSocket* socket);
+	bool OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUseInGameItem(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnFlyerFlockRequest(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnKillEvent(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUpdateKillCounter(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUpdateDeathCounter(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUpdateWinCounter(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUpdateScore(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUpdateClass(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnGameEnd(IExtendedSocket* socket);
+	bool OnUserWeapon(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnUserSpawn(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnRoundStart(CReceivePacket* msg, IExtendedSocket* socket);
 };

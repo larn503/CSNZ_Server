@@ -69,11 +69,11 @@ CClanManager::CClanManager() : CBaseManager("ClanManager")
 * }
 */
 
-bool CClanManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
+bool CClanManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -159,7 +159,7 @@ bool CClanManager::OnPacket(CReceivePacket* msg, CExtendedSocket* socket)
 	return true;
 }
 
-bool CClanManager::OnClanListRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanListRequest(CReceivePacket* msg, IUser* user)
 {
 	int pageID = msg->ReadUInt16();
 	int flag = msg->ReadUInt8(); // 0 - all play time and gamemodes, 1 - all play time, 2 - all gamemodes, 3 - play time
@@ -183,7 +183,7 @@ bool CClanManager::OnClanListRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanInfoRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanInfoRequest(CReceivePacket* msg, IUser* user)
 {
 	int clanID = msg->ReadUInt32();
 	Clan_s clan = {};
@@ -198,7 +198,7 @@ bool CClanManager::OnClanInfoRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanCreateRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanCreateRequest(CReceivePacket* msg, IUser* user)
 {
 	// TODO: Approved but requires some packet sent to client to display lol, kinda weird
 	string name = msg->ReadString();
@@ -265,7 +265,7 @@ bool CClanManager::OnClanCreateRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanJoinRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanJoinRequest(CReceivePacket* msg, IUser* user)
 {
 	// TODO: reverse packet vars
 	int clanID = msg->ReadUInt32();
@@ -309,7 +309,7 @@ bool CClanManager::OnClanJoinRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanCancelJoinRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanCancelJoinRequest(CReceivePacket* msg, IUser* user)
 {
 	int clanID = msg->ReadUInt32();
 
@@ -329,7 +329,7 @@ bool CClanManager::OnClanCancelJoinRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanJoinApproveRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanJoinApproveRequest(CReceivePacket* msg, IUser* user)
 {
 	string userName = msg->ReadString();
 
@@ -344,7 +344,7 @@ bool CClanManager::OnClanJoinApproveRequest(CReceivePacket* msg, CUser* user)
 		return false;
 	}
 
-	CUser* targetUser = g_pUserManager->GetUserByUsername(userName);
+	IUser* targetUser = g_pUserManager->GetUserByUsername(userName);
 	if (targetUser)
 	{
 		OnUserLogin(targetUser);
@@ -380,7 +380,7 @@ bool CClanManager::OnClanJoinApproveRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanJoinResultRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanJoinResultRequest(CReceivePacket* msg, IUser* user)
 {
 	int type = msg->ReadUInt8();
 	if (type == 0)
@@ -423,7 +423,7 @@ bool CClanManager::OnClanJoinResultRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanLeaveRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanLeaveRequest(CReceivePacket* msg, IUser* user)
 {
 	int result = g_pUserDatabase->LeaveClan(user->GetID());
 	switch (result)
@@ -458,7 +458,7 @@ bool CClanManager::OnClanLeaveRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanInviteRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanInviteRequest(CReceivePacket* msg, IUser* user)
 {
 	int type = msg->ReadUInt8();
 	if (type == 1)
@@ -467,7 +467,7 @@ bool CClanManager::OnClanInviteRequest(CReceivePacket* msg, CUser* user)
 		return true;
 	}
 
-	CUser* destUser = NULL;
+	IUser* destUser = NULL;
 	int clanID = 0;
 	string gameName = msg->ReadString();
 	int result = g_pUserDatabase->ClanInvite(user->GetID(), gameName, destUser, clanID);
@@ -502,7 +502,7 @@ bool CClanManager::OnClanInviteRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanChangeMemberGradeRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanChangeMemberGradeRequest(CReceivePacket* msg, IUser* user)
 {
 	string userName = msg->ReadString();
 	int newGrade = msg->ReadUInt8();
@@ -541,7 +541,7 @@ bool CClanManager::OnClanChangeMemberGradeRequest(CReceivePacket* msg, CUser* us
 	return true;
 }
 
-bool CClanManager::OnClanKickMemberRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanKickMemberRequest(CReceivePacket* msg, IUser* user)
 {
 	string userName = msg->ReadString();
 
@@ -559,7 +559,7 @@ bool CClanManager::OnClanKickMemberRequest(CReceivePacket* msg, CUser* user)
 	ClanUser kickedMember {};
 	kickedMember.userName = userName;
 
-	CUser* targetUser = g_pUserManager->GetUserByUsername(userName);
+	IUser* targetUser = g_pUserManager->GetUserByUsername(userName);
 	if (targetUser)
 	{
 		g_pPacketManager->SendClanKick(targetUser->GetExtendedSocket());
@@ -584,7 +584,7 @@ bool CClanManager::OnClanKickMemberRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanUpdateMarkRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanUpdateMarkRequest(CReceivePacket* msg, IUser* user)
 {
 	int type = msg->ReadUInt8();
 	if (type != 0)
@@ -656,7 +656,7 @@ bool CClanManager::OnClanUpdateMarkRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanUpdateConfigRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanUpdateConfigRequest(CReceivePacket* msg, IUser* user)
 {
 	int type = msg->ReadUInt8();
 	if (type == 0)
@@ -719,7 +719,7 @@ bool CClanManager::OnClanUpdateConfigRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanSetNoticeRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanSetNoticeRequest(CReceivePacket* msg, IUser* user)
 {
 	int unk = msg->ReadUInt8();
 	if (unk == 1)
@@ -756,7 +756,7 @@ bool CClanManager::OnClanSetNoticeRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanStorageGiveItemRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanStorageGiveItemRequest(CReceivePacket* msg, IUser* user)
 {
 	int storagePageID = msg->ReadUInt8();
 	int unk2 = msg->ReadUInt8();
@@ -787,7 +787,7 @@ bool CClanManager::OnClanStorageGiveItemRequest(CReceivePacket* msg, CUser* user
 	return true;
 }
 
-bool CClanManager::OnClanStorageGetItemRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanStorageGetItemRequest(CReceivePacket* msg, IUser* user)
 {
 	int pageID = msg->ReadUInt8();
 	int slot = msg->ReadUInt16();
@@ -825,7 +825,7 @@ bool CClanManager::OnClanStorageGetItemRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanStorageRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanStorageRequest(CReceivePacket* msg, IUser* user)
 {
 	int type = msg->ReadUInt8();
 	if (type == 0) // request storage page
@@ -883,7 +883,7 @@ bool CClanManager::OnClanStorageRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanStorageDeleteItem(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanStorageDeleteItem(CReceivePacket* msg, IUser* user)
 {
 	int storagePageID = msg->ReadUInt8();
 	int slot = msg->ReadUInt16();
@@ -899,7 +899,7 @@ bool CClanManager::OnClanStorageDeleteItem(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanDissolveRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanDissolveRequest(CReceivePacket* msg, IUser* user)
 {
 	int result = g_pUserDatabase->DissolveClan(user->GetID());
 	switch (result)
@@ -921,7 +921,7 @@ bool CClanManager::OnClanDissolveRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanDelegateMasterRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanDelegateMasterRequest(CReceivePacket* msg, IUser* user)
 {
 	string userName = msg->ReadString();
 
@@ -941,7 +941,7 @@ bool CClanManager::OnClanDelegateMasterRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanMemberUserListRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanMemberUserListRequest(CReceivePacket* msg, IUser* user)
 {
 	vector<ClanUser> users;
 	int result = g_pUserDatabase->GetClanMemberList(user->GetID(), users);
@@ -957,7 +957,7 @@ bool CClanManager::OnClanMemberUserListRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanJoinUserListRequest(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanJoinUserListRequest(CReceivePacket* msg, IUser* user)
 {
 	vector<ClanUserJoinRequest> users;
 	int result = g_pUserDatabase->GetClanMemberJoinUserList(user->GetID(), users);
@@ -973,7 +973,7 @@ bool CClanManager::OnClanJoinUserListRequest(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-bool CClanManager::OnClanChatMessage(CReceivePacket* msg, CUser* user)
+bool CClanManager::OnClanChatMessage(CReceivePacket* msg, IUser* user)
 {
 	string message = msg->ReadString();
 
@@ -994,7 +994,7 @@ bool CClanManager::OnClanChatMessage(CReceivePacket* msg, CUser* user)
 	return true;
 }
 
-void CClanManager::OnUserLogin(CUser* user)
+void CClanManager::OnUserLogin(IUser* user)
 {
 	vector<ClanUser> userList;
 	if (g_pUserDatabase->GetClanUserList(user->GetID(), true, userList) <= 0 || userList.size() <= 0)

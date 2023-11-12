@@ -10,7 +10,7 @@ CQuestEventBaseCondition::CQuestEventBaseCondition(CQuestEventTask* task, int id
 	m_nGoalPoints = goal;
 }
 
-bool CQuestEventBaseCondition::Event_Internal(CUser* user)
+bool CQuestEventBaseCondition::Event_Internal(IUser* user)
 {
 	UserQuestTaskProgress progress = {};
 	if (g_pUserDatabase->GetQuestEventTaskProgress(user->GetID(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), progress) <= 0)
@@ -41,7 +41,7 @@ CQuestEventTask::CQuestEventTask(CQuestEvent* quest, int id, int goal)
 	m_nNoticeGoal = 0;
 }
 
-void CQuestEventTask::IncrementCount(CUser* user, int count, bool setForce)
+void CQuestEventTask::IncrementCount(IUser* user, int count, bool setForce)
 {
 	UserQuestTaskProgress progress = {};
 	if (g_pUserDatabase->GetQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
@@ -70,7 +70,7 @@ void CQuestEventTask::IncrementCount(CUser* user, int count, bool setForce)
 	}
 }
 
-void CQuestEventTask::Done(CUser* user, UserQuestTaskProgress& progress)
+void CQuestEventTask::Done(IUser* user, UserQuestTaskProgress& progress)
 {
 	m_pQuest->OnTaskDone(user, progress, this);
 }
@@ -91,7 +91,7 @@ void CQuestEventTask::AddCondition(CQuestEventBaseCondition* condition)
 	m_Conditions.push_back(condition);
 }
 
-void CQuestEventTask::ApplyProgress(CUser* user, UserQuestTaskProgress& progress)
+void CQuestEventTask::ApplyProgress(IUser* user, UserQuestTaskProgress& progress)
 {
 	if (g_pUserDatabase->UpdateQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), progress) <= 0)
 		return;
@@ -193,7 +193,7 @@ void CQuestEventTask::OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameM
 	}
 }
 
-void CQuestEventTask::OnLevelUpEvent(CUser* user, int level, int newLevel)
+void CQuestEventTask::OnLevelUpEvent(IUser* user, int level, int newLevel)
 {
 	for (auto condition : m_Conditions)
 	{
@@ -205,7 +205,7 @@ void CQuestEventTask::OnLevelUpEvent(CUser* user, int level, int newLevel)
 	}
 }
 
-void CQuestEventTask::OnGameMatchLeave(CUser* user)
+void CQuestEventTask::OnGameMatchLeave(IUser* user)
 {
 
 }
@@ -222,7 +222,7 @@ void CQuestEventTask::OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* 
 	}
 }
 
-void CQuestEventTask::OnUserLogin(CUser* user)
+void CQuestEventTask::OnUserLogin(IUser* user)
 {
 	for (auto condition : m_Conditions)
 	{
@@ -269,7 +269,7 @@ CQuestEvent* CQuestEventTask::GetQuest()
 	return m_pQuest;
 }
 
-bool CQuestEventTask::IsFinished(CUser* user)
+bool CQuestEventTask::IsFinished(IUser* user)
 {
 	if (!g_pUserDatabase->IsQuestEventTaskFinished(user->GetID(), m_pQuest->GetID(), m_nID))
 		return false;
@@ -321,7 +321,7 @@ vector<CQuestEventTask*>& CQuestEvent::GetTasks()
 	return m_Tasks;
 }
 
-void CQuestEvent::ApplyProgress(CUser* user, UserQuestProgress& progress)
+void CQuestEvent::ApplyProgress(IUser* user, UserQuestProgress& progress)
 {
 	for (auto& taskProgress : progress.tasks)
 	{
@@ -397,7 +397,7 @@ void CQuestEvent::OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameMatch
 	}
 }
 
-void CQuestEvent::OnLevelUpEvent(CUser* user, int level, int newLevel)
+void CQuestEvent::OnLevelUpEvent(IUser* user, int level, int newLevel)
 {
 	for (auto task : m_Tasks)
 	{
@@ -405,7 +405,7 @@ void CQuestEvent::OnLevelUpEvent(CUser* user, int level, int newLevel)
 	}
 }
 
-void CQuestEvent::OnGameMatchLeave(CUser* user)
+void CQuestEvent::OnGameMatchLeave(IUser* user)
 {
 
 }
@@ -418,7 +418,7 @@ void CQuestEvent::OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* game
 	}
 }
 
-void CQuestEvent::OnUserLogin(CUser* user)
+void CQuestEvent::OnUserLogin(IUser* user)
 {
 	for (auto task : m_Tasks)
 	{
@@ -426,12 +426,12 @@ void CQuestEvent::OnUserLogin(CUser* user)
 	}
 }
 
-void CQuestEvent::OnTaskDone(CUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* doneTask)
+void CQuestEvent::OnTaskDone(IUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* doneTask)
 {
 	g_pQuestManager->OnQuestEventTaskFinished(user, taskProgress, doneTask, this);
 }
 
-bool CQuestEvent::IsAllTaskFinished(CUser* user)
+bool CQuestEvent::IsAllTaskFinished(IUser* user)
 {
 	for (auto task : m_Tasks)
 	{

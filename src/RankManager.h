@@ -7,12 +7,12 @@ class CRankManager : public CBaseManager<IRankManager>
 public:
 	CRankManager();
 
-	bool OnRankPacket(CReceivePacket* msg, CExtendedSocket* socket);
+	bool OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	
 private:
-	bool OnRankInfoRequest(CReceivePacket* msg, CUser* user);
-	bool OnRankInRoomRequest(CReceivePacket* msg, CUser* user);
-	bool OnRankSearchNicknameRequest(CReceivePacket* msg, CUser* user);
-	bool OnRankLeagueRequest(CReceivePacket* msg, CUser* user);
-	bool OnRankUserInfoRequest(CReceivePacket* msg, CUser* user);
+	bool OnRankInfoRequest(CReceivePacket* msg, IUser* user);
+	bool OnRankInRoomRequest(CReceivePacket* msg, IUser* user);
+	bool OnRankSearchNicknameRequest(CReceivePacket* msg, IUser* user);
+	bool OnRankLeagueRequest(CReceivePacket* msg, IUser* user);
+	bool OnRankUserInfoRequest(CReceivePacket* msg, IUser* user);
 };

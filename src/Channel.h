@@ -5,28 +5,28 @@
 class CChannel
 {
 public:
-	CChannel(CChannelServer* server, int id, std::string channelName, int maxPlayers, std::string loginMsg);
+	CChannel(CChannelServer* server, int id, const std::string& channelName, int maxPlayers, const std::string& loginMsg);
 
-	bool UserJoin(CUser* user, bool unhide = false);
-	void UserLeft(CUser* user, bool hide = false);
+	bool UserJoin(IUser* user, bool unhide = false);
+	void UserLeft(IUser* user, bool hide = false);
 	void SendFullUpdateRoomList();
-	void SendFullUpdateRoomList(CUser* user);
-	void SendUpdateRoomList(CRoom* room);
-	void SendAddRoomToRoomList(CRoom* room);
+	void SendFullUpdateRoomList(IUser* user);
+	void SendUpdateRoomList(IRoom* room);
+	void SendAddRoomToRoomList(IRoom* room);
 	void SendRemoveFromRoomList(int roomId);
-	void OnEmptyRoomCallback(CRoom* room);
-	void SendLobbyMessageToAllUser(std::string senderName, std::string msg);
-	void UpdateUserInfo(CUser* user, const CUserCharacter& character);
-	CRoom* CreateRoom(CUser* host, CRoomSettings* settings);
-	CRoom* GetRoomById(int id);
-	CUser* GetUserById(int userID);
+	void OnEmptyRoomCallback(IRoom* room);
+	void SendLobbyMessageToAllUser(const std::string& senderName, const std::string& msg);
+	void UpdateUserInfo(IUser* user, const CUserCharacter& character);
+	IRoom* CreateRoom(IUser* host, CRoomSettings* settings);
+	IRoom* GetRoomById(int id);
+	IUser* GetUserById(int userID);
 	bool RemoveRoomById(int roomID);
 	bool RemoveUserById(int userID);
 
 	int GetID();
 	std::string GetName();
-	std::vector<CRoom*> GetRooms();
-	std::vector<CUser*> GetUsers();
+	std::vector<IRoom*> GetRooms();
+	std::vector<IUser*> GetUsers();
 
 	CChannelServer* GetParentChannelServer();
 
@@ -39,6 +39,6 @@ private:
 	std::string m_szName;
 	std::string m_LoginMsg;
 
-	std::vector<CRoom*> m_Rooms;
-	std::vector<CUser*> m_Users;
+	std::vector<IRoom*> m_Rooms;
+	std::vector<IUser*> m_Users;
 };

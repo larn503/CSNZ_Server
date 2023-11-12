@@ -1,6 +1,10 @@
 #include "MainWindow.h"
 #include <ui_mainwindow.h>
 
+#include "GUI.h"
+#include "IEvent.h"
+#include "IUserManager.h"
+
 #include <QCloseEvent>
 #include <QMessageBox>
 
@@ -39,6 +43,11 @@ CConsoleTab* CMainWindow::GetConsoleTab()
 	return m_pConsoleTab;
 }
 
+CSessionTab* CMainWindow::GetSessionTab()
+{
+	return m_pSessionTab;
+}
+
 void CMainWindow::ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError)
 {
 	if (fatalError)
@@ -56,7 +65,11 @@ void CMainWindow::ShowMessageBox(const std::string& title, const std::string& ms
 void CMainWindow::closeEvent(QCloseEvent* event)
 {
 	QMessageBox msgBox;
-	QPushButton* quitAndSendMaintenanceMsgBtn = msgBox.addButton("Quit and send maintenance message", QMessageBox::ActionRole);
+
+	QPushButton* quitAndSendMaintenanceMsgBtn = NULL;
+	if (m_pMainTab->GetConnectedClients() > 0)
+		quitAndSendMaintenanceMsgBtn = msgBox.addButton("Quit and send maintenance message", QMessageBox::ActionRole);
+
 	QPushButton* quitBtn = msgBox.addButton("Quit", QMessageBox::ActionRole);
 	QPushButton* cancelBtn = msgBox.addButton(QMessageBox::Cancel);
 	msgBox.setWindowTitle("Quit");
@@ -67,6 +80,11 @@ void CMainWindow::closeEvent(QCloseEvent* event)
 	if (msgBox.clickedButton() == (QAbstractButton*)quitAndSendMaintenanceMsgBtn)
 	{
 		// send maintenance msg to all users and quit
+		g_pEvent->AddEventFunction([]()
+			{
+				g_pUserManager->SendNoticeMsgBoxToAll("Server down for maintenance");
+			});
+
 		event->accept();
 	}
 	else if (msgBox.clickedButton() == (QAbstractButton*)quitBtn)

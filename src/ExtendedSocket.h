@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IExtendedSocket.h"
 #include "main.h"
 #include "Buffer.h"
 
@@ -22,14 +23,14 @@ struct GuestData_s
 class CSendPacket;
 class CReceivePacket;
 
-class CExtendedSocket
+class CExtendedSocket : public IExtendedSocket
 {
 public:
-	CExtendedSocket();
+	CExtendedSocket(unsigned int id);
 	~CExtendedSocket();
 
-	void SetIP(std::string addr) { m_IP = addr; }
-	void SetHWID(std::vector<unsigned char>& hwid) { m_HWID = hwid; }
+	void SetIP(const std::string& addr) { m_IP = addr; }
+	void SetHWID(const std::vector<unsigned char>& hwid) { m_HWID = hwid; }
 	std::string GetIP() { return m_IP; }
 	std::vector<unsigned char> GetHWID() { return m_HWID; }
 	int GetSeq();
@@ -39,6 +40,7 @@ public:
 	int Send(const std::vector<unsigned char>& buffer);
 	int Send(CSendPacket* msg, bool forceSend = false);
 
+	int GetID();
 	void SetSocket(SOCKET socket);
 	SOCKET GetSocket();
 	void SetMsg(CReceivePacket* msg);
@@ -50,6 +52,7 @@ public:
 	GuestData_s& GetGuestData();
 
 private:
+	int m_nID;
 	SOCKET m_Socket;
 	int m_nSequence;
 	int m_nBytesReceived;
