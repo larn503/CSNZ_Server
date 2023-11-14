@@ -18,7 +18,10 @@ CConsoleTab::CConsoleTab(QWidget* parent) : QWidget(parent)
 	m_pCommandHistory = new QCompleter();
 
 	// completer example
-	QStringList cmdList = { "senddick", "sendnotice" };
+	QStringList cmdList = { "users", "kickall", "crash", "shutdown", "status",
+							"sendnotice", "giverewardtoall", "togglegamemaster", "ban",
+							"unban", "ipban", "unipban", "hban", "unhban",
+							"dbsave", "dbreload", "shopreload"};
 	m_pCommandList = new QCompleter(cmdList);
 	m_pUI->Entry->setCompleter(m_pCommandList);
 

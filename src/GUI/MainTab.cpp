@@ -24,6 +24,9 @@ CMainTab::CMainTab(QWidget* parent) : QWidget(parent)
 	connect(m_pUI->UserBanListBtn, &QPushButton::clicked, this, &CMainTab::OpenUserBanList);
 	connect(m_pUI->IPBanListBtn, &QPushButton::clicked, this, &CMainTab::OpenIPBanList);
 	connect(m_pUI->HWIDBanListBtn, &QPushButton::clicked, this, &CMainTab::OpenHWIDBanList);
+	connect(m_pUI->ConfigEditorBtn, &QPushButton::clicked, this, [=]() { QMessageBox::warning(this, "Warning", "Unimplemented"); });
+	connect(m_pUI->DelayedShutdownBtn, &QPushButton::clicked, this, [=]() { QMessageBox::warning(this, "Warning", "Unimplemented"); });
+
 	connect(m_pServerHeartbeatTimer, &QTimer::timeout, this, &CMainTab::ServerTimeout);
 
 	m_pServerHeartbeatTimer->start();
