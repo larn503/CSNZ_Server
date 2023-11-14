@@ -431,7 +431,6 @@ struct ServerConfigBingo
 
 struct ServerBanList
 {
-	class KeyValues* kvBanList;
 	std::vector<std::string> ip;
 	std::vector<std::vector<unsigned char>> hwid;
 };

@@ -12,9 +12,13 @@ class CUserCharacterDialog : public QDialog
 	Q_OBJECT
 
 public:
-	CUserCharacterDialog(QWidget* parent);
+	CUserCharacterDialog(QWidget* parent, int userID);
 	~CUserCharacterDialog();
 
 private:
+	void Init();
+
+private:
 	Ui::UserCharacterDialog* m_pUI;
+	int m_nUserID;
 };

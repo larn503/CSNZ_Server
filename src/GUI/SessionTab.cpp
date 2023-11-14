@@ -4,6 +4,7 @@
 #include <QMenu>
 
 #include "GUI.h"
+#include "UserCharacterDialog.h"
 
 #include "IExtendedSocket.h"
 #include "IServerInstance.h"
@@ -115,7 +116,7 @@ void CSessionTab::Kick()
 void CSessionTab::Ban()
 {
 	// show ban dlg
-
+	//CBanListDialog
 }
 
 void CSessionTab::ShowOnlyLoggedInToggled(bool checked)
@@ -187,5 +188,6 @@ void CSessionTab::HandleContextMenu(const QPoint& pos)
 
 void CSessionTab::OnOpenUserCharacterDialog(int userID)
 {
-
+	CUserCharacterDialog dlg(this, userID);
+	dlg.exec();
 }
