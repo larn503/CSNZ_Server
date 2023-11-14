@@ -146,6 +146,19 @@
     <string>IP ban list</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="UserBanListBtn">
+   <property name="geometry">
+    <rect>
+     <x>430</x>
+     <y>350</y>
+     <width>80</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>User ban list</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

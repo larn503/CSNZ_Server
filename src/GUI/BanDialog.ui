@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>303</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
   <widget class="QPushButton" name="BanBtn">
    <property name="geometry">
     <rect>
-     <x>230</x>
-     <y>260</y>
+     <x>231</x>
+     <y>271</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -32,14 +32,145 @@
   <widget class="QPushButton" name="CancelBtn">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>260</y>
+     <x>312</x>
+     <y>271</y>
      <width>75</width>
      <height>23</height>
     </rect>
    </property>
    <property name="text">
     <string>Cancel</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="BanTypeBox">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>30</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="ChooseBanTypeLabel">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>10</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Choose ban type</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="BanClientID">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>151</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Client ID: %1</string>
+   </property>
+  </widget>
+  <widget class="QPlainTextEdit" name="BanReason">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>130</y>
+     <width>381</width>
+     <height>131</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="BanUserID">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>30</y>
+     <width>151</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>User ID: %1</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="ChooseUserBanTypeLabel">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>60</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>User ban type</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="UserBanTypeBox">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>80</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>With message</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Silent (without showing reason on client)</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QLabel" name="WriteReasonLabel">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>110</y>
+     <width>201</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Write a reason</string>
+   </property>
+  </widget>
+  <widget class="QDateTimeEdit" name="ExpiryDateEntry">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>80</y>
+     <width>194</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="calendarPopup">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="ExpiryDateLabel">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>60</y>
+     <width>111</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Expiry date</string>
    </property>
   </widget>
  </widget>

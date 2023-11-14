@@ -1124,6 +1124,9 @@ const char* CServerInstance::GetMainInfo()
 
 void CServerInstance::DisconnectClient(IExtendedSocket* socket)
 {
+	if (!socket)
+		return;
+
 	IUser* user = g_pUserManager->GetUserBySocket(socket);
 	if (user)
 	{

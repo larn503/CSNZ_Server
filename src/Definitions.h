@@ -1033,6 +1033,7 @@ struct Session
 	int userID;
 	std::string userName;
 	std::string ip;
+	std::vector<unsigned char> hwid;
 	int status;
 	int uptime;
 	int roomID;
@@ -1194,7 +1195,7 @@ enum BanPacketType
 
 struct UserBan
 {
-	int banType; // 0 - none, 1 - with msg, 2 - silent
+	int banType; // 0 - remove ban, 1 - with msg, 2 - silent
 	std::string reason;
 	int term; // timestamp, 0 - perm
 };

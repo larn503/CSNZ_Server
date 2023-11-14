@@ -33,4 +33,5 @@ public slots:
 private:
 	Ui::SessionTab* m_pUI;
 	bool m_bRefresing;
+	std::vector<Session> m_Sessions;
 };

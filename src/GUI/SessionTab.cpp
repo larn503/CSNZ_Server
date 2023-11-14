@@ -4,7 +4,6 @@
 #include <QMenu>
 
 #include "GUI.h"
-#include "UserCharacterDialog.h"
 #include "Utils.h"
 
 #include "IExtendedSocket.h"
@@ -12,6 +11,9 @@
 #include "IUserManager.h"
 #include "IEvent.h"
 #include "IRoom.h"
+
+#include "UserCharacterDialog.h"
+#include "BanDialog.h"
 
 CSessionTab::CSessionTab(QWidget* parent) : QWidget(parent)
 {
@@ -27,6 +29,14 @@ CSessionTab::CSessionTab(QWidget* parent) : QWidget(parent)
 	connect(m_pUI->SessionList, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(HandleContextMenu(const QPoint&)));
 
 	m_bRefresing = false;
+
+	//Session session = {};
+	//session.clientID = 1;
+	//session.userID = 1;
+	//session.ip = "127.0.0.1";
+	//m_Sessions.push_back(session);
+
+	//OnSessionListUpdated(m_Sessions);
 }
 
 CSessionTab::~CSessionTab()
@@ -50,6 +60,7 @@ void CSessionTab::Refresh()
 				Session session;
 				session.clientID = s->GetID();
 				session.ip = s->GetIP();
+				session.hwid = s->GetHWID();
 
 				IUser* user = g_pUserManager->GetUserBySocket(s);
 				if (user)
@@ -84,17 +95,15 @@ void CSessionTab::Kick()
 	std::vector<int> clientsToKick;
 	QItemSelectionModel* selections = m_pUI->SessionList->selectionModel();
 	QModelIndexList selected = selections->selectedRows();
-	for (int i = 0; i < selected.count(); i++)
+	while (!selected.isEmpty())
 	{
-		const QModelIndex& idx = selected.at(i);
+		const QModelIndex& idx = selected.at(0);
 
-		QTableWidgetItem* item = m_pUI->SessionList->item(idx.row(), 0);
-		if (!item)
-		{
-			__debugbreak();
-		}
+		int clientID = m_pUI->SessionList->item(idx.row(), 0)->text().toInt();
+		clientsToKick.push_back(clientID);
 
-		clientsToKick.push_back(item->text().toInt());
+		m_pUI->SessionList->removeRow(idx.row());
+		selected = selections->selectedRows();
 	}
 
 	if (!clientsToKick.empty())
@@ -117,7 +126,36 @@ void CSessionTab::Kick()
 void CSessionTab::Ban()
 {
 	// show ban dlg
-	//CBanListDialog
+	QItemSelectionModel* selections = m_pUI->SessionList->selectionModel();
+	QModelIndexList selected = selections->selectedRows();
+	if (selected.size() > 1)
+	{
+		return;
+	}
+
+	if (!selected.isEmpty())
+	{
+		const QModelIndex& idx = selected.at(0);
+
+		int clientID = m_pUI->SessionList->item(idx.row(), 0)->text().toInt();
+
+		Session toBan;
+		for (auto& session : m_Sessions)
+		{
+			if (session.clientID = clientID)
+			{
+				toBan = session;
+				break;
+			}
+		}
+
+		CBanDialog dlg(this, toBan);
+		int res = dlg.exec();
+		if (res)
+		{
+			m_pUI->SessionList->model()->removeRow(idx.row());
+		}
+	}
 }
 
 void CSessionTab::ShowOnlyLoggedInToggled(bool checked)
@@ -144,6 +182,8 @@ void CSessionTab::OnSessionListUpdated(const std::vector<Session>& sessions)
 {
 	m_bRefresing = false;
 	m_pUI->RefreshBtn->setEnabled(true);
+
+	m_Sessions = sessions;
 
 	m_pUI->SessionList->clearContents();
 	m_pUI->SessionList->model()->removeRows(0, m_pUI->SessionList->rowCount());

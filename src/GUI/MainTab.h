@@ -20,6 +20,7 @@ public:
 public slots:
 	void UpdateInfo(int status, int totalConnections, int uptime, double memoryUsage);
 	void SendNoticeBtnClicked();
+	void OpenUserBanList();
 	void OpenIPBanList();
 	void OpenHWIDBanList();
 	void ServerTimeout();
