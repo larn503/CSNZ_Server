@@ -15,6 +15,8 @@ CNoticeDialog::CNoticeDialog(QWidget* parent) : QDialog(parent)
 	m_pUI = new Ui::NoticeDialog();
 	m_pUI->setupUi(this);
 
+	setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+
 	connect(m_pUI->CancelBtn, SIGNAL(clicked()), this, SLOT(close()));
 	connect(m_pUI->SendBtn, SIGNAL(clicked()), this, SLOT(SendClicked()));
 	connect(m_pUI->SelectUsersBtn, SIGNAL(clicked()), this, SLOT(SelectUsersClicked()));

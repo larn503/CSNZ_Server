@@ -18,6 +18,9 @@ public:
 	CSessionTab(QWidget* parent = nullptr);
 	~CSessionTab();
 
+public:
+	void OnOpenUserCharacterDialog(int userID);
+
 public slots:
 	void Refresh();
 	void Kick();
@@ -26,7 +29,6 @@ public slots:
 	void keyPressEvent(QKeyEvent* event);
 	void OnSessionListUpdated(const std::vector<Session>& sessions);
 	void HandleContextMenu(const QPoint& pos);
-	void OnOpenUserCharacterDialog(int userID);
 
 private:
 	Ui::SessionTab* m_pUI;

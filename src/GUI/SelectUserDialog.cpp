@@ -11,6 +11,8 @@ CSelectUserDialog::CSelectUserDialog(QWidget* parent, const std::vector<int>& us
 	
 	m_SelectedUsers = users;
 
+	setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+
 	connect(m_pUI->CancelBtn, SIGNAL(clicked()), this, SLOT(close()));
 	connect(m_pUI->ConfirmBtn, SIGNAL(clicked()), this, SLOT(SelectClicked()));
 	connect(m_pUI->AddBtn, SIGNAL(clicked()), this, SLOT(AddUserClicked()));

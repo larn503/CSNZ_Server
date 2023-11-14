@@ -5,6 +5,7 @@
 
 #include "GUI.h"
 #include "UserCharacterDialog.h"
+#include "Utils.h"
 
 #include "IExtendedSocket.h"
 #include "IServerInstance.h"
@@ -155,7 +156,7 @@ void CSessionTab::OnSessionListUpdated(const std::vector<Session>& sessions)
 		m_pUI->SessionList->setItem(row, 1, new QTableWidgetItem(QString::number(session.userID)));
 		m_pUI->SessionList->setItem(row, 2, new QTableWidgetItem(session.ip.c_str()));
 		m_pUI->SessionList->setItem(row, 3, new QTableWidgetItem(session.userName.c_str()));
-		m_pUI->SessionList->setItem(row, 4, new QTableWidgetItem(QString::number(session.uptime)));
+		m_pUI->SessionList->setItem(row, 4, new QTableWidgetItem(FormatSeconds(session.uptime)));
 		m_pUI->SessionList->setItem(row, 5, new QTableWidgetItem(QString::number(session.status)));
 		row++;
 	}
@@ -175,7 +176,7 @@ void CSessionTab::HandleContextMenu(const QPoint& pos)
 		int userID = m_pUI->SessionList->item(item->row(), 1)->text().toInt();
 		if (userID > 0)
 		{
-			menu.addAction("View character", this, SLOT(OnOpenUserCharacterDialog(userID)));
+			menu.addAction("View character", this, [=]() { OnOpenUserCharacterDialog(userID); });
 			menu.addSeparator();
 		}
 
