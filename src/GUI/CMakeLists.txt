@@ -31,6 +31,10 @@ target_sources(gui PRIVATE "SelectUserDialog.cpp")
 target_sources(gui PRIVATE "SelectUserDialog.ui")
 target_sources(gui PRIVATE "UserCharacterDialog.cpp")
 target_sources(gui PRIVATE "UserCharacterDialog.ui")
+target_sources(gui PRIVATE "HWIDBanListDialog.cpp")
+target_sources(gui PRIVATE "HWIDBanListDialog.ui")
+target_sources(gui PRIVATE "IPBanListDialog.cpp")
+target_sources(gui PRIVATE "IPBanListDialog.ui")
 
 target_sources(gui PRIVATE "../Common/Utils.cpp")
 

@@ -1,6 +1,8 @@
 #include "MainTab.h"
 #include "Utils.h"
 #include "NoticeDialog.h"
+#include "HWIDBanListDialog.h"
+#include "IPBanListDialog.h"
 
 #include <ui_maintab.h>
 #include <QDateTime.h>
@@ -18,6 +20,8 @@ CMainTab::CMainTab(QWidget* parent) : QWidget(parent)
 	m_pServerHeartbeatTimer->setInterval(120000); // 2 minutes
 
 	connect(m_pUI->SendNoticeBtn, &QPushButton::clicked, this, &CMainTab::SendNoticeBtnClicked);
+	connect(m_pUI->IPBanListBtn, &QPushButton::clicked, this, &CMainTab::OpenIPBanList);
+	connect(m_pUI->HWIDBanListBtn, &QPushButton::clicked, this, &CMainTab::OpenHWIDBanList);
 	connect(m_pServerHeartbeatTimer, &QTimer::timeout, this, &CMainTab::ServerTimeout);
 
 	m_pServerHeartbeatTimer->start();
@@ -50,6 +54,18 @@ void CMainTab::SendNoticeBtnClicked()
 {
 	CNoticeDialog noticeDialog(this);
 	noticeDialog.exec();
+}
+
+void CMainTab::OpenIPBanList()
+{
+	CIPBanListDialog dlg(this);
+	dlg.exec();
+}
+
+void CMainTab::OpenHWIDBanList()
+{
+	CHWIDBanListDialog dlg(this);
+	dlg.exec();
 }
 
 void CMainTab::ServerTimeout()

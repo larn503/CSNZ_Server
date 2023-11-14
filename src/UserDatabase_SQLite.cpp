@@ -3477,6 +3477,62 @@ int CUserDatabaseSQLite::SetAddons(int userID, vector<int>& addons)
 	return 1;
 }
 
+int CUserDatabaseSQLite::GetUsersAssociatedWithIP(const string& ip, vector<CUserData>& userData)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, "SELECT DISTINCT User.userID, User.userName FROM User "
+			"INNER JOIN UserSessionHistory "
+			"ON User.userID = UserSessionHistory.userID "
+			"AND UserSessionHistory.ip = ? "
+			"GROUP BY User.userID "
+			"HAVING COUNT(DISTINCT User.userID) = 1");
+		query.bind(1, ip);
+		while (query.executeStep())
+		{
+			CUserData data;
+			data.userID = query.getColumn(0);
+			data.userName = query.getColumn(1).getString();
+			userData.push_back(data);
+		}
+	}
+	catch (exception& e)
+	{
+		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::GetUsersAssociatedWithIP: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
+int CUserDatabaseSQLite::GetUsersAssociatedWithHWID(const vector<unsigned char>& hwid, vector<CUserData>& userData)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, "SELECT DISTINCT User.userID, User.userName FROM User "
+			"INNER JOIN UserSessionHistory "
+			"ON User.userID = UserSessionHistory.userID "
+			"AND UserSessionHistory.hwid = ? "
+			"GROUP BY User.userID "
+			"HAVING COUNT(DISTINCT User.userID) = 1");
+		query.bind(1, hwid.data(), hwid.size());
+		while (query.executeStep())
+		{
+			CUserData data;
+			data.userID = query.getColumn(0);
+			data.userName = query.getColumn(1).getString();
+			userData.push_back(data);
+		}
+	}
+	catch (exception& e)
+	{
+		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::GetUsersAssociatedWithHWID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
 int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 {
 	int clanID = 0;
@@ -5713,7 +5769,7 @@ bool CUserDatabaseSQLite::IsIPBanned(const string& ip)
 	return 1;
 }
 
-int CUserDatabaseSQLite::UpdateHWIDBanList(vector<unsigned char>& hwid, bool remove)
+int CUserDatabaseSQLite::UpdateHWIDBanList(const vector<unsigned char>& hwid, bool remove)
 {
 	try
 	{

@@ -103,6 +103,9 @@ public:
 	int GetAddons(int userID, std::vector<int>& addons);
 	int SetAddons(int userID, std::vector<int>& addons);
 
+	int GetUsersAssociatedWithIP(const std::string& ip, std::vector<CUserData>& userData);
+	int GetUsersAssociatedWithHWID(const std::vector<unsigned char>& hwid, std::vector<CUserData>& userData);
+
 	// clan related
 	int CreateClan(ClanCreateConfig& clanCfg);
 	int JoinClan(int userID, int clanID, std::string& clanName);
@@ -160,7 +163,7 @@ public:
 	std::vector<std::string> GetIPBanList();
 	bool IsIPBanned(const std::string& ip);
 
-	int UpdateHWIDBanList(std::vector<unsigned char>& hwid, bool remove = false);
+	int UpdateHWIDBanList(const std::vector<unsigned char>& hwid, bool remove = false);
 	std::vector<std::vector<unsigned char>> GetHWIDBanList();
 	bool IsHWIDBanned(std::vector<unsigned char>& hwid);
 
