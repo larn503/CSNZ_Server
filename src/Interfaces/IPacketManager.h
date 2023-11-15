@@ -1,5 +1,17 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
+class CSendPacket;
+class IExtendedSocket;
+class IRoom;
+class CRoomSettings;
+class CQuestTask;
+class CQuest;
+class CGameMatch;
+class CUserFastBuy;
+
 class IPacketManager : public IBaseManager
 {
 public:

@@ -9,6 +9,7 @@ IManager* g_pManager = NULL;
 IServerInstance* g_pServerInstance = NULL;
 IUserManager* g_pUserManager = NULL;
 IUserDatabase* g_pUserDatabase = NULL;
+IPacketManager* g_pPacketManager = NULL;
 
 CGUI::CGUI()
 {
@@ -52,9 +53,16 @@ bool CGUI::PostInit(IServerInstance* srv)
 	}
 
 	g_pUserDatabase = (IUserDatabase*)g_pManager->GetManager("UserDatabase");
-	if (!g_pUserManager)
+	if (!g_pUserDatabase)
 	{
 		ShowMessageBox("Fatal Error", "Could not get UserDatabase interface", true);
+		return false;
+	}
+
+	g_pPacketManager = (IPacketManager*)g_pManager->GetManager("PacketManager");
+	if (!g_pPacketManager)
+	{
+		ShowMessageBox("Fatal Error", "Could not get PacketManager interface", true);
 		return false;
 	}
 

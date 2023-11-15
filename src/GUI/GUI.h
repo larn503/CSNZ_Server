@@ -36,5 +36,6 @@ private:
 extern IEvent* g_pEvent;
 extern IManager* g_pManager;
 extern IServerInstance* g_pServerInstance;
+extern class IPacketManager* g_pPacketManager;
 extern class IUserManager* g_pUserManager;
 extern class IUserDatabase* g_pUserDatabase;

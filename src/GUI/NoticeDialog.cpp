@@ -3,6 +3,7 @@
 
 #include "GUI.h"
 #include "IUserManager.h"
+#include "IPacketManager.h"
 #include "IEvent.h"
 
 #include <ui_noticedialog.h>
@@ -44,9 +45,17 @@ void CNoticeDialog::SendClicked()
 	}
 
 	std::string str = text.toStdString();
-	g_pEvent->AddEventFunction([str]()
+	std::vector<int> users = m_SelectedUsers;
+	g_pEvent->AddEventFunction([str, users]()
 		{
-			g_pUserManager->SendNoticeMsgBoxToAll(str);
+			for (auto userID : users)
+			{
+				IUser* user = g_pUserManager->GetUserById(userID);
+				if (user)
+				{
+					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), str);
+				}
+			}
 		});
 
 	close();

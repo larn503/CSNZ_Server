@@ -18,10 +18,10 @@ CMainWindow::CMainWindow() : QMainWindow(NULL)
 	m_pSessionTab = new CSessionTab();
 	m_pRoomListTab = new CRoomListTab();
 
-	m_pUI->tabWidget->addTab(m_pMainTab, "MainTab");
-	m_pUI->tabWidget->addTab(m_pConsoleTab, "ConsoleTab");
-	m_pUI->tabWidget->addTab(m_pSessionTab, "SessionTab");
-	m_pUI->tabWidget->addTab(m_pRoomListTab, "RoomListTab");
+	m_pUI->tabWidget->addTab(m_pMainTab, "Main");
+	m_pUI->tabWidget->addTab(m_pConsoleTab, "Console");
+	m_pUI->tabWidget->addTab(m_pSessionTab, "Session");
+	//m_pUI->tabWidget->addTab(m_pRoomListTab, "Room list");
 }
 
 CMainWindow::~CMainWindow()

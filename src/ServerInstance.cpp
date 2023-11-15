@@ -120,7 +120,7 @@ bool CServerInstance::Init()
 		return false;
 	}
 
-	g_pConsole->Log("Server starts listening. Server developers: Jusic, Hardee, NekoMeow. Thx to Ochii for CSO2 server.\nFor more information visit vk.com/csnz_server or discord.gg/EvUAY6D\n");
+	g_pConsole->Log("Server starts listening. Server developers: Jusic, Hardee, NekoMeow. Thx to Ochii for CSO2 server.\nFor more information visit discord.gg/EvUAY6D\n");
 	g_pConsole->Log("Server build: %s, %s\n", build_number(),
 #ifdef PUBLIC_RELEASE
 		"Public Release");

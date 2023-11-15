@@ -446,8 +446,8 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	g_pPacketManager->SendShopRecommendedProducts(socket, g_pShopManager->GetRecommendedProducts());
 	g_pPacketManager->SendShopPopularProducts(socket, g_pShopManager->GetPopularProducts());
 
-	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \nVK群组: https://vk.com/csnz_server
-	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \nVK: https://vk.com/csnz_server \n");
+	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \n
+	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \n");
 	g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, text);
 
 	if (!g_pServerConfig->welcomeMessage.empty())
