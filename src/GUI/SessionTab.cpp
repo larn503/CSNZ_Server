@@ -178,6 +178,21 @@ void CSessionTab::keyPressEvent(QKeyEvent* event)
 	}
 }
 
+QString UserStatusToString(int status)
+{
+	switch (status)
+	{
+	case STATUS_MENU:
+		return "Menu";
+	case STATUS_INROOM:
+		return "In room";
+	case STATUS_PLAYING:
+		return "Playing";
+	}
+
+	return "Unknown";
+}
+
 void CSessionTab::OnSessionListUpdated(const std::vector<Session>& sessions)
 {
 	m_bRefresing = false;
@@ -197,7 +212,7 @@ void CSessionTab::OnSessionListUpdated(const std::vector<Session>& sessions)
 		m_pUI->SessionList->setItem(row, 2, new QTableWidgetItem(session.ip.c_str()));
 		m_pUI->SessionList->setItem(row, 3, new QTableWidgetItem(session.userName.c_str()));
 		m_pUI->SessionList->setItem(row, 4, new QTableWidgetItem(FormatSeconds(session.uptime)));
-		m_pUI->SessionList->setItem(row, 5, new QTableWidgetItem(QString::number(session.status)));
+		m_pUI->SessionList->setItem(row, 5, new QTableWidgetItem(UserStatusToString(session.status)));
 		row++;
 	}
 }
