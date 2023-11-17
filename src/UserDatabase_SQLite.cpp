@@ -32,6 +32,8 @@ bool CUserDatabaseSQLite::Init()
 		m_Database.exec(OBFUSCATE("PRAGMA synchronous=OFF"));
 		m_Database.exec(OBFUSCATE("PRAGMA foreign_keys=ON"));
 
+		m_Database.setBusyTimeout(100000);
+
 		if (!CheckForTables())
 			return false;
 
@@ -5358,11 +5360,12 @@ int CUserDatabaseSQLite::IsUserSuspect(int userID)
 // processes user database every minute
 void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 {
+	printf("CUserDatabaseSQLite::OnMinuteTick start\n");
 	try
 	{
 		// process inventory
 		{
-			static SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE expiryDate != 0 AND inUse = 1 AND expiryDate < ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE expiryDate != 0 AND inUse = 1 AND expiryDate < ?"));
 			query.bind(1, curTime);
 
 			map<int, int> expiredItems;
@@ -5476,6 +5479,8 @@ void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 	{
 		g_pConsole->Error(OBFUSCATE("CUserDatabaseSQLite::OnMinuteTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
+
+	printf("CUserDatabaseSQLite::OnMinuteTick finish\n");
 }
 
 // processes user database every day
