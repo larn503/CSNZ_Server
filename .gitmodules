@@ -7,3 +7,6 @@
 [submodule "src/Thirdparty/KeyValues"]
 	path = src/Thirdparty/KeyValues
 	url = https://github.com/JusicP/KeyValues
+[submodule "src/Thirdparty/wolfssl"]
+	path = src/Thirdparty/wolfssl
+	url = https://github.com/wolfSSL/wolfssl

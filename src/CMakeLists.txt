@@ -8,8 +8,7 @@ option(CSO_SERVER_PUBLIC "Public build" OFF)
 option(CSO_SERVER_PROTECTION "Enable protection" OFF)
 option(CSO_SERVER_DBSQLITE "SQLite database" ON)
 
-add_subdirectory(Thirdparty/KeyValues)
-add_subdirectory(Thirdparty/json)
+add_subdirectory(Thirdparty)
 
 if (CSO_SERVER_USE_GUI)
 	add_subdirectory(GUI)
@@ -21,6 +20,7 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "" FOR
 
 target_link_libraries(PROJECTNAME PRIVATE keyvalues)
 target_link_libraries(PROJECTNAME PRIVATE nlohmann_json)
+target_link_libraries(PROJECTNAME PRIVATE wolfssl)
 if (CSO_SERVER_USE_GUI)
 	target_link_libraries(PROJECTNAME PRIVATE gui)
 	qt6_disable_unicode_defines(PROJECTNAME)
@@ -93,9 +93,6 @@ endif()
 
 if (CSO_SERVER_DBSQLITE)
 	add_definitions(-DDB_SQLITE)
-
-	set(SQLITECPP_USE_STATIC_RUNTIME OFF CACHE BOOL "Use MSVC static runtime (default for internal googletest).")
-	add_subdirectory(Thirdparty/SQLiteCpp)
 	target_link_libraries(PROJECTNAME PRIVATE SQLiteCpp sqlite3)
 endif()
 
@@ -131,8 +128,6 @@ if (MSVC)
 	
 	target_link_libraries(PROJECTNAME PRIVATE ws2_32)
 	target_link_libraries(PROJECTNAME PRIVATE Shlwapi)
-	#target_link_libraries(PROJECTNAME OpenSSL/libssl)
-	#target_link_libraries(PROJECTNAME OpenSSL/libcrypto)
 
 	target_compile_options(PROJECTNAME PRIVATE /W3)
 endif()
