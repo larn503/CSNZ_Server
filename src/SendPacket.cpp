@@ -120,7 +120,7 @@ void CSendPacket::BuildHeader()
 	WriteUInt8(m_nPacketID);
 }
 
-void CSendPacket::Send(const vector<unsigned char>& data)
+void CSendPacket::Send(vector<unsigned char>& data)
 {
 	m_pSocket->Send(data);
 }

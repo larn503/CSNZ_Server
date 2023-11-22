@@ -14,6 +14,11 @@ class CReceivePacket;
 class IExtendedSocket
 {
 public:
+	virtual bool SetupCrypt() = 0;
+	virtual void SetCryptInput(bool val) = 0;
+	virtual void SetCryptOutput(bool val) = 0;
+	virtual unsigned char* GetCryptKey() = 0;
+	virtual unsigned char* GetCryptIV() = 0;
 	virtual void SetIP(const std::string& addr) = 0;
 	virtual void SetHWID(const std::vector<unsigned char>& hwid) = 0;
 	virtual std::string GetIP() = 0;
@@ -22,7 +27,7 @@ public:
 	virtual int LoggerGetSeq() = 0;
 	virtual void ResetSeq() = 0;
 	virtual CReceivePacket* Read() = 0;
-	virtual int Send(const std::vector<unsigned char>& buffer) = 0;
+	virtual int Send(std::vector<unsigned char>& buffer) = 0;
 	virtual int Send(CSendPacket* msg, bool forceSend = false) = 0;
 
 	virtual int GetID() = 0;

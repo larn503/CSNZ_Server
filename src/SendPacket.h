@@ -28,7 +28,7 @@ public:
 	void SetOverride(bool override);
 	bool IsBufferFull();
 	void BuildHeader();
-	void Send(const std::vector<unsigned char>& data);
+	void Send(std::vector<unsigned char>& data);
 
 public:
 	int m_nPacketID;

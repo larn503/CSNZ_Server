@@ -223,4 +223,6 @@ public:
 
 	virtual void SendLeaguePacket(IExtendedSocket* socket) = 0;
 	virtual void SendLeagueGaugePacket(IExtendedSocket* socket, int gameModeId) = 0;
+
+	virtual void SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv) = 0;
 };

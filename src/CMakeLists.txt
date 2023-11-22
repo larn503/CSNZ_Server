@@ -79,6 +79,7 @@ target_include_directories(PROJECTNAME PUBLIC
 	"Thirdparty/json/include"
 	"Thirdparty/SQLiteCpp/include"
 	"Thirdparty/KeyValues/include"
+	"Thirdparty/wolfssl"
 	"Common"
 	"Interfaces"
 )

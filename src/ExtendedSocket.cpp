@@ -1,6 +1,9 @@
 #include "ExtendedSocket.h"
 #include "SendPacket.h"
 
+#include <wolfssl/options.h>
+#include <wolfssl/openssl/evp.h>
+
 using namespace std;
 
 CExtendedSocket::CExtendedSocket(unsigned int id)
@@ -16,6 +19,10 @@ CExtendedSocket::CExtendedSocket(unsigned int id)
 	m_nReadResult = 0;
 	m_nNextExpectedSeq = 1;
 	m_pMsg = NULL;
+	m_pEncEVPCTX = NULL;
+	m_pDecEVPCTX = NULL;
+	m_bCryptInput = false;
+	m_bCryptOutput = false;
 }
 
 CExtendedSocket::~CExtendedSocket()
@@ -25,6 +32,76 @@ CExtendedSocket::~CExtendedSocket()
 
 	for (auto msg : m_SendPackets)
 		delete msg;
+
+	if (m_pDecEVPCTX)
+	{
+		EVP_CIPHER_CTX_cleanup(m_pDecEVPCTX);
+		EVP_CIPHER_CTX_free(m_pDecEVPCTX);
+	}
+
+	if (m_pEncEVPCTX)
+	{
+		EVP_CIPHER_CTX_cleanup(m_pEncEVPCTX);
+		EVP_CIPHER_CTX_free(m_pEncEVPCTX);
+	}
+}
+
+// Setup packet cipher and create key
+bool CExtendedSocket::SetupCrypt()
+{
+	if (m_pEncEVPCTX && m_pDecEVPCTX)
+	{
+		return true;
+	}
+
+	memset(m_pCryptKey, 0, 64);
+	memset(m_pCryptIV, 0, 64);
+
+	int keyLen = EVP_BytesToKey(EVP_aes_128_cbc(), EVP_md5(), NULL, m_HWID.data(), m_HWID.size(), 1, m_pCryptKey, m_pCryptIV);
+	if (!keyLen)
+	{
+		return false;
+	}
+
+	m_pEncEVPCTX = EVP_CIPHER_CTX_new();
+	m_pDecEVPCTX = EVP_CIPHER_CTX_new();
+
+	EVP_CipherInit(m_pEncEVPCTX, EVP_rc4(), NULL, NULL, 1);
+	EVP_CipherInit(m_pDecEVPCTX, EVP_rc4(), NULL, NULL, 0);
+
+	// useless?
+	//EVP_CIPHER_CTX_set_padding(m_pEncEVPCTX, 0);
+	//EVP_CIPHER_CTX_set_padding(m_pDecEVPCTX, 0);
+
+	if (EVP_CipherInit(m_pEncEVPCTX, EVP_rc4(), (const unsigned char*)m_pCryptKey, (const unsigned char*)m_pCryptIV, 1) != 1)
+	{
+		EVP_CIPHER_CTX_cleanup(m_pDecEVPCTX);
+		EVP_CIPHER_CTX_cleanup(m_pEncEVPCTX);
+
+		EVP_CIPHER_CTX_free(m_pDecEVPCTX);
+		EVP_CIPHER_CTX_free(m_pEncEVPCTX);
+
+		m_pDecEVPCTX = NULL;
+		m_pEncEVPCTX = NULL;
+
+		return false;
+	}
+
+	if (EVP_CipherInit(m_pDecEVPCTX, EVP_rc4(), (const unsigned char*)m_pCryptKey, (const unsigned char*)m_pCryptIV, 0) != 1)
+	{
+		EVP_CIPHER_CTX_cleanup(m_pDecEVPCTX);
+		EVP_CIPHER_CTX_cleanup(m_pEncEVPCTX);
+
+		EVP_CIPHER_CTX_free(m_pDecEVPCTX);
+		EVP_CIPHER_CTX_free(m_pEncEVPCTX);
+
+		m_pDecEVPCTX = NULL;
+		m_pEncEVPCTX = NULL;
+
+		return false;
+	}
+
+	return true;
 }
 
 int CExtendedSocket::GetSeq()
@@ -70,8 +147,23 @@ CReceivePacket* CExtendedSocket::Read()
 		if (m_nBytesReceived < 0)
 			m_nBytesReceived = 0;
 
+		// decrypt header if encrypted
+		if (m_bCryptInput)
+		{
+			int outLen = 0;
+			if (EVP_DecryptUpdate(m_pDecEVPCTX, packetDataBuf.data(), &outLen, packetDataBuf.data(), recvResult) != 1)
+			{
+				g_pConsole->Log("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+			}
+
+			int finalLen = 0;
+			if (EVP_DecryptFinal_ex(m_pDecEVPCTX, packetDataBuf.data() + outLen, &finalLen) != 1)
+			{
+				g_pConsole->Log("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+			}
+		}
+
 		// when a people may incorrect once packet data, might spammed this message forever....
-		
 		m_pMsg = new CReceivePacket(Buffer(packetDataBuf));
 		if (!m_pMsg->IsValid())
 		{
@@ -117,6 +209,22 @@ CReceivePacket* CExtendedSocket::Read()
 	if (m_nBytesReceived < 0)
 		m_nBytesReceived = 0;
 
+	// decrypt the rest part of packet
+	if (m_bCryptInput)
+	{
+		int outLen = 0;
+		if (EVP_DecryptUpdate(m_pDecEVPCTX, packetDataBuf.data(), &outLen, packetDataBuf.data(), recvResult) != 1)
+		{
+			g_pConsole->Log("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+		}
+
+		int finalLen = 0;
+		if (EVP_DecryptFinal_ex(m_pDecEVPCTX, packetDataBuf.data() + outLen, &finalLen) != 1)
+		{
+			g_pConsole->Log("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+		}
+	}
+
 	Buffer& buf = m_pMsg->GetData();
 	// todo: rewrite
 	vector<unsigned char> vecBuf = buf.getBuffer();
@@ -140,7 +248,7 @@ CReceivePacket* CExtendedSocket::Read()
 	return m_pMsg;
 }
 
-int CExtendedSocket::Send(const vector<unsigned char>& buffer)
+int CExtendedSocket::Send(vector<unsigned char>& buffer)
 {
 	if (buffer.size() > PACKET_MAX_SIZE)
 	{
@@ -149,7 +257,32 @@ int CExtendedSocket::Send(const vector<unsigned char>& buffer)
 		return 0;
 	}
 
-	const char* bufData = reinterpret_cast<const char*>(&buffer[0]);
+	std::vector<unsigned char> outBuf;
+	outBuf.resize(buffer.size());
+
+	if (m_bCryptOutput)
+	{
+		int encLen = 0;
+		if (EVP_EncryptUpdate(m_pEncEVPCTX, outBuf.data(), &encLen, buffer.data(), buffer.size()) != 1)
+		{
+			g_pConsole->Log("CExtendedSocket::Send: EVP_EncryptUpdate failed\n");
+		}
+
+		int finalLen = 0;
+		if (EVP_EncryptFinal_ex(m_pEncEVPCTX, outBuf.data() + encLen, &finalLen) != 1)
+		{
+			g_pConsole->Log("CExtendedSocket::Read: EVP_EncryptUpdate failed\n");
+		}
+
+		if (encLen != buffer.size())
+		{
+			g_pConsole->Log("CExtendedSocket::Send: encLen != buffer.size()\n");
+		}
+	}
+
+	outBuf = buffer;
+
+	const char* bufData = reinterpret_cast<const char*>(&outBuf[0]);
 
 	int bytesSent = g_pNetwork->SendMessage(m_Socket, bufData, buffer.size());
 	if (bytesSent != buffer.size())
@@ -177,7 +310,8 @@ int CExtendedSocket::Send(CSendPacket* msg, bool forceSend)
 	}
 	else
 	{
-		result = Send(msg->SetPacketLength());
+		auto data = msg->SetPacketLength();
+		result = Send(data);
 		int error = WSAGetLastError();
 		if (result != msg->GetData().getBuffer().size() && error)
 		{

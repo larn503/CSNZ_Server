@@ -234,6 +234,8 @@ public:
 	void SendLeaguePacket(IExtendedSocket* socket);
 	void SendLeagueGaugePacket(IExtendedSocket* socket, int gameModeId);
 
+	void SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv);
+
 private:
 	BinMetadata* LoadBinaryMetadata(const char* fileName);
 

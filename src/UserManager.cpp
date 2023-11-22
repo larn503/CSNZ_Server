@@ -22,6 +22,8 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
+	g_pConsole->Log("Client (%s) sent login packet\n", socket->GetIP().c_str());
+
 	string steamID = msg->ReadString();
 	int size = msg->ReadUInt16();
 	vector<unsigned char> authSessionTicket = msg->ReadArray(size); // AuthSessionTicket - Reference: https://partner.steamgames.com/doc/features/auth
@@ -36,10 +38,10 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	{
 		g_pConsole->Log("Client (%s) disconnected from the server due to banned HWID\n", socket->GetIP().c_str());
 
-		IUser* user = g_pUserManager->GetUserBySocket(socket);
+		IUser* user = GetUserBySocket(socket);
 		if (user)
 		{
-			g_pUserManager->RemoveUser(user);
+			RemoveUser(user);
 		}
 
 		g_pNetwork->RemoveSocket(socket);
@@ -47,7 +49,32 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		return true;
 	}
 
-	g_pConsole->Log("Client (%s) sent login packet\n", socket->GetIP().c_str());
+	if (1/*g_pServerConfig->crypt*/)
+	{
+		if (!socket->SetupCrypt())
+		{
+			g_pConsole->Log("Client (%s) disconnected from the server (Crypt failed)\n", socket->GetIP().c_str());
+
+			IUser* user = GetUserBySocket(socket);
+			if (user)
+			{
+				RemoveUser(user);
+			}
+
+			g_pNetwork->RemoveSocket(socket);
+
+			return true;
+		}
+
+		unsigned char* key = socket->GetCryptKey();
+		unsigned char* iv = socket->GetCryptIV();
+
+		g_pPacketManager->SendCrypt(socket, 0, key, iv);
+
+		socket->SetCryptOutput(true);
+
+		g_pPacketManager->SendCrypt(socket, 1, key, iv);
+	}
 
 	return true;
 }
@@ -1113,6 +1140,15 @@ bool CUserManager::OnLeaguePacket(CReceivePacket* msg, IExtendedSocket* socket)
 		g_pConsole->Warn(OBFUSCATE("[User '%s'] Unknown Packet_League type %d (len: %d)\n"), user->GetLogName(), type, msg->GetLength());
 		break;
 	}
+
+	return true;
+}
+
+bool CUserManager::OnCryptPacket(CReceivePacket* msg, IExtendedSocket* socket)
+{
+	socket->SetCryptInput(true);
+
+	//socket->ResetSeq();
 
 	return true;
 }

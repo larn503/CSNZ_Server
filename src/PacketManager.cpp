@@ -6889,13 +6889,28 @@ void CPacketManager::SendLeaguePacket(IExtendedSocket* socket)
 void CPacketManager::SendLeagueGaugePacket(IExtendedSocket* socket, int gameModeId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::League);
-	msg->BuildHeader();
+	msg->BuildHeader();  
 
 	msg->WriteUInt8(6);
 
 	msg->WriteUInt8(1); // size always 1
 	msg->WriteUInt8(gameModeId);
 	msg->WriteUInt8(0); // 0 - show league gauge in-game, 1 - don't show league gauge in-game
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Crypt);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(type);
+	msg->WriteUInt8(2); // crypt method(0,1 - something related to ssl ?, 2 - rc4, 3 - rc40, 4 - none)
+
+	// if TLSv1 used, key is 32 bytes
+	msg->WriteData(key, 64);
+	msg->WriteData(iv, 64);
 
 	socket->Send(msg);
 }

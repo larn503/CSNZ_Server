@@ -26,6 +26,7 @@ public:
 	bool OnMessengerPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnAddonPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnLeaguePacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnCryptPacket(CReceivePacket* msg, IExtendedSocket* socket);
 
 	void SendNoticeMessageToAll(const std::string& msg);
 	void SendNoticeMsgBoxToAll(const std::string& msg);

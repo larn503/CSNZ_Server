@@ -990,6 +990,9 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 	case PacketId::RequestRoomList:
 		g_pChannelManager->OnRoomListPacket(msg, s);
 		break;
+	case PacketId::RecvCrypt:
+		g_pUserManager->OnCryptPacket(msg, s);
+		break;
 	case PacketId::Room:
 		g_pChannelManager->OnRoomRequest(msg, s);
 		break;
