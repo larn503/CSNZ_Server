@@ -135,7 +135,7 @@ CReceivePacket* CExtendedSocket::Read()
 	{
 		// first of all read the packet header to know is received packet is valid
 		recvResult = g_pNetwork->ReceiveMessage(m_Socket, (char*)packetDataBuf.data(), PACKET_HEADER_SIZE);
-		if (recvResult < 4)
+		if (recvResult < PACKET_HEADER_SIZE)
 		{
 			g_pConsole->Warn("CExtendedSocket::Read(%s): result < PACKET_HEADER_SIZE, %d\n", GetIP().c_str(), WSAGetLastError());
 			return NULL;
@@ -257,19 +257,16 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer)
 		return 0;
 	}
 
-	std::vector<unsigned char> outBuf;
-	outBuf.resize(buffer.size());
-
 	if (m_bCryptOutput)
 	{
 		int encLen = 0;
-		if (EVP_EncryptUpdate(m_pEncEVPCTX, outBuf.data(), &encLen, buffer.data(), buffer.size()) != 1)
+		if (EVP_EncryptUpdate(m_pEncEVPCTX, buffer.data(), &encLen, buffer.data(), buffer.size()) != 1)
 		{
 			g_pConsole->Log("CExtendedSocket::Send: EVP_EncryptUpdate failed\n");
 		}
 
 		int finalLen = 0;
-		if (EVP_EncryptFinal_ex(m_pEncEVPCTX, outBuf.data() + encLen, &finalLen) != 1)
+		if (EVP_EncryptFinal_ex(m_pEncEVPCTX, buffer.data() + encLen, &finalLen) != 1)
 		{
 			g_pConsole->Log("CExtendedSocket::Read: EVP_EncryptUpdate failed\n");
 		}
@@ -280,9 +277,9 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer)
 		}
 	}
 
-	outBuf = buffer;
+	//outBuf = buffer;
 
-	const char* bufData = reinterpret_cast<const char*>(&outBuf[0]);
+	const char* bufData = reinterpret_cast<const char*>(&buffer[0]);
 
 	int bytesSent = g_pNetwork->SendMessage(m_Socket, bufData, buffer.size());
 	if (bytesSent != buffer.size())

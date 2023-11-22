@@ -281,6 +281,10 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 			{
 				g_pUserManager->DisconnectUser(user);
 			}
+			else
+			{
+				DropSession(userID);
+			}
 		}
 
 		if (restoreData)
