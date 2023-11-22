@@ -35,6 +35,7 @@ CServerConfig::CServerConfig()
 	allowedLauncherVersion = 0;
 	allowedClientTimestamp = 0;
 	maxRegistrationsPerIP = 0;
+	crypt = false;
 }
 
 CServerConfig::~CServerConfig()
@@ -943,6 +944,7 @@ bool CServerConfig::Load()
 		allowedClientTimestamp = cfg.value("AllowedClientTimestamp", 0);
 		allowedLauncherVersion = cfg.value("AllowedLauncherVersion", 67);
 		maxRegistrationsPerIP = cfg.value("MaxRegistrationsPerIP", 1);
+		crypt = cfg.value("Crypt", false);
 		if (cfg.contains("Metadata"))
 		{
 			ordered_json jMetadata = cfg["Metadata"];
@@ -1323,6 +1325,7 @@ void CServerConfig::LoadDefaultConfig(ordered_json& cfg)
 	//cfg["InventorySlotMax"] = 3000;
 	//cfg["CheckClientBuild"] = false;
 	//cfg["MaxRegistrationsPerIP"] = 3;
+	//cfg["Crypt"] = false;
 
 	//static vector<int> defaultItems{ 175, 459, 460, 8079, 8080, 8138, 358, 136, 137, 25, 305, 138, 26, 306, 27,
 	//	28, 252, 29, 30, 31, 200, 201, 214, 8222, 215, 216, 163, 8115, 390, 391, 40, 41, 42, 43, 44, 49, 50, 51, 52, 53 };

@@ -41,4 +41,5 @@ public:
 	WeaponReleaseConfig weaponRelease;
 	std::vector<std::string> nameBlacklist;
 	std::vector<Survey> surveys;
+	bool crypt;
 };

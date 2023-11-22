@@ -49,7 +49,7 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		return true;
 	}
 
-	if (1/*g_pServerConfig->crypt*/)
+	if (g_pServerConfig->crypt)
 	{
 		if (!socket->SetupCrypt())
 		{
@@ -1146,9 +1146,8 @@ bool CUserManager::OnLeaguePacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 bool CUserManager::OnCryptPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
-	socket->SetCryptInput(true);
-
-	//socket->ResetSeq();
+	if (g_pServerConfig->crypt)
+		socket->SetCryptInput(true);
 
 	return true;
 }
