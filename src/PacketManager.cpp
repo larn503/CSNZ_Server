@@ -3,11 +3,9 @@
 #include "PacketHelper_FullUserInfo.h"
 #include "Packet_Metadata_Data.h"
 #include "UserFastBuy.h"
+#include "zip.h"
 
 using namespace std;
-
-// 16Mb max zipped size
-#define MAX_ZIP_SIZE	(1024 * 1024 * 16 )
 
 enum OutRoomPacketType
 {
@@ -29,24 +27,24 @@ enum OutRoomPacketType
 
 CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 {
-	m_hMapListZip = 0;
-	m_hClientTableZip = 0;
-	m_hWeaponPartsZip = 0;
-	m_hMatchingZip = 0;
-	m_hProgressUnlockZip = 0;
-	m_hGameModeListZip = 0;
-	m_hReinforceMaxLvlZip = 0;
-	m_hReinforceMaxExpZip = 0;
-	m_hItemExpireTimeZip = 0;
-	m_hHonorMoneyShopZip = 0;
-	m_hScenarioTX_CommonZip = 0;
-	m_hScenarioTX_DediZip = 0;
-	m_hShopItemList_DediZip = 0;
-	m_hZBCompetitiveZip = 0;
-	m_hPPSystemZip = 0;
-	m_hItemZip = 0;
-	m_hCodisDataZip = 0;
-	m_hWeaponPropZip = 0;
+	m_pMapListZip = NULL;
+	m_pClientTableZip = NULL;
+	m_pWeaponPartsZip = NULL;
+	m_pMatchingZip = NULL;
+	m_pProgressUnlockZip = NULL;
+	m_pGameModeListZip = NULL;
+	m_pReinforceMaxLvlZip = NULL;
+	m_pReinforceMaxExpZip = NULL;
+	m_pItemExpireTimeZip = NULL;
+	m_pHonorMoneyShopZip = NULL;
+	m_pScenarioTX_CommonZip = NULL;
+	m_pScenarioTX_DediZip = NULL;
+	m_pShopItemList_DediZip = NULL;
+	m_pZBCompetitiveZip = NULL;
+	m_pPPSystemZip = NULL;
+	m_pItemZip = NULL;
+	m_pCodisDataZip = NULL;
+	m_pWeaponPropZip = NULL;
 	m_pPaintItemList = NULL;
 	m_pReinforceItemsExp = NULL;
 	m_pRandomWeaponList = NULL;
@@ -66,76 +64,41 @@ CPacketManager::~CPacketManager()
 
 bool CPacketManager::Init()
 {
-	m_hMapListZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hClientTableZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hWeaponPartsZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hMatchingZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hProgressUnlockZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hGameModeListZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hReinforceMaxLvlZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hReinforceMaxExpZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hItemExpireTimeZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hHonorMoneyShopZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hScenarioTX_CommonZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hScenarioTX_DediZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hShopItemList_DediZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hZBCompetitiveZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hPPSystemZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hItemZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hCodisDataZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
-	m_hWeaponPropZip = CreateZip(0, MAX_ZIP_SIZE, ZIP_MEMORY);
+	m_pMapListZip = LoadBinaryMetadata("MapList.csv", true);
+	m_pClientTableZip = LoadBinaryMetadata("ClientTable.csv", true);
+	m_pWeaponPartsZip = LoadBinaryMetadata("weaponparts.csv", true);
+	m_pMatchingZip = LoadBinaryMetadata("MatchOption.csv", true);
+	m_pProgressUnlockZip = LoadBinaryMetadata("progress_unlock.csv", true);
+	m_pGameModeListZip = LoadBinaryMetadata("GameModeList.csv", true);
+	m_pReinforceMaxLvlZip = LoadBinaryMetadata("ReinforceMaxLv.csv", true);
+	m_pReinforceMaxExpZip = LoadBinaryMetadata("ReinforceMaxEXP.csv", true);
+	m_pItemExpireTimeZip = LoadBinaryMetadata("ItemExpireTime.csv", true);
+	m_pHonorMoneyShopZip = LoadBinaryMetadata("HonorMoneyShop.csv", true);
+	m_pScenarioTX_CommonZip = LoadBinaryMetadata("scenariotx_common.json", true);
+	m_pScenarioTX_DediZip = LoadBinaryMetadata("scenariotx_dedi.json", true);
+	m_pShopItemList_DediZip = LoadBinaryMetadata("shopitemlist_dedi.json", true);
+	m_pZBCompetitiveZip = LoadBinaryMetadata("ZBCompetitive.json", true);
+	m_pPPSystemZip = LoadBinaryMetadata("ppsystem.json", true);
+	m_pItemZip = LoadBinaryMetadata("Item.csv", true);
+	m_pCodisDataZip = LoadBinaryMetadata("CodisData.csv", true);
+	m_pWeaponPropZip = LoadBinaryMetadata("WeaponProp.json", true);
+	m_pPaintItemList = LoadBinaryMetadata("Metadata_PaintItemList.bin");
+	m_pReinforceItemsExp = LoadBinaryMetadata("Metadata_ReinforceItemsExp.bin");
+	m_pRandomWeaponList = LoadBinaryMetadata("Metadata_RandomWeaponList.bin");
+	m_pUnk3 = LoadBinaryMetadata("Metadata_Unk3.bin");
+	m_pUnk8 = LoadBinaryMetadata("Metadata_Unk8.bin");
+	m_pUnk15 = LoadBinaryMetadata("Metadata_Unk15.bin");
+	m_pUnk20 = LoadBinaryMetadata("Metadata_Unk20.bin");
+	m_pUnk31 = LoadBinaryMetadata("Metadata_Unk31.bin");
+	m_pUnk43 = LoadBinaryMetadata("Metadata_Unk43.bin");
+	m_pUnk49 = LoadBinaryMetadata("Metadata_Unk49.bin");
 
-	if (!m_hMapListZip || !m_hClientTableZip || !m_hWeaponPartsZip || !m_hMatchingZip || !m_hProgressUnlockZip
-		|| !m_hGameModeListZip || !m_hReinforceMaxLvlZip || !m_hReinforceMaxExpZip || !m_hItemExpireTimeZip
-		|| !m_hHonorMoneyShopZip || !m_hScenarioTX_CommonZip || !m_hScenarioTX_DediZip || !m_hShopItemList_DediZip
-		|| !m_hZBCompetitiveZip || !m_hPPSystemZip || !m_hItemZip || !m_hCodisDataZip || !m_hWeaponPropZip)
+	if (!m_pMapListZip || !m_pClientTableZip || !m_pWeaponPartsZip || !m_pWeaponPartsZip || !m_pMatchingZip || !m_pProgressUnlockZip || !m_pGameModeListZip ||
+		!m_pReinforceMaxLvlZip || !m_pReinforceMaxExpZip || !m_pItemExpireTimeZip || !m_pHonorMoneyShopZip || !m_pScenarioTX_CommonZip || !m_pScenarioTX_DediZip ||
+		!m_pShopItemList_DediZip || !m_pZBCompetitiveZip || !m_pPPSystemZip || !m_pItemZip || !m_pCodisDataZip || !m_pWeaponPropZip ||
+		!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49)
 	{
-		g_pConsole->FatalError("CPacketManager(): CreateZip() returned NULL. Some metadata not loaded\n");
-		return false;
-	}
-
-	ZRESULT res = ZipAdd(m_hMapListZip, "MapList.csv", (void*)"Data/MapList.csv", 0, ZIP_FILENAME);\
-	char msg[256];
-	FormatZipMessageZ(res, msg, 256);
-	printf("%s\n", msg);
-
-	if (ZipAdd(m_hMapListZip, "MapList.csv", (void*)"Data/MapList.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hClientTableZip, "ClientTable.csv", (void*)"Data/ClientTable.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hWeaponPartsZip, "weaponparts.csv", (void*)"Data/weaponparts.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hMatchingZip, "MatchOption.csv", (void*)"Data/MatchOption.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hProgressUnlockZip, "progress_unlock.csv", (void*)"Data/progress_unlock.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hGameModeListZip, "GameModeList.csv", (void*)"Data/GameModeList.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hReinforceMaxLvlZip, "ReinforceMaxLv.csv", (void*)"Data/ReinforceMaxLv.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hReinforceMaxExpZip, "ReinforceMaxEXP.csv", (void*)"Data/ReinforceMaxEXP.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hItemExpireTimeZip, "ItemExpireTime.csv", (void*)"Data/ItemExpireTime.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hHonorMoneyShopZip, "HonorMoneyShop.csv", (void*)"Data/HonorMoneyShop.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hScenarioTX_CommonZip, "scenariotx_common.json", (void*)"Data/scenariotx_common.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hScenarioTX_DediZip, "scenariotx_dedi.json", (void*)"Data/scenariotx_dedi.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hShopItemList_DediZip, "shopitemlist_dedi.json", (void*)"Data/shopitemlist_dedi.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hZBCompetitiveZip, "ZBCompetitive.json", (void*)"Data/ZBCompetitive.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hPPSystemZip, "ppsystem.json", (void*)"Data/ppsystem.json", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hItemZip, "Item.csv", (void*)"Data/Item.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hCodisDataZip, "CodisData.csv", (void*)"Data/CodisData.csv", 0, ZIP_FILENAME)
-		|| ZipAdd(m_hWeaponPropZip, "WeaponProp.json", (void*)"Data/WeaponProp.json", 0, ZIP_FILENAME))
-	{
-		g_pConsole->FatalError("CPacketManager(): ZipAdd() returned error. Some metadata not loaded\n");
-		return false;
-	}
-
-	m_pPaintItemList = LoadBinaryMetadata("Data/Metadata_PaintItemList.bin");
-	m_pReinforceItemsExp = LoadBinaryMetadata("Data/Metadata_ReinforceItemsExp.bin");
-	m_pRandomWeaponList = LoadBinaryMetadata("Data/Metadata_RandomWeaponList.bin");
-	m_pUnk3 = LoadBinaryMetadata("Data/Metadata_Unk3.bin");
-	m_pUnk8 = LoadBinaryMetadata("Data/Metadata_Unk8.bin");
-	m_pUnk15 = LoadBinaryMetadata("Data/Metadata_Unk15.bin");
-	m_pUnk20 = LoadBinaryMetadata("Data/Metadata_Unk20.bin");
-	m_pUnk31 = LoadBinaryMetadata("Data/Metadata_Unk31.bin");
-	m_pUnk43 = LoadBinaryMetadata("Data/Metadata_Unk43.bin");
-	m_pUnk49 = LoadBinaryMetadata("Data/Metadata_Unk49.bin");
-
-	if (!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49)
-	{
-		g_pConsole->FatalError("Required metadata:\nMetadata_PaintItemList.bin\nMetadata_ReinforceItemsExp.bin\nMetadata_RandomWeaponList.bin\nMetadata_Unk3.bin\nMetadata_Unk8.bin\nMetadata_Unk15.bin\nMetadata_Unk20.bin\nMetadata_Unk31.bin\nMetadata_Unk43.bin\nMetadata_Unk49.bin\n");
+		g_pConsole->FatalError("Failed to load metadata\n");
 		return false;
 	}
 
@@ -144,73 +107,54 @@ bool CPacketManager::Init()
 
 void CPacketManager::Shutdown()
 {
-	CloseZip(m_hMapListZip);
-	CloseZip(m_hClientTableZip);
-	CloseZip(m_hWeaponPartsZip);
-	CloseZip(m_hMatchingZip);
-	CloseZip(m_hProgressUnlockZip);
-	CloseZip(m_hGameModeListZip);
-	CloseZip(m_hReinforceMaxLvlZip);
-	CloseZip(m_hReinforceMaxExpZip);
-	CloseZip(m_hItemExpireTimeZip);
-	CloseZip(m_hHonorMoneyShopZip);
-	CloseZip(m_hScenarioTX_CommonZip);
-	CloseZip(m_hScenarioTX_DediZip);
-	CloseZip(m_hShopItemList_DediZip);
-	CloseZip(m_hZBCompetitiveZip);
-	CloseZip(m_hPPSystemZip);
-	CloseZip(m_hItemZip);
-	CloseZip(m_hCodisDataZip);
-	CloseZip(m_hWeaponPropZip);
-
 	if (m_pPaintItemList)
 	{
-		free(m_pPaintItemList->buffer);
+		free(m_pPaintItemList->buf);
 		delete m_pPaintItemList;
 	}
 	if (m_pReinforceItemsExp)
 	{
-		free(m_pReinforceItemsExp->buffer);
+		free(m_pReinforceItemsExp->buf);
 		delete m_pReinforceItemsExp;
 	}
 	if (m_pUnk3)
 	{
-		free(m_pUnk3->buffer);
+		free(m_pUnk3->buf);
 		delete m_pUnk3;
 	}
 	if (m_pUnk8)
 	{
-		free(m_pUnk8->buffer);
+		free(m_pUnk8->buf);
 		delete m_pUnk8;
 	}
 	if (m_pUnk15)
 	{
-		free(m_pUnk15->buffer);
+		free(m_pUnk15->buf);
 		delete m_pUnk15;
 	}
 	if (m_pRandomWeaponList)
 	{
-		free(m_pRandomWeaponList->buffer);
+		free(m_pRandomWeaponList->buf);
 		delete m_pRandomWeaponList;
 	}
 	if (m_pUnk20)
 	{
-		free(m_pUnk20->buffer);
+		free(m_pUnk20->buf);
 		delete m_pUnk20;
 	}
 	if (m_pUnk31)
 	{
-		free(m_pUnk31->buffer);
+		free(m_pUnk31->buf);
 		delete m_pUnk31;
 	}
 	if (m_pUnk43)
 	{
-		free(m_pUnk43->buffer);
+		free(m_pUnk43->buf);
 		delete m_pUnk43;
 	}
 	if (m_pUnk49)
 	{
-		free(m_pUnk49->buffer);
+		free(m_pUnk49->buf);
 		delete m_pUnk49;
 	}
 }
@@ -220,36 +164,58 @@ CSendPacket* CPacketManager::CreatePacket(IExtendedSocket* socket, int msgID)
 	return new CSendPacket(socket, msgID);
 }
 
-BinMetadata* CPacketManager::LoadBinaryMetadata(const char* fileName)
+BinMetadata* CPacketManager::LoadBinaryMetadata(const char* fileName, bool zip)
 {
-	FILE* f = fopen(fileName, "rb");
+	char path[MAX_PATH];
+	snprintf(path, MAX_PATH, "Data/%s", fileName);
+
+	FILE* f = fopen(path, "rb");
 	if (!f)
 	{
+		g_pConsole->Error("CPacketManager::LoadBinaryMetadata: couldn't load Data/%s\n", fileName);
 		return NULL;
 	}
 
 	fseek(f, 0, SEEK_END);
-	long size = ftell(f);
+	size_t size = ftell(f);
 	rewind(f);
 
 	void* buffer = malloc(sizeof(char) * size);
 	if (buffer == NULL)
 	{
+		g_pConsole->Error("CPacketManager::LoadBinaryMetadata: failed to allocate memory for Data/%s\n", fileName);
 		fclose(f);
 		return NULL;
 	}
 
-	size_t result = fread(buffer, 1, size, f);
+	size_t result = fread(buffer, sizeof(char), size, f);
 	if (result != size)
 	{
+		g_pConsole->Error("CPacketManager::LoadBinaryMetadata: failed to read file Data/%s\n", fileName);
 		fclose(f);
 		free(buffer);
 		return NULL;
 	}
 
+	fclose(f);
+
+	if (zip)
+	{
+		// create zip and get stream data
+		zip_t *zipStream = zip_stream_open(NULL, 0, ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
+		zip_entry_open(zipStream, fileName);
+		zip_entry_write(zipStream, buffer, result);
+		zip_entry_close(zipStream);
+
+		free(buffer);
+
+		zip_stream_copy(zipStream, &buffer, &size);
+		zip_stream_close(zipStream);
+	}
+
 	BinMetadata* metadata = new BinMetadata;
-	metadata->buffer = buffer;
-	metadata->size = size;
+	metadata->buf = buffer;
+	metadata->bufsize = size;
 
 	return metadata;
 }
@@ -977,57 +943,49 @@ void CPacketManager::SendOptionUnk3(IExtendedSocket* socket)
 
 void CPacketManager::SendMetadataMaplist(IExtendedSocket* socket)
 {
+	if (!m_pMapListZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_MapList);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hMapListZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pMapListZip->bufsize);
+	msg->WriteData(m_pMapListZip->buf, m_pMapListZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataClientTable(IExtendedSocket* socket)
 {
+	if (!m_pClientTableZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ClientTable);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hClientTableZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pClientTableZip->bufsize);
+	msg->WriteData(m_pClientTableZip->buf, m_pClientTableZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataWeaponParts(IExtendedSocket* socket)
 {
+	if (!m_pWeaponPartsZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_WeaponParts);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hWeaponPartsZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pWeaponPartsZip->bufsize);
+	msg->WriteData(m_pWeaponPartsZip->buf, m_pWeaponPartsZip->bufsize);
+
 	socket->Send(msg);
 }
 
@@ -1047,38 +1005,32 @@ void CPacketManager::SendMetadataModelist(IExtendedSocket* socket)
 
 void CPacketManager::SendMetadataMatchOption(IExtendedSocket* socket)
 {
+	if (!m_pMatchingZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_MatchOption);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hMatchingZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pMatchingZip->bufsize);
+	msg->WriteData(m_pMatchingZip->buf, m_pMatchingZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataProgressUnlock(IExtendedSocket* socket)
 {
+	if (!m_pProgressUnlockZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ProgressUnlock); // progress_unlock.csv
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hProgressUnlockZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pProgressUnlockZip->bufsize);
+	msg->WriteData(m_pProgressUnlockZip->buf, m_pProgressUnlockZip->bufsize);
 
 	socket->Send(msg);
 }
@@ -1091,7 +1043,7 @@ void CPacketManager::SendMetadataUnk8(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk8->buffer, m_pUnk8->size);
+	msg->WriteData(m_pUnk8->buf, m_pUnk8->bufsize);
 
 	socket->Send(msg);
 }
@@ -1104,17 +1056,20 @@ void CPacketManager::SendMetadataWeaponPaint(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pPaintItemList->buffer, m_pPaintItemList->size);
+	msg->WriteData(m_pPaintItemList->buf, m_pPaintItemList->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataUnk3(IExtendedSocket* socket)
 {
+	if (!m_pUnk3)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk3->buffer, m_pUnk3->size);
+	msg->WriteData(m_pUnk3->buf, m_pUnk3->bufsize);
 
 	socket->Send(msg);
 }
@@ -1166,57 +1121,48 @@ void CPacketManager::SendMetadataEncyclopedia(IExtendedSocket* socket)
 
 void CPacketManager::SendMetadataGameModeList(IExtendedSocket* socket)
 {
+	if (!m_pGameModeListZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_GameModeList);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hGameModeListZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pGameModeListZip->bufsize);
+	msg->WriteData(m_pGameModeListZip->buf, m_pGameModeListZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataReinforceMaxLvl(IExtendedSocket* socket)
 {
+	if (!m_pReinforceMaxLvlZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ReinforceMaxLvl);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hReinforceMaxLvlZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pReinforceMaxLvlZip->bufsize);
+	msg->WriteData(m_pReinforceMaxLvlZip->buf, m_pReinforceMaxLvlZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataReinforceMaxEXP(IExtendedSocket* socket)
 {
+	if (!m_pReinforceMaxExpZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ReinforceMaxEXP);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hReinforceMaxExpZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pReinforceMaxExpZip->bufsize);
+	msg->WriteData(m_pReinforceMaxExpZip->buf, m_pReinforceMaxExpZip->bufsize);
 
 	socket->Send(msg);
 }
@@ -1229,26 +1175,23 @@ void CPacketManager::SendMetadataReinforceItemsExp(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pReinforceItemsExp->buffer, m_pReinforceItemsExp->size);
+	msg->WriteData(m_pReinforceItemsExp->buf, m_pReinforceItemsExp->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataItemExpireTime(IExtendedSocket* socket)
 {
+	if (!m_pItemExpireTimeZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ItemExpireTime);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hItemExpireTimeZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pItemExpireTimeZip->bufsize);
+	msg->WriteData(m_pItemExpireTimeZip->buf, m_pItemExpireTimeZip->bufsize);
 
 	socket->Send(msg);
 }
@@ -1261,7 +1204,7 @@ void CPacketManager::SendMetadataUnk20(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk20->buffer, m_pUnk20->size);
+	msg->WriteData(m_pUnk20->buf, m_pUnk20->bufsize);
 
 	socket->Send(msg);
 }
@@ -1274,7 +1217,7 @@ void CPacketManager::SendMetadataUnk15(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk15->buffer, m_pUnk15->size);
+	msg->WriteData(m_pUnk15->buf, m_pUnk15->bufsize);
 
 	socket->Send(msg);
 }
@@ -1287,8 +1230,8 @@ void CPacketManager::SendMetadataRandomWeaponList(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	//unsigned char* buf = (unsigned char*)m_pRandomWeaponList->buffer;
-	//std::vector<unsigned char> vec(buf, buf + m_pRandomWeaponList->size);
+	//unsigned char* buf = (unsigned char*)m_pRandomWeaponList->buf;
+	//std::vector<unsigned char> vec(buf, buf + m_pRandomWeaponList->bufsize);
 	//Buffer bufer(vec);
 	//bufer.readInt8();
 
@@ -1321,7 +1264,7 @@ void CPacketManager::SendMetadataRandomWeaponList(IExtendedSocket* socket)
 	//	}
 	//}
 
-	msg->WriteData(m_pRandomWeaponList->buffer, m_pRandomWeaponList->size);
+	msg->WriteData(m_pRandomWeaponList->buf, m_pRandomWeaponList->bufsize);
 
 	socket->Send(msg);
 }
@@ -1344,102 +1287,87 @@ void CPacketManager::SendMetadataUnk31(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk31->buffer, m_pUnk31->size);
+	msg->WriteData(m_pUnk31->buf, m_pUnk31->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataHonorMoneyShop(IExtendedSocket* socket)
 {
+	if (!m_pHonorMoneyShopZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_HonorMoneyShop);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hHonorMoneyShopZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pHonorMoneyShopZip->bufsize);
+	msg->WriteData(m_pHonorMoneyShopZip->buf, m_pHonorMoneyShopZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataScenarioTX_Common(IExtendedSocket* socket)
 {
+	if (!m_pScenarioTX_CommonZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ScenarioTX_Common);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hScenarioTX_CommonZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pScenarioTX_CommonZip->bufsize);
+	msg->WriteData(m_pScenarioTX_CommonZip->buf, m_pScenarioTX_CommonZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataScenarioTX_Dedi(IExtendedSocket* socket)
 {
+	if (!m_pScenarioTX_DediZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ScenarioTX_Dedi);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hScenarioTX_DediZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pScenarioTX_DediZip->bufsize);
+	msg->WriteData(m_pScenarioTX_DediZip->buf, m_pScenarioTX_DediZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataShopItemList_Dedi(IExtendedSocket* socket)
 {
+	if (!m_pShopItemList_DediZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ShopItemList_Dedi);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hShopItemList_DediZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pShopItemList_DediZip->bufsize);
+	msg->WriteData(m_pShopItemList_DediZip->buf, m_pShopItemList_DediZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataZBCompetitive(IExtendedSocket* socket)
 {
+	if (!m_pZBCompetitiveZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_ZBCompetitive);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hZBCompetitiveZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pZBCompetitiveZip->bufsize);
+	msg->WriteData(m_pZBCompetitiveZip->buf, m_pZBCompetitiveZip->bufsize);
 
 	socket->Send(msg);
 }
@@ -1452,7 +1380,7 @@ void CPacketManager::SendMetadataUnk43(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk43->buffer, m_pUnk43->size);
+	msg->WriteData(m_pUnk43->buf, m_pUnk43->bufsize);
 
 	socket->Send(msg);
 }
@@ -1465,83 +1393,71 @@ void CPacketManager::SendMetadataUnk49(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk49->buffer, m_pUnk49->size);
+	msg->WriteData(m_pUnk49->buf, m_pUnk49->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataWeaponProp(IExtendedSocket* socket)
 {
+	if (!m_pWeaponPropZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_WeaponProp);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hWeaponPropZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pWeaponPropZip->bufsize);
+	msg->WriteData(m_pWeaponPropZip->buf, m_pWeaponPropZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataPPSystem(IExtendedSocket* socket)
 {
+	if (!m_pPPSystemZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_PPSystem);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hPPSystemZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pPPSystemZip->bufsize);
+	msg->WriteData(m_pPPSystemZip->buf, m_pPPSystemZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataCodisData(IExtendedSocket* socket)
 {
+	if (!m_pCodisDataZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_CodisData);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hCodisDataZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pCodisDataZip->bufsize);
+	msg->WriteData(m_pCodisDataZip->buf, m_pCodisDataZip->bufsize);
 
 	socket->Send(msg);
 }
 
 void CPacketManager::SendMetadataItem(IExtendedSocket* socket)
 {
+	if (!m_pItemZip)
+		return;
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(kPacket_Metadata_Item);
 
-	void* mem;
-	unsigned long len = 0;
-	ZipGetMemory(m_hItemZip, &mem, &len);
-	msg->WriteUInt16(len);
-	if (mem != NULL && len > 0)
-	{
-		msg->WriteData(mem, len);
-	}
+	msg->WriteUInt16(m_pItemZip->bufsize);
+	msg->WriteData(m_pItemZip->buf, m_pItemZip->bufsize);
 
 	socket->Send(msg);
 }

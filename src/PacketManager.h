@@ -4,7 +4,6 @@
 #include "User.h"
 #include "LuckyItemManager.h"
 #include "ShopManager.h"
-#include "XZip.h"
 #include "Quest.h"
 #include "IPacketManager.h"
 
@@ -12,8 +11,8 @@ struct Notice_s;
 
 struct BinMetadata
 {
-	void* buffer;
-	int size;
+	void* buf;
+	size_t bufsize;
 };
 
 class CPacketManager : public CBaseManager<IPacketManager>
@@ -237,26 +236,26 @@ public:
 	void SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv);
 
 private:
-	BinMetadata* LoadBinaryMetadata(const char* fileName);
+	BinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);
 
-	HZIP m_hMapListZip;
-	HZIP m_hClientTableZip;
-	HZIP m_hWeaponPartsZip;
-	HZIP m_hMatchingZip;
-	HZIP m_hProgressUnlockZip;
-	HZIP m_hGameModeListZip;
-	HZIP m_hReinforceMaxLvlZip;
-	HZIP m_hReinforceMaxExpZip;
-	HZIP m_hItemExpireTimeZip;
-	HZIP m_hHonorMoneyShopZip;
-	HZIP m_hScenarioTX_CommonZip;
-	HZIP m_hScenarioTX_DediZip;
-	HZIP m_hShopItemList_DediZip;
-	HZIP m_hZBCompetitiveZip;
-	HZIP m_hPPSystemZip;
-	HZIP m_hItemZip;
-	HZIP m_hCodisDataZip;
-	HZIP m_hWeaponPropZip;
+	BinMetadata* m_pMapListZip;
+	BinMetadata* m_pClientTableZip;
+	BinMetadata* m_pWeaponPartsZip;
+	BinMetadata* m_pMatchingZip;
+	BinMetadata* m_pProgressUnlockZip;
+	BinMetadata* m_pGameModeListZip;
+	BinMetadata* m_pReinforceMaxLvlZip;
+	BinMetadata* m_pReinforceMaxExpZip;
+	BinMetadata* m_pItemExpireTimeZip;
+	BinMetadata* m_pHonorMoneyShopZip;
+	BinMetadata* m_pScenarioTX_CommonZip;
+	BinMetadata* m_pScenarioTX_DediZip;
+	BinMetadata* m_pShopItemList_DediZip;
+	BinMetadata* m_pZBCompetitiveZip;
+	BinMetadata* m_pPPSystemZip;
+	BinMetadata* m_pItemZip;
+	BinMetadata* m_pCodisDataZip;
+	BinMetadata* m_pWeaponPropZip;
 	BinMetadata* m_pPaintItemList;
 	BinMetadata* m_pReinforceItemsExp;
 	BinMetadata* m_pRandomWeaponList;

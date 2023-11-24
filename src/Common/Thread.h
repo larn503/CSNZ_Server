@@ -44,7 +44,7 @@ public:
 		switch (dwEvent)
 		{
 		case WAIT_ABANDONED:
-			printf("CObjectSync: WAIT_ABANDONED: %d\n");
+			printf("CObjectSync: WAIT_ABANDONED: %d\n", GetLastError());
 			break;
 		case WAIT_OBJECT_0:
 			break;

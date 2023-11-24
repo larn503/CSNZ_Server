@@ -21,6 +21,7 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "" FOR
 target_link_libraries(PROJECTNAME PRIVATE keyvalues)
 target_link_libraries(PROJECTNAME PRIVATE nlohmann_json)
 target_link_libraries(PROJECTNAME PRIVATE wolfssl)
+target_link_libraries(PROJECTNAME PRIVATE zip)
 if (CSO_SERVER_USE_GUI)
 	target_link_libraries(PROJECTNAME PRIVATE gui)
 	qt6_disable_unicode_defines(PROJECTNAME)
@@ -33,7 +34,6 @@ target_sources(PROJECTNAME PRIVATE "ServerConfig.cpp")
 target_sources(PROJECTNAME PRIVATE "Buffer.cpp")
 target_sources(PROJECTNAME PRIVATE "BuildNum.cpp")
 target_sources(PROJECTNAME PRIVATE "Console.cpp")
-target_sources(PROJECTNAME PRIVATE "Thirdparty/XZip.cpp")
 target_sources(PROJECTNAME PRIVATE "User.cpp")
 target_sources(PROJECTNAME PRIVATE "UserInventoryItem.cpp")
 target_sources(PROJECTNAME PRIVATE "UserLoadout.cpp")
@@ -82,6 +82,7 @@ target_include_directories(PROJECTNAME PUBLIC
 	"Thirdparty/SQLiteCpp/include"
 	"Thirdparty/KeyValues/include"
 	"Thirdparty/wolfssl"
+	"Thirdparty/zip/src"
 	"Common"
 	"Interfaces"
 )

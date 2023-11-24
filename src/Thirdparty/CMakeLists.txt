@@ -13,3 +13,5 @@ if (CSO_SERVER_DBSQLITE)
 	set(SQLITECPP_USE_STATIC_RUNTIME OFF CACHE BOOL "Use MSVC static runtime (default for internal googletest).")
 	add_subdirectory(SQLiteCpp)
 endif()
+
+add_subdirectory(zip)
