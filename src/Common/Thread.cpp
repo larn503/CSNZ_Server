@@ -68,7 +68,7 @@ void CThread::Join()
     if (dwResult == WAIT_FAILED)
         printf("CThread::Join: dwResult == WAIT_FAILED\n");
 #else
-    if (pthread_join(&m_ID, NULL) != 0)
+    if (pthread_join(m_ID, NULL) != 0)
         printf("CThread::Join: pthread_join != 0\n");
 #endif
 }

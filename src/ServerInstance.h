@@ -57,7 +57,7 @@ private:
 	time_t m_nUptime;
 };
 
-void ReadConsoleThread();
-void ListenThread();
-void ListenThreadUDP();
-void EventThread();
+void* ReadConsoleThread(void*);
+void* ListenThread(void*);
+void* ListenThreadUDP(void*);
+void* EventThread(void*);

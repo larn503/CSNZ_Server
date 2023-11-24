@@ -94,6 +94,11 @@ bool CPacketManager::Init()
 		return false;
 	}
 
+	ZRESULT res = ZipAdd(m_hMapListZip, "MapList.csv", (void*)"Data/MapList.csv", 0, ZIP_FILENAME);\
+	char msg[256];
+	FormatZipMessageZ(res, msg, 256);
+	printf("%s\n", msg);
+
 	if (ZipAdd(m_hMapListZip, "MapList.csv", (void*)"Data/MapList.csv", 0, ZIP_FILENAME)
 		|| ZipAdd(m_hClientTableZip, "ClientTable.csv", (void*)"Data/ClientTable.csv", 0, ZIP_FILENAME)
 		|| ZipAdd(m_hWeaponPartsZip, "weaponparts.csv", (void*)"Data/weaponparts.csv", 0, ZIP_FILENAME)
@@ -238,7 +243,7 @@ BinMetadata* CPacketManager::LoadBinaryMetadata(const char* fileName)
 	if (result != size)
 	{
 		fclose(f);
-		delete[] buffer;
+		free(buffer);
 		return NULL;
 	}
 

@@ -375,7 +375,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			if (args[0] == (char*)OBFUSCATE("/version"))
 			{
 				char buf[128];
-				sprintf_s(buf, sizeof(buf), OBFUSCATE("Server build: %s"), build_number());
+				snprintf(buf, sizeof(buf), OBFUSCATE("Server build: %s"), build_number());
 				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, buf);
 				return true;
 			}

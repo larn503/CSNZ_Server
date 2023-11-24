@@ -632,13 +632,13 @@ void CGameMatch::PrintGameResult()
 	char msg[2048];
 
 	ostringstream log;
-	sprintf_s(msg, 2048, OBFUSCATE("\nRoom (%d) game result, host time: %s, GameModeID: %d, MapID: %d\n%-6s|%-32s|%-10s|%-10s|%-10s|%-10s|%-10s\n"), m_pParentRoom->GetID(), FormatSeconds(m_nSecondCounter), m_nGameMode, m_nMapID,
+	snprintf(msg, 2048, OBFUSCATE("\nRoom (%d) game result, host time: %s, GameModeID: %d, MapID: %d\n%-6s|%-32s|%-10s|%-10s|%-10s|%-10s|%-10s\n"), m_pParentRoom->GetID(), FormatSeconds(m_nSecondCounter), m_nGameMode, m_nMapID,
 		(const char*)OBFUSCATE("UserID"), (const char*)OBFUSCATE("Username"), (const char*)OBFUSCATE("Kills"), (const char*)OBFUSCATE("Deaths"), (const char*)OBFUSCATE("Score"), (const char*)OBFUSCATE("Exp"), (const char*)OBFUSCATE("Points"));
 	log << msg;
 
 	for (auto stat : m_UserStats)
 	{
-		sprintf_s(msg, 2048, OBFUSCATE("%-6d|%-32s|%-10d|%-10d|%-10d|+%-10d|+%-10d\n"), stat->m_pUser ? stat->m_pUser->GetID() : 0, stat->m_pUser ? stat->m_pUser->GetUsername().c_str() : "NONE", stat->m_nKills, stat->m_nDeaths,
+		snprintf(msg, 2048, OBFUSCATE("%-6d|%-32s|%-10d|%-10d|%-10d|+%-10d|+%-10d\n"), stat->m_pUser ? stat->m_pUser->GetID() : 0, stat->m_pUser ? stat->m_pUser->GetUsername().c_str() : "NONE", stat->m_nKills, stat->m_nDeaths,
 			stat->m_nScore, stat->m_nExpEarned, stat->m_nPointsEarned);
 		log << msg;
 	}

@@ -21,19 +21,17 @@ public:
 		m_hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 		if (m_hEvent == NULL)
 			printf("CObjectSync: Failed to create event\n");
-#elif _LINUX
+#else
 		m_bSignalled = false;
 		pthread_mutex_init(&m_Mutex, NULL);
 		pthread_cond_init(&m_Cond, NULL);
-#else
-#error
 #endif
 	}
 	~CObjectSync()
 	{
 #ifdef _WIN32
 		CloseHandle(m_hEvent);
-#elif _LINUX
+#else
 		pthread_mutex_destroy(&m_Mutex);
 		pthread_cond_destroy(&m_Cond);
 #endif
@@ -57,7 +55,7 @@ public:
 			printf("CObjectSync: WAIT_FAILED: %d\n", GetLastError());
 			break;
 		}
-#elif _LINUX
+#else
 		pthread_mutex_lock(&m_Mutex);
 		while (!m_bSignalled)
 		{
@@ -72,7 +70,7 @@ public:
 	{
 #ifdef _WIN32
 		SetEvent(m_hEvent);
-#elif _LINUX
+#else
 		pthread_mutex_lock(&m_Mutex);
 		m_bSignalled = true;
 		pthread_mutex_unlock(&m_Mutex);
@@ -83,7 +81,7 @@ public:
 private:
 #ifdef _WIN32
 	HANDLE m_hEvent;
-#elif _LINUX
+#else
 	bool m_bSignalled;
 	pthread_mutex_t m_Mutex;
 	pthread_cond_t m_Cond;
@@ -97,10 +95,8 @@ public:
 	{
 #ifdef _WIN32
 		InitializeCriticalSection(&m_CriticalSection);
-#elif _LINUX
-		pthread_mutex_init(&m_Mutex, NULL);
 #else
-#error
+		pthread_mutex_init(&m_Mutex, NULL);
 #endif
 	}
 
@@ -108,7 +104,7 @@ public:
 	{
 #ifdef _WIN32
 		DeleteCriticalSection(&m_CriticalSection);
-#elif _LINUX
+#else
 		pthread_mutex_destroy(&m_Mutex);
 #endif
 	}
@@ -117,7 +113,7 @@ public:
 	{
 #ifdef _WIN32
 		EnterCriticalSection(&m_CriticalSection);
-#elif _LINUX
+#else
 		pthread_mutex_lock(&m_Mutex);
 #endif
 	}
@@ -126,7 +122,7 @@ public:
 	{
 #ifdef _WIN32
 		return TryEnterCriticalSection(&m_CriticalSection);
-#elif _LINUX
+#else
 		return pthread_mutex_trylock(&m_Mutex);
 #endif
 	}
@@ -135,7 +131,7 @@ public:
 	{
 #ifdef _WIN32
 		LeaveCriticalSection(&m_CriticalSection);
-#elif _LINUX
+#else
 		pthread_mutex_unlock(&m_Mutex);
 #endif
 	}
@@ -143,12 +139,12 @@ public:
 private:
 #ifdef _WIN32
 	CRITICAL_SECTION m_CriticalSection;
-#elif _LINUX
+#else
 	pthread_mutex_t m_Mutex;
 #endif
 };
 
-typedef void (*Handler)();
+typedef void* (*Handler)(void*);
 
 ThreadId GetCurrentThreadID();
 

@@ -1,7 +1,12 @@
 #include "Utils.h"
+#ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <sstream>
+#else
+#include <stdarg.h>
+#endif
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -108,9 +113,9 @@ char* va(const char* format, ...)
 	return string[curstring];
 }
 
-#ifdef WIN32
 const char* WSAGetLastErrorString()
 {
+#ifdef WIN32
 	int error = WSAGetLastError();
 	static char msgbuf[256];	// for a message up to 255 bytes.
 	msgbuf[0] = '\0';	// Microsoft doesn't guarantee this on man page.
@@ -127,8 +132,10 @@ const char* WSAGetLastErrorString()
 		sprintf(msgbuf, "%d", error);  // provide error # if no string available
 
 	return msgbuf;
-}
+#else
+	return strerror(errno);
 #endif
+}
 
 vector<string> deserialize_array_str(string const& csv)
 {
@@ -214,4 +221,18 @@ char* build_number(void);
 inline static char* ServerBuild()
 {
 	return va("Server build: %s", build_number());
+}
+
+void SleepMS(unsigned int ms)
+{
+	this_thread::sleep_for(chrono::milliseconds(ms));
+}
+
+int GetNetworkError()
+{
+#ifdef WIN32
+	return WSAGetLastError();
+#else
+	return errno;
+#endif
 }

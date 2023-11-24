@@ -2,7 +2,7 @@
 #include "ItemManager.h"
 #include "CSVTable.h"
 #include "ServerConfig.h"
-#include "KeyValues.hpp"
+#include "keyvalues.hpp"
 
 using namespace std;
 
@@ -1161,8 +1161,8 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 				user->UpdateKillerMarkEffect(itemID);
 		}
 
-		CUserInventoryItem item;
-		item.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
+		CUserInventoryItem newItems;
+		newItems.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
 		if (g_pUserDatabase->AddInventoryItem(userID, updatedItems.back()) <= 0)
 		{
@@ -2372,7 +2372,7 @@ bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 	string weaponClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(weapon.m_nItemID));
 	string paintClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(paintID));
 
-	if (weaponClassName != "Equipment" || paintClassName != "WeaponPaintItem" && paintClassName != "WeaponPaintRemoveItem")
+	if (weaponClassName != "Equipment" || (paintClassName != "WeaponPaintItem" && paintClassName != "WeaponPaintRemoveItem"))
 		return false;
 
 	if (paintClassName != "WeaponPaintRemoveItem")

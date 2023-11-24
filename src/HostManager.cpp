@@ -22,9 +22,9 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	if (server == NULL && room->GetHostUser() != user)
 		return false;
 
-	CGameMatch* gamematch = room->GetGameMatch();
+	CGameMatch* gameMatch = room->GetGameMatch();
 
-	if (gamematch == NULL)
+	if (gameMatch == NULL)
 		return false;
 
 	int type = msg->ReadUInt8();
@@ -32,8 +32,9 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	{
 	case HostPacketType::GameStart:
 		room->OnGameStart();
+		break;
 	case HostPacketType::SaveData:
-		return OnSaveData(msg, gamematch);
+		return OnSaveData(msg, gameMatch);
 	case HostPacketType::SetInventory:
 		return OnSetUserInventory(msg, socket);
 	case HostPacketType::UseScenItem:
@@ -126,12 +127,6 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 bool CHostManager::OnSaveData(CReceivePacket* msg, CGameMatch* gamematch)
 {
-	if (!msg->CanReadBytes(2))
-	{
-		// наебал систему :)
-		return false;
-	}
-
 	int saveDataSize = msg->ReadUInt16();
 	if (saveDataSize <= 0)
 	{

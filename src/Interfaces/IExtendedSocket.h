@@ -2,6 +2,8 @@
 
 #ifdef WIN32
 #include "Windows.h"
+#else
+typedef int SOCKET;
 #endif
 
 #include <string>
@@ -30,7 +32,7 @@ public:
 	virtual int Send(std::vector<unsigned char>& buffer) = 0;
 	virtual int Send(CSendPacket* msg, bool forceSend = false) = 0;
 
-	virtual int GetID() = 0;
+	virtual unsigned int GetID() = 0;
 	virtual void SetSocket(SOCKET socket) = 0;
 	virtual SOCKET GetSocket() = 0;
 	virtual void SetMsg(CReceivePacket* msg) = 0;

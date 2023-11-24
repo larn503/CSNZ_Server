@@ -15,15 +15,6 @@
 
 #define MAX_PATH 260
 
-typedef unsigned long DWORD;
-typedef unsigned short WORD;
-typedef long LONG;
-
-typedef void* HANDLE;
-typedef unsigned int UINT_PTR;
-
-typedef UINT_PTR SOCKET;
-
 #endif
 
 #include <iostream>  //std::string, std::cout

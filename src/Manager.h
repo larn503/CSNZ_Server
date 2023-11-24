@@ -37,13 +37,13 @@ public:
 
 	virtual ~CBaseManager()
 	{
-		printf("~CBaseManager called, 0x%p\n\n", this);
+		printf("~CBaseManager called, %p\n\n", this);
 		Manager().RemoveManager(this);
 	}
 
 	// stub methods
 	virtual bool Init() { return true; }
-	virtual void Shutdown() { printf("Shutdown called, 0x%p\n", this); }
+	virtual void Shutdown() { printf("Shutdown called, %p\n", this); }
 	virtual std::string GetName() { return m_Name; }
 	virtual void OnSecondTick(time_t curTime) {}
 	virtual void OnMinuteTick(time_t curTime) {}

@@ -3,6 +3,7 @@
 #include <direct.h>
 #define getcwd _getcwd // avoid warning C4996
 #else
+#include <stdarg.h>
 #include <unistd.h>
 #endif
 #ifdef USE_GUI
@@ -21,20 +22,22 @@ CConsole::CConsole()
 		printf("getcwd failed: %s", strerror(errno));
 	}
 
-	snprintf(m_szServerLogPath, sizeof(m_szServerLogPath), "%s\\%s", cwd, "Server.log");
+	snprintf(m_szServerLogPath, sizeof(m_szServerLogPath), "%s/%s", cwd, "Server.log");
 
-	FILE* file;
-	fopen_s(&file, m_szServerLogPath, "w");
-	fclose(file);
+	FILE* file = fopen(m_szServerLogPath, "w");
+	if (file)
+	{
+		fclose(file);
+	}
 
 #ifdef WIN32
 	m_Output = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	char windowName[512];
 #ifdef _DEBUG
-	sprintf_s(windowName, sizeof(windowName), OBFUSCATE("CSN:Z Server %s %s DEBUG BUILD"), __DATE__, __TIME__);
+	snprintf(windowName, sizeof(windowName), OBFUSCATE("CSN:Z Server %s %s DEBUG BUILD"), __DATE__, __TIME__);
 #else
-	sprintf_s(windowName, sizeof(windowName), OBFUSCATE("CSN:Z Server %s %s"), __DATE__, __TIME__);
+	snprintf(windowName, sizeof(windowName), OBFUSCATE("CSN:Z Server %s %s"), __DATE__, __TIME__);
 #endif
 	SetWindowTextA(GetConsoleWindow(), windowName);
 #endif
@@ -54,7 +57,7 @@ CConsole::~CConsole()
 
 const char* CConsole::GetCurrTime()
 {
-	static char buf[32]; // 32 should be enough
+	static char buf[21]; // 32 should be enough
 	char szTime[MAX_DATE_LEN];
 	char szDate[MAX_DATE_LEN];
 
@@ -63,8 +66,8 @@ const char* CConsole::GetCurrTime()
 	_strdate_s(szDate);
 #else
 	time_t myTime = time(NULL);
-	strftime(timeStr, MAX_DATE_LEN, "%T", localtime(&myTime));
-	strftime(dateStr, MAX_DATE_LEN, "%D", localtime(&myTime));
+	strftime(szTime, MAX_DATE_LEN, "%T", localtime(&myTime));
+	strftime(szDate, MAX_DATE_LEN, "%D", localtime(&myTime));
 #endif
 
 	sprintf(buf, "[%s %s]", szDate, szTime);
@@ -77,7 +80,24 @@ void CConsole::SetTextColor(TextColor color)
 #ifdef WIN32
 	SetConsoleTextAttribute(m_Output, color);
 #else
-	printf("CConsole::SetTextColor: not implemented\n");
+	switch (color)
+	{
+	case CON_YELLOW:
+		printf("\033[0;33m");
+		break;
+	case CON_RED:
+		printf("\033[0;31m");
+		break;
+	case CON_WHITE:
+		printf("\033[0;37m");
+		break;
+	case CON_GREEN:
+		printf("\033[0;32m");
+		break;
+	case CON_CYAN:
+		printf("\033[0;36m");
+		break;
+	}
 #endif
 }
 
@@ -112,13 +132,12 @@ void CConsole::WriteToConsole(OutMode mode, const char* msg)
 	snprintf(buffer, sizeof(buffer), "%s %s", GetCurrTime(), msg);
 
 	// write to console
-	printf(buffer);
+	printf("%s", buffer);
 
-	FILE* file;
-	fopen_s(&file, m_szServerLogPath, "a+");
+	FILE* file = fopen(m_szServerLogPath, "a+");
 	if (file)
 	{
-		fprintf(file, buffer);
+		fprintf(file, "%s", buffer);
 		fclose(file);
 	}
 

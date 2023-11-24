@@ -1,6 +1,7 @@
 #include "main.h"
+#ifdef WIN32
 #include "CrashDump.h"
-
+#endif
 #ifdef USE_GUI
 #include "GUI/IGUI.h"
 #endif
@@ -39,11 +40,11 @@ BOOL WINAPI CtrlHandler(DWORD ctrlType)
 #ifdef USE_GUI
 CObjectSync g_GUIInitEvent;
 
-void GUIThread()
+void* GUIThread(void*)
 {
 	if (!GUI()->Init(&Manager(), &g_Event))
 	{
-		__debugbreak();
+		printf("error!\n");
 	}
 	
 	g_GUIInitEvent.Signal();
@@ -57,6 +58,8 @@ void GUIThread()
 	g_pServerInstance->SetServerActive(false);
 
 	g_ServerCriticalSection.Leave();
+	
+	return NULL;
 }
 #endif
 
@@ -118,7 +121,7 @@ int main(int argc, char* argv[])
 	{
 		g_Event.AddEventSecondTick();
 
-		Sleep(1000);
+		SleepMS(1000);
 	}
 
 #ifdef USE_GUI

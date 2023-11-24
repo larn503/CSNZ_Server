@@ -95,19 +95,29 @@
 // zip.cpp. The repackaging was done by Lucian Wischik to simplify its
 // use in Windows/C++.
 
-#ifndef DECLARE_XZIP_HANDLE
-#define DECLARE_XZIP_HANDLE(name) struct name##__ { int unused; }; typedef struct name##__ *name
+#if !defined( DWORD )
+#ifdef _WIN32
+typedef unsigned long DWORD;
+#else
+typedef unsigned int DWORD;
+#endif
+#endif
+
+#if !defined( TCHAR )
+typedef char TCHAR;
 #endif
 
 #ifndef XUNZIP_H
-DECLARE_XZIP_HANDLE(HZIP);		// An HZIP identifies a zip file that is being created
+#if !defined(DECLARE_HANDLE)
+#if !defined(HANDLE)
+typedef void * HANDLE;
+#endif
+#define DECLARE_HANDLE(name) typedef struct name##__ { int unused; } *name
+#endif
+DECLARE_HANDLE(HZIP);		// An HZIP identifies a zip file that is being created
 #endif
 
 typedef DWORD ZRESULT;		// result codes from any of the zip functions. Listed later.
-
-#ifdef _LINUX
-typedef char TCHAR;
-#endif
 
 // flag values passed to some functions
 #define ZIP_HANDLE   1
@@ -131,7 +141,7 @@ typedef char TCHAR;
 //
 // Returns:     HZIP   - non-zero if zip archive created ok, otherwise 0
 //
-HZIP CreateZip(void* z, unsigned int len, DWORD flags);
+HZIP CreateZip(void *z, unsigned int len, DWORD flags);
 // CreateZip - call this to start the creation of a zip file.
 // As the zip is being created, it will be stored somewhere:
 // to a pipe:              CreateZip(hpipe_write, 0,ZIP_HANDLE);
@@ -174,7 +184,7 @@ HZIP CreateZip(void* z, unsigned int len, DWORD flags);
 //
 // Returns:     ZRESULT - ZR_OK if success, otherwise some other value
 //
-ZRESULT ZipAdd(HZIP hz, const TCHAR* dstzn, void* src, unsigned int len, DWORD flags);
+ZRESULT ZipAdd(HZIP hz, const TCHAR *dstzn, void *src, unsigned int len, DWORD flags);
 // ZipAdd - call this for each file to be added to the zip.
 // dstzn is the name that the file will be stored as in the zip file.
 // The file to be added to the zip can come
@@ -204,14 +214,14 @@ ZRESULT CloseZip(HZIP hz);
 // CloseZip - the zip handle must be closed with this function.
 
 
-ZRESULT ZipGetMemory(HZIP hz, void** buf, unsigned long* len);
+ZRESULT ZipGetMemory(HZIP hz, void **buf, unsigned long *len);
 // ZipGetMemory - If the zip was created in memory, via ZipCreate(0,ZIP_MEMORY),
 // then this function will return information about that memory block.
 // buf will receive a pointer to its start, and len its length.
 // Note: you can't add any more after calling this.
 
 
-unsigned int FormatZipMessage(ZRESULT code, char* buf, unsigned int len);
+unsigned int FormatZipMessage(ZRESULT code, char *buf,unsigned int len);
 // FormatZipMessage - given an error code, formats it as a string.
 // It returns the length of the error message. If buf/len points
 // to a real buffer, then it also writes as much as possible into there.
@@ -314,9 +324,9 @@ unsigned int FormatZipMessage(ZRESULT code, char* buf, unsigned int len);
 // the cpp files for zip and unzip are both present, so we will call
 // one or the other of them based on a dynamic choice. If the header file
 // for only one is present, then we will bind to that particular one.
-HZIP CreateZipZ(void* z, unsigned int len, DWORD flags);
+HZIP CreateZipZ(void *z,unsigned int len,DWORD flags);
 ZRESULT CloseZipZ(HZIP hz);
-unsigned int FormatZipMessageZ(ZRESULT code, char* buf, unsigned int len);
+unsigned int FormatZipMessageZ(ZRESULT code, char *buf,unsigned int len);
 bool IsZipHandleZ(HZIP hz);
 #define CreateZip CreateZipZ
 

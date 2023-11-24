@@ -3,6 +3,9 @@
 #ifdef WIN32
 #include <windows.h> 
 #include "shlwapi.h"
+#else
+#include <stdio.h>
+#define MAX_PATH FILENAME_MAX
 #endif
 #include <iostream>  //std::string, std::cout
 #include <vector>    //std::vector

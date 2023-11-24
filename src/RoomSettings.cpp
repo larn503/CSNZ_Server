@@ -511,10 +511,10 @@ bool CRoomSettings::IsMutationRestrictValid(const std::vector<int>& mutationRest
 
 bool CRoomSettings::IsMapPlaylistValid(const std::vector<mapPlaylist_data>& mapPlaylist)
 {
-	for (int i = 0; i < mapPlaylist.size(); i++)
+	for (size_t i = 0; i < mapPlaylist.size(); i++)
 	{
 		int current = mapPlaylist[i].mapId;
-		for (int j = i + 1; j < mapPlaylist.size(); j++)
+		for (size_t j = i + 1; j < mapPlaylist.size(); j++)
 		{
 			if (current == mapPlaylist[j].mapId)
 				return false;
@@ -2052,7 +2052,8 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 
 		if (roomSettings->gameModeId == 0 || roomSettings->gameModeId == 3)
 		{
-			if (lowMidFlag & ROOM_LOWMID_LEAGUERULE && leagueRule != roomSettings->leagueRule && !leagueRule || lowMidFlag & ROOM_LOWMID_TEAMSWITCH && teamSwitch != roomSettings->teamSwitch && !teamSwitch) // requesting league rule or team switch to be deactivated
+			if ((lowMidFlag & ROOM_LOWMID_LEAGUERULE && leagueRule != roomSettings->leagueRule && !leagueRule) ||
+				(lowMidFlag & ROOM_LOWMID_TEAMSWITCH && teamSwitch != roomSettings->teamSwitch && !teamSwitch)) // requesting league rule or team switch to be deactivated
 			{
 				lowFlag |= ROOM_LOW_WINLIMIT;
 				winLimit = GetGameModeDefaultSetting(roomSettings->gameModeId, "mode_win_limit_id");

@@ -137,7 +137,7 @@ CReceivePacket* CExtendedSocket::Read()
 		recvResult = g_pNetwork->ReceiveMessage(m_Socket, (char*)packetDataBuf.data(), PACKET_HEADER_SIZE);
 		if (recvResult < PACKET_HEADER_SIZE)
 		{
-			g_pConsole->Warn("CExtendedSocket::Read(%s): result < PACKET_HEADER_SIZE, %d\n", GetIP().c_str(), WSAGetLastError());
+			g_pConsole->Warn("CExtendedSocket::Read(%s): result < PACKET_HEADER_SIZE, %d\n", GetIP().c_str(), GetNetworkError());
 			return NULL;
 		}
 
@@ -196,7 +196,7 @@ CReceivePacket* CExtendedSocket::Read()
 	recvResult = g_pNetwork->ReceiveMessage(m_Socket, (char*)packetDataBuf.data(), m_nPacketReceivedSize ? m_pMsg->GetLength() + PACKET_HEADER_SIZE - m_nPacketReceivedSize : m_pMsg->GetLength());
 	if (recvResult <= 0)
 	{
-		g_pConsole->Warn("CExtendedSocket::Read(%s): result <= 0\n", GetIP().c_str(), WSAGetLastError());
+		g_pConsole->Warn("CExtendedSocket::Read(%s): result <= 0\n", GetIP().c_str(), GetNetworkError());
 		delete m_pMsg;
 		m_pMsg = NULL;
 		return NULL;
@@ -309,7 +309,7 @@ int CExtendedSocket::Send(CSendPacket* msg, bool forceSend)
 	{
 		auto data = msg->SetPacketLength();
 		result = Send(data);
-		int error = WSAGetLastError();
+		int error = GetNetworkError();
 		if (result != msg->GetData().getBuffer().size() && error)
 		{
 			if (error == WSAEWOULDBLOCK)
@@ -330,7 +330,7 @@ int CExtendedSocket::Send(CSendPacket* msg, bool forceSend)
 	return result;
 }
 
-int CExtendedSocket::GetID()
+unsigned int CExtendedSocket::GetID()
 {
 	return m_nID;
 }

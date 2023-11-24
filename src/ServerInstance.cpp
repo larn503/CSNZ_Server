@@ -641,7 +641,7 @@ void CServerInstance::OnCommand(const string& command)
 	}
 }
 
-void EventThread()
+void* EventThread(void*)
 {
 	while (g_pServerInstance->IsServerActive())
 	{
@@ -650,9 +650,11 @@ void EventThread()
 		if (g_pServerInstance->IsServerActive())
 			g_pServerInstance->OnEvent();
 	}
+	
+	return NULL;
 }
 
-void ReadConsoleThread()
+void* ReadConsoleThread(void*)
 {
 	while (g_pServerInstance->IsServerActive())
 	{
@@ -663,22 +665,28 @@ void ReadConsoleThread()
 
 		g_Event.AddEventConsoleCommand(cmd);
 	}
+	
+	return NULL;
 }
 
-void ListenThread()
+void* ListenThread(void*)
 {
 	while (g_pServerInstance->IsServerActive())
 	{
 		g_pServerInstance->ListenTCP();
 	}
+	
+	return NULL;
 }
 
-void ListenThreadUDP()
+void* ListenThreadUDP(void*)
 {
 	while (g_pServerInstance->IsServerActive())
 	{
 		g_pServerInstance->ListenUDP();
 	}
+	
+	return NULL;
 }
 
 void CServerInstance::ListenTCP()
@@ -706,7 +714,7 @@ void CServerInstance::ListenTCP()
 	int activity = select(g_pNetwork->m_nFDmax + 1, &g_pNetwork->m_Read_fds, &g_pNetwork->m_Write_fds, NULL, &tv);
 	if (activity == SOCKET_ERROR)
 	{
-		g_pConsole->Error("select() failed with error: %d\n", WSAGetLastError());
+		g_pConsole->Error("select() failed with error: %d\n", GetNetworkError());
 		g_pChannelManager->EndAllGames();
 		SetServerActive(false);
 		return;
@@ -727,7 +735,7 @@ void CServerInstance::ListenTCP()
 				IExtendedSocket* sock = g_pNetwork->AcceptNewClient(m_nNextClientIndex);
 				if (!sock)
 				{
-					Sleep(100);
+					SleepMS(100);
 					break;
 				}
 
@@ -774,12 +782,12 @@ void CServerInstance::ListenTCP()
 						g_pNetwork->RemoveSocket(s);
 					}
 
-					g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, received: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, WSAGetLastError(), user);
+					g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, received: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, GetNetworkError(), user);
 				}
 				else if (readResult == SOCKET_ERROR)
 				{
-					int wsaResult = WSAGetLastError();
-					if (wsaResult == WSAECONNABORTED || wsaResult == WSAECONNRESET)
+					int error = GetNetworkError();
+					if (error == WSAECONNABORTED || error == WSAECONNRESET)
 					{
 						int bytesSent = s->GetBytesSent();
 						int bytesReceived = s->GetBytesReceived();
@@ -801,11 +809,11 @@ void CServerInstance::ListenTCP()
 							g_pNetwork->RemoveSocket(s);
 						}
 
-						g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, received: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, WSAGetLastError(), user);
+						g_pConsole->Log(OBFUSCATE("User logged out (%d, '%s', sent: %d, received: %d, %d, %d, 0x%X)\n"), userID, userName.c_str(), bytesSent, bytesReceived, socket, GetNetworkError(), user);
 					}
 					else
 					{
-						g_pConsole->Log(OBFUSCATE("Unhandled WSA error: %d, user object will remain...\n"), wsaResult);
+						g_pConsole->Log(OBFUSCATE("Unhandled WSA error: %d, user object will remain...\n"), error);
 						g_pDedicatedServerManager->RemoveServer(s);
 						g_pNetwork->RemoveSocket(s);
 					}
@@ -830,7 +838,7 @@ void CServerInstance::ListenTCP()
 				CSendPacket* msg = sock->GetPacketsToSend()[0]; // send only one packet from vector
 				if (sock->Send(msg, true) <= 0)
 				{
-					g_pConsole->Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", WSAGetLastError(), sock->GetPacketsToSend().size());
+					g_pConsole->Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", GetNetworkError(), sock->GetPacketsToSend().size());
 					
 					DisconnectClient(sock);
 				}
@@ -856,7 +864,7 @@ void CServerInstance::ListenUDP()
 	int activity = select(g_pNetwork->m_nFDmax_u + 1, &g_pNetwork->m_Read_fds_u, NULL, NULL, &tv);
 	if (activity == SOCKET_ERROR)
 	{
-		g_pConsole->Error("select(udp) failed with error: %d.\n", WSAGetLastError());
+		g_pConsole->Error("select(udp) failed with error: %d.\n", GetNetworkError());
 		return;
 	}
 	else if (!activity) // timeout
@@ -872,7 +880,7 @@ void CServerInstance::ListenUDP()
 		{
 			// got message
 			struct sockaddr_in from;
-			int fromlen = sizeof(from);
+			socklen_t fromlen = sizeof(from);
 
 			int datalen = recvfrom(g_pNetwork->m_UDPSocket, network_data, 15000, 0, (sockaddr*)&from, &fromlen);
 			if (datalen == 14)
@@ -1110,6 +1118,7 @@ void CServerInstance::OnFunction(function<void()>& func)
 
 double CServerInstance::GetMemoryInfo()
 {
+#ifdef WIN32
 	PROCESS_MEMORY_COUNTERS pmc;
 	GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
 
@@ -1118,6 +1127,10 @@ double CServerInstance::GetMemoryInfo()
 		g_pConsole->Warn("[ALERT] Server is using more than 1G of memory.\n");
 
 	return mem / (1024.0 * 1024.0);
+#else
+	g_pConsole->Log("CServerInstance::GetMemoryInfo: not implemented\n");
+	return 0;
+#endif
 }
 
 const char* CServerInstance::GetMainInfo()

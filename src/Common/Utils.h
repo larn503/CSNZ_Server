@@ -10,9 +10,7 @@ bool isNumber(const std::string& str);
 bool yesOrNo(float probabilityOfYes);
 const char* FormatSeconds(int seconds);
 char* va(const char* format, ...);
-#ifdef WIN32
 const char* WSAGetLastErrorString();
-#endif
 std::vector<std::string> deserialize_array_str(std::string const& csv);
 std::vector<int> deserialize_array_int(std::string const& csv);
 std::vector<unsigned char> deserialize_array_uchar(std::string const& csv);
@@ -22,6 +20,8 @@ std::string serialize_array_uchar(const std::vector<unsigned char>& arr);
 size_t findCaseInsensitive(std::string data, std::string toSearch, size_t pos = 0);
 size_t findCaseInsensitive(std::string data, const std::vector<std::string>& toSearch, size_t pos = 0);
 std::vector<std::string> ParseArguments(const std::string& str);
+void SleepMS(unsigned int ms);
+int GetNetworkError();
 
 class Randomer
 {

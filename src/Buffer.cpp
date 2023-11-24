@@ -99,7 +99,7 @@ void Buffer::writeUInt8(unsigned char val) {
 }
 void Buffer::writeArray(const std::vector<unsigned char>& vec) {
 	if (overrideBuf)
-		__debugbreak();
+		printf("writeArray override not implemented\n");
 	else
 		buffer.insert(buffer.begin() + writeOffset, vec.begin(), vec.end());
 	
@@ -107,7 +107,7 @@ void Buffer::writeArray(const std::vector<unsigned char>& vec) {
 }
 void Buffer::writeData(void* data, int len) {
 	if (overrideBuf)
-		__debugbreak();
+		printf("writeArray override not implemented\n");
 	else
 		buffer.insert(buffer.begin() + writeOffset, (unsigned char*)data, (unsigned char*)data + len);
 	writeOffset += len;

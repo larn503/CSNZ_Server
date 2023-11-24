@@ -1,4 +1,6 @@
+#ifdef WIN32
 #include <windows.h>
+#endif
 #include <stdio.h>
 
 const char* pdate = __DATE__;
@@ -20,7 +22,11 @@ char* build_number(void)
 
 	for (m = 0; m < 11; m++)
 	{
+#ifdef WIN32
 		if (!_strnicmp(pdate, mon[m], 3))
+#else
+		if (!strncasecmp(pdate, mon[m], 3))
+#endif
 			break;
 
 		d += mond[m];

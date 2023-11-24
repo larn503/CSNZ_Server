@@ -12,6 +12,7 @@ using namespace std;
 #define LAST_DB_VERSION 3
 
 //#define OBFUSCATE(data) (string)AY_OBFUSCATE_KEY(data, 'F')
+#undef OBFUSCATE
 #define OBFUSCATE(data) (char*)AY_OBFUSCATE_KEY(data, 'F')
 
 CUserDatabaseSQLite::CUserDatabaseSQLite()
@@ -118,6 +119,12 @@ bool CUserDatabaseSQLite::ExecuteScript(string scriptPath)
 	{
 		fseek(file, 0, SEEK_END);
 		long lSize = ftell(file);
+		if (lSize <= 0)
+		{
+			fclose(file);
+			return false;
+		}
+		
 		rewind(file);
 
 		char* buffer = (char*)malloc(sizeof(char) * lSize + 1);
@@ -201,7 +208,9 @@ bool CUserDatabaseSQLite::ExecuteOnce()
 
 #ifdef WIN32
 	_mkdir("Data/SQL/ExecutedHistory");
-
+#else
+	mkdir("Data/SQL/ExecutedHistory", 0777);
+#endif
 	time_t currTime = time(NULL);
 	struct tm* pTime = localtime(&currTime);
 
@@ -217,9 +226,6 @@ bool CUserDatabaseSQLite::ExecuteOnce()
 	);
 
 	rename("Data/SQL/executeonce.txt", name);
-#else
-#error
-#endif
 	return true;
 }
 

@@ -1,3 +1,10 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: 
+//
+// $NoKeywords: $
+//
+//=============================================================================//
 // XZip.cpp  Version 1.1
 //
 // Authors:      Mark Adler et al. (see below)
@@ -86,11 +93,26 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#if defined( WIN32)
 #define STRICT
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include <string.h>
+#include <stdarg.h>
+#define TRUE true
+#define far
+#define near
+#define INVALID_HANDLE_VALUE (void*)-1
+#define _tzset tzset
+
+#define __cdecl __attribute__((cdecl))
+#define _stricmp strcasecmp
+#endif
+
+
 #include <time.h>
-#include "XZip.h" 
+#include "XZip.h"
 
 typedef unsigned char uch;      // unsigned 8-bit value
 typedef unsigned short ush;     // unsigned 16-bit value
@@ -281,15 +303,19 @@ typedef unsigned IPos; // A Pos is an index in the character window. Pos is used
 // Output a 16 bit value to the bit stream, lower (oldest) byte first
 #define PUTSHORT(state,w) \
 { if (state.bs.out_offset >= state.bs.out_size-1) \
-    state.flush_outbuf(state.param,state.bs.out_buf, &state.bs.out_offset); \
-  state.bs.out_buf[state.bs.out_offset++] = (char) ((w) & 0xff); \
-  state.bs.out_buf[state.bs.out_offset++] = (char) ((ush)(w) >> 8); \
+	state.flush_outbuf(state.param,state.bs.out_buf, &state.bs.out_offset); \
+  /* flush may fail, so only write into the buffer if there's actually room (same below) */ \
+  if (state.bs.out_offset < state.bs.out_size-1) { \
+    state.bs.out_buf[state.bs.out_offset++] = (char) ((w) & 0xff); \
+    state.bs.out_buf[state.bs.out_offset++] = (char) ((ush)(w) >> 8); \
+  } \
 }
 
 #define PUTBYTE(state,b) \
 { if (state.bs.out_offset >= state.bs.out_size) \
     state.flush_outbuf(state.param,state.bs.out_buf, &state.bs.out_offset); \
-  state.bs.out_buf[state.bs.out_offset++] = (char) (b); \
+  if (state.bs.out_offset < state.bs.out_size) \
+	state.bs.out_buf[state.bs.out_offset++] = (char) (b); \
 }
 
 // DEFLATE.CPP HEADER
@@ -335,24 +361,24 @@ typedef unsigned IPos; // A Pos is an index in the character window. Pos is used
 
 
 const int extra_lbits[LENGTH_CODES] // extra bits for each length code
-= { 0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0 };
+   = {0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0};
 
 const int extra_dbits[D_CODES] // extra bits for each distance code
-= { 0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13 };
+   = {0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
 
 const int extra_blbits[BL_CODES]// extra bits for each bit length code
-= { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7 };
+   = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7};
 
-const uch bl_order[BL_CODES] = { 16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15 };
+const uch bl_order[BL_CODES] = {16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15};
 // The lengths of the bit length codes are sent in order of decreasing
 // probability, to avoid transmitting the lengths for unused bit length codes.
 
 
 typedef struct config {
-    ush good_length; // reduce lazy search above this match length
-    ush max_lazy;    // do not perform lazy search above this match length
-    ush nice_length; // quit search above this match length
-    ush max_chain;
+   ush good_length; // reduce lazy search above this match length
+   ush max_lazy;    // do not perform lazy search above this match length
+   ush nice_length; // quit search above this match length
+   ush max_chain;
 } config;
 
 // Values for max_lazy_match, good_match, nice_match and max_chain_length,
@@ -362,26 +388,26 @@ typedef struct config {
 //
 
 const config configuration_table[10] = {
-    //  good lazy nice chain
-        {0,    0,  0,    0},  // 0 store only
-        {4,    4,  8,    4},  // 1 maximum speed, no lazy matches
-        {4,    5, 16,    8},  // 2
-        {4,    6, 32,   32},  // 3
-        {4,    4, 16,   16},  // 4 lazy matches */
-        {8,   16, 32,   32},  // 5
-        {8,   16, 128, 128},  // 6
-        {8,   32, 128, 256},  // 7
-        {32, 128, 258, 1024}, // 8
-        {32, 258, 258, 4096} };// 9 maximum compression */
+//  good lazy nice chain
+    {0,    0,  0,    0},  // 0 store only
+    {4,    4,  8,    4},  // 1 maximum speed, no lazy matches
+    {4,    5, 16,    8},  // 2
+    {4,    6, 32,   32},  // 3
+    {4,    4, 16,   16},  // 4 lazy matches */
+    {8,   16, 32,   32},  // 5
+    {8,   16, 128, 128},  // 6
+    {8,   32, 128, 256},  // 7
+    {32, 128, 258, 1024}, // 8
+    {32, 258, 258, 4096}};// 9 maximum compression */
 
-    // Note: the deflate() code requires max_lazy >= MIN_MATCH and max_chain >= 4
-    // For deflate_fast() (levels <= 3) good is ignored and lazy has a different meaning.
-
-
+// Note: the deflate() code requires max_lazy >= MIN_MATCH and max_chain >= 4
+// For deflate_fast() (levels <= 3) good is ignored and lazy has a different meaning.
 
 
 
-    // Data structure describing a single value and its code string.
+
+
+// Data structure describing a single value and its code string.
 typedef struct ct_data {
     union {
         ush  freq;       // frequency count
@@ -394,9 +420,9 @@ typedef struct ct_data {
 } ct_data;
 
 typedef struct tree_desc {
-    ct_data* dyn_tree;      // the dynamic tree
-    ct_data* static_tree;   // corresponding static tree or NULL
-    const int* extra_bits;  // extra bits for each code or NULL
+    ct_data *dyn_tree;      // the dynamic tree
+    ct_data *static_tree;   // corresponding static tree or NULL
+    const int *extra_bits;  // extra bits for each code or NULL
     int     extra_base;     // base index for extra_bits
     int     elems;          // max number of elements in the tree
     int     max_length;     // max bit length for the codes
@@ -407,110 +433,107 @@ typedef struct tree_desc {
 
 
 class TTreeState
-{
-public:
-    TTreeState();
+{ public:
+  TTreeState();
 
-    ct_data dyn_ltree[HEAP_SIZE];    // literal and length tree
-    ct_data dyn_dtree[2 * D_CODES + 1];  // distance tree
-    ct_data static_ltree[L_CODES + 2]; // the static literal tree...
-    // ... Since the bit lengths are imposed, there is no need for the L_CODES
-    // extra codes used during heap construction. However the codes 286 and 287
-    // are needed to build a canonical tree (see ct_init below).
-    ct_data static_dtree[D_CODES]; // the static distance tree...
-    // ... (Actually a trivial tree since all codes use 5 bits.)
-    ct_data bl_tree[2 * BL_CODES + 1];  // Huffman tree for the bit lengths
+  ct_data dyn_ltree[HEAP_SIZE];    // literal and length tree
+  ct_data dyn_dtree[2*D_CODES+1];  // distance tree
+  ct_data static_ltree[L_CODES+2]; // the static literal tree...
+  // ... Since the bit lengths are imposed, there is no need for the L_CODES
+  // extra codes used during heap construction. However the codes 286 and 287
+  // are needed to build a canonical tree (see ct_init below).
+  ct_data static_dtree[D_CODES]; // the static distance tree...
+  // ... (Actually a trivial tree since all codes use 5 bits.)
+  ct_data bl_tree[2*BL_CODES+1];  // Huffman tree for the bit lengths
 
-    tree_desc l_desc;
-    tree_desc d_desc;
-    tree_desc bl_desc;
+  tree_desc l_desc;
+  tree_desc d_desc;
+  tree_desc bl_desc;
 
-    ush bl_count[MAX_BITS + 1];  // number of codes at each bit length for an optimal tree
+  ush bl_count[MAX_BITS+1];  // number of codes at each bit length for an optimal tree
 
-    int heap[2 * L_CODES + 1]; // heap used to build the Huffman trees
-    int heap_len;               // number of elements in the heap
-    int heap_max;               // element of largest frequency
-    // The sons of heap[n] are heap[2*n] and heap[2*n+1]. heap[0] is not used.
-    // The same heap array is used to build all trees.
+  int heap[2*L_CODES+1]; // heap used to build the Huffman trees
+  int heap_len;               // number of elements in the heap
+  int heap_max;               // element of largest frequency
+  // The sons of heap[n] are heap[2*n] and heap[2*n+1]. heap[0] is not used.
+  // The same heap array is used to build all trees.
 
-    uch depth[2 * L_CODES + 1];
-    // Depth of each subtree used as tie breaker for trees of equal frequency
+  uch depth[2*L_CODES+1];
+  // Depth of each subtree used as tie breaker for trees of equal frequency
 
-    uch length_code[MAX_MATCH - MIN_MATCH + 1];
-    // length code for each normalized match length (0 == MIN_MATCH)
+  uch length_code[MAX_MATCH-MIN_MATCH+1];
+  // length code for each normalized match length (0 == MIN_MATCH)
 
-    uch dist_code[512];
-    // distance codes. The first 256 values correspond to the distances
-    // 3 .. 258, the last 256 values correspond to the top 8 bits of
-    // the 15 bit distances.
+  uch dist_code[512];
+  // distance codes. The first 256 values correspond to the distances
+  // 3 .. 258, the last 256 values correspond to the top 8 bits of
+  // the 15 bit distances.
 
-    int base_length[LENGTH_CODES];
-    // First normalized length for each code (0 = MIN_MATCH)
+  int base_length[LENGTH_CODES];
+  // First normalized length for each code (0 = MIN_MATCH)
 
-    int base_dist[D_CODES];
-    // First normalized distance for each code (0 = distance of 1)
+  int base_dist[D_CODES];
+  // First normalized distance for each code (0 = distance of 1)
 
-    uch far l_buf[LIT_BUFSIZE];  // buffer for literals/lengths
-    ush far d_buf[DIST_BUFSIZE]; // buffer for distances
+  uch far l_buf[LIT_BUFSIZE];  // buffer for literals/lengths
+  ush far d_buf[DIST_BUFSIZE]; // buffer for distances
 
-    uch flag_buf[(LIT_BUFSIZE / 8)];
-    // flag_buf is a bit array distinguishing literals from lengths in
-    // l_buf, and thus indicating the presence or absence of a distance.
+  uch flag_buf[(LIT_BUFSIZE/8)];
+  // flag_buf is a bit array distinguishing literals from lengths in
+  // l_buf, and thus indicating the presence or absence of a distance.
 
-    unsigned last_lit;    // running index in l_buf
-    unsigned last_dist;   // running index in d_buf
-    unsigned last_flags;  // running index in flag_buf
-    uch flags;            // current flags not yet saved in flag_buf
-    uch flag_bit;         // current bit used in flags
-    // bits are filled in flags starting at bit 0 (least significant).
-    // Note: these flags are overkill in the current code since we don't
-    // take advantage of DIST_BUFSIZE == LIT_BUFSIZE.
+  unsigned last_lit;    // running index in l_buf
+  unsigned last_dist;   // running index in d_buf
+  unsigned last_flags;  // running index in flag_buf
+  uch flags;            // current flags not yet saved in flag_buf
+  uch flag_bit;         // current bit used in flags
+  // bits are filled in flags starting at bit 0 (least significant).
+  // Note: these flags are overkill in the current code since we don't
+  // take advantage of DIST_BUFSIZE == LIT_BUFSIZE.
 
-    ulg opt_len;          // bit length of current block with optimal trees
-    ulg static_len;       // bit length of current block with static trees
+  ulg opt_len;          // bit length of current block with optimal trees
+  ulg static_len;       // bit length of current block with static trees
 
-    ulg cmpr_bytelen;     // total byte length of compressed file
-    ulg cmpr_len_bits;    // number of bits past 'cmpr_bytelen'
+  ulg cmpr_bytelen;     // total byte length of compressed file
+  ulg cmpr_len_bits;    // number of bits past 'cmpr_bytelen'
 
-    ulg input_len;        // total byte length of input file
-    // input_len is for debugging only since we can get it by other means.
+  ulg input_len;        // total byte length of input file
+  // input_len is for debugging only since we can get it by other means.
 
-    ush* file_type;       // pointer to UNKNOWN, BINARY or ASCII
-  //  int *file_method;     // pointer to DEFLATE or STORE
+  ush *file_type;       // pointer to UNKNOWN, BINARY or ASCII
+//  int *file_method;     // pointer to DEFLATE or STORE
 };
 
 TTreeState::TTreeState()
-{
-    tree_desc a = { dyn_ltree, static_ltree, extra_lbits, LITERALS + 1, L_CODES, MAX_BITS, 0 };  l_desc = a;
-    tree_desc b = { dyn_dtree, static_dtree, extra_dbits, 0,          D_CODES, MAX_BITS, 0 };  d_desc = b;
-    tree_desc c = { bl_tree, NULL,       extra_blbits, 0,         BL_CODES, MAX_BL_BITS, 0 };  bl_desc = c;
-    last_lit = 0;
-    last_dist = 0;
-    last_flags = 0;
+{ tree_desc a = {dyn_ltree, static_ltree, extra_lbits, LITERALS+1, L_CODES, MAX_BITS, 0};  l_desc = a;
+  tree_desc b = {dyn_dtree, static_dtree, extra_dbits, 0,          D_CODES, MAX_BITS, 0};  d_desc = b;
+  tree_desc c = {bl_tree, NULL,       extra_blbits, 0,         BL_CODES, MAX_BL_BITS, 0};  bl_desc = c;
+  last_lit=0;
+  last_dist=0;
+  last_flags=0;
 }
 
 
 
 class TBitState
-{
-public:
+{ public:
 
-    int flush_flg;
-    //
-    unsigned bi_buf;
-    // Output buffer. bits are inserted starting at the bottom (least significant
-    // bits). The width of bi_buf must be at least 16 bits.
-    int bi_valid;
-    // Number of valid bits in bi_buf.  All bits above the last valid bit
-    // are always zero.
-    char* out_buf;
-    // Current output buffer.
-    unsigned out_offset;
-    // Current offset in output buffer.
-    // On 16 bit machines, the buffer is limited to 64K.
-    unsigned out_size;
-    // Size of current output buffer
-    ulg bits_sent;   // bit length of the compressed data  only needed for debugging???
+  int flush_flg;
+  //
+  unsigned bi_buf;
+  // Output buffer. bits are inserted starting at the bottom (least significant
+  // bits). The width of bi_buf must be at least 16 bits.
+  int bi_valid;
+  // Number of valid bits in bi_buf.  All bits above the last valid bit
+  // are always zero.
+  char *out_buf;
+  // Current output buffer.
+  unsigned out_offset;
+  // Current offset in output buffer.
+  // On 16 bit machines, the buffer is limited to 64K.
+  unsigned out_size;
+  // Size of current output buffer
+  ulg bits_sent;   // bit length of the compressed data  only needed for debugging???
 };
 
 
@@ -520,101 +543,99 @@ public:
 
 
 class TDeflateState
-{
-public:
-    TDeflateState() { window_size = 0; }
+{ public:
+  TDeflateState() {window_size=0;}
 
-    uch    window[2L * WSIZE];
-    // Sliding window. Input bytes are read into the second half of the window,
-    // and move to the first half later to keep a dictionary of at least WSIZE
-    // bytes. With this organization, matches are limited to a distance of
-    // WSIZE-MAX_MATCH bytes, but this ensures that IO is always
-    // performed with a length multiple of the block size. Also, it limits
-    // the window size to 64K, which is quite useful on MSDOS.
-    // To do: limit the window size to WSIZE+CBSZ if SMALL_MEM (the code would
-    // be less efficient since the data would have to be copied WSIZE/CBSZ times)
-    Pos    prev[WSIZE];
-    // Link to older string with same hash index. To limit the size of this
-    // array to 64K, this link is maintained only for the last 32K strings.
-    // An index in this array is thus a window index modulo 32K.
-    Pos    head[HASH_SIZE];
-    // Heads of the hash chains or NIL. If your compiler thinks that
-    // HASH_SIZE is a dynamic value, recompile with -DDYN_ALLOC.
+  uch    window[2L*WSIZE];
+  // Sliding window. Input bytes are read into the second half of the window,
+  // and move to the first half later to keep a dictionary of at least WSIZE
+  // bytes. With this organization, matches are limited to a distance of
+  // WSIZE-MAX_MATCH bytes, but this ensures that IO is always
+  // performed with a length multiple of the block size. Also, it limits
+  // the window size to 64K, which is quite useful on MSDOS.
+  // To do: limit the window size to WSIZE+CBSZ if SMALL_MEM (the code would
+  // be less efficient since the data would have to be copied WSIZE/CBSZ times)
+  Pos    prev[WSIZE];
+  // Link to older string with same hash index. To limit the size of this
+  // array to 64K, this link is maintained only for the last 32K strings.
+  // An index in this array is thus a window index modulo 32K.
+  Pos    head[HASH_SIZE];
+  // Heads of the hash chains or NIL. If your compiler thinks that
+  // HASH_SIZE is a dynamic value, recompile with -DDYN_ALLOC.
 
-    ulg window_size;
-    // window size, 2*WSIZE except for MMAP or BIG_MEM, where it is the
-    // input file length plus MIN_LOOKAHEAD.
+  ulg window_size;
+  // window size, 2*WSIZE except for MMAP or BIG_MEM, where it is the
+  // input file length plus MIN_LOOKAHEAD.
 
-    long block_start;
-    // window position at the beginning of the current output block. Gets
-    // negative when the window is moved backwards.
+  long block_start;
+  // window position at the beginning of the current output block. Gets
+  // negative when the window is moved backwards.
 
-    int sliding;
-    // Set to false when the input file is already in memory
+  int sliding;
+  // Set to false when the input file is already in memory
 
-    unsigned ins_h;  // hash index of string to be inserted
+  unsigned ins_h;  // hash index of string to be inserted
 
-    unsigned int prev_length;
-    // Length of the best match at previous step. Matches not greater than this
-    // are discarded. This is used in the lazy match evaluation.
+  unsigned int prev_length;
+  // Length of the best match at previous step. Matches not greater than this
+  // are discarded. This is used in the lazy match evaluation.
 
-    unsigned strstart;         // start of string to insert
-    unsigned match_start; // start of matching string
-    int      eofile;           // flag set at end of input file
-    unsigned lookahead;        // number of valid bytes ahead in window
+  unsigned strstart;         // start of string to insert
+  unsigned match_start; // start of matching string
+  int      eofile;           // flag set at end of input file
+  unsigned lookahead;        // number of valid bytes ahead in window
 
-    unsigned max_chain_length;
-    // To speed up deflation, hash chains are never searched beyond this length.
-    // A higher limit improves compression ratio but degrades the speed.
+  unsigned max_chain_length;
+  // To speed up deflation, hash chains are never searched beyond this length.
+  // A higher limit improves compression ratio but degrades the speed.
 
-    unsigned int max_lazy_match;
-    // Attempt to find a better match only when the current match is strictly
-    // smaller than this value. This mechanism is used only for compression
-    // levels >= 4.
+  unsigned int max_lazy_match;
+  // Attempt to find a better match only when the current match is strictly
+  // smaller than this value. This mechanism is used only for compression
+  // levels >= 4.
 
-    unsigned good_match;
-    // Use a faster search when the previous match is longer than this
+  unsigned good_match;
+  // Use a faster search when the previous match is longer than this
 
-    int nice_match; // Stop searching when current match exceeds this
+  int nice_match; // Stop searching when current match exceeds this
 };
 
 
 typedef struct iztimes {
-    time_t atime, mtime, ctime;
+  time_t atime,mtime,ctime;
 } iztimes; // access, modify, create times
 
 typedef struct zlist {
-    ush vem, ver, flg, how;       // See central header in zipfile.c for what vem..off are
-    ulg tim, crc, siz, len;
-    size_t nam, ext, cext, com;   // offset of ext must be >= LOCHEAD
-    ush dsk, att, lflg;           // offset of lflg must be >= LOCHEAD
-    ulg atx, off;
-    char name[MAX_PATH];                   // File name in zip file
-    char* extra;                  // Extra field (set only if ext != 0)
-    char* cextra;                 // Extra in central (set only if cext != 0)
-    char* comment;                // Comment (set only if com != 0)
-    char iname[MAX_PATH];                  // Internal file name after cleanup
-    char zname[MAX_PATH];                  // External version of internal name
-    int mark;                     // Marker for files to operate on
-    int trash;                    // Marker for files to delete
-    int dosflag;                  // Set to force MSDOS file attributes
-    struct zlist far* nxt;        // Pointer to next header in list
+  ush vem, ver, flg, how;       // See central header in zipfile.c for what vem..off are
+  ulg tim, crc, siz, len;
+  extent nam, ext, cext, com;   // offset of ext must be >= LOCHEAD
+  ush dsk, att, lflg;           // offset of lflg must be >= LOCHEAD
+  ulg atx, off;
+  char name[MAX_PATH];                   // File name in zip file
+  char *extra;                  // Extra field (set only if ext != 0)
+  char *cextra;                 // Extra in central (set only if cext != 0)
+  char *comment;                // Comment (set only if com != 0)
+  char iname[MAX_PATH];                  // Internal file name after cleanup
+  char zname[MAX_PATH];                  // External version of internal name
+  int mark;                     // Marker for files to operate on
+  int trash;                    // Marker for files to delete
+  int dosflag;                  // Set to force MSDOS file attributes
+  struct zlist far *nxt;        // Pointer to next header in list
 } TZipFileInfo;
 
 
 class TState;
-typedef unsigned (*READFUNC)(TState& state, char* buf, unsigned size);
-typedef unsigned (*FLUSHFUNC)(void* param, const char* buf, unsigned* size);
-typedef unsigned (*WRITEFUNC)(void* param, const char* buf, unsigned size);
+typedef unsigned (*READFUNC)(TState &state, char *buf,unsigned size);
+typedef unsigned (*FLUSHFUNC)(void *param, const char *buf, unsigned *size);
+typedef unsigned (*WRITEFUNC)(void *param, const char *buf, unsigned size);
 class TState
-{
-public: TState() { err = 0; }
-      //
-      void* param;
-      int level; bool seekable;
-      READFUNC readfunc; FLUSHFUNC flush_outbuf;
-      TTreeState ts; TBitState bs; TDeflateState ds;
-      const char* err;
+{ public: TState() {err=0;}
+  //
+  void *param;
+  int level; bool seekable;
+  READFUNC readfunc; FLUSHFUNC flush_outbuf;
+  TTreeState ts; TBitState bs; TDeflateState ds;
+  const char *err;
 };
 
 
@@ -624,14 +645,13 @@ public: TState() { err = 0; }
 
 
 
-
-void Assert(TState& state, bool cond, const char* msg)
-{
-    if (cond) return;
-    state.err = msg;
+#undef Assert
+void Assert(TState &state,bool cond, const char *msg)
+{ if (cond) return;
+  state.err=msg;
 }
-void __cdecl Trace(const char* x, ...) { va_list paramList; va_start(paramList, x); paramList; va_end(paramList); }
-void __cdecl Tracec(bool, const char* x, ...) { va_list paramList; va_start(paramList, x); paramList; va_end(paramList); }
+void __cdecl Trace(const char *x, ...) {va_list paramList; va_start(paramList, x); paramList; va_end(paramList);}
+void __cdecl Tracec(bool ,const char *x, ...) {va_list paramList; va_start(paramList, x); paramList; va_end(paramList);}
 
 
 
@@ -639,21 +659,21 @@ void __cdecl Tracec(bool, const char* x, ...) { va_list paramList; va_start(para
 // Local (static) routines in this file.
 //
 
-void init_block(TState&);
-void pqdownheap(TState&, ct_data* tree, int k);
-void gen_bitlen(TState&, tree_desc* desc);
-void gen_codes(TState& state, ct_data* tree, int max_code);
-void build_tree(TState&, tree_desc* desc);
-void scan_tree(TState&, ct_data* tree, int max_code);
-void send_tree(TState& state, ct_data* tree, int max_code);
-int  build_bl_tree(TState&);
-void send_all_trees(TState& state, int lcodes, int dcodes, int blcodes);
-void compress_block(TState& state, ct_data* ltree, ct_data* dtree);
-void set_file_type(TState&);
-void send_bits(TState& state, int value, int length);
-unsigned bi_reverse(unsigned code, int len);
-void bi_windup(TState& state);
-void copy_block(TState& state, char* buf, unsigned len, int header);
+void init_block     (TState &);
+void pqdownheap     (TState &,ct_data *tree, int k);
+void gen_bitlen     (TState &,tree_desc *desc);
+void gen_codes      (TState &state,ct_data *tree, int max_code);
+void build_tree     (TState &,tree_desc *desc);
+void scan_tree      (TState &,ct_data *tree, int max_code);
+void send_tree      (TState &state,ct_data *tree, int max_code);
+int  build_bl_tree  (TState &);
+void send_all_trees (TState &state,int lcodes, int dcodes, int blcodes);
+void compress_block (TState &state,ct_data *ltree, ct_data *dtree);
+void set_file_type  (TState &);
+void send_bits      (TState &state, int value, int length);
+unsigned bi_reverse (unsigned code, int len);
+void bi_windup      (TState &state);
+void copy_block     (TState &state,char *buf, unsigned len, int header);
 
 
 #define send_code(state, c, tree) send_bits(state, tree[c].fc.code, tree[c].dl.len)
@@ -676,7 +696,7 @@ void copy_block(TState& state, char* buf, unsigned len, int header);
  * location of the internal file attribute (ascii/binary) and method
  * (DEFLATE/STORE).
  */
-void ct_init(TState& state, ush* attr)
+void ct_init(TState &state, ush *attr)
 {
     int n;        /* iterates over tree elements */
     int bits;     /* bit counter */
@@ -693,36 +713,36 @@ void ct_init(TState& state, ush* attr)
 
     /* Initialize the mapping length (0..255) -> length code (0..28) */
     length = 0;
-    for (code = 0; code < LENGTH_CODES - 1; code++) {
+    for (code = 0; code < LENGTH_CODES-1; code++) {
         state.ts.base_length[code] = length;
-        for (n = 0; n < (1 << extra_lbits[code]); n++) {
+        for (n = 0; n < (1<<extra_lbits[code]); n++) {
             state.ts.length_code[length++] = (uch)code;
         }
     }
-    Assert(state, length == 256, "ct_init: length != 256");
+    Assert(state,length == 256, "ct_init: length != 256");
     /* Note that the length 255 (match length 258) can be represented
      * in two different ways: code 284 + 5 bits or code 285, so we
      * overwrite length_code[255] to use the best encoding:
      */
-    state.ts.length_code[length - 1] = (uch)code;
+    state.ts.length_code[length-1] = (uch)code;
 
     /* Initialize the mapping dist (0..32K) -> dist code (0..29) */
     dist = 0;
-    for (code = 0; code < 16; code++) {
+    for (code = 0 ; code < 16; code++) {
         state.ts.base_dist[code] = dist;
-        for (n = 0; n < (1 << extra_dbits[code]); n++) {
+        for (n = 0; n < (1<<extra_dbits[code]); n++) {
             state.ts.dist_code[dist++] = (uch)code;
         }
     }
-    Assert(state, dist == 256, "ct_init: dist != 256");
+    Assert(state,dist == 256, "ct_init: dist != 256");
     dist >>= 7; /* from now on, all distances are divided by 128 */
-    for (; code < D_CODES; code++) {
+    for ( ; code < D_CODES; code++) {
         state.ts.base_dist[code] = dist << 7;
-        for (n = 0; n < (1 << (extra_dbits[code] - 7)); n++) {
+        for (n = 0; n < (1<<(extra_dbits[code]-7)); n++) {
             state.ts.dist_code[256 + dist++] = (uch)code;
         }
     }
-    Assert(state, dist == 256, "ct_init: 256+dist != 512");
+    Assert(state,dist == 256, "ct_init: 256+dist != 512");
 
     /* Construct the codes of the static literal tree */
     for (bits = 0; bits <= MAX_BITS; bits++) state.ts.bl_count[bits] = 0;
@@ -735,7 +755,7 @@ void ct_init(TState& state, ush* attr)
      * tree construction to get a canonical Huffman tree (longest code
      * all ones)
      */
-    gen_codes(state, (ct_data*)state.ts.static_ltree, L_CODES + 1);
+    gen_codes(state,(ct_data *)state.ts.static_ltree, L_CODES+1);
 
     /* The static distance tree is trivial: */
     for (n = 0; n < D_CODES; n++) {
@@ -750,13 +770,13 @@ void ct_init(TState& state, ush* attr)
 /* ===========================================================================
  * Initialize a new block.
  */
-void init_block(TState& state)
+void init_block(TState &state)
 {
     int n; /* iterates over tree elements */
 
     /* Initialize the trees. */
-    for (n = 0; n < L_CODES; n++) state.ts.dyn_ltree[n].fc.freq = 0;
-    for (n = 0; n < D_CODES; n++) state.ts.dyn_dtree[n].fc.freq = 0;
+    for (n = 0; n < L_CODES;  n++) state.ts.dyn_ltree[n].fc.freq = 0;
+    for (n = 0; n < D_CODES;  n++) state.ts.dyn_dtree[n].fc.freq = 0;
     for (n = 0; n < BL_CODES; n++) state.ts.bl_tree[n].fc.freq = 0;
 
     state.ts.dyn_ltree[END_BLOCK].fc.freq = 1;
@@ -780,21 +800,21 @@ void init_block(TState& state)
     pqdownheap(state,tree, SMALLEST); \
 }
 
- /* ===========================================================================
-  * Compares to subtrees, using the tree depth as tie breaker when
-  * the subtrees have equal frequency. This minimizes the worst case length.
-  */
+/* ===========================================================================
+ * Compares to subtrees, using the tree depth as tie breaker when
+ * the subtrees have equal frequency. This minimizes the worst case length.
+ */
 #define smaller(tree, n, m) \
    (tree[n].fc.freq < tree[m].fc.freq || \
    (tree[n].fc.freq == tree[m].fc.freq && state.ts.depth[n] <= state.ts.depth[m]))
 
-  /* ===========================================================================
-   * Restore the heap property by moving down the tree starting at node k,
-   * exchanging a node with the smallest of its two sons if necessary, stopping
-   * when the heap property is re-established (each father smaller than its
-   * two sons).
-   */
-void pqdownheap(TState& state, ct_data* tree, int k)
+/* ===========================================================================
+ * Restore the heap property by moving down the tree starting at node k,
+ * exchanging a node with the smallest of its two sons if necessary, stopping
+ * when the heap property is re-established (each father smaller than its
+ * two sons).
+ */
+void pqdownheap(TState &state,ct_data *tree, int k)
 {
     int v = state.ts.heap[k];
     int j = k << 1;  /* left son of k */
@@ -802,7 +822,7 @@ void pqdownheap(TState& state, ct_data* tree, int k)
 
     while (j <= state.ts.heap_len) {
         /* Set j to the smallest of the two sons: */
-        if (j < state.ts.heap_len && smaller(tree, state.ts.heap[j + 1], state.ts.heap[j])) j++;
+        if (j < state.ts.heap_len && smaller(tree, state.ts.heap[j+1], state.ts.heap[j])) j++;
 
         /* Exit if v is smaller than both sons */
         htemp = state.ts.heap[j];
@@ -828,14 +848,14 @@ void pqdownheap(TState& state, ct_data* tree, int k)
  *     The length opt_len is updated; static_len is also updated if stree is
  *     not null.
  */
-void gen_bitlen(TState& state, tree_desc* desc)
+void gen_bitlen(TState &state,tree_desc *desc)
 {
-    ct_data* tree = desc->dyn_tree;
-    const int* extra = desc->extra_bits;
-    int base = desc->extra_base;
-    int max_code = desc->max_code;
-    int max_length = desc->max_length;
-    ct_data* stree = desc->static_tree;
+    ct_data *tree  = desc->dyn_tree;
+    const int *extra     = desc->extra_bits;
+    int base            = desc->extra_base;
+    int max_code        = desc->max_code;
+    int max_length      = desc->max_length;
+    ct_data *stree = desc->static_tree;
     int h;              /* heap index */
     int n, m;           /* iterate over the tree elements */
     int bits;           /* bit length */
@@ -850,7 +870,7 @@ void gen_bitlen(TState& state, tree_desc* desc)
      */
     tree[state.ts.heap[state.ts.heap_max]].dl.len = 0; /* root of the heap */
 
-    for (h = state.ts.heap_max + 1; h < HEAP_SIZE; h++) {
+    for (h = state.ts.heap_max+1; h < HEAP_SIZE; h++) {
         n = state.ts.heap[h];
         bits = tree[tree[n].dl.dad].dl.len + 1;
         if (bits > max_length) bits = max_length, overflow++;
@@ -861,7 +881,7 @@ void gen_bitlen(TState& state, tree_desc* desc)
 
         state.ts.bl_count[bits]++;
         xbits = 0;
-        if (n >= base) xbits = extra[n - base];
+        if (n >= base) xbits = extra[n-base];
         f = tree[n].fc.freq;
         state.ts.opt_len += (ulg)f * (bits + xbits);
         if (stree) state.ts.static_len += (ulg)f * (stree[n].dl.len + xbits);
@@ -873,10 +893,10 @@ void gen_bitlen(TState& state, tree_desc* desc)
 
     /* Find the first bit length which could increase: */
     do {
-        bits = max_length - 1;
+        bits = max_length-1;
         while (state.ts.bl_count[bits] == 0) bits--;
         state.ts.bl_count[bits]--;           /* move one leaf down the tree */
-        state.ts.bl_count[bits + 1] += (ush)2; /* move one overflow item as its brother */
+        state.ts.bl_count[bits+1] += (ush)2; /* move one overflow item as its brother */
         state.ts.bl_count[max_length]--;
         /* The brother of the overflow item also moves one step up,
          * but this does not affect bl_count[max_length]
@@ -896,7 +916,7 @@ void gen_bitlen(TState& state, tree_desc* desc)
             if (m > max_code) continue;
             if (tree[m].dl.len != (ush)bits) {
                 Trace("code %d bits %d->%d\n", m, tree[m].dl.len, bits);
-                state.ts.opt_len += ((long)bits - (long)tree[m].dl.len) * (long)tree[m].fc.freq;
+                state.ts.opt_len += ((long)bits-(long)tree[m].dl.len)*(long)tree[m].fc.freq;
                 tree[m].dl.len = (ush)bits;
             }
             n--;
@@ -912,9 +932,9 @@ void gen_bitlen(TState& state, tree_desc* desc)
  * OUT assertion: the field code is set for all tree elements of non
  *     zero code length.
  */
-void gen_codes(TState& state, ct_data* tree, int max_code)
+void gen_codes (TState &state, ct_data *tree, int max_code)
 {
-    ush next_code[MAX_BITS + 1]; /* next code value for each bit length */
+    ush next_code[MAX_BITS+1]; /* next code value for each bit length */
     ush code = 0;              /* running code value */
     int bits;                  /* bit index */
     int n;                     /* code index */
@@ -923,16 +943,16 @@ void gen_codes(TState& state, ct_data* tree, int max_code)
      * without bit reversal.
      */
     for (bits = 1; bits <= MAX_BITS; bits++) {
-        next_code[bits] = code = (ush)((code + state.ts.bl_count[bits - 1]) << 1);
+        next_code[bits] = code = (ush)((code + state.ts.bl_count[bits-1]) << 1);
     }
     /* Check that the bit counts in bl_count are consistent. The last code
      * must be all ones.
      */
-    Assert(state, code + state.ts.bl_count[MAX_BITS] - 1 == (1 << ((ush)MAX_BITS)) - 1,
-        "inconsistent bit counts");
+    Assert(state,code + state.ts.bl_count[MAX_BITS]-1 == (1<< ((ush) MAX_BITS)) - 1,
+            "inconsistent bit counts");
     Trace("\ngen_codes: max_code %d ", max_code);
 
-    for (n = 0; n <= max_code; n++) {
+    for (n = 0;  n <= max_code; n++) {
         int len = tree[n].dl.len;
         if (len == 0) continue;
         /* Now reverse the bits */
@@ -950,11 +970,11 @@ void gen_codes(TState& state, ct_data* tree, int max_code)
  *     and corresponding code. The length opt_len is updated; static_len is
  *     also updated if stree is not null. The field max_code is set.
  */
-void build_tree(TState& state, tree_desc* desc)
+void build_tree(TState &state,tree_desc *desc)
 {
-    ct_data* tree = desc->dyn_tree;
-    ct_data* stree = desc->static_tree;
-    int elems = desc->elems;
+    ct_data *tree   = desc->dyn_tree;
+    ct_data *stree  = desc->static_tree;
+    int elems            = desc->elems;
     int n, m;          /* iterate over heap elements */
     int max_code = -1; /* largest code with non zero frequency */
     int node = elems;  /* next internal node of the tree */
@@ -969,8 +989,7 @@ void build_tree(TState& state, tree_desc* desc)
         if (tree[n].fc.freq != 0) {
             state.ts.heap[++state.ts.heap_len] = max_code = n;
             state.ts.depth[n] = 0;
-        }
-        else {
+        } else {
             tree[n].dl.len = 0;
         }
     }
@@ -992,7 +1011,7 @@ void build_tree(TState& state, tree_desc* desc)
     /* The elements heap[heap_len/2+1 .. heap_len] are leaves of the tree,
      * establish sub-heaps of increasing lengths:
      */
-    for (n = state.ts.heap_len / 2; n >= 1; n--) pqdownheap(state, tree, n);
+    for (n = state.ts.heap_len/2; n >= 1; n--) pqdownheap(state,tree, n);
 
     /* Construct the Huffman tree by repeatedly combining the least two
      * frequent nodes.
@@ -1006,11 +1025,11 @@ void build_tree(TState& state, tree_desc* desc)
 
         /* Create a new node father of n and m */
         tree[node].fc.freq = (ush)(tree[n].fc.freq + tree[m].fc.freq);
-        state.ts.depth[node] = (uch)(Max(state.ts.depth[n], state.ts.depth[m]) + 1);
+        state.ts.depth[node] = (uch) (Max(state.ts.depth[n], state.ts.depth[m]) + 1);
         tree[n].dl.dad = tree[m].dl.dad = (ush)node;
         /* and insert the new node in the heap */
         state.ts.heap[SMALLEST] = node++;
-        pqdownheap(state, tree, SMALLEST);
+        pqdownheap(state,tree, SMALLEST);
 
     } while (state.ts.heap_len >= 2);
 
@@ -1019,10 +1038,10 @@ void build_tree(TState& state, tree_desc* desc)
     /* At this point, the fields freq and dad are set. We can now
      * generate the bit lengths.
      */
-    gen_bitlen(state, (tree_desc*)desc);
+    gen_bitlen(state,(tree_desc *)desc);
 
     /* The field len is now set, we can generate the bit codes */
-    gen_codes(state, (ct_data*)tree, max_code);
+    gen_codes (state,(ct_data *)tree, max_code);
 }
 
 /* ===========================================================================
@@ -1031,7 +1050,7 @@ void build_tree(TState& state, tree_desc* desc)
  * counts. (The contribution of the bit length codes will be added later
  * during the construction of bl_tree.)
  */
-void scan_tree(TState& state, ct_data* tree, int max_code)
+void scan_tree (TState &state,ct_data *tree, int max_code)
 {
     int n;                     /* iterates over all tree elements */
     int prevlen = -1;          /* last emitted length */
@@ -1042,34 +1061,28 @@ void scan_tree(TState& state, ct_data* tree, int max_code)
     int min_count = 4;         /* min repeat count */
 
     if (nextlen == 0) max_count = 138, min_count = 3;
-    tree[max_code + 1].dl.len = (ush)-1; /* guard */
+    tree[max_code+1].dl.len = (ush)-1; /* guard */
 
     for (n = 0; n <= max_code; n++) {
-        curlen = nextlen; nextlen = tree[n + 1].dl.len;
+        curlen = nextlen; nextlen = tree[n+1].dl.len;
         if (++count < max_count && curlen == nextlen) {
             continue;
-        }
-        else if (count < min_count) {
+        } else if (count < min_count) {
             state.ts.bl_tree[curlen].fc.freq = (ush)(state.ts.bl_tree[curlen].fc.freq + count);
-        }
-        else if (curlen != 0) {
+        } else if (curlen != 0) {
             if (curlen != prevlen) state.ts.bl_tree[curlen].fc.freq++;
             state.ts.bl_tree[REP_3_6].fc.freq++;
-        }
-        else if (count <= 10) {
+        } else if (count <= 10) {
             state.ts.bl_tree[REPZ_3_10].fc.freq++;
-        }
-        else {
+        } else {
             state.ts.bl_tree[REPZ_11_138].fc.freq++;
         }
         count = 0; prevlen = curlen;
         if (nextlen == 0) {
             max_count = 138, min_count = 3;
-        }
-        else if (curlen == nextlen) {
+        } else if (curlen == nextlen) {
             max_count = 6, min_count = 3;
-        }
-        else {
+        } else {
             max_count = 7, min_count = 4;
         }
     }
@@ -1079,7 +1092,7 @@ void scan_tree(TState& state, ct_data* tree, int max_code)
  * Send a literal or distance tree in compressed form, using the codes in
  * bl_tree.
  */
-void send_tree(TState& state, ct_data* tree, int max_code)
+void send_tree (TState &state, ct_data *tree, int max_code)
 {
     int n;                     /* iterates over all tree elements */
     int prevlen = -1;          /* last emitted length */
@@ -1093,37 +1106,31 @@ void send_tree(TState& state, ct_data* tree, int max_code)
     if (nextlen == 0) max_count = 138, min_count = 3;
 
     for (n = 0; n <= max_code; n++) {
-        curlen = nextlen; nextlen = tree[n + 1].dl.len;
+        curlen = nextlen; nextlen = tree[n+1].dl.len;
         if (++count < max_count && curlen == nextlen) {
             continue;
-        }
-        else if (count < min_count) {
+        } else if (count < min_count) {
             do { send_code(state, curlen, state.ts.bl_tree); } while (--count != 0);
 
-        }
-        else if (curlen != 0) {
+        } else if (curlen != 0) {
             if (curlen != prevlen) {
                 send_code(state, curlen, state.ts.bl_tree); count--;
             }
-            Assert(state, count >= 3 && count <= 6, " 3_6?");
-            send_code(state, REP_3_6, state.ts.bl_tree); send_bits(state, count - 3, 2);
+            Assert(state,count >= 3 && count <= 6, " 3_6?");
+            send_code(state,REP_3_6, state.ts.bl_tree); send_bits(state,count-3, 2);
 
-        }
-        else if (count <= 10) {
-            send_code(state, REPZ_3_10, state.ts.bl_tree); send_bits(state, count - 3, 3);
+        } else if (count <= 10) {
+            send_code(state,REPZ_3_10, state.ts.bl_tree); send_bits(state,count-3, 3);
 
-        }
-        else {
-            send_code(state, REPZ_11_138, state.ts.bl_tree); send_bits(state, count - 11, 7);
+        } else {
+            send_code(state,REPZ_11_138, state.ts.bl_tree); send_bits(state,count-11, 7);
         }
         count = 0; prevlen = curlen;
         if (nextlen == 0) {
             max_count = 138, min_count = 3;
-        }
-        else if (curlen == nextlen) {
+        } else if (curlen == nextlen) {
             max_count = 6, min_count = 3;
-        }
-        else {
+        } else {
             max_count = 7, min_count = 4;
         }
     }
@@ -1133,29 +1140,29 @@ void send_tree(TState& state, ct_data* tree, int max_code)
  * Construct the Huffman tree for the bit lengths and return the index in
  * bl_order of the last bit length code to send.
  */
-int build_bl_tree(TState& state)
+int build_bl_tree(TState &state)
 {
     int max_blindex;  /* index of last bit length code of non zero freq */
 
     /* Determine the bit length frequencies for literal and distance trees */
-    scan_tree(state, (ct_data*)state.ts.dyn_ltree, state.ts.l_desc.max_code);
-    scan_tree(state, (ct_data*)state.ts.dyn_dtree, state.ts.d_desc.max_code);
+    scan_tree(state,(ct_data *)state.ts.dyn_ltree, state.ts.l_desc.max_code);
+    scan_tree(state,(ct_data *)state.ts.dyn_dtree, state.ts.d_desc.max_code);
 
     /* Build the bit length tree: */
-    build_tree(state, (tree_desc*)(&state.ts.bl_desc));
+    build_tree(state,(tree_desc *)(&state.ts.bl_desc));
     /* opt_len now includes the length of the tree representations, except
      * the lengths of the bit lengths codes and the 5+5+4 bits for the counts.
      */
 
-     /* Determine the number of bit length codes to send. The pkzip format
-      * requires that at least 4 bit length codes be sent. (appnote.txt says
-      * 3 but the actual value used is 4.)
-      */
-    for (max_blindex = BL_CODES - 1; max_blindex >= 3; max_blindex--) {
+    /* Determine the number of bit length codes to send. The pkzip format
+     * requires that at least 4 bit length codes be sent. (appnote.txt says
+     * 3 but the actual value used is 4.)
+     */
+    for (max_blindex = BL_CODES-1; max_blindex >= 3; max_blindex--) {
         if (state.ts.bl_tree[bl_order[max_blindex]].dl.len != 0) break;
     }
     /* Update opt_len to include the bit length tree and counts */
-    state.ts.opt_len += 3 * (max_blindex + 1) + 5 + 5 + 4;
+    state.ts.opt_len += 3*(max_blindex+1) + 5+5+4;
     Trace("\ndyn trees: dyn %ld, stat %ld", state.ts.opt_len, state.ts.static_len);
 
     return max_blindex;
@@ -1166,28 +1173,28 @@ int build_bl_tree(TState& state)
  * lengths of the bit length codes, the literal tree and the distance tree.
  * IN assertion: lcodes >= 257, dcodes >= 1, blcodes >= 4.
  */
-void send_all_trees(TState& state, int lcodes, int dcodes, int blcodes)
+void send_all_trees(TState &state,int lcodes, int dcodes, int blcodes)
 {
     int rank;                    /* index in bl_order */
 
-    Assert(state, lcodes >= 257 && dcodes >= 1 && blcodes >= 4, "not enough codes");
-    Assert(state, lcodes <= L_CODES && dcodes <= D_CODES && blcodes <= BL_CODES,
-        "too many codes");
+    Assert(state,lcodes >= 257 && dcodes >= 1 && blcodes >= 4, "not enough codes");
+    Assert(state,lcodes <= L_CODES && dcodes <= D_CODES && blcodes <= BL_CODES,
+            "too many codes");
     Trace("\nbl counts: ");
-    send_bits(state, lcodes - 257, 5);
+    send_bits(state,lcodes-257, 5);
     /* not +255 as stated in appnote.txt 1.93a or -256 in 2.04c */
-    send_bits(state, dcodes - 1, 5);
-    send_bits(state, blcodes - 4, 4); /* not -3 as stated in appnote.txt */
+    send_bits(state,dcodes-1,   5);
+    send_bits(state,blcodes-4,  4); /* not -3 as stated in appnote.txt */
     for (rank = 0; rank < blcodes; rank++) {
         Trace("\nbl code %2d ", bl_order[rank]);
-        send_bits(state, state.ts.bl_tree[bl_order[rank]].dl.len, 3);
-    }
+        send_bits(state,state.ts.bl_tree[bl_order[rank]].dl.len, 3);
+    }    
     Trace("\nbl tree: sent %ld", state.bs.bits_sent);
 
-    send_tree(state, (ct_data*)state.ts.dyn_ltree, lcodes - 1); /* send the literal tree */
+    send_tree(state,(ct_data *)state.ts.dyn_ltree, lcodes-1); /* send the literal tree */
     Trace("\nlit tree: sent %ld", state.bs.bits_sent);
 
-    send_tree(state, (ct_data*)state.ts.dyn_dtree, dcodes - 1); /* send the distance tree */
+    send_tree(state,(ct_data *)state.ts.dyn_dtree, dcodes-1); /* send the distance tree */
     Trace("\ndist tree: sent %ld", state.bs.bits_sent);
 }
 
@@ -1196,7 +1203,7 @@ void send_all_trees(TState& state, int lcodes, int dcodes, int blcodes)
  * trees or store, and output the encoded block to the zip file. This function
  * returns the total compressed length (in bytes) for the file so far.
  */
-ulg flush_block(TState& state, char* buf, ulg stored_len, int eof)
+ulg flush_block(TState &state,char *buf, ulg stored_len, int eof)
 {
     ulg opt_lenb, static_lenb; /* opt_len and static_len in bytes */
     int max_blindex;  /* index of last bit length code of non zero freq */
@@ -1207,28 +1214,28 @@ ulg flush_block(TState& state, char* buf, ulg stored_len, int eof)
     if (*state.ts.file_type == (ush)UNKNOWN) set_file_type(state);
 
     /* Construct the literal and distance trees */
-    build_tree(state, (tree_desc*)(&state.ts.l_desc));
+    build_tree(state,(tree_desc *)(&state.ts.l_desc));
     Trace("\nlit data: dyn %ld, stat %ld", state.ts.opt_len, state.ts.static_len);
 
-    build_tree(state, (tree_desc*)(&state.ts.d_desc));
+    build_tree(state,(tree_desc *)(&state.ts.d_desc));
     Trace("\ndist data: dyn %ld, stat %ld", state.ts.opt_len, state.ts.static_len);
     /* At this point, opt_len and static_len are the total bit lengths of
      * the compressed block data, excluding the tree representations.
      */
 
-     /* Build the bit length tree for the above two trees, and get the index
-      * in bl_order of the last bit length code to send.
-      */
+    /* Build the bit length tree for the above two trees, and get the index
+     * in bl_order of the last bit length code to send.
+     */
     max_blindex = build_bl_tree(state);
 
     /* Determine the best encoding. Compute first the block length in bytes */
-    opt_lenb = (state.ts.opt_len + 3 + 7) >> 3;
-    static_lenb = (state.ts.static_len + 3 + 7) >> 3;
+    opt_lenb = (state.ts.opt_len+3+7)>>3;
+    static_lenb = (state.ts.static_len+3+7)>>3;
     state.ts.input_len += stored_len; /* for debugging only */
 
     Trace("\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u dist %u ",
-        opt_lenb, state.ts.opt_len, static_lenb, state.ts.static_len, stored_len,
-        state.ts.last_lit, state.ts.last_dist);
+            opt_lenb, state.ts.opt_len, static_lenb, state.ts.static_len, stored_len,
+            state.ts.last_lit, state.ts.last_dist);
 
     if (static_lenb <= opt_lenb) opt_lenb = static_lenb;
 
@@ -1247,36 +1254,36 @@ ulg flush_block(TState& state, char* buf, ulg stored_len, int eof)
     //    //*state.ts.file_method = STORE;
     //}
     //else
-    if (stored_len + 4 <= opt_lenb && buf != (char*)NULL) {
-        /* 4: two words for the lengths */
-/* The test buf != NULL is only necessary if LIT_BUFSIZE > WSIZE.
- * Otherwise we can't have processed more than WSIZE input bytes since
- * the last block flush, because compression would have been
- * successful. If LIT_BUFSIZE <= WSIZE, it is never too late to
- * transform a block into a stored block.
- */
-        send_bits(state, (STORED_BLOCK << 1) + eof, 3);  /* send block type */
+    if (stored_len+4 <= opt_lenb && buf != (char*)NULL) {
+                       /* 4: two words for the lengths */
+        /* The test buf != NULL is only necessary if LIT_BUFSIZE > WSIZE.
+         * Otherwise we can't have processed more than WSIZE input bytes since
+         * the last block flush, because compression would have been
+         * successful. If LIT_BUFSIZE <= WSIZE, it is never too late to
+         * transform a block into a stored block.
+         */
+        send_bits(state,(STORED_BLOCK<<1)+eof, 3);  /* send block type */
         state.ts.cmpr_bytelen += ((state.ts.cmpr_len_bits + 3 + 7) >> 3) + stored_len + 4;
         state.ts.cmpr_len_bits = 0L;
 
-        copy_block(state, buf, (unsigned)stored_len, 1); /* with header */
+        copy_block(state,buf, (unsigned)stored_len, 1); /* with header */
     }
     else if (static_lenb == opt_lenb) {
-        send_bits(state, (STATIC_TREES << 1) + eof, 3);
-        compress_block(state, (ct_data*)state.ts.static_ltree, (ct_data*)state.ts.static_dtree);
+        send_bits(state,(STATIC_TREES<<1)+eof, 3);
+        compress_block(state,(ct_data *)state.ts.static_ltree, (ct_data *)state.ts.static_dtree);
         state.ts.cmpr_len_bits += 3 + state.ts.static_len;
         state.ts.cmpr_bytelen += state.ts.cmpr_len_bits >> 3;
         state.ts.cmpr_len_bits &= 7L;
     }
     else {
-        send_bits(state, (DYN_TREES << 1) + eof, 3);
-        send_all_trees(state, state.ts.l_desc.max_code + 1, state.ts.d_desc.max_code + 1, max_blindex + 1);
-        compress_block(state, (ct_data*)state.ts.dyn_ltree, (ct_data*)state.ts.dyn_dtree);
+        send_bits(state,(DYN_TREES<<1)+eof, 3);
+        send_all_trees(state,state.ts.l_desc.max_code+1, state.ts.d_desc.max_code+1, max_blindex+1);
+        compress_block(state,(ct_data *)state.ts.dyn_ltree, (ct_data *)state.ts.dyn_dtree);
         state.ts.cmpr_len_bits += 3 + state.ts.opt_len;
         state.ts.cmpr_bytelen += state.ts.cmpr_len_bits >> 3;
         state.ts.cmpr_len_bits &= 7L;
     }
-    Assert(state, ((state.ts.cmpr_bytelen << 3) + state.ts.cmpr_len_bits) == state.bs.bits_sent, "bad compressed size");
+    Assert(state,((state.ts.cmpr_bytelen << 3) + state.ts.cmpr_len_bits) == state.bs.bits_sent, "bad compressed size");
     init_block(state);
 
     if (eof) {
@@ -1293,21 +1300,20 @@ ulg flush_block(TState& state, char* buf, ulg stored_len, int eof)
  * Save the match info and tally the frequency counts. Return true if
  * the current block must be flushed.
  */
-int ct_tally(TState& state, int dist, int lc)
+int ct_tally (TState &state,int dist, int lc)
 {
     state.ts.l_buf[state.ts.last_lit++] = (uch)lc;
     if (dist == 0) {
         /* lc is the unmatched char */
         state.ts.dyn_ltree[lc].fc.freq++;
-    }
-    else {
+    } else {
         /* Here, lc is the match length - MIN_MATCH */
         dist--;             /* dist = match distance - 1 */
-        Assert(state, (ush)dist < (ush)MAX_DIST &&
-            (ush)lc <= (ush)(MAX_MATCH - MIN_MATCH) &&
-            (ush)d_code(dist) < (ush)D_CODES, "ct_tally: bad match");
+        Assert(state,(ush)dist < (ush)MAX_DIST &&
+               (ush)lc <= (ush)(MAX_MATCH-MIN_MATCH) &&
+               (ush)d_code(dist) < (ush)D_CODES,  "ct_tally: bad match");
 
-        state.ts.dyn_ltree[state.ts.length_code[lc] + LITERALS + 1].fc.freq++;
+        state.ts.dyn_ltree[state.ts.length_code[lc]+LITERALS+1].fc.freq++;
         state.ts.dyn_dtree[d_code(dist)].fc.freq++;
 
         state.ts.d_buf[state.ts.last_dist++] = (ush)dist;
@@ -1323,19 +1329,19 @@ int ct_tally(TState& state, int dist, int lc)
     /* Try to guess if it is profitable to stop the current block here */
     if (state.level > 2 && (state.ts.last_lit & 0xfff) == 0) {
         /* Compute an upper bound for the compressed length */
-        ulg out_length = (ulg)state.ts.last_lit * 8L;
-        ulg in_length = (ulg)state.ds.strstart - state.ds.block_start;
+        ulg out_length = (ulg)state.ts.last_lit*8L;
+        ulg in_length = (ulg)state.ds.strstart-state.ds.block_start;
         int dcode;
         for (dcode = 0; dcode < D_CODES; dcode++) {
-            out_length += (ulg)state.ts.dyn_dtree[dcode].fc.freq * (5L + extra_dbits[dcode]);
+            out_length += (ulg)state.ts.dyn_dtree[dcode].fc.freq*(5L+extra_dbits[dcode]);
         }
         out_length >>= 3;
         Trace("\nlast_lit %u, last_dist %u, in %ld, out ~%ld(%ld%%) ",
-            state.ts.last_lit, state.ts.last_dist, in_length, out_length,
-            100L - out_length * 100L / in_length);
-        if (state.ts.last_dist < state.ts.last_lit / 2 && out_length < in_length / 2) return 1;
+               state.ts.last_lit, state.ts.last_dist, in_length, out_length,
+               100L - out_length*100L/in_length);
+        if (state.ts.last_dist < state.ts.last_lit/2 && out_length < in_length/2) return 1;
     }
-    return (state.ts.last_lit == LIT_BUFSIZE - 1 || state.ts.last_dist == DIST_BUFSIZE);
+    return (state.ts.last_lit == LIT_BUFSIZE-1 || state.ts.last_dist == DIST_BUFSIZE);
     /* We avoid equality with LIT_BUFSIZE because of wraparound at 64K
      * on 16 bit machines and because stored blocks are restricted to
      * 64K-1 bytes.
@@ -1345,7 +1351,7 @@ int ct_tally(TState& state, int dist, int lc)
 /* ===========================================================================
  * Send the block data compressed using the given Huffman trees
  */
-void compress_block(TState& state, ct_data* ltree, ct_data* dtree)
+void compress_block(TState &state,ct_data *ltree, ct_data *dtree)
 {
     unsigned dist;      /* distance of matched string */
     int lc;             /* match length or unmatched char (if dist == 0) */
@@ -1360,33 +1366,32 @@ void compress_block(TState& state, ct_data* ltree, ct_data* dtree)
         if ((lx & 7) == 0) flag = state.ts.flag_buf[fx++];
         lc = state.ts.l_buf[lx++];
         if ((flag & 1) == 0) {
-            send_code(state, lc, ltree); /* send a literal byte */
-        }
-        else {
+            send_code(state,lc, ltree); /* send a literal byte */
+        } else {
             /* Here, lc is the match length - MIN_MATCH */
             code = state.ts.length_code[lc];
-            send_code(state, code + LITERALS + 1, ltree); /* send the length code */
+            send_code(state,code+LITERALS+1, ltree); /* send the length code */
             extra = extra_lbits[code];
             if (extra != 0) {
                 lc -= state.ts.base_length[code];
-                send_bits(state, lc, extra);        /* send the extra length bits */
+                send_bits(state,lc, extra);        /* send the extra length bits */
             }
             dist = state.ts.d_buf[dx++];
             /* Here, dist is the match distance - 1 */
             code = d_code(dist);
-            Assert(state, code < D_CODES, "bad d_code");
+            Assert(state,code < D_CODES, "bad d_code");
 
-            send_code(state, code, dtree);       /* send the distance code */
+            send_code(state,code, dtree);       /* send the distance code */
             extra = extra_dbits[code];
             if (extra != 0) {
                 dist -= state.ts.base_dist[code];
-                send_bits(state, dist, extra);   /* send the extra distance bits */
+                send_bits(state,dist, extra);   /* send the extra distance bits */
             }
         } /* literal or match pair ? */
         flag >>= 1;
     } while (lx < state.ts.last_lit);
 
-    send_code(state, END_BLOCK, ltree);
+    send_code(state,END_BLOCK, ltree);
 }
 
 /* ===========================================================================
@@ -1395,7 +1400,7 @@ void compress_block(TState& state, ct_data* ltree, ct_data* dtree)
  * IN assertion: the fields freq of dyn_ltree are set and the total of all
  * frequencies does not exceed 64K (to fit in an int on 16 bit machines).
  */
-void set_file_type(TState& state)
+void set_file_type(TState &state)
 {
     int n = 0;
     unsigned ascii_freq = 0;
@@ -1410,7 +1415,7 @@ void set_file_type(TState& state)
 /* ===========================================================================
  * Initialize the bit string routines.
  */
-void bi_init(TState& state, char* tgt_buf, unsigned tgt_size, int flsh_allowed)
+void bi_init (TState &state,char *tgt_buf, unsigned tgt_size, int flsh_allowed)
 {
     state.bs.out_buf = tgt_buf;
     state.bs.out_size = tgt_size;
@@ -1426,9 +1431,9 @@ void bi_init(TState& state, char* tgt_buf, unsigned tgt_size, int flsh_allowed)
  * Send a value on a given number of bits.
  * IN assertion: length <= 16 and value fits in length bits.
  */
-void send_bits(TState& state, int value, int length)
+void send_bits(TState &state,int value, int length)
 {
-    Assert(state, length > 0 && length <= 15, "invalid length");
+    Assert(state,length > 0 && length <= 15, "invalid length");
     state.bs.bits_sent += (ulg)length;
     /* If not enough room in bi_buf, use (bi_valid) bits from bi_buf and
      * (Buf_size - bi_valid) bits from value to flush the filled bi_buf,
@@ -1438,7 +1443,7 @@ void send_bits(TState& state, int value, int length)
     state.bs.bi_buf |= (value << state.bs.bi_valid);
     state.bs.bi_valid += length;
     if (state.bs.bi_valid > (int)Buf_size) {
-        PUTSHORT(state, state.bs.bi_buf);
+        PUTSHORT(state,state.bs.bi_buf);
         state.bs.bi_valid -= Buf_size;
         state.bs.bi_buf = (unsigned)value >> (length - state.bs.bi_valid);
     }
@@ -1451,7 +1456,7 @@ void send_bits(TState& state, int value, int length)
  */
 unsigned bi_reverse(unsigned code, int len)
 {
-    register unsigned res = 0;
+    unsigned res = 0;
     do {
         res |= code & 1;
         code >>= 1, res <<= 1;
@@ -1462,48 +1467,45 @@ unsigned bi_reverse(unsigned code, int len)
 /* ===========================================================================
  * Write out any remaining bits in an incomplete byte.
  */
-void bi_windup(TState& state)
+void bi_windup(TState &state)
 {
     if (state.bs.bi_valid > 8) {
-        PUTSHORT(state, state.bs.bi_buf);
-    }
-    else if (state.bs.bi_valid > 0) {
-        PUTBYTE(state, state.bs.bi_buf);
+        PUTSHORT(state,state.bs.bi_buf);
+    } else if (state.bs.bi_valid > 0) {
+        PUTBYTE(state,state.bs.bi_buf);
     }
     if (state.bs.flush_flg) {
         state.flush_outbuf(state.param, state.bs.out_buf, &state.bs.out_offset);
     }
     state.bs.bi_buf = 0;
     state.bs.bi_valid = 0;
-    state.bs.bits_sent = (state.bs.bits_sent + 7) & ~7;
+    state.bs.bits_sent = (state.bs.bits_sent+7) & ~7;
 }
 
 /* ===========================================================================
  * Copy a stored block to the zip file, storing first the length and its
  * one's complement if requested.
  */
-void copy_block(TState& state, char* block, unsigned len, int header)
+void copy_block(TState &state, char *block, unsigned len, int header)
 {
     bi_windup(state);              /* align on byte boundary */
 
     if (header) {
-        PUTSHORT(state, (ush)len);
-        PUTSHORT(state, (ush)~len);
-        state.bs.bits_sent += 2 * 16;
+        PUTSHORT(state,(ush)len);
+        PUTSHORT(state,(ush)~len);
+        state.bs.bits_sent += 2*16;
     }
     if (state.bs.flush_flg) {
         state.flush_outbuf(state.param, state.bs.out_buf, &state.bs.out_offset);
         state.bs.out_offset = len;
         state.flush_outbuf(state.param, block, &state.bs.out_offset);
-    }
-    else if (state.bs.out_offset + len > state.bs.out_size) {
-        Assert(state, false, "output buffer too small for in-memory compression");
-    }
-    else {
+    } else if (state.bs.out_offset + len > state.bs.out_size) {
+        Assert(state,false,"output buffer too small for in-memory compression");
+    } else {
         memcpy(state.bs.out_buf + state.bs.out_offset, block, len);
         state.bs.out_offset += len;
     }
-    state.bs.bits_sent += (ulg)len << 3;
+    state.bs.bits_sent += (ulg)len<<3;
 }
 
 
@@ -1517,10 +1519,10 @@ void copy_block(TState& state, char* block, unsigned len, int header)
  *  Prototypes for functions.
  */
 
-void fill_window(TState& state);
-ulg deflate_fast(TState& state);
+void fill_window  (TState &state);
+ulg deflate_fast  (TState &state);
 
-int  longest_match(TState& state, IPos cur_match);
+int  longest_match (TState &state,IPos cur_match);
 
 
 /* ===========================================================================
@@ -1531,33 +1533,33 @@ int  longest_match(TState& state, IPos cur_match);
  */
 #define UPDATE_HASH(h,c) (h = (((h)<<H_SHIFT) ^ (c)) & HASH_MASK)
 
- /* ===========================================================================
-  * Insert string s in the dictionary and set match_head to the previous head
-  * of the hash chain (the most recent string with same hash key). Return
-  * the previous length of the hash chain.
-  * IN  assertion: all calls to to INSERT_STRING are made with consecutive
-  *    input characters and the first MIN_MATCH bytes of s are valid
-  *    (except for the last MIN_MATCH-1 bytes of the input file).
-  */
+/* ===========================================================================
+ * Insert string s in the dictionary and set match_head to the previous head
+ * of the hash chain (the most recent string with same hash key). Return
+ * the previous length of the hash chain.
+ * IN  assertion: all calls to to INSERT_STRING are made with consecutive
+ *    input characters and the first MIN_MATCH bytes of s are valid
+ *    (except for the last MIN_MATCH-1 bytes of the input file).
+ */
 #define INSERT_STRING(s, match_head) \
    (UPDATE_HASH(state.ds.ins_h, state.ds.window[(s) + (MIN_MATCH-1)]), \
     state.ds.prev[(s) & WMASK] = match_head = state.ds.head[state.ds.ins_h], \
     state.ds.head[state.ds.ins_h] = (s))
 
-  /* ===========================================================================
-   * Initialize the "longest match" routines for a new file
-   *
-   * IN assertion: window_size is > 0 if the input file is already read or
-   *    mmap'ed in the window[] array, 0 otherwise. In the first case,
-   *    window_size is sufficient to contain the whole input file plus
-   *    MIN_LOOKAHEAD bytes (to avoid referencing memory beyond the end
-   *    of window[] when looking for matches towards the end).
-   */
-void lm_init(TState& state, int pack_level, ush* flags)
+/* ===========================================================================
+ * Initialize the "longest match" routines for a new file
+ *
+ * IN assertion: window_size is > 0 if the input file is already read or
+ *    mmap'ed in the window[] array, 0 otherwise. In the first case,
+ *    window_size is sufficient to contain the whole input file plus
+ *    MIN_LOOKAHEAD bytes (to avoid referencing memory beyond the end
+ *    of window[] when looking for matches towards the end).
+ */
+void lm_init (TState &state, int pack_level, ush *flags)
 {
-    register unsigned j;
+    unsigned j;
 
-    Assert(state, pack_level >= 1 && pack_level <= 8, "bad pack level");
+    Assert(state,pack_level>=1 && pack_level<=8,"bad pack level");
 
     /* Do not slide the window if the whole input is already in memory
      * (window_size > 0)
@@ -1565,26 +1567,25 @@ void lm_init(TState& state, int pack_level, ush* flags)
     state.ds.sliding = 0;
     if (state.ds.window_size == 0L) {
         state.ds.sliding = 1;
-        state.ds.window_size = (ulg)2L * WSIZE;
+        state.ds.window_size = (ulg)2L*WSIZE;
     }
 
     /* Initialize the hash table (avoiding 64K overflow for 16 bit systems).
      * prev[] will be initialized on the fly.
      */
-    state.ds.head[HASH_SIZE - 1] = NIL;
-    memset((char*)state.ds.head, NIL, (unsigned)(HASH_SIZE - 1) * sizeof(*state.ds.head));
+    state.ds.head[HASH_SIZE-1] = NIL;
+    memset((char*)state.ds.head, NIL, (unsigned)(HASH_SIZE-1)*sizeof(*state.ds.head));
 
     /* Set the default configuration parameters:
      */
-    state.ds.max_lazy_match = configuration_table[pack_level].max_lazy;
-    state.ds.good_match = configuration_table[pack_level].good_length;
-    state.ds.nice_match = configuration_table[pack_level].nice_length;
+    state.ds.max_lazy_match   = configuration_table[pack_level].max_lazy;
+    state.ds.good_match       = configuration_table[pack_level].good_length;
+    state.ds.nice_match       = configuration_table[pack_level].nice_length;
     state.ds.max_chain_length = configuration_table[pack_level].max_chain;
     if (pack_level <= 2) {
-        *flags |= FAST;
-    }
-    else if (pack_level >= 8) {
-        *flags |= SLOW;
+       *flags |= FAST;
+    } else if (pack_level >= 8) {
+       *flags |= SLOW;
     }
     /* ??? reduce max_chain_length for binary files */
 
@@ -1596,8 +1597,8 @@ void lm_init(TState& state, int pack_level, ush* flags)
     state.ds.lookahead = state.readfunc(state, (char*)state.ds.window, j);
 
     if (state.ds.lookahead == 0 || state.ds.lookahead == (unsigned)EOF) {
-        state.ds.eofile = 1, state.ds.lookahead = 0;
-        return;
+       state.ds.eofile = 1, state.ds.lookahead = 0;
+       return;
     }
     state.ds.eofile = 0;
     /* Make sure that we always have enough lookahead. This is important
@@ -1606,7 +1607,7 @@ void lm_init(TState& state, int pack_level, ush* flags)
     if (state.ds.lookahead < MIN_LOOKAHEAD) fill_window(state);
 
     state.ds.ins_h = 0;
-    for (j = 0; j < MIN_MATCH - 1; j++) UPDATE_HASH(state.ds.ins_h, state.ds.window[j]);
+    for (j=0; j<MIN_MATCH-1; j++) UPDATE_HASH(state.ds.ins_h, state.ds.window[j]);
     /* If lookahead < MIN_MATCH, ins_h is garbage, but this is
      * not important since only literal bytes will be emitted.
      */
@@ -1621,49 +1622,49 @@ void lm_init(TState& state, int pack_level, ush* flags)
  * IN assertions: cur_match is the head of the hash chain for the current
  *   string (strstart) and its distance is <= MAX_DIST, and prev_length >= 1
  */
- // For 80x86 and 680x0 and ARM, an optimized version is in match.asm or
- // match.S. The code is functionally equivalent, so you can use the C version
- // if desired. Which I do so desire!
-int longest_match(TState& state, IPos cur_match)
+// For 80x86 and 680x0 and ARM, an optimized version is in match.asm or
+// match.S. The code is functionally equivalent, so you can use the C version
+// if desired. Which I do so desire!
+int longest_match(TState &state,IPos cur_match)
 {
     unsigned chain_length = state.ds.max_chain_length;   /* max hash chain length */
-    register uch far* scan = state.ds.window + state.ds.strstart; /* current string */
-    register uch far* match;                    /* matched string */
-    register int len;                           /* length of current match */
+    uch far *scan = state.ds.window + state.ds.strstart; /* current string */
+    uch far *match;                    /* matched string */
+    int len;                           /* length of current match */
     int best_len = state.ds.prev_length;                 /* best match length so far */
     IPos limit = state.ds.strstart > (IPos)MAX_DIST ? state.ds.strstart - (IPos)MAX_DIST : NIL;
     /* Stop when cur_match becomes <= limit. To simplify the code,
      * we prevent matches with the string of window index 0.
      */
 
-     // The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
-     // It is easy to get rid of this optimization if necessary.
-    Assert(state, HASH_BITS >= 8 && MAX_MATCH == 258, "Code too clever");
+  // The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
+  // It is easy to get rid of this optimization if necessary.
+    Assert(state,HASH_BITS>=8 && MAX_MATCH==258,"Code too clever");
 
 
 
-    register uch far* strend = state.ds.window + state.ds.strstart + MAX_MATCH;
-    register uch scan_end1 = scan[best_len - 1];
-    register uch scan_end = scan[best_len];
+    uch far *strend = state.ds.window + state.ds.strstart + MAX_MATCH;
+    uch scan_end1  = scan[best_len-1];
+    uch scan_end   = scan[best_len];
 
     /* Do not waste too much time if we already have a good match: */
     if (state.ds.prev_length >= state.ds.good_match) {
         chain_length >>= 2;
     }
 
-    Assert(state, state.ds.strstart <= state.ds.window_size - MIN_LOOKAHEAD, "insufficient lookahead");
+    Assert(state,state.ds.strstart <= state.ds.window_size-MIN_LOOKAHEAD, "insufficient lookahead");
 
     do {
-        Assert(state, cur_match < state.ds.strstart, "no future");
+        Assert(state,cur_match < state.ds.strstart, "no future");
         match = state.ds.window + cur_match;
 
         /* Skip to next match if the match length cannot increase
          * or if the match length is less than 2:
          */
-        if (match[best_len] != scan_end ||
-            match[best_len - 1] != scan_end1 ||
-            *match != *scan ||
-            *++match != scan[1])      continue;
+        if (match[best_len]   != scan_end  ||
+            match[best_len-1] != scan_end1 ||
+            *match            != *scan     ||
+            *++match          != scan[1])      continue;
 
         /* The check at best_len-1 can be removed because it will be made
          * again later. (This heuristic is not always a win.)
@@ -1678,13 +1679,13 @@ int longest_match(TState& state, IPos cur_match)
          */
         do {
         } while (*++scan == *++match && *++scan == *++match &&
-            *++scan == *++match && *++scan == *++match &&
-            *++scan == *++match && *++scan == *++match &&
-            *++scan == *++match && *++scan == *++match &&
-            scan < strend);
+                 *++scan == *++match && *++scan == *++match &&
+                 *++scan == *++match && *++scan == *++match &&
+                 *++scan == *++match && *++scan == *++match &&
+                 scan < strend);
 
-        Assert(state, scan <= state.ds.window + (unsigned)(state.ds.window_size - 1), "wild scan");
-
+        Assert(state,scan <= state.ds.window+(unsigned)(state.ds.window_size-1), "wild scan");
+                          
         len = MAX_MATCH - (int)(strend - scan);
         scan = strend - MAX_MATCH;
 
@@ -1693,11 +1694,11 @@ int longest_match(TState& state, IPos cur_match)
             state.ds.match_start = cur_match;
             best_len = len;
             if (len >= state.ds.nice_match) break;
-            scan_end1 = scan[best_len - 1];
-            scan_end = scan[best_len];
+            scan_end1  = scan[best_len-1];
+            scan_end   = scan[best_len];
         }
     } while ((cur_match = state.ds.prev[cur_match & WMASK]) > limit
-        && --chain_length != 0);
+             && --chain_length != 0);
 
     return best_len;
 }
@@ -1730,9 +1731,9 @@ int longest_match(TState& state, IPos cur_match)
  *    At least one byte has been read, or eofile is set; file reads are
  *    performed for at least two bytes (required for the translate_eol option).
  */
-void fill_window(TState& state)
+void fill_window(TState &state)
 {
-    register unsigned n, m;
+    unsigned n, m;
     unsigned more;    /* Amount of free space at the end of the window. */
 
     do {
@@ -1747,29 +1748,28 @@ void fill_window(TState& state)
              */
             more--;
 
-            /* For MMAP or BIG_MEM, the whole input file is already in memory so
-             * we must not perform sliding. We must however call (*read_buf)() in
-             * order to compute the crc, update lookahead and possibly set eofile.
-             */
-        }
-        else if (state.ds.strstart >= WSIZE + MAX_DIST && state.ds.sliding) {
+        /* For MMAP or BIG_MEM, the whole input file is already in memory so
+         * we must not perform sliding. We must however call (*read_buf)() in
+         * order to compute the crc, update lookahead and possibly set eofile.
+         */
+        } else if (state.ds.strstart >= WSIZE+MAX_DIST && state.ds.sliding) {
 
             /* By the IN assertion, the window is not empty so we can't confuse
              * more == 0 with more == 64K on a 16 bit machine.
              */
-            memcpy((char*)state.ds.window, (char*)state.ds.window + WSIZE, (unsigned)WSIZE);
+            memcpy((char*)state.ds.window, (char*)state.ds.window+WSIZE, (unsigned)WSIZE);
             state.ds.match_start -= WSIZE;
-            state.ds.strstart -= WSIZE; /* we now have strstart >= MAX_DIST: */
+            state.ds.strstart    -= WSIZE; /* we now have strstart >= MAX_DIST: */
 
-            state.ds.block_start -= (long)WSIZE;
+            state.ds.block_start -= (long) WSIZE;
 
             for (n = 0; n < HASH_SIZE; n++) {
                 m = state.ds.head[n];
-                state.ds.head[n] = (Pos)(m >= WSIZE ? m - WSIZE : NIL);
+                state.ds.head[n] = (Pos)(m >= WSIZE ? m-WSIZE : NIL);
             }
             for (n = 0; n < WSIZE; n++) {
                 m = state.ds.prev[n];
-                state.ds.prev[n] = (Pos)(m >= WSIZE ? m - WSIZE : NIL);
+                state.ds.prev[n] = (Pos)(m >= WSIZE ? m-WSIZE : NIL);
                 /* If n is not on any hash chain, prev[n] is garbage but
                  * its value will never be used.
                  */
@@ -1789,14 +1789,13 @@ void fill_window(TState& state)
          * Otherwise, window_size == 2*WSIZE so more >= 2.
          * If there was sliding, more >= WSIZE. So in all cases, more >= 2.
          */
-        Assert(state, more >= 2, "more < 2");
+        Assert(state,more >= 2, "more < 2");
 
-        n = state.readfunc(state, (char*)state.ds.window + state.ds.strstart + state.ds.lookahead, more);
+        n = state.readfunc(state, (char*)state.ds.window+state.ds.strstart+state.ds.lookahead, more);
 
         if (n == 0 || n == (unsigned)EOF) {
             state.ds.eofile = 1;
-        }
-        else {
+        } else {
             state.ds.lookahead += n;
         }
     } while (state.ds.lookahead < MIN_LOOKAHEAD && !state.ds.eofile);
@@ -1810,25 +1809,25 @@ void fill_window(TState& state)
    flush_block(state,state.ds.block_start >= 0L ? (char*)&state.ds.window[(unsigned)state.ds.block_start] : \
                 (char*)NULL, (long)state.ds.strstart - state.ds.block_start, (eof))
 
- /* ===========================================================================
-  * Processes a new input file and return its compressed length. This
-  * function does not perform lazy evaluation of matches and inserts
-  * new strings in the dictionary only for unmatched strings or for short
-  * matches. It is used only for the fast compression options.
-  */
-ulg deflate_fast(TState& state)
+/* ===========================================================================
+ * Processes a new input file and return its compressed length. This
+ * function does not perform lazy evaluation of matches and inserts
+ * new strings in the dictionary only for unmatched strings or for short
+ * matches. It is used only for the fast compression options.
+ */
+ulg deflate_fast(TState &state)
 {
     IPos hash_head = NIL;       /* head of the hash chain */
     int flush;                  /* set if current block must be flushed */
     unsigned match_length = 0;  /* length of best match */
 
-    state.ds.prev_length = MIN_MATCH - 1;
+    state.ds.prev_length = MIN_MATCH-1;
     while (state.ds.lookahead != 0) {
         /* Insert the string window[strstart .. strstart+2] in the
          * dictionary, and set hash_head to the head of the hash chain:
          */
         if (state.ds.lookahead >= MIN_MATCH)
-            INSERT_STRING(state.ds.strstart, hash_head);
+        INSERT_STRING(state.ds.strstart, hash_head);
 
         /* Find the longest match, discarding those <= prev_length.
          * At this point we have always match_length < MIN_MATCH
@@ -1838,18 +1837,18 @@ ulg deflate_fast(TState& state)
              * of window index 0 (in particular we have to avoid a match
              * of the string with itself at the start of the input file).
              */
-             /* Do not look for matches beyond the end of the input.
-              * This is necessary to make deflate deterministic.
-              */
+            /* Do not look for matches beyond the end of the input.
+             * This is necessary to make deflate deterministic.
+             */
             if ((unsigned)state.ds.nice_match > state.ds.lookahead) state.ds.nice_match = (int)state.ds.lookahead;
-            match_length = longest_match(state, hash_head);
+            match_length = longest_match (state,hash_head);
             /* longest_match() sets match_start */
             if (match_length > state.ds.lookahead) match_length = state.ds.lookahead;
         }
         if (match_length >= MIN_MATCH) {
-            check_match(state, state.ds.strstart, state.ds.match_start, match_length);
+            check_match(state,state.ds.strstart, state.ds.match_start, match_length);
 
-            flush = ct_tally(state, state.ds.strstart - state.ds.match_start, match_length - MIN_MATCH);
+            flush = ct_tally(state,state.ds.strstart-state.ds.match_start, match_length - MIN_MATCH);
 
             state.ds.lookahead -= match_length;
 
@@ -1867,22 +1866,20 @@ ulg deflate_fast(TState& state)
                      */
                 } while (--match_length != 0);
                 state.ds.strstart++;
-            }
-            else {
+            } else {
                 state.ds.strstart += match_length;
                 match_length = 0;
                 state.ds.ins_h = state.ds.window[state.ds.strstart];
-                UPDATE_HASH(state.ds.ins_h, state.ds.window[state.ds.strstart + 1]);
-                Assert(state, MIN_MATCH == 3, "Call UPDATE_HASH() MIN_MATCH-3 more times");
+                UPDATE_HASH(state.ds.ins_h, state.ds.window[state.ds.strstart+1]);
+                Assert(state,MIN_MATCH==3,"Call UPDATE_HASH() MIN_MATCH-3 more times");
             }
-        }
-        else {
+        } else {
             /* No match, output a literal byte */
-            flush = ct_tally(state, 0, state.ds.window[state.ds.strstart]);
+            flush = ct_tally (state,0, state.ds.window[state.ds.strstart]);
             state.ds.lookahead--;
             state.ds.strstart++;
         }
-        if (flush) FLUSH_BLOCK(state, 0), state.ds.block_start = state.ds.strstart;
+        if (flush) FLUSH_BLOCK(state,0), state.ds.block_start = state.ds.strstart;
 
         /* Make sure that we always have enough lookahead, except
          * at the end of the input file. We need MAX_MATCH bytes
@@ -1891,7 +1888,7 @@ ulg deflate_fast(TState& state)
          */
         if (state.ds.lookahead < MIN_LOOKAHEAD) fill_window(state);
     }
-    return FLUSH_BLOCK(state, 1); /* eof */
+    return FLUSH_BLOCK(state,1); /* eof */
 }
 
 /* ===========================================================================
@@ -1899,13 +1896,13 @@ ulg deflate_fast(TState& state)
  * evaluation for matches: a match is finally adopted only if there is
  * no better match at the next window position.
  */
-ulg deflate(TState& state)
+ulg deflate(TState &state)
 {
     IPos hash_head = NIL;       /* head of hash chain */
     IPos prev_match;            /* previous match */
     int flush;                  /* set if current block must be flushed */
     int match_available = 0;    /* set if previous match exists */
-    register unsigned match_length = MIN_MATCH - 1; /* length of best match */
+    unsigned match_length = MIN_MATCH-1; /* length of best match */
 
     if (state.level <= 3) return deflate_fast(state); /* optimized for speed */
 
@@ -1915,12 +1912,12 @@ ulg deflate(TState& state)
          * dictionary, and set hash_head to the head of the hash chain:
          */
         if (state.ds.lookahead >= MIN_MATCH)
-            INSERT_STRING(state.ds.strstart, hash_head);
+        INSERT_STRING(state.ds.strstart, hash_head);
 
         /* Find the longest match, discarding those <= prev_length.
          */
         state.ds.prev_length = match_length, prev_match = state.ds.match_start;
-        match_length = MIN_MATCH - 1;
+        match_length = MIN_MATCH-1;
 
         if (hash_head != NIL && state.ds.prev_length < state.ds.max_lazy_match &&
             state.ds.strstart - hash_head <= MAX_DIST) {
@@ -1928,20 +1925,20 @@ ulg deflate(TState& state)
              * of window index 0 (in particular we have to avoid a match
              * of the string with itself at the start of the input file).
              */
-             /* Do not look for matches beyond the end of the input.
-              * This is necessary to make deflate deterministic.
-              */
+            /* Do not look for matches beyond the end of the input.
+             * This is necessary to make deflate deterministic.
+             */
             if ((unsigned)state.ds.nice_match > state.ds.lookahead) state.ds.nice_match = (int)state.ds.lookahead;
-            match_length = longest_match(state, hash_head);
+            match_length = longest_match (state,hash_head);
             /* longest_match() sets match_start */
             if (match_length > state.ds.lookahead) match_length = state.ds.lookahead;
 
             /* Ignore a length 3 match if it is too distant: */
-            if (match_length == MIN_MATCH && state.ds.strstart - state.ds.match_start > TOO_FAR) {
+            if (match_length == MIN_MATCH && state.ds.strstart-state.ds.match_start > TOO_FAR){
                 /* If prev_match is also MIN_MATCH, match_start is garbage
                  * but we will ignore the current match anyway.
                  */
-                match_length = MIN_MATCH - 1;
+                match_length = MIN_MATCH-1;
             }
         }
         /* If there was a match at the previous step and the current
@@ -1949,13 +1946,13 @@ ulg deflate(TState& state)
          */
         if (state.ds.prev_length >= MIN_MATCH && match_length <= state.ds.prev_length) {
             unsigned max_insert = state.ds.strstart + state.ds.lookahead - MIN_MATCH;
-            check_match(state, state.ds.strstart - 1, prev_match, state.ds.prev_length);
-            flush = ct_tally(state, state.ds.strstart - 1 - prev_match, state.ds.prev_length - MIN_MATCH);
+            check_match(state,state.ds.strstart-1, prev_match, state.ds.prev_length);
+            flush = ct_tally(state,state.ds.strstart-1-prev_match, state.ds.prev_length - MIN_MATCH);
 
             /* Insert in hash table all strings up to the end of the match.
              * strstart-1 and strstart are already inserted.
              */
-            state.ds.lookahead -= state.ds.prev_length - 1;
+            state.ds.lookahead -= state.ds.prev_length-1;
             state.ds.prev_length -= 2;
             do {
                 if (++state.ds.strstart <= max_insert) {
@@ -1967,23 +1964,21 @@ ulg deflate(TState& state)
             } while (--state.ds.prev_length != 0);
             state.ds.strstart++;
             match_available = 0;
-            match_length = MIN_MATCH - 1;
+            match_length = MIN_MATCH-1;
 
-            if (flush) FLUSH_BLOCK(state, 0), state.ds.block_start = state.ds.strstart;
+            if (flush) FLUSH_BLOCK(state,0), state.ds.block_start = state.ds.strstart;
 
-        }
-        else if (match_available) {
+        } else if (match_available) {
             /* If there was no match at the previous position, output a
              * single literal. If there was a match but the current match
              * is longer, truncate the previous match to a single literal.
              */
-            if (ct_tally(state, 0, state.ds.window[state.ds.strstart - 1])) {
-                FLUSH_BLOCK(state, 0), state.ds.block_start = state.ds.strstart;
+            if (ct_tally (state,0, state.ds.window[state.ds.strstart-1])) {
+                FLUSH_BLOCK(state,0), state.ds.block_start = state.ds.strstart;
             }
             state.ds.strstart++;
             state.ds.lookahead--;
-        }
-        else {
+        } else {
             /* There is no previous match to compare with, wait for
              * the next step to decide.
              */
@@ -1991,18 +1986,18 @@ ulg deflate(TState& state)
             state.ds.strstart++;
             state.ds.lookahead--;
         }
-        //        Assert(state,strstart <= isize && lookahead <= isize, "a bit too far");
+//        Assert(state,strstart <= isize && lookahead <= isize, "a bit too far");
 
-                /* Make sure that we always have enough lookahead, except
-                 * at the end of the input file. We need MAX_MATCH bytes
-                 * for the next match, plus MIN_MATCH bytes to insert the
-                 * string following the next match.
-                 */
+        /* Make sure that we always have enough lookahead, except
+         * at the end of the input file. We need MAX_MATCH bytes
+         * for the next match, plus MIN_MATCH bytes to insert the
+         * string following the next match.
+         */
         if (state.ds.lookahead < MIN_LOOKAHEAD) fill_window(state);
     }
-    if (match_available) ct_tally(state, 0, state.ds.window[state.ds.strstart - 1]);
+    if (match_available) ct_tally (state,0, state.ds.window[state.ds.strstart-1]);
 
-    return FLUSH_BLOCK(state, 1); /* eof */
+    return FLUSH_BLOCK(state,1); /* eof */
 }
 
 
@@ -2016,76 +2011,75 @@ ulg deflate(TState& state)
 
 
 
-int putlocal(struct zlist far* z, WRITEFUNC wfunc, void* param)
+int putlocal(struct zlist far *z, WRITEFUNC wfunc,void *param)
 { // Write a local header described by *z to file *f.  Return a ZE_ error code.
-    PUTLG(LOCSIG, f);
-    PUTSH(z->ver, f);
-    PUTSH(z->lflg, f);
-    PUTSH(z->how, f);
-    PUTLG(z->tim, f);
-    PUTLG(z->crc, f);
-    PUTLG(z->siz, f);
-    PUTLG(z->len, f);
-    PUTSH(z->nam, f);
-    PUTSH(z->ext, f);
-    size_t res = (size_t)wfunc(param, z->iname, (unsigned int)z->nam);
-    if (res != z->nam) return ZE_TEMP;
-    if (z->ext)
-    {
-        res = (size_t)wfunc(param, z->extra, (unsigned int)z->ext);
-        if (res != z->ext) return ZE_TEMP;
-    }
-    return ZE_OK;
+  PUTLG(LOCSIG, f);
+  PUTSH(z->ver, f);
+  PUTSH(z->lflg, f);
+  PUTSH(z->how, f);
+  PUTLG(z->tim, f);
+  PUTLG(z->crc, f);
+  PUTLG(z->siz, f);
+  PUTLG(z->len, f);
+  PUTSH(z->nam, f);
+  PUTSH(z->ext, f);
+  size_t res = (size_t)wfunc(param, z->iname, (unsigned int)z->nam);
+  if (res!=z->nam) return ZE_TEMP;
+  if (z->ext)
+  { res = (size_t)wfunc(param, z->extra, (unsigned int)z->ext);
+    if (res!=z->ext) return ZE_TEMP;
+  }
+  return ZE_OK;
 }
 
-int putextended(struct zlist far* z, WRITEFUNC wfunc, void* param)
+int putextended(struct zlist far *z, WRITEFUNC wfunc, void *param)
 { // Write an extended local header described by *z to file *f. Returns a ZE_ code
-    PUTLG(EXTLOCSIG, f);
-    PUTLG(z->crc, f);
-    PUTLG(z->siz, f);
-    PUTLG(z->len, f);
-    return ZE_OK;
+  PUTLG(EXTLOCSIG, f);
+  PUTLG(z->crc, f);
+  PUTLG(z->siz, f);
+  PUTLG(z->len, f);
+  return ZE_OK;
 }
 
-int putcentral(struct zlist far* z, WRITEFUNC wfunc, void* param)
+int putcentral(struct zlist far *z, WRITEFUNC wfunc, void *param)
 { // Write a central header entry of *z to file *f. Returns a ZE_ code.
-    PUTLG(CENSIG, f);
-    PUTSH(z->vem, f);
-    PUTSH(z->ver, f);
-    PUTSH(z->flg, f);
-    PUTSH(z->how, f);
-    PUTLG(z->tim, f);
-    PUTLG(z->crc, f);
-    PUTLG(z->siz, f);
-    PUTLG(z->len, f);
-    PUTSH(z->nam, f);
-    PUTSH(z->cext, f);
-    PUTSH(z->com, f);
-    PUTSH(z->dsk, f);
-    PUTSH(z->att, f);
-    PUTLG(z->atx, f);
-    PUTLG(z->off, f);
-    if ((size_t)wfunc(param, z->iname, (unsigned int)z->nam) != z->nam ||
-        (z->cext && (size_t)wfunc(param, z->cextra, (unsigned int)z->cext) != z->cext) ||
-        (z->com && (size_t)wfunc(param, z->comment, (unsigned int)z->com) != z->com))
-        return ZE_TEMP;
-    return ZE_OK;
+  PUTLG(CENSIG, f);
+  PUTSH(z->vem, f);
+  PUTSH(z->ver, f);
+  PUTSH(z->flg, f);
+  PUTSH(z->how, f);
+  PUTLG(z->tim, f);
+  PUTLG(z->crc, f);
+  PUTLG(z->siz, f);
+  PUTLG(z->len, f);
+  PUTSH(z->nam, f);
+  PUTSH(z->cext, f);
+  PUTSH(z->com, f);
+  PUTSH(z->dsk, f);
+  PUTSH(z->att, f);
+  PUTLG(z->atx, f);
+  PUTLG(z->off, f);
+  if ((size_t)wfunc(param, z->iname, (unsigned int)z->nam) != z->nam ||
+      (z->cext && (size_t)wfunc(param, z->cextra, (unsigned int)z->cext) != z->cext) ||
+      (z->com && (size_t)wfunc(param, z->comment, (unsigned int)z->com) != z->com))
+    return ZE_TEMP;
+  return ZE_OK;
 }
 
 
-int putend(int n, ulg s, ulg c, size_t m, char* z, WRITEFUNC wfunc, void* param)
+int putend(int n, ulg s, ulg c, extent m, char *z, WRITEFUNC wfunc, void *param)
 { // write the end of the central-directory-data to file *f.
-    PUTLG(ENDSIG, f);
-    PUTSH(0, f);
-    PUTSH(0, f);
-    PUTSH(n, f);
-    PUTSH(n, f);
-    PUTLG(s, f);
-    PUTLG(c, f);
-    PUTSH(m, f);
-    // Write the comment, if any
-    if (m && wfunc(param, z, (unsigned int)m) != m) return ZE_TEMP;
-    return ZE_OK;
+  PUTLG(ENDSIG, f);
+  PUTSH(0, f);
+  PUTSH(0, f);
+  PUTSH(n, f);
+  PUTSH(n, f);
+  PUTLG(s, f);
+  PUTLG(c, f);
+  PUTSH(m, f);
+  // Write the comment, if any
+  if (m && wfunc(param, z, (unsigned int)m) != m) return ZE_TEMP;
+  return ZE_OK;
 }
 
 
@@ -2154,13 +2148,12 @@ const ulg crc_table[256] = {
 #define DO4(buf)  DO2(buf); DO2(buf)
 #define DO8(buf)  DO4(buf); DO4(buf)
 
-ulg crc32(ulg crc, const uch* buf, size_t len)
-{
-    if (buf == NULL) return 0L;
-    crc = crc ^ 0xffffffffL;
-    while (len >= 8) { DO8(buf); len -= 8; }
-    if (len) do { DO1(buf); } while (--len);
-    return crc ^ 0xffffffffL;  // (instead of ~c for 64-bit machines)
+ulg crc32(ulg crc, const uch *buf, extent len)
+{ if (buf==NULL) return 0L;
+  crc = crc ^ 0xffffffffL;
+  while (len >= 8) {DO8(buf); len -= 8;}
+  if (len) do {DO1(buf);} while (--len);
+  return crc ^ 0xffffffffL;  // (instead of ~c for 64-bit machines)
 }
 
 
@@ -2170,109 +2163,124 @@ ulg crc32(ulg crc, const uch* buf, size_t len)
 
 
 
-bool HasZipSuffix(const char* fn)
-{
-    const char* ext = fn + strlen(fn);
-    while (ext > fn && *ext != '.')
-    {
-        ext--;
-    }
-    if (ext == fn && *ext != '.') return false;
-    if (stricmp(ext, ".Z") == 0) return true;
-    if (stricmp(ext, ".zip") == 0) return true;
-    if (stricmp(ext, ".zoo") == 0) return true;
-    if (stricmp(ext, ".arc") == 0) return true;
-    if (stricmp(ext, ".lzh") == 0) return true;
-    if (stricmp(ext, ".arj") == 0) return true;
-    if (stricmp(ext, ".gz") == 0) return true;
-    if (stricmp(ext, ".tgz") == 0) return true;
-    return false;
+bool HasZipSuffix(const char *fn)
+{ const char *ext = fn+strlen(fn);
+  while (ext>fn && *ext!='.') ext--;
+  if (ext==fn && *ext!='.') return false;
+  if (_stricmp(ext,".Z")==0) return true;
+  if (_stricmp(ext,".zip")==0) return true;
+  if (_stricmp(ext,".zoo")==0) return true;
+  if (_stricmp(ext,".arc")==0) return true;
+  if (_stricmp(ext,".lzh")==0) return true;
+  if (_stricmp(ext,".arj")==0) return true;
+  if (_stricmp(ext,".gz")==0) return true;
+  if (_stricmp(ext,".tgz")==0) return true;
+  return false;
 }
 
-
+#ifdef _WIN32
 time_t filetime2timet(const FILETIME ft)
-{
-    SYSTEMTIME st; FileTimeToSystemTime(&ft, &st);
-    if (st.wYear < 1970) { st.wYear = 1970; st.wMonth = 1; st.wDay = 1; }
-    if (st.wYear >= 2038) { st.wYear = 2037; st.wMonth = 12; st.wDay = 31; }
-    struct tm tm;
-    tm.tm_sec = st.wSecond;
-    tm.tm_min = st.wMinute;
-    tm.tm_hour = st.wHour;
-    tm.tm_mday = st.wDay;
-    tm.tm_mon = st.wMonth - 1;
-    tm.tm_year = st.wYear - 1900;
-    tm.tm_isdst = 0;
-    time_t t = mktime(&tm);
-    return t;
+{ SYSTEMTIME st; FileTimeToSystemTime(&ft,&st);
+  if (st.wYear<1970) {st.wYear=1970; st.wMonth=1; st.wDay=1;}
+  if (st.wYear>=2038) {st.wYear=2037; st.wMonth=12; st.wDay=31;}
+  struct tm tm;
+  tm.tm_sec = st.wSecond;
+  tm.tm_min = st.wMinute;
+  tm.tm_hour = st.wHour;
+  tm.tm_mday = st.wDay;
+  tm.tm_mon = st.wMonth-1;
+  tm.tm_year = st.wYear-1900;
+  tm.tm_isdst = 0;
+  time_t t = mktime(&tm);
+  return t;
 }
 
-
-ZRESULT GetFileInfo(HANDLE hf, ulg* attr, long* size, iztimes* times, ulg* timestamp)
-{
-    DWORD type = GetFileType(hf);
-    if (type != FILE_TYPE_DISK)
-        return ZR_NOTINITED;
-    // The handle must be a handle to a file
-    // The date and time is returned in a long with the date most significant to allow
-    // unsigned integer comparison of absolute times. The attributes have two
-    // high bytes unix attr, and two low bytes a mapping of that to DOS attr.
-    //struct stat s; int res=stat(fn,&s); if (res!=0) return false;
-    // translate windows file attributes into zip ones.
-    BY_HANDLE_FILE_INFORMATION bhi;
-    BOOL res = GetFileInformationByHandle(hf, &bhi);
-    if (!res)
-        return ZR_NOFILE;
-    DWORD fa = bhi.dwFileAttributes;
-    ulg a = 0;
-    // Zip uses the lower word for its interpretation of windows stuff
-    if (fa & FILE_ATTRIBUTE_READONLY) a |= 0x01;
-    if (fa & FILE_ATTRIBUTE_HIDDEN)   a |= 0x02;
-    if (fa & FILE_ATTRIBUTE_SYSTEM)   a |= 0x04;
-    if (fa & FILE_ATTRIBUTE_DIRECTORY)a |= 0x10;
-    if (fa & FILE_ATTRIBUTE_ARCHIVE)  a |= 0x20;
-    // It uses the upper word for standard unix attr, which we must manually construct
-    if (fa & FILE_ATTRIBUTE_DIRECTORY)a |= 0x40000000;  // directory
-    else a |= 0x80000000;  // normal file
-    a |= 0x01000000;      // readable
-    if (fa & FILE_ATTRIBUTE_READONLY) {}
-    else a |= 0x00800000; // writeable
-    // now just a small heuristic to check if it's an executable:
-    DWORD red, hsize = GetFileSize(hf, NULL); if (hsize > 40)
-    {
-        SetFilePointer(hf, 0, NULL, FILE_BEGIN); unsigned short magic; ReadFile(hf, &magic, sizeof(magic), &red, NULL);
-        SetFilePointer(hf, 36, NULL, FILE_BEGIN); unsigned long hpos;  ReadFile(hf, &hpos, sizeof(hpos), &red, NULL);
-        if (magic == 0x54AD && hsize > hpos + 4 + 20 + 28)
-        {
-            SetFilePointer(hf, hpos, NULL, FILE_BEGIN); unsigned long signature; ReadFile(hf, &signature, sizeof(signature), &red, NULL);
-            if (signature == IMAGE_DOS_SIGNATURE || signature == IMAGE_OS2_SIGNATURE
-                || signature == IMAGE_OS2_SIGNATURE_LE || signature == IMAGE_NT_SIGNATURE)
-            {
-                a |= 0x00400000; // executable
-            }
-        }
+ZRESULT GetFileInfo(HANDLE hf, ulg *attr, long *size, iztimes *times, ulg *timestamp)
+{ 
+  DWORD type=GetFileType(hf);
+  if (type!=FILE_TYPE_DISK) 
+	  return ZR_NOTINITED;
+  // The handle must be a handle to a file
+  // The date and time is returned in a long with the date most significant to allow
+  // unsigned integer comparison of absolute times. The attributes have two
+  // high bytes unix attr, and two low bytes a mapping of that to DOS attr.
+  //struct stat s; int res=stat(fn,&s); if (res!=0) return false;
+  // translate windows file attributes into zip ones.
+  BY_HANDLE_FILE_INFORMATION bhi; 
+  BOOL res=GetFileInformationByHandle(hf,&bhi);
+  if (!res) 
+	  return ZR_NOFILE;
+  FileTimeToLocalFileTime( &bhi.ftLastAccessTime, &bhi.ftLastAccessTime );
+  FileTimeToLocalFileTime( &bhi.ftLastWriteTime, &bhi.ftLastWriteTime );
+  FileTimeToLocalFileTime( &bhi.ftCreationTime, &bhi.ftCreationTime );
+  DWORD fa=bhi.dwFileAttributes; 
+  ulg a=0;
+  // Zip uses the lower word for its interpretation of windows stuff
+  if (fa&FILE_ATTRIBUTE_READONLY) a|=0x01;
+  if (fa&FILE_ATTRIBUTE_HIDDEN)   a|=0x02;
+  if (fa&FILE_ATTRIBUTE_SYSTEM)   a|=0x04;
+  if (fa&FILE_ATTRIBUTE_DIRECTORY)a|=0x10;
+  if (fa&FILE_ATTRIBUTE_ARCHIVE)  a|=0x20;
+  // It uses the upper word for standard unix attr, which we must manually construct
+  if (fa&FILE_ATTRIBUTE_DIRECTORY)a|=0x40000000;  // directory
+  else a|=0x80000000;  // normal file
+  a|=0x01000000;      // readable
+  if (fa&FILE_ATTRIBUTE_READONLY) {}
+  else a|=0x00800000; // writeable
+  // now just a small heuristic to check if it's an executable:
+  DWORD red, hsize=GetFileSize(hf,NULL); if (hsize>40)
+  { SetFilePointer(hf,0,NULL,FILE_BEGIN); unsigned short magic; ReadFile(hf,&magic,sizeof(magic),&red,NULL);
+    SetFilePointer(hf,36,NULL,FILE_BEGIN); unsigned long hpos;  ReadFile(hf,&hpos,sizeof(hpos),&red,NULL);
+    if (magic==0x54AD && hsize>hpos+4+20+28)
+    { SetFilePointer(hf,hpos,NULL,FILE_BEGIN); unsigned long signature; ReadFile(hf,&signature,sizeof(signature),&red,NULL);
+      if (signature==IMAGE_DOS_SIGNATURE || signature==IMAGE_OS2_SIGNATURE
+         || signature==IMAGE_OS2_SIGNATURE_LE || signature==IMAGE_NT_SIGNATURE)
+      { a |= 0x00400000; // executable
+      }
     }
-    //
-    if (attr != NULL) *attr = a;
-    if (size != NULL) *size = hsize;
-    if (times != NULL)
-    { // time_t is 32bit number of seconds elapsed since 0:0:0GMT, Jan1, 1970.
-      // but FILETIME is 64bit number of 100-nanosecs since Jan1, 1601
-        times->atime = filetime2timet(bhi.ftLastAccessTime);
-        times->mtime = filetime2timet(bhi.ftLastWriteTime);
-        times->ctime = filetime2timet(bhi.ftCreationTime);
-    }
-    if (timestamp != NULL)
-    {
-        WORD dosdate, dostime;
-        FileTimeToDosDateTime(&bhi.ftLastWriteTime, &dosdate, &dostime);
-        *timestamp = (WORD)dostime | (((DWORD)dosdate) << 16);
-    }
-    return ZR_OK;
+  }
+  //
+  if (attr!=NULL) *attr = a;
+  if (size!=NULL) *size = hsize;
+  if (times!=NULL)
+  { // time_t is 32bit number of seconds elapsed since 0:0:0GMT, Jan1, 1970.
+    // but FILETIME is 64bit number of 100-nanosecs since Jan1, 1601
+    times->atime = filetime2timet(bhi.ftLastAccessTime);
+    times->mtime = filetime2timet(bhi.ftLastWriteTime);
+    times->ctime = filetime2timet(bhi.ftCreationTime);
+  }
+  if (timestamp!=NULL)
+  { WORD dosdate,dostime;
+    FileTimeToDosDateTime(&bhi.ftLastWriteTime,&dosdate,&dostime);
+    *timestamp = (WORD)dostime | (((DWORD)dosdate)<<16);
+  }
+  return ZR_OK;
 }
+#endif
 
-
-
+#ifndef _WIN32
+int timet_to_timestamp( time_t time )
+{
+	struct tm *tm;
+	tm = localtime( &time );
+	if ( !tm )
+		return 0;
+	
+	int date = 0;
+	
+	date |= ( ( ( tm->tm_year & 0x7f ) + ( 1900 - 1980 ) ) << 9 );
+	date |= ( ( ( tm->tm_mon & 0x0f ) + 1 ) << 5 );
+	date |= ( ( ( tm->tm_mday & 0x1f ) ) );
+	
+	int timepart = 0;
+	
+	timepart |= ( ( ( tm->tm_hour & 0x1f ) ) << 11 );
+	timepart |= ( ( ( tm->tm_min & 0x3f ) ) << 5 );
+	timepart |= ( ( ( tm->tm_sec & 0x3e ) ) >> 1 );
+	
+	return time | (date << 16 );
+}
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2280,711 +2288,734 @@ ZRESULT GetFileInfo(HANDLE hf, ulg* attr, long* size, iztimes* times, ulg* times
 ///////////////////////////////////////////////////////////////////////////////
 
 class TZip
-{
-public:
-    TZip() : hfout(0), hmapout(0), zfis(0), obuf(0), hfin(0), writ(0), oerr(false), hasputcen(false), ooffset(0) {}
-    ~TZip() {}
+{ public:
+  TZip() : hfout(0),hmapout(0),zfis(0),obuf(0),hfin(0),writ(0),oerr(false),hasputcen(false),ooffset(0) {}
+  ~TZip() {}
 
-    // These variables say about the file we're writing into
-    // We can write to pipe, file-by-handle, file-by-name, memory-to-memmapfile
-    HANDLE hfout;             // if valid, we'll write here (for files or pipes)
-    HANDLE hmapout;           // otherwise, we'll write here (for memmap)
-    unsigned ooffset;         // for hfout, this is where the pointer was initially
-    ZRESULT oerr;             // did a write operation give rise to an error?
-    unsigned writ;            // how far have we written. This is maintained by Add, not write(), to avoid confusion over seeks
-    bool ocanseek;            // can we seek?
-    char* obuf;               // this is where we've locked mmap to view.
-    unsigned int opos;        // current pos in the mmap
-    unsigned int mapsize;     // the size of the map we created
-    bool hasputcen;           // have we yet placed the central directory?
-    //
-    TZipFileInfo* zfis;       // each file gets added onto this list, for writing the table at the end
+  // These variables say about the file we're writing into
+  // We can write to pipe, file-by-handle, file-by-name, memory-to-memmapfile
+  HANDLE hfout;             // if valid, we'll write here (for files or pipes)
+  HANDLE hmapout;           // otherwise, we'll write here (for memmap)
+  unsigned ooffset;         // for hfout, this is where the pointer was initially
+  ZRESULT oerr;             // did a write operation give rise to an error?
+  unsigned writ;            // how far have we written. This is maintained by Add, not write(), to avoid confusion over seeks
+  bool ocanseek;            // can we seek?
+  char *obuf;               // this is where we've locked mmap to view.
+  unsigned int opos;        // current pos in the mmap
+  unsigned int mapsize;     // the size of the map we created
+  bool hasputcen;           // have we yet placed the central directory?
+  //
+  TZipFileInfo *zfis;       // each file gets added onto this list, for writing the table at the end
 
-    ZRESULT Create(void* z, unsigned int len, DWORD flags);
-    static unsigned sflush(void* param, const char* buf, unsigned* size);
-    static unsigned swrite(void* param, const char* buf, unsigned size);
-    unsigned int write(const char* buf, unsigned int size);
-    bool oseek(unsigned int pos);
-    ZRESULT GetMemory(void** pbuf, unsigned long* plen);
-    ZRESULT Close();
+  ZRESULT Create(void *z,unsigned int len,DWORD flags);
+  static unsigned sflush(void *param,const char *buf, unsigned *size);
+  static unsigned swrite(void *param,const char *buf, unsigned size);
+  unsigned int write(const char *buf,unsigned int size);
+  bool oseek(unsigned int pos);
+  ZRESULT GetMemory(void **pbuf, unsigned long *plen);
+  ZRESULT Close();
 
-    // some variables to do with the file currently being read:
-    // I haven't done it object-orientedly here, just put them all
-    // together, since OO didn't seem to make the design any clearer.
-    ulg attr; iztimes times; ulg timestamp;  // all open_* methods set these
-    bool iseekable; long isize, ired;         // size is not set until close() on pips
-    ulg crc;                                 // crc is not set until close(). iwrit is cumulative
-    HANDLE hfin; bool selfclosehf;           // for input files and pipes
-    const char* bufin; unsigned int lenin, posin; // for memory
-    // and a variable for what we've done with the input: (i.e. compressed it!)
-    ulg csize;                               // compressed size, set by the compression routines
-    // and this is used by some of the compression routines
-    char buf[16384];
+  // some variables to do with the file currently being read:
+  // I haven't done it object-orientedly here, just put them all
+  // together, since OO didn't seem to make the design any clearer.
+  ulg attr; iztimes times; ulg timestamp;  // all open_* methods set these
+  bool iseekable; long isize,ired;         // size is not set until close() on pips
+  ulg crc;                                 // crc is not set until close(). iwrit is cumulative
+  HANDLE hfin; bool selfclosehf;           // for input files and pipes
+  const char *bufin; unsigned int lenin,posin; // for memory
+  // and a variable for what we've done with the input: (i.e. compressed it!)
+  ulg csize;                               // compressed size, set by the compression routines
+  // and this is used by some of the compression routines
+  char buf[16384];
 
 
-    ZRESULT open_file(const TCHAR* fn);
-    ZRESULT open_handle(HANDLE hf, unsigned int len);
-    ZRESULT open_mem(void* src, unsigned int len);
-    ZRESULT open_dir();
-    static unsigned sread(TState& s, char* buf, unsigned size);
-    unsigned read(char* buf, unsigned size);
-    ZRESULT iclose();
+  ZRESULT open_file(const TCHAR *fn);
+  ZRESULT open_handle(HANDLE hf,unsigned int len);
+  ZRESULT open_mem(void *src,unsigned int len);
+  ZRESULT open_dir();
+  static unsigned sread(TState &s,char *buf,unsigned size);
+  unsigned read(char *buf, unsigned size);
+  ZRESULT iclose();
 
-    ZRESULT ideflate(TZipFileInfo* zfi);
-    ZRESULT istore();
+  ZRESULT ideflate(TZipFileInfo *zfi);
+  ZRESULT istore();
 
-    ZRESULT Add(const char* odstzn, void* src, unsigned int len, DWORD flags);
-    ZRESULT AddCentral();
+  ZRESULT Add(const char *odstzn, void *src,unsigned int len, DWORD flags);
+  ZRESULT AddCentral();
 
 };
 
-ZRESULT TZip::Create(void* z, unsigned int len, DWORD flags)
-{
-    if (hfout != 0 || hmapout != 0 || obuf != 0 || writ != 0 || oerr != ZR_OK || hasputcen)
-        return ZR_NOTINITED;
-    //
-    if (flags == ZIP_HANDLE)
-    {
-        HANDLE hf = (HANDLE)z;
-        BOOL res = DuplicateHandle(GetCurrentProcess(), hf, GetCurrentProcess(), &hfout, 0, FALSE, DUPLICATE_SAME_ACCESS);
-        if (!res)
-            return ZR_NODUPH;
-        // now we have our own hfout, which we must close. And the caller will close hf
-        DWORD type = GetFileType(hfout);
-        ocanseek = (type == FILE_TYPE_DISK);
-        if (type == FILE_TYPE_DISK)
-            ooffset = SetFilePointer(hfout, 0, NULL, FILE_CURRENT);
-        else
-            ooffset = 0;
-        return ZR_OK;
-    }
-    else if (flags == ZIP_FILENAME)
-    {
+ZRESULT TZip::Create(void *z,unsigned int len,DWORD flags)
+{ 
+	if (hfout!=0 || hmapout!=0 || obuf!=0 || writ!=0 || oerr!=ZR_OK || hasputcen) 
+		return ZR_NOTINITED;
+	//
+	if (flags==ZIP_MEMORY)
+	{ 
+		if (len==0) 
+			return ZR_MEMSIZE;
+		if (z!=0) 
+			obuf=(char*)z;
+		else
+		{ 
+#ifdef _WIN32
+			hmapout = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,len,NULL);
+			if (hmapout==NULL) 
+				return ZR_NOALLOC;
+			obuf = (char*)MapViewOfFile(hmapout,FILE_MAP_ALL_ACCESS,0,0,len);
+			if (obuf==0) 
+			{
+				CloseHandle(hmapout); 
+				hmapout=0; 
+				return ZR_NOALLOC;
+			}
+#endif
+#ifdef POSIX
+			obuf = (char*) calloc( len, 1 );
+			hmapout = (void*)-1; // sentinel to let close know it's a file in posix.
+			if ( !obuf )
+				return ZR_NOALLOC;
+#endif
+		}
+		ocanseek=true;
+		opos=0; 
+		mapsize=len;
+		return ZR_OK;
+	}
+#ifdef _WIN32
+	else if (flags==ZIP_HANDLE)
+	{ 
+		HANDLE hf = (HANDLE)z;
+		BOOL res = DuplicateHandle(GetCurrentProcess(),hf,GetCurrentProcess(),&hfout,0,FALSE,DUPLICATE_SAME_ACCESS);
+		if (!res) 
+			return ZR_NODUPH;
+		// now we have our own hfout, which we must close. And the caller will close hf
+		DWORD type = GetFileType(hfout);
+		ocanseek = (type==FILE_TYPE_DISK);
+		if (type==FILE_TYPE_DISK) 
+			ooffset=SetFilePointer(hfout,0,NULL,FILE_CURRENT);
+		else 
+			ooffset=0;
+		return ZR_OK;
+	}
+	else if (flags==ZIP_FILENAME)
+	{ 
 #ifdef _UNICODE
-        const TCHAR* fn = (const TCHAR*)z;
-        hfout = CreateFileW(fn, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		const TCHAR *fn = (const TCHAR*)z;
+		hfout = CreateFileW(fn,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
 #else
-        const char* fn = (const char*)z;
-        hfout = CreateFileA(fn, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		const char *fn = (const char*)z;
+		hfout = CreateFileA(fn,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
 #endif
 
-        if (hfout == INVALID_HANDLE_VALUE)
-        {
-            hfout = 0;
-            return ZR_NOFILE;
-        }
-        ocanseek = true;
-        ooffset = 0;
-        return ZR_OK;
-    }
-#ifndef _XBOX
-    else if (flags == ZIP_MEMORY)
-    {
-        unsigned int size = len;
-        if (size == 0)
-            return ZR_MEMSIZE;
-        if (z != 0)
-            obuf = (char*)z;
-        else
-        {
-            hmapout = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, size, NULL);
-            if (hmapout == NULL)
-                return ZR_NOALLOC;
-            obuf = (char*)MapViewOfFile(hmapout, FILE_MAP_ALL_ACCESS, 0, 0, size);
-            if (obuf == 0)
-            {
-                CloseHandle(hmapout);
-                hmapout = 0;
-                return ZR_NOALLOC;
-            }
-        }
-        ocanseek = true;
-        opos = 0;
-        mapsize = size;
-        return ZR_OK;
-    }
+		if (hfout==INVALID_HANDLE_VALUE) 
+		{
+			hfout=0;
+			return ZR_NOFILE;
+		}
+		ocanseek=true;
+		ooffset=0;
+		return ZR_OK;
+	}
 #endif
-    else
-        return ZR_ARGS;
+	else 
+		return ZR_ARGS;
 }
 
 
-unsigned TZip::sflush(void* param, const char* buf, unsigned* size)
+unsigned TZip::sflush(void *param,const char *buf, unsigned *size)
 { // static
-    if (*size == 0) return 0;
-    TZip* zip = (TZip*)param;
-    unsigned int writ = zip->write(buf, *size);
-    if (writ != 0) *size = 0;
-    return writ;
+  if (*size==0) return 0;
+  TZip *zip = (TZip*)param;
+  unsigned int writ = zip->write(buf,*size);
+  if (writ!=0) *size=0;
+  return writ;
 }
-unsigned TZip::swrite(void* param, const char* buf, unsigned size)
+unsigned TZip::swrite(void *param,const char *buf, unsigned size)
 { // static
-    if (size == 0) return 0;
-    TZip* zip = (TZip*)param; return zip->write(buf, size);
+  if (size==0) return 0;
+  TZip *zip=(TZip*)param; return zip->write(buf,size);
 }
-unsigned int TZip::write(const char* buf, unsigned int size)
-{
-    if (obuf != 0)
-    {
-        if (opos + size >= mapsize) { oerr = ZR_MEMSIZE; return 0; }
-        memcpy(obuf + opos, buf, size);
-        opos += size;
-        return size;
-    }
-    else if (hfout != 0)
-    {
-        DWORD writ; WriteFile(hfout, buf, size, &writ, NULL);
-        return writ;
-    }
-    oerr = ZR_NOTINITED; return 0;
+unsigned int TZip::write(const char *pBuf,unsigned int size)
+{ if (obuf!=0)
+  { if (opos+size>=mapsize) {oerr=ZR_MEMSIZE; return 0;}
+    memcpy(obuf+opos, pBuf, size);
+    opos+=size;
+    return size;
+  }
+#ifdef _WIN32
+  else if (hfout!=0)
+  { DWORD writF; WriteFile(hfout, pBuf,size,&writF,NULL);
+    return writF;
+  }
+#endif
+  oerr=ZR_NOTINITED; return 0;
 }
 
 bool TZip::oseek(unsigned int pos)
-{
-    if (!ocanseek) { oerr = ZR_SEEK; return false; }
-    if (obuf != 0)
-    {
-        if (pos >= mapsize) { oerr = ZR_MEMSIZE; return false; }
-        opos = pos;
-        return true;
-    }
-    else if (hfout != 0)
-    {
-        SetFilePointer(hfout, pos + ooffset, NULL, FILE_BEGIN);
-        return true;
-    }
-    oerr = ZR_NOTINITED; return 0;
+{ if (!ocanseek) {oerr=ZR_SEEK; return false;}
+  if (obuf!=0)
+  { if (pos>=mapsize) {oerr=ZR_MEMSIZE; return false;}
+    opos=pos;
+    return true;
+  }
+#ifdef _WIN32
+  else if (hfout!=0)
+  { SetFilePointer(hfout,pos+ooffset,NULL,FILE_BEGIN);
+    return true;
+  }
+#endif
+  oerr=ZR_NOTINITED; return 0;
 }
 
-ZRESULT TZip::GetMemory(void** pbuf, unsigned long* plen)
+ZRESULT TZip::GetMemory(void **pbuf, unsigned long *plen)
 { // When the user calls GetMemory, they're presumably at the end
   // of all their adding. In any case, we have to add the central
   // directory now, otherwise the memory we tell them won't be complete.
-    if (!hasputcen) AddCentral(); hasputcen = true;
-    if (pbuf != NULL) *pbuf = (void*)obuf;
-    if (plen != NULL) *plen = writ;
-    if (obuf == NULL) return ZR_NOTMMAP;
-    return ZR_OK;
+  if (!hasputcen) { AddCentral(); hasputcen=true; }
+  if (pbuf!=NULL) *pbuf=(void*)obuf;
+  if (plen!=NULL) *plen=writ;
+  if (obuf==NULL) return ZR_NOTMMAP;
+  return ZR_OK;
 }
 
 ZRESULT TZip::Close()
 { // if the directory hadn't already been added through a call to GetMemory,
   // then we do it now
-    ZRESULT res = ZR_OK; if (!hasputcen) res = AddCentral(); hasputcen = true;
-#ifndef _XBOX
-    if (obuf != 0 && hmapout != 0) UnmapViewOfFile(obuf); obuf = 0;
+  ZRESULT res=ZR_OK; if (!hasputcen) res=AddCentral(); hasputcen=true;
+  if (obuf!=0 && hmapout!=0) 
+#ifdef _WIN32
+    UnmapViewOfFile(obuf); 
+#elif defined( POSIX )
+	free(obuf);
 #endif
-    if (hmapout != 0) CloseHandle(hmapout); hmapout = 0;
-    if (hfout != 0) CloseHandle(hfout); hfout = 0;
+  obuf=0;
+#ifdef _WIN32
+  if (hmapout!=0) CloseHandle(hmapout); hmapout=0;
+  if (hfout!=0) CloseHandle(hfout); hfout=0;
+#endif
+  return res;
+}
+
+
+
+
+ZRESULT TZip::open_file(const TCHAR *fn)
+{ hfin=0; bufin=0; selfclosehf=false; crc=CRCVAL_INITIAL; isize=0; csize=0; ired=0;
+  if (fn==0) return ZR_ARGS;
+  HANDLE hf = INVALID_HANDLE_VALUE;
+#ifdef _WIN32
+  hf = CreateFile(fn,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
+#endif
+  if (hf==INVALID_HANDLE_VALUE) return ZR_NOFILE;
+  ZRESULT res = open_handle(hf,0);
+  if (res!=ZR_OK) {
+#ifdef _WIN32
+    CloseHandle(hf); 
+#endif
     return res;
+  }
+  selfclosehf=true;
+  return ZR_OK;
 }
-
-
-
-
-ZRESULT TZip::open_file(const TCHAR* fn)
-{
-    hfin = 0; bufin = 0; selfclosehf = false; crc = CRCVAL_INITIAL; isize = 0; csize = 0; ired = 0;
-    if (fn == 0) return ZR_ARGS;
-    HANDLE hf = CreateFile(fn, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    if (hf == INVALID_HANDLE_VALUE) return ZR_NOFILE;
-    ZRESULT res = open_handle(hf, 0);
-    if (res != ZR_OK) { CloseHandle(hf); return res; }
-    selfclosehf = true;
+ZRESULT TZip::open_handle(HANDLE hf,unsigned int len)
+{ hfin=0; bufin=0; selfclosehf=false; crc=CRCVAL_INITIAL; isize=0; csize=0; ired=0;
+  if (hf==0 || hf==INVALID_HANDLE_VALUE) return ZR_ARGS;
+#ifdef _WIN32
+  DWORD type = GetFileType(hf);
+  if (type==FILE_TYPE_DISK)
+  { ZRESULT res = GetFileInfo(hf,&attr,&isize,&times,&timestamp);
+    if (res!=ZR_OK) return res;
+    SetFilePointer(hf,0,NULL,FILE_BEGIN); // because GetFileInfo will have screwed it up
+    iseekable=true; hfin=hf;
     return ZR_OK;
-}
-ZRESULT TZip::open_handle(HANDLE hf, unsigned int len)
-{
-    hfin = 0; bufin = 0; selfclosehf = false; crc = CRCVAL_INITIAL; isize = 0; csize = 0; ired = 0;
-    if (hf == 0 || hf == INVALID_HANDLE_VALUE) return ZR_ARGS;
-    DWORD type = GetFileType(hf);
-    if (type == FILE_TYPE_DISK)
-    {
-        ZRESULT res = GetFileInfo(hf, &attr, &isize, &times, &timestamp);
-        if (res != ZR_OK) return res;
-        SetFilePointer(hf, 0, NULL, FILE_BEGIN); // because GetFileInfo will have screwed it up
-        iseekable = true; hfin = hf;
-        return ZR_OK;
-    }
-    else
-    {
-        attr = 0x80000000;      // just a normal file
-        isize = -1;            // can't know size until at the end
-        if (len != 0) isize = len; // unless we were told explicitly!
-        iseekable = false;
-        SYSTEMTIME st; GetLocalTime(&st);
-        FILETIME ft;   SystemTimeToFileTime(&st, &ft);
-        WORD dosdate, dostime; FileTimeToDosDateTime(&ft, &dosdate, &dostime);
-        times.atime = filetime2timet(ft);
-        times.mtime = times.atime;
-        times.ctime = times.atime;
-        timestamp = (WORD)dostime | (((DWORD)dosdate) << 16);
-        hfin = hf;
-        return ZR_OK;
-    }
-}
-ZRESULT TZip::open_mem(void* src, unsigned int len)
-{
-    hfin = 0; bufin = (const char*)src; selfclosehf = false; crc = CRCVAL_INITIAL; ired = 0; csize = 0; ired = 0;
-    lenin = len; posin = 0;
-    if (src == 0 || len == 0) return ZR_ARGS;
-    attr = 0x80000000; // just a normal file
-    isize = len;
-    iseekable = true;
+  }
+  else
+  { attr= 0x80000000;      // just a normal file
+    isize = -1;            // can't know size until at the end
+    if (len!=0) isize=len; // unless we were told explicitly!
+    iseekable=false;
     SYSTEMTIME st; GetLocalTime(&st);
-    FILETIME ft;   SystemTimeToFileTime(&st, &ft);
-    WORD dosdate, dostime; FileTimeToDosDateTime(&ft, &dosdate, &dostime);
+    FILETIME ft;   SystemTimeToFileTime(&st,&ft);
+    WORD dosdate,dostime; FileTimeToDosDateTime(&ft,&dosdate,&dostime);
     times.atime = filetime2timet(ft);
     times.mtime = times.atime;
     times.ctime = times.atime;
-    timestamp = (WORD)dostime | (((DWORD)dosdate) << 16);
+    timestamp = (WORD)dostime | (((DWORD)dosdate)<<16);
+    hfin=hf;
     return ZR_OK;
+  }
+#else
+  return ZR_FAILED;
+#endif
 }
+
+ZRESULT TZip::open_mem(void *src,unsigned int len)
+{ hfin=0; bufin=(const char*)src; selfclosehf=false; crc=CRCVAL_INITIAL; ired=0; csize=0; ired=0;
+  lenin=len; posin=0;
+  if (src==0 || len==0) return ZR_ARGS;
+#ifdef _WIN32
+  attr= 0x80000000; // just a normal file
+  isize = len;
+  iseekable=true;
+  SYSTEMTIME st; GetLocalTime(&st);
+  FILETIME ft;   SystemTimeToFileTime(&st,&ft);
+  WORD dosdate,dostime; FileTimeToDosDateTime(&ft,&dosdate,&dostime);
+  times.atime = filetime2timet(ft);
+  times.mtime = times.atime;
+  times.ctime = times.atime;
+  timestamp = (WORD)dostime | (((DWORD)dosdate)<<16);
+  return ZR_OK;
+#else
+	times.atime = time(NULL);
+	times.mtime = times.atime;
+	times.ctime = times.atime;
+	timestamp = timet_to_timestamp( times.atime );
+	return ZR_OK;
+#endif
+}
+
 ZRESULT TZip::open_dir()
-{
-    hfin = 0; bufin = 0; selfclosehf = false; crc = CRCVAL_INITIAL; isize = 0; csize = 0; ired = 0;
-    attr = 0x41C00010; // a readable writable directory, and again directory
-    isize = 0;
-    iseekable = false;
-    SYSTEMTIME st; GetLocalTime(&st);
-    FILETIME ft;   SystemTimeToFileTime(&st, &ft);
-    WORD dosdate, dostime; FileTimeToDosDateTime(&ft, &dosdate, &dostime);
-    times.atime = filetime2timet(ft);
-    times.mtime = times.atime;
-    times.ctime = times.atime;
-    timestamp = (WORD)dostime | (((DWORD)dosdate) << 16);
-    return ZR_OK;
+{ hfin=0; bufin=0; selfclosehf=false; crc=CRCVAL_INITIAL; isize=0; csize=0; ired=0;
+#ifdef _WIN32
+  attr= 0x41C00010; // a readable writable directory, and again directory
+  isize = 0;
+  iseekable=false;
+  SYSTEMTIME st; GetLocalTime(&st);
+  FILETIME ft;   SystemTimeToFileTime(&st,&ft);
+  WORD dosdate,dostime; FileTimeToDosDateTime(&ft,&dosdate,&dostime);
+  times.atime = filetime2timet(ft);
+  times.mtime = times.atime;
+  times.ctime = times.atime;
+  timestamp = (WORD)dostime | (((DWORD)dosdate)<<16);
+  return ZR_OK;
+#else
+	times.atime = time(NULL);
+	times.mtime = times.atime;
+	times.ctime = times.atime;
+	timestamp = timet_to_timestamp( times.atime );
+	return ZR_OK;
+#endif
 }
 
-unsigned TZip::sread(TState& s, char* buf, unsigned size)
+unsigned TZip::sread(TState &s,char *buf,unsigned size)
 { // static
-    TZip* zip = (TZip*)s.param;
-    return zip->read(buf, size);
+  TZip *zip = (TZip*)s.param;
+  return zip->read(buf,size);
 }
 
-unsigned TZip::read(char* buf, unsigned size)
-{
-    if (bufin != 0)
-    {
-        if (posin >= lenin) return 0; // end of input
-        ulg red = lenin - posin;
-        if (red > size) red = size;
-        memcpy(buf, bufin + posin, red);
-        posin += red;
-        ired += red;
-        crc = crc32(crc, (uch*)buf, red);
-        return red;
-    }
-    else if (hfin != 0)
-    {
-        DWORD red;
-        BOOL ok = ReadFile(hfin, buf, size, &red, NULL);
-        if (!ok) return 0;
-        ired += red;
-        crc = crc32(crc, (uch*)buf, red);
-        return red;
-    }
-    else { oerr = ZR_NOTINITED; return 0; }
+unsigned TZip::read(char *pBuf, unsigned size)
+{ if (bufin!=0)
+  { if (posin>=lenin) return 0; // end of input
+    ulg red = lenin-posin;
+    if (red>size) red=size;
+    memcpy( pBuf, bufin+posin, red);
+    posin += red;
+    ired += red;
+    crc = crc32(crc, (uch*)pBuf, red);
+    return red;
+  }
+#ifdef _WIN32
+  else if (hfin!=0)
+  { DWORD red;
+    BOOL ok = ReadFile(hfin, pBuf,size,&red,NULL);
+    if (!ok) return 0;
+    ired += red;
+    crc = crc32(crc, (uch*)pBuf, red);
+    return red;
+  }
+#endif
+  else {oerr=ZR_NOTINITED; return 0;}
 }
 
 ZRESULT TZip::iclose()
-{
-    if (selfclosehf && hfin != 0) CloseHandle(hfin); hfin = 0;
-    bool mismatch = (isize != -1 && isize != ired);
-    isize = ired; // and crc has been being updated anyway
-    if (mismatch) return ZR_MISSIZE;
-    else return ZR_OK;
+{ 
+#ifdef _WIN32
+  if (selfclosehf && hfin!=0) CloseHandle(hfin); 
+#endif
+  hfin=0;
+  bool mismatch = (isize!=-1 && isize!=ired);
+  isize=ired; // and crc has been being updated anyway
+  if (mismatch) return ZR_MISSIZE;
+  else return ZR_OK;
 }
 
 
 
-ZRESULT TZip::ideflate(TZipFileInfo* zfi)
-{
-    TState state;
-    state.readfunc = sread; state.flush_outbuf = sflush;
-    state.param = this; state.level = 8; state.seekable = iseekable; state.err = NULL;
-    // the following line will make ct_init realise it has to perform the init
-    state.ts.static_dtree[0].dl.len = 0;
-    // It would be nicer if I could figure out precisely which data had to
-    // be initted each time, and which didn't, but that's kind of difficult.
-    // Maybe for the next version...
-    //
-    bi_init(state, buf, sizeof(buf), TRUE); // it used to be just 1024-size, not 16384 as here
-    ct_init(state, &zfi->att);
-    lm_init(state, state.level, &zfi->flg);
-    ulg sz = deflate(state);
-    csize = sz;
-    if (state.err != NULL) return ZR_FLATE;
-    else return ZR_OK;
+ZRESULT TZip::ideflate(TZipFileInfo *zfi)
+{ TState state;
+  state.readfunc=sread; state.flush_outbuf=sflush;
+  state.param=this; state.level=8; state.seekable=iseekable; state.err=NULL;
+  // the following line will make ct_init realise it has to perform the init
+  state.ts.static_dtree[0].dl.len = 0;
+  // It would be nicer if I could figure out precisely which data had to
+  // be initted each time, and which didn't, but that's kind of difficult.
+  // Maybe for the next version...
+  //
+  bi_init(state,buf, sizeof(buf), TRUE); // it used to be just 1024-size, not 16384 as here
+  ct_init(state,&zfi->att);
+  lm_init(state,state.level, &zfi->flg);
+  ulg sz = deflate(state);
+  csize=sz;
+  if (state.err!=NULL) return ZR_FLATE;
+  else return ZR_OK;
 }
 
 ZRESULT TZip::istore()
-{
-    ulg size = 0;
-    for (;;)
-    {
-        unsigned int cin = read(buf, 16384); if (cin <= 0 || cin == (unsigned int)EOF) break;
-        unsigned int cout = write(buf, cin); if (cout != cin) return ZR_MISSIZE;
-        size += cin;
-    }
-    csize = size;
-    return ZR_OK;
+{ ulg size=0;
+  for (;;)
+  { unsigned int cin=read(buf,16384); if (cin<=0 || cin==(unsigned int)EOF) break;
+    unsigned int cout = write(buf,cin); if (cout!=cin) return ZR_MISSIZE;
+    size += cin;
+  }
+  csize=size;
+  return ZR_OK;
 }
 
 
 
 
-ZRESULT TZip::Add(const char* odstzn, void* src, unsigned int len, DWORD flags)
-{
-    if (oerr)
-        return ZR_FAILED;
-    if (hasputcen)
-        return ZR_ENDED;
+ZRESULT TZip::Add(const char *odstzn, void *src,unsigned int len, DWORD flags)
+{ 
+	if (oerr) 
+		return ZR_FAILED;
+	if (hasputcen) 
+		return ZR_ENDED;
 
-    // zip has its own notion of what its names should look like: i.e. dir/file.stuff
-    char dstzn[MAX_PATH];
-    strncpy(dstzn, odstzn, sizeof(dstzn));
-    if (*dstzn == 0)
-        return ZR_ARGS;
-    char* d = dstzn;
-    while (*d != 0)
-    {
-        if (*d == '\\')
-            *d = '/'; d++;
-    }
-    bool isdir = (flags == ZIP_FOLDER);
-    bool needs_trailing_slash = (isdir && dstzn[strlen(dstzn) - 1] != '/');
-    int method = DEFLATE;
-    if (isdir || HasZipSuffix(dstzn))
-        method = STORE;
+	// zip has its own notion of what its names should look like: i.e. dir/file.stuff
+	char dstzn[MAX_PATH]; 
+	strcpy(dstzn, odstzn);
+	if (*dstzn == 0) 
+		return ZR_ARGS;
+	char *d=dstzn; 
+	while (*d != 0) 
+	{
+		if (*d == '\\') 
+			*d = '/';
+		d++;
+	}
+	bool isdir = (flags==ZIP_FOLDER);
+	bool needs_trailing_slash = (isdir && dstzn[strlen(dstzn)-1]!='/');
+	int method=DEFLATE; 
+	if (isdir || HasZipSuffix(dstzn)) 
+		method=STORE;
 
-    // now open whatever was our input source:
-    ZRESULT openres;
-    if (flags == ZIP_FILENAME)
-        openres = open_file((const TCHAR*)src);
-    else if (flags == ZIP_HANDLE)
-        openres = open_handle((HANDLE)src, len);
-    else if (flags == ZIP_MEMORY)
-        openres = open_mem(src, len);
-    else if (flags == ZIP_FOLDER)
-        openres = open_dir();
-    else return ZR_ARGS;
-    if (openres != ZR_OK)
-        return openres;
+	// now open whatever was our input source:
+	ZRESULT openres;
+	if (flags==ZIP_FILENAME) 
+		openres=open_file((const TCHAR*)src);
+	else if (flags==ZIP_HANDLE) 
+		openres=open_handle((HANDLE)src,len);
+	else if (flags==ZIP_MEMORY) 
+		openres=open_mem(src,len);
+	else if (flags==ZIP_FOLDER) 
+		openres=open_dir();
+	else return ZR_ARGS;
+	if (openres!=ZR_OK) 
+		return openres;
 
-    // A zip "entry" consists of a local header (which includes the file name),
-    // then the compressed data, and possibly an extended local header.
+	// A zip "entry" consists of a local header (which includes the file name),
+	// then the compressed data, and possibly an extended local header.
 
-    // Initialize the local header
-    TZipFileInfo zfi; zfi.nxt = NULL;
-    strncpy(zfi.name, "", sizeof(zfi.name));
-    strncpy(zfi.iname, dstzn, sizeof(zfi.iname));
-    zfi.nam = strlen(zfi.iname);
-    if (needs_trailing_slash)
-    {
-        strncat(zfi.iname, "/", sizeof(zfi.iname));
-        zfi.nam++;
-    }
-    strncpy(zfi.zname, "", sizeof(zfi.zname));
-    zfi.extra = NULL; zfi.ext = 0;   // extra header to go after this compressed data, and its length
-    zfi.cextra = NULL; zfi.cext = 0; // extra header to go in the central end-of-zip directory, and its length
-    zfi.comment = NULL; zfi.com = 0; // comment, and its length
-    zfi.mark = 1;
-    zfi.dosflag = 0;
-    zfi.att = (ush)BINARY;
-    zfi.vem = (ush)0xB17; // 0xB00 is win32 os-code. 0x17 is 23 in decimal: zip 2.3
-    zfi.ver = (ush)20;    // Needs PKUNZIP 2.0 to unzip it
-    zfi.tim = timestamp;
-    // Even though we write the header now, it will have to be rewritten, since we don't know compressed size or crc.
-    zfi.crc = 0;            // to be updated later
-    zfi.flg = 8;            // 8 means 'there is an extra header'. Assume for the moment that we need it.
-    zfi.lflg = zfi.flg;     // to be updated later
-    zfi.how = (ush)method;  // to be updated later
-    zfi.siz = (ulg)(method == STORE && isize >= 0 ? isize : 0); // to be updated later
-    zfi.len = (ulg)(isize);  // to be updated later
-    zfi.dsk = 0;
-    zfi.atx = attr;
-    zfi.off = writ + ooffset;         // offset within file of the start of this local record
-    // stuff the 'times' structure into zfi.extra
-    char xloc[EB_L_UT_SIZE];
-    zfi.extra = xloc;
-    zfi.ext = EB_L_UT_SIZE;
-    char xcen[EB_C_UT_SIZE];
-    zfi.cextra = xcen;
-    zfi.cext = EB_C_UT_SIZE;
-    xloc[0] = 'U';
-    xloc[1] = 'T';
-    xloc[2] = EB_UT_LEN(3);       // length of data part of e.f.
-    xloc[3] = 0;
-    xloc[4] = EB_UT_FL_MTIME | EB_UT_FL_ATIME | EB_UT_FL_CTIME;
-    xloc[5] = (char)(times.mtime);
-    xloc[6] = (char)(times.mtime >> 8);
-    xloc[7] = (char)(times.mtime >> 16);
-    xloc[8] = (char)(times.mtime >> 24);
-    xloc[9] = (char)(times.atime);
-    xloc[10] = (char)(times.atime >> 8);
-    xloc[11] = (char)(times.atime >> 16);
-    xloc[12] = (char)(times.atime >> 24);
-    xloc[13] = (char)(times.ctime);
-    xloc[14] = (char)(times.ctime >> 8);
-    xloc[15] = (char)(times.ctime >> 16);
-    xloc[16] = (char)(times.ctime >> 24);
-    memcpy(zfi.cextra, zfi.extra, EB_C_UT_SIZE);
-    zfi.cextra[EB_LEN] = EB_UT_LEN(1);
+	// Initialize the local header
+	TZipFileInfo zfi; zfi.nxt=NULL;
+	strcpy(zfi.name,"");
+	strcpy(zfi.iname,dstzn); 
+	zfi.nam=strlen(zfi.iname);
+	if (needs_trailing_slash) 
+	{
+		strcat(zfi.iname,"/"); 
+		zfi.nam++;
+	}
+	strcpy(zfi.zname,"");
+	zfi.extra=NULL; zfi.ext=0;   // extra header to go after this compressed data, and its length
+	zfi.cextra=NULL; zfi.cext=0; // extra header to go in the central end-of-zip directory, and its length
+	zfi.comment=NULL; zfi.com=0; // comment, and its length
+	zfi.mark = 1;
+	zfi.dosflag = 0;
+	zfi.att = (ush)BINARY;
+	zfi.vem = (ush)0xB17; // 0xB00 is win32 os-code. 0x17 is 23 in decimal: zip 2.3
+	zfi.ver = (ush)20;    // Needs PKUNZIP 2.0 to unzip it
+	zfi.tim = timestamp;
+	// Even though we write the header now, it will have to be rewritten, since we don't know compressed size or crc.
+	zfi.crc = 0;            // to be updated later
+	zfi.flg = 8;            // 8 means 'there is an extra header'. Assume for the moment that we need it.
+	zfi.lflg = zfi.flg;     // to be updated later
+	zfi.how = (ush)method;  // to be updated later
+	zfi.siz = (ulg)(method==STORE && isize>=0 ? isize : 0); // to be updated later
+	zfi.len = (ulg)(isize);  // to be updated later
+	zfi.dsk = 0;
+	zfi.atx = attr;
+	zfi.off = writ+ooffset;         // offset within file of the start of this local record
+	// stuff the 'times' structure into zfi.extra
+	char xloc[EB_L_UT_SIZE]; 
+	zfi.extra=xloc;  
+	zfi.ext=EB_L_UT_SIZE;
+	char xcen[EB_C_UT_SIZE]; 
+	zfi.cextra=xcen; 
+	zfi.cext=EB_C_UT_SIZE;
+	xloc[0]  = 'U';
+	xloc[1]  = 'T';
+	xloc[2]  = EB_UT_LEN(3);       // length of data part of e.f.
+	xloc[3]  = 0;
+	xloc[4]  = EB_UT_FL_MTIME | EB_UT_FL_ATIME | EB_UT_FL_CTIME;
+	xloc[5]  = (char)(times.mtime);
+	xloc[6]  = (char)(times.mtime >> 8);
+	xloc[7]  = (char)(times.mtime >> 16);
+	xloc[8]  = (char)(times.mtime >> 24);
+	xloc[9]  = (char)(times.atime);
+	xloc[10] = (char)(times.atime >> 8);
+	xloc[11] = (char)(times.atime >> 16);
+	xloc[12] = (char)(times.atime >> 24);
+	xloc[13] = (char)(times.ctime);
+	xloc[14] = (char)(times.ctime >> 8);
+	xloc[15] = (char)(times.ctime >> 16);
+	xloc[16] = (char)(times.ctime >> 24);
+	memcpy(zfi.cextra,zfi.extra,EB_C_UT_SIZE);
+	zfi.cextra[EB_LEN] = EB_UT_LEN(1);
 
 
-    // (1) Start by writing the local header:
-    int r = putlocal(&zfi, swrite, this);
-    if (r != ZE_OK)
-    {
-        iclose();
-        return ZR_WRITE;
-    }
-    writ += 4 + LOCHEAD + (unsigned int)zfi.nam + (unsigned int)zfi.ext;
-    if (oerr != ZR_OK)
-    {
-        iclose();
-        return oerr;
-    }
+	// (1) Start by writing the local header:
+	int r = putlocal(&zfi,swrite,this);
+	if (r!=ZE_OK) 
+	{
+		iclose(); 
+		return ZR_WRITE;
+	}
+	writ += 4 + LOCHEAD + (unsigned int)zfi.nam + (unsigned int)zfi.ext;
+	if (oerr!=ZR_OK) 
+	{
+		iclose(); 
+		return oerr;
+	}
 
-    //(2) Write deflated/stored file to zip file
-    ZRESULT writeres = ZR_OK;
-    if (!isdir && method == DEFLATE)
-        writeres = ideflate(&zfi);
-    else if (!isdir && method == STORE)
-        writeres = istore();
-    else if (isdir)
-        csize = 0;
-    iclose();
-    writ += csize;
-    if (oerr != ZR_OK)
-        return oerr;
-    if (writeres != ZR_OK)
-        return ZR_WRITE;
+	//(2) Write deflated/stored file to zip file
+	ZRESULT writeres=ZR_OK;
+	if (!isdir && method==DEFLATE) 
+		writeres=ideflate(&zfi);
+	else if (!isdir && method==STORE) 
+		writeres=istore();
+	else if (isdir) 
+		csize=0;
+	iclose();
+	writ += csize;
+	if (oerr!=ZR_OK) 
+		return oerr;
+	if (writeres!=ZR_OK) 
+		return ZR_WRITE;
 
-    // (3) Either rewrite the local header with correct information...
-    bool first_header_has_size_right = (zfi.siz == csize);
-    zfi.crc = crc;
-    zfi.siz = csize;
-    zfi.len = isize;
-    if (ocanseek)
-    {
-        zfi.how = (ush)method;
-        if ((zfi.flg & 1) == 0)
-            zfi.flg &= ~8; // clear the extended local header flag
-        zfi.lflg = zfi.flg;
-        // rewrite the local header:
-        if (!oseek(zfi.off - ooffset))
-            return ZR_SEEK;
-        if ((r = putlocal(&zfi, swrite, this)) != ZE_OK)
-            return ZR_WRITE;
-        if (!oseek(writ))
-            return ZR_SEEK;
-    }
-    else
-    {
-        // (4) ... or put an updated header at the end
-        if (zfi.how != (ush)method)
-            return ZR_NOCHANGE;
-        if (method == STORE && !first_header_has_size_right)
-            return ZR_NOCHANGE;
-        if ((r = putextended(&zfi, swrite, this)) != ZE_OK)
-            return ZR_WRITE;
-        writ += 16L;
-        zfi.flg = zfi.lflg; // if flg modified by inflate, for the central index
-    }
-    if (oerr != ZR_OK)
-        return oerr;
+	// (3) Either rewrite the local header with correct information...
+	bool first_header_has_size_right = (zfi.siz==csize);
+	zfi.crc = crc;
+	zfi.siz = csize;
+	zfi.len = isize;
+	if (ocanseek)
+	{ 
+		zfi.how = (ush)method;
+		if ((zfi.flg & 1) == 0) 
+			zfi.flg &= ~8; // clear the extended local header flag
+		zfi.lflg = zfi.flg;
+		// rewrite the local header:
+		if (!oseek(zfi.off-ooffset)) 
+			return ZR_SEEK;
+		if ((r = putlocal(&zfi, swrite,this)) != ZE_OK) 
+			return ZR_WRITE;
+		if (!oseek(writ)) 
+			return ZR_SEEK;
+	}
+	else
+	{ 
+		// (4) ... or put an updated header at the end
+		if (zfi.how != (ush) method) 
+			return ZR_NOCHANGE;
+		if (method==STORE && !first_header_has_size_right) 
+			return ZR_NOCHANGE;
+		if ((r = putextended(&zfi, swrite,this)) != ZE_OK) 
+			return ZR_WRITE;
+		writ += 16L;
+		zfi.flg = zfi.lflg; // if flg modified by inflate, for the central index
+	}
+	if (oerr!=ZR_OK) 
+		return oerr;
 
-    // Keep a copy of the zipfileinfo, for our end-of-zip directory
-    char* cextra = new char[zfi.cext];
-    memcpy(cextra, zfi.cextra, zfi.cext); zfi.cextra = cextra;
-    TZipFileInfo* pzfi = new TZipFileInfo;
-    memcpy(pzfi, &zfi, sizeof(zfi));
-    if (zfis == NULL)
-        zfis = pzfi;
-    else
-    {
-        TZipFileInfo* z = zfis;
-        while (z->nxt != NULL)
-            z = z->nxt;
-        z->nxt = pzfi;
-    }
-    return ZR_OK;
+	// Keep a copy of the zipfileinfo, for our end-of-zip directory
+	char *cextra = new char[zfi.cext]; 
+	memcpy(cextra,zfi.cextra,zfi.cext); zfi.cextra=cextra;
+	TZipFileInfo *pzfi = new TZipFileInfo; 
+	memcpy(pzfi,&zfi,sizeof(zfi));
+	if (zfis==NULL) 
+		zfis=pzfi;
+	else 
+	{
+		TZipFileInfo *z=zfis; 
+		while (z->nxt!=NULL) 
+			z=z->nxt; 
+		z->nxt=pzfi;
+	}
+	return ZR_OK;
 }
 
 ZRESULT TZip::AddCentral()
 { // write central directory
-    int numentries = 0;
-    ulg pos_at_start_of_central = writ;
-    //ulg tot_unc_size=0, tot_compressed_size=0;
-    bool okay = true;
-    for (TZipFileInfo* zfi = zfis; zfi != NULL; )
-    {
-        if (okay)
-        {
-            int res = putcentral(zfi, swrite, this);
-            if (res != ZE_OK) okay = false;
-        }
-        writ += 4 + CENHEAD + (unsigned int)zfi->nam + (unsigned int)zfi->cext + (unsigned int)zfi->com;
-        //tot_unc_size += zfi->len;
-        //tot_compressed_size += zfi->siz;
-        numentries++;
-        //
-        TZipFileInfo* zfinext = zfi->nxt;
-        if (zfi->cextra != 0) delete[] zfi->cextra;
-        delete zfi;
-        zfi = zfinext;
+  int numentries = 0;
+  ulg pos_at_start_of_central = writ;
+  //ulg tot_unc_size=0, tot_compressed_size=0;
+  bool okay=true;
+  for (TZipFileInfo *zfi=zfis; zfi!=NULL; )
+  { if (okay)
+    { int res = putcentral(zfi, swrite,this);
+      if (res!=ZE_OK) okay=false;
     }
-    ulg center_size = writ - pos_at_start_of_central;
-    if (okay)
-    {
-        int res = putend(numentries, center_size, pos_at_start_of_central + ooffset, 0, NULL, swrite, this);
-        if (res != ZE_OK) okay = false;
-        writ += 4 + ENDHEAD + 0;
-    }
-    if (!okay) return ZR_WRITE;
-    return ZR_OK;
+    writ += 4 + CENHEAD + (unsigned int)zfi->nam + (unsigned int)zfi->cext + (unsigned int)zfi->com;
+    //tot_unc_size += zfi->len;
+    //tot_compressed_size += zfi->siz;
+    numentries++;
+    //
+    TZipFileInfo *zfinext = zfi->nxt;
+    if (zfi->cextra!=0) delete[] zfi->cextra;
+    delete zfi;
+    zfi = zfinext;
+  }
+  ulg center_size = writ - pos_at_start_of_central;
+  if (okay)
+  { int res = putend(numentries, center_size, pos_at_start_of_central+ooffset, 0, NULL, swrite,this);
+    if (res!=ZE_OK) okay=false;
+    writ += 4 + ENDHEAD + 0;
+  }
+  if (!okay) return ZR_WRITE;
+  return ZR_OK;
 }
-
-
-
-
 
 ZRESULT lasterrorZ = ZR_OK;
 
-unsigned int FormatZipMessageZ(ZRESULT code, char* buf, unsigned int len)
-{
-    if (code == ZR_RECENT) code = lasterrorZ;
-    const char* msg = "unknown zip result code";
-    switch (code)
-    {
-    case ZR_OK: msg = "Success"; break;
-    case ZR_NODUPH: msg = "Culdn't duplicate handle"; break;
-    case ZR_NOFILE: msg = "Couldn't create/open file"; break;
-    case ZR_NOALLOC: msg = "Failed to allocate memory"; break;
-    case ZR_WRITE: msg = "Error writing to file"; break;
-    case ZR_NOTFOUND: msg = "File not found in the zipfile"; break;
-    case ZR_MORE: msg = "Still more data to unzip"; break;
-    case ZR_CORRUPT: msg = "Zipfile is corrupt or not a zipfile"; break;
-    case ZR_READ: msg = "Error reading file"; break;
-    case ZR_ARGS: msg = "Caller: faulty arguments"; break;
-    case ZR_PARTIALUNZ: msg = "Caller: the file had already been partially unzipped"; break;
-    case ZR_NOTMMAP: msg = "Caller: can only get memory of a memory zipfile"; break;
-    case ZR_MEMSIZE: msg = "Caller: not enough space allocated for memory zipfile"; break;
-    case ZR_FAILED: msg = "Caller: there was a previous error"; break;
-    case ZR_ENDED: msg = "Caller: additions to the zip have already been ended"; break;
-    case ZR_ZMODE: msg = "Caller: mixing creation and opening of zip"; break;
-    case ZR_NOTINITED: msg = "Zip-bug: internal initialisation not completed"; break;
-    case ZR_SEEK: msg = "Zip-bug: trying to seek the unseekable"; break;
-    case ZR_MISSIZE: msg = "Zip-bug: the anticipated size turned out wrong"; break;
-    case ZR_NOCHANGE: msg = "Zip-bug: tried to change mind, but not allowed"; break;
-    case ZR_FLATE: msg = "Zip-bug: an internal error during flation"; break;
-    }
-    unsigned int mlen = (unsigned int)strlen(msg);
-    if (buf == 0 || len == 0) return mlen;
-    unsigned int n = mlen; if (n + 1 > len) n = len - 1;
-    strncpy(buf, msg, n); buf[n] = 0;
-    return mlen;
+unsigned int FormatZipMessageZ(ZRESULT code, char *buf,unsigned int len)
+{ if (code==ZR_RECENT) code=lasterrorZ;
+  const char *msg="unknown zip result code";
+  switch (code)
+  { case ZR_OK: msg="Success"; break;
+    case ZR_NODUPH: msg="Culdn't duplicate handle"; break;
+    case ZR_NOFILE: msg="Couldn't create/open file"; break;
+    case ZR_NOALLOC: msg="Failed to allocate memory"; break;
+    case ZR_WRITE: msg="Error writing to file"; break;
+    case ZR_NOTFOUND: msg="File not found in the zipfile"; break;
+    case ZR_MORE: msg="Still more data to unzip"; break;
+    case ZR_CORRUPT: msg="Zipfile is corrupt or not a zipfile"; break;
+    case ZR_READ: msg="Error reading file"; break;
+    case ZR_ARGS: msg="Caller: faulty arguments"; break;
+    case ZR_PARTIALUNZ: msg="Caller: the file had already been partially unzipped"; break;
+    case ZR_NOTMMAP: msg="Caller: can only get memory of a memory zipfile"; break;
+    case ZR_MEMSIZE: msg="Caller: not enough space allocated for memory zipfile"; break;
+    case ZR_FAILED: msg="Caller: there was a previous error"; break;
+    case ZR_ENDED: msg="Caller: additions to the zip have already been ended"; break;
+    case ZR_ZMODE: msg="Caller: mixing creation and opening of zip"; break;
+    case ZR_NOTINITED: msg="Zip-bug: internal initialisation not completed"; break;
+    case ZR_SEEK: msg="Zip-bug: trying to seek the unseekable"; break;
+    case ZR_MISSIZE: msg="Zip-bug: the anticipated size turned out wrong"; break;
+    case ZR_NOCHANGE: msg="Zip-bug: tried to change mind, but not allowed"; break;
+    case ZR_FLATE: msg="Zip-bug: an internal error during flation"; break;
+  }
+  unsigned int mlen=(unsigned int)strlen(msg);
+  if (buf==0 || len==0) return mlen;
+  unsigned int n=mlen; if (n+1>len) n=len-1;
+  memcpy(buf,msg,n); buf[n]=0;
+  return mlen;
 }
 
 
 
 typedef struct
-{
-    DWORD flag;
-    TZip* zip;
+{ DWORD flag;
+  TZip *zip;
 } TZipHandleData;
 
 
-HZIP CreateZipZ(void* z, unsigned int len, DWORD flags)
-{
-    _tzset();
-    TZip* zip = new TZip();
-    lasterrorZ = zip->Create(z, len, flags);
-    if (lasterrorZ != ZR_OK)
-    {
-        delete zip;
-        return 0;
-    }
-    TZipHandleData* han = new TZipHandleData;
-    han->flag = 2;
-    han->zip = zip;
-    return (HZIP)han;
+HZIP CreateZipZ(void *z,unsigned int len,DWORD flags)
+{ 
+	_tzset();
+	TZip *zip = new TZip();
+	lasterrorZ = zip->Create(z,len,flags);
+	if (lasterrorZ != ZR_OK) 
+	{
+		delete zip; 
+		return 0;
+	}
+	TZipHandleData *han = new TZipHandleData;
+	han->flag = 2; 
+	han->zip = zip; 
+	return (HZIP)han;
 }
 
-ZRESULT ZipAdd(HZIP hz, const TCHAR* dstzn, void* src, unsigned int len, DWORD flags)
-{
-    if (hz == 0)
-    {
-        lasterrorZ = ZR_ARGS;
-        return ZR_ARGS;
-    }
-    TZipHandleData* han = (TZipHandleData*)hz;
-    if (han->flag != 2)
-    {
-        lasterrorZ = ZR_ZMODE;
-        return ZR_ZMODE;
-    }
-    TZip* zip = han->zip;
+ZRESULT ZipAdd(HZIP hz, const TCHAR *dstzn, void *src, unsigned int len, DWORD flags)
+{ 
+	if (hz == 0) 
+	{
+		lasterrorZ = ZR_ARGS;
+		return ZR_ARGS;
+	}
+	TZipHandleData *han = (TZipHandleData*)hz;
+	if (han->flag != 2) 
+	{
+		lasterrorZ = ZR_ZMODE;
+		return ZR_ZMODE;
+	}
+	TZip *zip = han->zip;
 
 
-    if (flags == ZIP_FILENAME)
-    {
-        char szDest[MAX_PATH * 2];
-        memset(szDest, 0, sizeof(szDest));
+	if (flags == ZIP_FILENAME)
+	{
+		char szDest[MAX_PATH*2];
+		memset(szDest, 0, sizeof(szDest));
 
 #ifdef _UNICODE
-        // need to convert Unicode dest to ANSI
-        int nActualChars = WideCharToMultiByte(CP_ACP,	// code page
-            0,						// performance and mapping flags
-            (LPCWSTR)dstzn,		// wide-character string
-            -1,						// number of chars in string
-            szDest,					// buffer for new string
-            MAX_PATH * 2 - 2,			// size of buffer
-            NULL,					// default for unmappable chars
-            NULL);					// set when default char used
-        if (nActualChars == 0)
-            return ZR_ARGS;
+		// need to convert Unicode dest to ANSI
+		int nActualChars = WideCharToMultiByte(CP_ACP,	// code page
+								0,						// performance and mapping flags
+								(LPCWSTR) dstzn,		// wide-character string
+								-1,						// number of chars in string
+								szDest,					// buffer for new string
+								MAX_PATH*2-2,			// size of buffer
+								NULL,					// default for unmappable chars
+								NULL);					// set when default char used
+		if (nActualChars == 0)
+			return ZR_ARGS; 
 #else
-        strncpy(szDest, dstzn, sizeof(szDest));
+		strcpy(szDest, dstzn);
 #endif
 
-        lasterrorZ = zip->Add(szDest, src, len, flags);
-    }
-    else
-    {
-        lasterrorZ = zip->Add((char*)dstzn, src, len, flags);
-    }
+		lasterrorZ = zip->Add(szDest, src, len, flags);
+	}
+	else
+	{
+		lasterrorZ = zip->Add((char *)dstzn, src, len, flags);
+	}
 
-    return lasterrorZ;
+	return lasterrorZ;
 }
 
-ZRESULT ZipGetMemory(HZIP hz, void** buf, unsigned long* len)
-{
-    if (hz == 0) { if (buf != 0) *buf = 0; if (len != 0) *len = 0; lasterrorZ = ZR_ARGS; return ZR_ARGS; }
-    TZipHandleData* han = (TZipHandleData*)hz;
-    if (han->flag != 2) { lasterrorZ = ZR_ZMODE; return ZR_ZMODE; }
-    TZip* zip = han->zip;
-    lasterrorZ = zip->GetMemory(buf, len);
-    return lasterrorZ;
+ZRESULT ZipGetMemory(HZIP hz, void **buf, unsigned long *len)
+{ if (hz==0) {if (buf!=0) *buf=0; if (len!=0) *len=0; lasterrorZ=ZR_ARGS;return ZR_ARGS;}
+  TZipHandleData *han = (TZipHandleData*)hz;
+  if (han->flag!=2) {lasterrorZ=ZR_ZMODE;return ZR_ZMODE;}
+  TZip *zip = han->zip;
+  lasterrorZ = zip->GetMemory(buf,len);
+  return lasterrorZ;
 }
 
 ZRESULT CloseZipZ(HZIP hz)
-{
-    if (hz == 0) { lasterrorZ = ZR_ARGS; return ZR_ARGS; }
-    TZipHandleData* han = (TZipHandleData*)hz;
-    if (han->flag != 2) { lasterrorZ = ZR_ZMODE; return ZR_ZMODE; }
-    TZip* zip = han->zip;
-    lasterrorZ = zip->Close();
-    delete zip;
-    delete han;
-    return lasterrorZ;
+{ if (hz==0) {lasterrorZ=ZR_ARGS;return ZR_ARGS;}
+  TZipHandleData *han = (TZipHandleData*)hz;
+  if (han->flag!=2) {lasterrorZ=ZR_ZMODE;return ZR_ZMODE;}
+  TZip *zip = han->zip;
+  lasterrorZ = zip->Close();
+  delete zip;
+  delete han;
+  return lasterrorZ;
 }
 
 bool IsZipHandleZ(HZIP hz)
-{
-    if (hz == 0) return true;
-    TZipHandleData* han = (TZipHandleData*)hz;
-    return (han->flag == 2);
+{ if (hz==0) return true;
+  TZipHandleData *han = (TZipHandleData*)hz;
+  return (han->flag==2);
 }
+
+

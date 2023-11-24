@@ -68,7 +68,9 @@ target_sources(PROJECTNAME PRIVATE "ReceivePacket.cpp")
 target_sources(PROJECTNAME PRIVATE "SendPacket.cpp")
 target_sources(PROJECTNAME PRIVATE "PacketHelper_FullUserInfo.cpp")
 target_sources(PROJECTNAME PRIVATE "Manager.cpp")
-target_sources(PROJECTNAME PRIVATE "CrashDump.cpp")
+if (WIN32)
+	target_sources(PROJECTNAME PRIVATE "CrashDump.cpp")
+endif()
 
 target_sources(PROJECTNAME PRIVATE "Common/Thread.cpp")
 target_sources(PROJECTNAME PRIVATE "Common/Utils.cpp")
@@ -108,10 +110,9 @@ endif()
 
 set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "Reset Default Build Config")
 
-set_target_properties(PROJECTNAME PROPERTIES OUTPUT_NAME "CSNZ Server")
+set_target_properties(PROJECTNAME PROPERTIES OUTPUT_NAME "CSNZ_Server")
 
 set(EXECUTABLE_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/../bin)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
 
 # define max numbers of connected users by changing FD_SETSIZE
 if (CSO_SERVER_PUBLIC)
@@ -121,7 +122,13 @@ else()
 	add_definitions(-DFD_SETSIZE=1024)
 endif()
 
+if (NOT WIN32)
+	add_definitions(-DPOSIX=1)
+endif()
+
 if (MSVC)
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
+
 	set (CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Od")
 	set (CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1")
 		
@@ -131,4 +138,7 @@ if (MSVC)
 	target_link_libraries(PROJECTNAME PRIVATE Shlwapi)
 
 	target_compile_options(PROJECTNAME PRIVATE /W3)
+else()
+	# don't treat some warnings as errors
+	target_compile_options(PROJECTNAME PRIVATE -Wno-error=sign-compare -Wno-error=unused-variable -Wno-error=delete-non-virtual-dtor -Wno-error=unused-parameter -Wno-error=conversion-null -Wno-error=register -Wno-error=unused-value -Wno-error=reorder -Wno-error=attributes)
 endif()

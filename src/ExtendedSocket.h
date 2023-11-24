@@ -46,7 +46,7 @@ public:
 	int Send(std::vector<unsigned char>& buffer);
 	int Send(CSendPacket* msg, bool forceSend = false);
 
-	int GetID();
+	unsigned int GetID();
 	void SetSocket(SOCKET socket);
 	SOCKET GetSocket();
 	void SetMsg(CReceivePacket* msg);
@@ -58,7 +58,7 @@ public:
 	GuestData_s& GetGuestData();
 
 private:
-	int m_nID;
+	unsigned int m_nID;
 	SOCKET m_Socket;
 	int m_nSequence;
 	int m_nBytesReceived;

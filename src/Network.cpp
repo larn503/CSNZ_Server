@@ -19,12 +19,9 @@ CNetwork::CNetwork(void)
 
 bool CNetwork::ServerInit(void)
 {
+#ifdef WIN32
 	// create WSADATA object
 	WSADATA wsaData;
-
-	// address info for the server to listen to
-	struct addrinfo* result = NULL;
-	struct addrinfo hints;
 
 	// Initialize Winsock
 	m_iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -33,9 +30,14 @@ bool CNetwork::ServerInit(void)
 		g_pConsole->FatalError("WSAStartup() failed with error: %d\n%s\n", m_iResult, WSAGetLastErrorString());
 		return false;
 	}
+#endif
+
+	// address info for the server to listen to
+	struct addrinfo* result = NULL;
+	struct addrinfo hints;
 
 	// set address information
-	ZeroMemory(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;    // TCP connection!!!
@@ -46,7 +48,7 @@ bool CNetwork::ServerInit(void)
 	if (m_iResult != 0)
 	{
 		g_pConsole->FatalError("getaddrinfo() failed with error: %d\n%s\n", m_iResult, WSAGetLastErrorString());
-		WSACleanup();
+		Cleanup();
 		return false;
 	}
 
@@ -54,9 +56,9 @@ bool CNetwork::ServerInit(void)
 	m_TCPSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (m_TCPSocket == INVALID_SOCKET)
 	{
-		g_pConsole->FatalError("socket() failed with error: %ld\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("socket() failed with error: %ld\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
-		WSACleanup();
+		Cleanup();
 		return false;
 	}
 
@@ -65,9 +67,8 @@ bool CNetwork::ServerInit(void)
 	m_iResult = ioctlsocket(m_TCPSocket, FIONBIO, &iMode);
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->FatalError("ioctlsocket() failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
-		closesocket(m_TCPSocket);
-		WSACleanup();
+		g_pConsole->FatalError("ioctlsocket() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Cleanup();
 		return false;
 	}
 
@@ -75,10 +76,9 @@ bool CNetwork::ServerInit(void)
 	m_iResult = ::bind(m_TCPSocket, result->ai_addr, (int)result->ai_addrlen);
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->FatalError("bind failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("bind failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
-		closesocket(m_TCPSocket);
-		WSACleanup();
+		Cleanup();
 		return false;
 	}
 
@@ -89,9 +89,8 @@ bool CNetwork::ServerInit(void)
 	m_iResult = listen(m_TCPSocket, SOMAXCONN);
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->FatalError("listen() failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
-		closesocket(m_TCPSocket);
-		WSACleanup();
+		g_pConsole->FatalError("listen() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Cleanup();
 		return false;
 	}
 
@@ -99,9 +98,8 @@ bool CNetwork::ServerInit(void)
 	m_iResult = setsockopt(m_TCPSocket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBuffer, sizeof(int));
 	if (m_iResult == SOCKET_ERROR)
 	{
-		g_pConsole->FatalError("setsockopt failed with error %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
-		closesocket(m_TCPSocket);
-		WSACleanup();
+		g_pConsole->FatalError("setsockopt failed with error %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Cleanup();
 		return false;
 	}
 
@@ -119,7 +117,7 @@ bool CNetwork::UDPInit(void)
 	struct addrinfo* result = NULL;
 	struct addrinfo hints;
 
-	ZeroMemory(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
@@ -130,14 +128,16 @@ bool CNetwork::UDPInit(void)
 	if (iResult != 0)
 	{
 		g_pConsole->FatalError("getaddrinfo() failed with error: %d\n%s\n", iResult, WSAGetLastErrorString());
-		WSACleanup();
+		Cleanup();
+		return false;
 	}
 
 	m_UDPSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (m_UDPSocket == INVALID_SOCKET)
 	{
-		g_pConsole->FatalError("socket() failed with error: %ld\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
-		WSACleanup();
+		g_pConsole->FatalError("socket() failed with error: %ld\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Cleanup();
+		return false;
 	}
 
 	u_long iMode = 1;
@@ -146,10 +146,9 @@ bool CNetwork::UDPInit(void)
 	iResult = ::bind(m_UDPSocket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR)
 	{
-		g_pConsole->FatalError("bind failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->FatalError("bind failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
-		closesocket(m_UDPSocket);
-		WSACleanup();
+		Cleanup();
 		return false;
 	}
 
@@ -165,15 +164,25 @@ bool CNetwork::UDPInit(void)
 
 CNetwork::~CNetwork(void)
 {
-	closesocket(m_TCPSocket);
-	closesocket(m_UDPSocket);
-
 	for (auto socket : m_Sessions)
 	{
 		delete socket;
 	}
 
+	Cleanup();
+}
+
+void CNetwork::Cleanup()
+{
+	if (m_TCPSocket)
+		closesocket(m_TCPSocket);
+	
+	if (m_UDPSocket)
+		closesocket(m_UDPSocket);
+	
+#ifdef WIN32
 	WSACleanup();
+#endif
 }
 
 int CNetwork::SendMessage(SOCKET curSocket, const char* message, int messageSize)
@@ -188,10 +197,10 @@ int CNetwork::ReceiveMessage(SOCKET curSocket, char* buffer, int bufSize)
 
 IExtendedSocket* CNetwork::AcceptNewClient(unsigned int& id)
 {
-	SOCKADDR_IN addr;
-	int addrlen = sizeof(addr);
+	sockaddr_in addr;
+	socklen_t addrlen = sizeof(addr);
 
-	SOCKET clientSocket = accept(m_TCPSocket, (SOCKADDR*)&addr, &addrlen);
+	SOCKET clientSocket = accept(m_TCPSocket, (sockaddr*)&addr, &addrlen);
 	if (clientSocket != INVALID_SOCKET)
 	{
 		char value = 1;
@@ -215,7 +224,7 @@ IExtendedSocket* CNetwork::AcceptNewClient(unsigned int& id)
 	}
 	else
 	{
-		g_pConsole->Error("accept() failed with error: %d\n%s\n", WSAGetLastError(), WSAGetLastErrorString());
+		g_pConsole->Error("accept() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 	}
 
 	return NULL;

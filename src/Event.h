@@ -19,7 +19,7 @@ public:
 		m_Mutex.Enter();
 
 		if (m_Events.size() >= 50)
-			__debugbreak();
+			printf("m_Events.size() >= 50\n");
 
 		m_Events.push_back(ev);
 		m_Object.Signal();

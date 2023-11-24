@@ -2,7 +2,7 @@
 #include "ShopManager.h"
 #include "PacketManager.h"
 #include "nlohmann/json.hpp"
-#include "KeyValues.hpp"
+#include "keyvalues.hpp"
 
 using namespace std;
 using ordered_json = nlohmann::ordered_json;
