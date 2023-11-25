@@ -1,15 +1,15 @@
-[submodule "src/Thirdparty/json"]
-	path = src/Thirdparty/json
+[submodule "src/thirdparty/json"]
+	path = src/thirdparty/json
 	url = https://github.com/nlohmann/json
-[submodule "src/Thirdparty/SQLiteCpp"]
-	path = src/Thirdparty/SQLiteCpp
+[submodule "src/thirdparty/SQLiteCpp"]
+	path = src/thirdparty/SQLiteCpp
 	url = https://github.com/SRombauts/SQLiteCpp
-[submodule "src/Thirdparty/KeyValues"]
-	path = src/Thirdparty/KeyValues
+[submodule "src/thirdparty/KeyValues"]
+	path = src/thirdparty/KeyValues
 	url = https://github.com/JusicP/KeyValues
-[submodule "src/Thirdparty/wolfssl"]
-	path = src/Thirdparty/wolfssl
+[submodule "src/thirdparty/wolfssl"]
+	path = src/thirdparty/wolfssl
 	url = https://github.com/wolfSSL/wolfssl
-[submodule "src/Thirdparty/zip"]
-	path = src/Thirdparty/zip
+[submodule "src/thirdparty/zip"]
+	path = src/thirdparty/zip
 	url = https://github.com/kuba--/zip
