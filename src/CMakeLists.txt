@@ -8,7 +8,7 @@ option(CSO_SERVER_PUBLIC "Public build" OFF)
 option(CSO_SERVER_PROTECTION "Enable protection" OFF)
 option(CSO_SERVER_DBSQLITE "SQLite database" ON)
 
-add_subdirectory(Thirdparty)
+add_subdirectory(thirdparty)
 
 if (CSO_SERVER_USE_GUI)
 	add_subdirectory(GUI)
