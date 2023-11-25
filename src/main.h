@@ -35,7 +35,7 @@
 #pragma comment (lib, "dbghelp.lib")
 
 #include "obfuscate.h"
-#include "common/Utils.h"
+#include "common/utils.h"
 
 #include "serverinstance.h"
 #include "csvtable.h"
