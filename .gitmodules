@@ -1,12 +1,12 @@
-[submodule "src/thirdparty/json"]
-	path = src/thirdparty/json
-	url = https://github.com/nlohmann/json
-[submodule "src/thirdparty/SQLiteCpp"]
-	path = src/thirdparty/SQLiteCpp
-	url = https://github.com/SRombauts/SQLiteCpp
 [submodule "src/thirdparty/KeyValues"]
 	path = src/thirdparty/KeyValues
 	url = https://github.com/JusicP/KeyValues
+[submodule "src/thirdparty/SQLiteCpp"]
+	path = src/thirdparty/SQLiteCpp
+	url = https://github.com/SRombauts/SQLiteCpp
+[submodule "src/thirdparty/json"]
+	path = src/thirdparty/json
+	url = https://github.com/nlohmann/json
 [submodule "src/thirdparty/wolfssl"]
 	path = src/thirdparty/wolfssl
 	url = https://github.com/wolfSSL/wolfssl
