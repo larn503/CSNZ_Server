@@ -9,10 +9,34 @@
 
 struct Notice_s;
 
-struct BinMetadata
+class CBinMetadata
 {
-	void* buf;
-	size_t bufsize;
+public:
+	CBinMetadata(void* buf, size_t bufsize)
+	{
+		m_pBuf = buf;
+		m_nBufsize = bufsize;
+	}
+
+	~CBinMetadata()
+	{
+		if (m_pBuf)
+			free(m_pBuf);
+	}
+
+	void* GetBuf()
+	{
+		return m_pBuf;
+	}
+
+	size_t GetBufSize()
+	{
+		return m_nBufsize;
+	}
+
+private:
+	void* m_pBuf;
+	size_t m_nBufsize;
 };
 
 class CPacketManager : public CBaseManager<IPacketManager>
@@ -236,34 +260,34 @@ public:
 	void SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv);
 
 private:
-	BinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);
+	CBinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);
 
-	BinMetadata* m_pMapListZip;
-	BinMetadata* m_pClientTableZip;
-	BinMetadata* m_pWeaponPartsZip;
-	BinMetadata* m_pMatchingZip;
-	BinMetadata* m_pProgressUnlockZip;
-	BinMetadata* m_pGameModeListZip;
-	BinMetadata* m_pReinforceMaxLvlZip;
-	BinMetadata* m_pReinforceMaxExpZip;
-	BinMetadata* m_pItemExpireTimeZip;
-	BinMetadata* m_pHonorMoneyShopZip;
-	BinMetadata* m_pScenarioTX_CommonZip;
-	BinMetadata* m_pScenarioTX_DediZip;
-	BinMetadata* m_pShopItemList_DediZip;
-	BinMetadata* m_pZBCompetitiveZip;
-	BinMetadata* m_pPPSystemZip;
-	BinMetadata* m_pItemZip;
-	BinMetadata* m_pCodisDataZip;
-	BinMetadata* m_pWeaponPropZip;
-	BinMetadata* m_pPaintItemList;
-	BinMetadata* m_pReinforceItemsExp;
-	BinMetadata* m_pRandomWeaponList;
-	BinMetadata* m_pUnk3;
-	BinMetadata* m_pUnk8;
-	BinMetadata* m_pUnk15;
-	BinMetadata* m_pUnk20;
-	BinMetadata* m_pUnk31;
-	BinMetadata* m_pUnk43;
-	BinMetadata* m_pUnk49;
+	CBinMetadata* m_pMapListZip;
+	CBinMetadata* m_pClientTableZip;
+	CBinMetadata* m_pWeaponPartsZip;
+	CBinMetadata* m_pMatchingZip;
+	CBinMetadata* m_pProgressUnlockZip;
+	CBinMetadata* m_pGameModeListZip;
+	CBinMetadata* m_pReinforceMaxLvlZip;
+	CBinMetadata* m_pReinforceMaxExpZip;
+	CBinMetadata* m_pItemExpireTimeZip;
+	CBinMetadata* m_pHonorMoneyShopZip;
+	CBinMetadata* m_pScenarioTX_CommonZip;
+	CBinMetadata* m_pScenarioTX_DediZip;
+	CBinMetadata* m_pShopItemList_DediZip;
+	CBinMetadata* m_pZBCompetitiveZip;
+	CBinMetadata* m_pPPSystemZip;
+	CBinMetadata* m_pItemZip;
+	CBinMetadata* m_pCodisDataZip;
+	CBinMetadata* m_pWeaponPropZip;
+	CBinMetadata* m_pPaintItemList;
+	CBinMetadata* m_pReinforceItemsExp;
+	CBinMetadata* m_pRandomWeaponList;
+	CBinMetadata* m_pUnk3;
+	CBinMetadata* m_pUnk8;
+	CBinMetadata* m_pUnk15;
+	CBinMetadata* m_pUnk20;
+	CBinMetadata* m_pUnk31;
+	CBinMetadata* m_pUnk43;
+	CBinMetadata* m_pUnk49;
 };
