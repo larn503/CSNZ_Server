@@ -1,9 +1,9 @@
-#include "IPBanListDialog.h"
+#include "ipbanlistdialog.h"
 #include <ui_ipbanlistdialog.h>
 #include <QMessageBox.h>
 
-#include "GUI.h"
-#include "IUserDatabase.h"
+#include "gui.h"
+#include "interface/iuserdatabase.h"
 
 CIPBanListDialog::CIPBanListDialog(QWidget* parent) : QDialog(parent)
 {

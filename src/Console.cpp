@@ -1,4 +1,4 @@
-#include "Console.h"
+#include "console.h"
 #ifdef WIN32
 #include <direct.h>
 #define getcwd _getcwd // avoid warning C4996
@@ -7,7 +7,7 @@
 #include <unistd.h>
 #endif
 #ifdef USE_GUI
-#include "GUI/IGUI.h"
+#include "gui/igui.h"
 #endif
 
 #define MAX_DATE_LEN 9

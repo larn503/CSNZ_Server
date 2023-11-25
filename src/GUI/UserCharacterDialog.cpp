@@ -1,10 +1,10 @@
-#include "UserCharacterDialog.h"
+#include "usercharacterdialog.h"
 #include <ui_usercharacterdialog.h>
 #include <QMessageBox.h>
 #include <QDateTime.h>
 
-#include "GUI.h"
-#include "IUserDatabase.h"
+#include "gui.h"
+#include "interface/iuserdatabase.h"
 
 CUserCharacterDialog::CUserCharacterDialog(QWidget* parent, int userID) : QDialog(parent)
 {

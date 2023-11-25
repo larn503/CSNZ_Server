@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Network.h"
-#include "Console.h"
+#include "net/network.h"
+#include "console.h"
 
 #define NOMINMAX
 
@@ -35,12 +35,12 @@
 #pragma comment (lib, "dbghelp.lib")
 
 #include "obfuscate.h"
-#include "Utils.h"
+#include "common/Utils.h"
 
-#include "ServerInstance.h"
-#include "CSVTable.h"
-#include "Thread.h"
-#include "Event.h"
+#include "serverinstance.h"
+#include "csvtable.h"
+#include "common/thread.h"
+#include "event.h"
 
 extern CConsole* g_pConsole;
 extern class CServerInstance* g_pServerInstance;

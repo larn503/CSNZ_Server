@@ -5,7 +5,7 @@
 #define UDP_HOLEPUNCHER2_PACKET_SIGNATURE = 'X';
 #define UDP_HOLEPUNCHER3_PACKET_SIGNATURE = '`';
 
-#include "UserLoadout.h"
+#include "user/userloadout.h"
 
 #include <string>
 #include <vector>

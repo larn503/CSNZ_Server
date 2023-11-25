@@ -1,9 +1,9 @@
-#include "MainTab.h"
-#include "Utils.h"
-#include "NoticeDialog.h"
-#include "UserBanListDialog.h"
-#include "HWIDBanListDialog.h"
-#include "IPBanListDialog.h"
+#include "maintab.h"
+#include "common/utils.h"
+#include "noticedialog.h"
+#include "userbanlistdialog.h"
+#include "hwidbanlistdialog.h"
+#include "ipbanlistdialog.h"
 
 #include <ui_maintab.h>
 #include <QDateTime.h>

@@ -2,7 +2,7 @@
 
 #include <QDialog>
 #undef slots
-#include "Definitions.h"
+#include "definitions.h"
 #define slots Q_SLOTS
 
 namespace Ui

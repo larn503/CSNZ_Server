@@ -1,9 +1,9 @@
-#include "HWIDBanListDialog.h"
+#include "hwidbanlistdialog.h"
 #include <ui_hwidbanlistdialog.h>
 #include <QMessageBox.h>
 
-#include "GUI.h"
-#include "IUserDatabase.h"
+#include "gui.h"
+#include "interface/iuserdatabase.h"
 
 CHWIDBanListDialog::CHWIDBanListDialog(QWidget* parent) : QDialog(parent)
 {

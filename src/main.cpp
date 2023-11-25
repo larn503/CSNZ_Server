@@ -1,9 +1,9 @@
 #include "main.h"
 #ifdef WIN32
-#include "CrashDump.h"
+#include "crashdump.h"
 #endif
 #ifdef USE_GUI
-#include "GUI/IGUI.h"
+#include "gui/igui.h"
 #endif
 
 CConsole* g_pConsole;

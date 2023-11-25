@@ -1,20 +1,20 @@
 #pragma once
 
-#include "IServerInstance.h"
+#include "interface/iserverinstance.h"
 
-#include "ExtendedSocket.h"
-#include "PacketManager.h"
-#include "UserManager.h"
-#include "ChannelManager.h"
-#include "ItemManager.h"
-#include "ShopManager.h"
-#include "LuckyItemManager.h"
-#include "HostManager.h"
-#include "DedicatedServerManager.h"
-#include "QuestManager.h"
-#include "MiniGameManager.h"
-#include "ClanManager.h"
-#include "RankManager.h"
+#include "net/extendedsocket.h"
+#include "manager/packetmanager.h"
+#include "manager/usermanager.h"
+#include "manager/channelmanager.h"
+#include "manager/itemmanager.h"
+#include "manager/shopmanager.h"
+#include "manager/luckyitemmanager.h"
+#include "manager/hostmanager.h"
+#include "manager/dedicatedservermanager.h"
+#include "manager/questmanager.h"
+#include "manager/minigamemanager.h"
+#include "manager/clanmanager.h"
+#include "manager/rankmanager.h"
 
 class CServerInstance : public IServerInstance
 {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "IGUI.h"
-#include "MainWindow.h"
+#include "igui.h"
+#include "mainwindow.h"
 #undef slots // undef keyword to avoid conflict 
 //#include "IUserManager.h"
 //#include "IUserDatabase.h"

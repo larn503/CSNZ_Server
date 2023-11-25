@@ -3,8 +3,8 @@
 #include <QMessageBox.h>
 #include <QDateTime.h>
 
-#include "GUI.h"
-#include "IUserDatabase.h"
+#include "gui.h"
+#include "interface/iuserdatabase.h"
 
 CUserBanListDialog::CUserBanListDialog(QWidget* parent) : QDialog(parent)
 {

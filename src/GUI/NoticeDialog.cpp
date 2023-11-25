@@ -1,10 +1,10 @@
-#include "NoticeDialog.h"
-#include "SelectUserDialog.h"
+#include "noticedialog.h"
+#include "selectuserdialog.h"
 
-#include "GUI.h"
-#include "IUserManager.h"
-#include "IPacketManager.h"
-#include "IEvent.h"
+#include "gui.h"
+#include "interface/iusermanager.h"
+#include "interface/ipacketmanager.h"
+#include "interface/ievent.h"
 
 #include <ui_noticedialog.h>
 #include <QMessageBox>

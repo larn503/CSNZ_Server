@@ -1,5 +1,5 @@
-#include "GUI.h"
-#include "IManager.h"
+#include "gui.h"
+#include "interface/imanager.h"
 
 static CGUI g_GUI;
 IGUI* g_pGUI = NULL;

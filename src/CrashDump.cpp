@@ -1,6 +1,6 @@
-#include "CrashDump.h"
+#include "crashdump.h"
 #include "main.h"
-#include "ServerConfig.h"
+#include "serverconfig.h"
 
 // Ends all game matches if possible
 void ForceEndServer()

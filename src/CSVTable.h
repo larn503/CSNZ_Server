@@ -1,7 +1,6 @@
 #pragma once
 
 #include "rapidcsv.h"
-#include "UserManager.h"
 
 class CCSVTable : public rapidcsv::Document
 {

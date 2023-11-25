@@ -1,6 +1,6 @@
-#include "SelectUserDialog.h"
-#include "GUI.h"
-#include "IUserDatabase.h"
+#include "selectuserdialog.h"
+#include "gui.h"
+#include "interface/iuserdatabase.h"
 
 #include <ui_selectuserdialog.h>
 

@@ -1,5 +1,5 @@
-#include "ServerConfig.h"
-#include "BuildNum.h"
+#include "serverconfig.h"
+#include "common/buildnum.h"
 
 using namespace std;
 

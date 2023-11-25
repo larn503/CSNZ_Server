@@ -1,19 +1,19 @@
-#include "SessionTab.h"
+#include "sessiontab.h"
 #include <ui_sessiontab.h>
 #include <QKeyEvent>
 #include <QMenu>
 
-#include "GUI.h"
-#include "Utils.h"
+#include "gui.h"
+#include "common/utils.h"
 
-#include "IExtendedSocket.h"
-#include "IServerInstance.h"
-#include "IUserManager.h"
-#include "IEvent.h"
-#include "IRoom.h"
+#include "interface/iextendedsocket.h"
+#include "interface/iserverinstance.h"
+#include "interface/iusermanager.h"
+#include "interface/ievent.h"
+#include "interface/iroom.h"
 
-#include "UserCharacterDialog.h"
-#include "BanDialog.h"
+#include "usercharacterdialog.h"
+#include "bandialog.h"
 
 CSessionTab::CSessionTab(QWidget* parent) : QWidget(parent)
 {

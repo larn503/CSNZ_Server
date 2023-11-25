@@ -1,7 +1,7 @@
 #pragma once
 
-#include "IEvent.h"
-#include "Common/Thread.h"
+#include "interface/ievent.h"
+#include "common/thread.h"
 
 class CEvent : public IEvent
 {

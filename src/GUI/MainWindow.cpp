@@ -1,9 +1,9 @@
-#include "MainWindow.h"
+#include "mainwindow.h"
 #include <ui_mainwindow.h>
 
-#include "GUI.h"
-#include "IEvent.h"
-#include "IUserManager.h"
+#include "gui.h"
+#include "interface/ievent.h"
+#include "interface/iusermanager.h"
 
 #include <QCloseEvent>
 #include <QMessageBox>

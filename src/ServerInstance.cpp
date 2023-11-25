@@ -1,10 +1,10 @@
-#include "ServerInstance.h"
-#include "ReceivePacket.h"
-#include "BuildNum.h"
-#include "CSVTable.h"
-#include "ServerConfig.h"
+#include "serverinstance.h"
+#include "net/receivepacket.h"
+#include "common/buildnum.h"
+#include "csvtable.h"
+#include "serverconfig.h"
 #ifdef USE_GUI
-#include "GUI/IGUI.h"
+#include "gui/igui.h"
 #endif
 
 using namespace std;

@@ -29,62 +29,60 @@ if (CSO_SERVER_USE_GUI)
 endif()
 
 target_sources(PROJECTNAME PRIVATE "main.cpp")
-target_sources(PROJECTNAME PRIVATE "ServerInstance.cpp")
-target_sources(PROJECTNAME PRIVATE "ServerConfig.cpp")
-target_sources(PROJECTNAME PRIVATE "Buffer.cpp")
-target_sources(PROJECTNAME PRIVATE "BuildNum.cpp")
-target_sources(PROJECTNAME PRIVATE "Console.cpp")
-target_sources(PROJECTNAME PRIVATE "User.cpp")
-target_sources(PROJECTNAME PRIVATE "UserInventoryItem.cpp")
-target_sources(PROJECTNAME PRIVATE "UserLoadout.cpp")
-target_sources(PROJECTNAME PRIVATE "Room.cpp")
-target_sources(PROJECTNAME PRIVATE "RoomSettings.cpp")
-target_sources(PROJECTNAME PRIVATE "GameMatch.cpp")
-target_sources(PROJECTNAME PRIVATE "Channel.cpp")
-target_sources(PROJECTNAME PRIVATE "ChannelServer.cpp")
-target_sources(PROJECTNAME PRIVATE "CSVTable.cpp")
-target_sources(PROJECTNAME PRIVATE "Quest.cpp")
-target_sources(PROJECTNAME PRIVATE "QuestEvent.cpp")
+target_sources(PROJECTNAME PRIVATE "serverinstance.cpp")
+target_sources(PROJECTNAME PRIVATE "serverconfig.cpp")
+target_sources(PROJECTNAME PRIVATE "common/buffer.cpp")
+target_sources(PROJECTNAME PRIVATE "common/buildnum.cpp")
+target_sources(PROJECTNAME PRIVATE "console.cpp")
+target_sources(PROJECTNAME PRIVATE "user/user.cpp")
+target_sources(PROJECTNAME PRIVATE "user/userinventoryitem.cpp")
+target_sources(PROJECTNAME PRIVATE "user/userloadout.cpp")
+target_sources(PROJECTNAME PRIVATE "room/room.cpp")
+target_sources(PROJECTNAME PRIVATE "room/roomsettings.cpp")
+target_sources(PROJECTNAME PRIVATE "room/gamematch.cpp")
+target_sources(PROJECTNAME PRIVATE "channel/channel.cpp")
+target_sources(PROJECTNAME PRIVATE "channel/channelserver.cpp")
+target_sources(PROJECTNAME PRIVATE "csvtable.cpp")
+target_sources(PROJECTNAME PRIVATE "quest/quest.cpp")
+target_sources(PROJECTNAME PRIVATE "quest/questevent.cpp")
 
-target_sources(PROJECTNAME PRIVATE "UserManager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/manager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/usermanager.cpp")
 if (CSO_SERVER_DBSQLITE)
-	target_sources(PROJECTNAME PRIVATE "UserDatabase_SQLite.cpp")
+	target_sources(PROJECTNAME PRIVATE "manager/userdatabase_sqlite.cpp")
 endif()
-target_sources(PROJECTNAME PRIVATE "ChannelManager.cpp")
-target_sources(PROJECTNAME PRIVATE "PacketManager.cpp")
-target_sources(PROJECTNAME PRIVATE "ShopManager.cpp")
-target_sources(PROJECTNAME PRIVATE "ItemManager.cpp")
-target_sources(PROJECTNAME PRIVATE "LuckyItemManager.cpp")
-target_sources(PROJECTNAME PRIVATE "HostManager.cpp")
-target_sources(PROJECTNAME PRIVATE "DedicatedServerManager.cpp")
-target_sources(PROJECTNAME PRIVATE "QuestManager.cpp")
-target_sources(PROJECTNAME PRIVATE "MiniGameManager.cpp")
-target_sources(PROJECTNAME PRIVATE "ClanManager.cpp")
-target_sources(PROJECTNAME PRIVATE "RankManager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/channelmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/packetmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/shopmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/itemmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/luckyitemmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/hostmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/dedicatedservermanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/questmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/minigamemanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/clanmanager.cpp")
+target_sources(PROJECTNAME PRIVATE "manager/rankmanager.cpp")
 
-target_sources(PROJECTNAME PRIVATE "Network.cpp")
-target_sources(PROJECTNAME PRIVATE "ExtendedSocket.cpp")
-target_sources(PROJECTNAME PRIVATE "ReceivePacket.cpp")
-target_sources(PROJECTNAME PRIVATE "SendPacket.cpp")
-target_sources(PROJECTNAME PRIVATE "PacketHelper_FullUserInfo.cpp")
-target_sources(PROJECTNAME PRIVATE "Manager.cpp")
+target_sources(PROJECTNAME PRIVATE "net/network.cpp")
+target_sources(PROJECTNAME PRIVATE "net/extendedsocket.cpp")
+target_sources(PROJECTNAME PRIVATE "net/receivepacket.cpp")
+target_sources(PROJECTNAME PRIVATE "net/sendpacket.cpp")
+target_sources(PROJECTNAME PRIVATE "packet/packethelper_fulluserinfo.cpp")
 if (WIN32)
-	target_sources(PROJECTNAME PRIVATE "CrashDump.cpp")
+	target_sources(PROJECTNAME PRIVATE "crashdump.cpp")
 endif()
 
-target_sources(PROJECTNAME PRIVATE "Common/Thread.cpp")
-target_sources(PROJECTNAME PRIVATE "Common/Utils.cpp")
+target_sources(PROJECTNAME PRIVATE "common/thread.cpp")
+target_sources(PROJECTNAME PRIVATE "common/utils.cpp")
 
 target_include_directories(PROJECTNAME PUBLIC
-	"./"
-	"Thirdparty"
-	"Thirdparty/json/include"
-	"Thirdparty/SQLiteCpp/include"
-	"Thirdparty/KeyValues/include"
-	"Thirdparty/wolfssl"
-	"Thirdparty/zip/src"
-	"Common"
-	"Interfaces"
+	"."
+	"thirdparty"
+	"thirdparty/json/include"
+	"thirdparty/SQLiteCpp/include"
+	"thirdparty/KeyValues/include"
+	"thirdparty/wolfssl"
+	"thirdparty/zip/src"
 )
 
 target_precompile_headers(PROJECTNAME PRIVATE main.h)

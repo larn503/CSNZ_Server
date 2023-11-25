@@ -1,11 +1,11 @@
-#include "BanDialog.h"
+#include "bandialog.h"
 #include <ui_bandialog.h>
 #include <QMessageBox.h>
 
-#include "GUI.h"
-#include "IEvent.h"
-#include "IUserDatabase.h"
-#include "IServerInstance.h"
+#include "gui.h"
+#include "interface/ievent.h"
+#include "interface/iuserdatabase.h"
+#include "interface/iserverinstance.h"
 
 CBanDialog::CBanDialog(QWidget* parent, const Session& session) : QDialog(parent)
 {

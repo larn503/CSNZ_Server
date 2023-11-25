@@ -1,4 +1,4 @@
-#include "Thread.h"
+#include "thread.h"
 
 ThreadId GetCurrentThreadID()
 {

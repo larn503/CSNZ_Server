@@ -1,4 +1,4 @@
-#include "CSVTable.h"
+#include "csvtable.h"
 
 using namespace std;
 

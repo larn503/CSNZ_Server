@@ -1,7 +1,7 @@
-#include "ConsoleTab.h"
-#include "../Console.h"
-#include "GUI.h"
-#include "IEvent.h"
+#include "consoletab.h"
+#include "../console.h"
+#include "gui.h"
+#include "interface/ievent.h"
 
 #include <ui_consoletab.h>
 #include <QKeyEvent>
