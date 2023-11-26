@@ -25,4 +25,11 @@ Then click on Build -> Build All.
 * [CMake](https://www.cmake.org/download/)
 * [Qt 6.5.3 (optional)](https://www.qt.io/download-qt-installer)
 
-...
+```
+cd PathToRepo/CSNZ_Server/src
+cmake -S . -B build
+cmake --build build
+```
+
+# Documentation
+You can find server documentation in [DOCUMENTATION.md](doc/documentation.md) file.
