@@ -31,3 +31,5 @@ private:
 	void OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, IUser* user);
 	void OnWeaponReleaseGetJokerRequest(IUser* user);
 };
+
+extern class CMiniGameManager* g_pMiniGameManager;

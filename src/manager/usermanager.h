@@ -74,3 +74,5 @@ private:
 	std::vector<IUser*> m_Users;
 	std::vector<CUserInventoryItem> m_DefaultItems;
 };
+
+extern class CUserManager* g_pUserManager;

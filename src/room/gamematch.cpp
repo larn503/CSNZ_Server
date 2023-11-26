@@ -1,5 +1,13 @@
 #include "gamematch.h"
 #include "serverconfig.h"
+#include "manager/questmanager.h"
+#include "manager/packetmanager.h"
+#include "manager/minigamemanager.h"
+#include "manager/itemmanager.h"
+#include "manager/hostmanager.h"
+#include "manager/userdatabase.h"
+
+#include "user/userinventoryitem.h"
 
 using namespace std;
 

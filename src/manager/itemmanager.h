@@ -60,3 +60,5 @@ private:
 	CCSVTable* m_pReinforceMaxLvTable;
 	CCSVTable* m_pReinforceMaxExpTable;
 };
+
+extern class CItemManager* g_pItemManager;

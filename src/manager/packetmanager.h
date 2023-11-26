@@ -1,11 +1,10 @@
 #pragma once
 
 #include "interface/ipacketmanager.h"
+#include "manager.h"
 
 #include "net/sendpacket.h"
 #include "user/user.h"
-#include "luckyitemmanager.h"
-#include "shopmanager.h"
 #include "quest/quest.h"
 
 struct Notice_s;
@@ -292,3 +291,5 @@ private:
 	CBinMetadata* m_pUnk43;
 	CBinMetadata* m_pUnk49;
 };
+
+extern CPacketManager* g_pPacketManager;

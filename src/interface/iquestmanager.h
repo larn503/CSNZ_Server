@@ -2,8 +2,17 @@
 
 #include "imanager.h"
 
+class CGameMatch;
+class CGameMatchUserStat;
+class IUser;
+class CQuest;
+class CQuestTask;
 class CQuestEvent;
 class CQuestEventTask;
+struct UserQuestProgress;
+struct UserQuestTaskProgress;
+struct GameMatch_KillEvent;
+struct QuestReward_s;
 
 class IQuestManager : public IBaseManager
 {

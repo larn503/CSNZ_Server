@@ -1,5 +1,6 @@
 #include "extendedsocket.h"
 #include "sendpacket.h"
+#include "receivepacket.h"
 
 #include <wolfssl/options.h>
 #include <wolfssl/openssl/evp.h>

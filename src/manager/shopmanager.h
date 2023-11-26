@@ -1,7 +1,7 @@
 #pragma once
 
 #include "interface/ishopmanager.h"
-#include "itemmanager.h"
+#include "manager.h"
 
 class CShopManager : public CBaseManager<IShopManager>
 {
@@ -29,3 +29,5 @@ private:
 	std::vector<std::vector<int>> m_RecommendedProducts;
 	std::vector<int> m_PopularProducts;
 };
+
+extern class CShopManager* g_pShopManager;

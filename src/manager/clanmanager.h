@@ -1,6 +1,7 @@
 #pragma once
 
 #include "interface/iclanmanager.h"
+#include "manager.h"
 
 class CClanManager : public CBaseManager<IClanManager>
 {
@@ -34,3 +35,5 @@ public:
 
 	void OnUserLogin(IUser* user);
 };
+
+extern class CClanManager* g_pClanManager;

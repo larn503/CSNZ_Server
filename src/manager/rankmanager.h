@@ -1,6 +1,7 @@
 #pragma once
 
 #include "interface/irankmanager.h"
+#include "manager.h"
 
 class CRankManager : public CBaseManager<IRankManager>
 {
@@ -16,3 +17,5 @@ private:
 	bool OnRankLeagueRequest(CReceivePacket* msg, IUser* user);
 	bool OnRankUserInfoRequest(CReceivePacket* msg, IUser* user);
 };
+
+extern class CRankManager* g_pRankManager;

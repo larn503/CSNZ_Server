@@ -43,3 +43,5 @@ public:
 	std::vector<Survey> surveys;
 	bool crypt;
 };
+
+extern class CServerConfig* g_pServerConfig;

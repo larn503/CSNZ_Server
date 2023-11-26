@@ -1,4 +1,5 @@
 #include "sendpacket.h"
+#include "extendedsocket.h"
 
 using namespace std;
 

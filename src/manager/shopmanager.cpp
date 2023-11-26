@@ -1,6 +1,7 @@
-#include "main.h"
 #include "shopmanager.h"
 #include "packetmanager.h"
+#include "usermanager.h"
+#include "itemmanager.h"
 #include "nlohmann/json.hpp"
 #include "keyvalues.hpp"
 

@@ -1,8 +1,12 @@
 #include "packetmanager.h"
 #include "serverinstance.h"
+#include "channelmanager.h"
+
 #include "packet/packethelper_fulluserinfo.h"
 #include "packet/packet_metadata_data.h"
 #include "user/userfastbuy.h"
+#include "user/userinventoryitem.h"
+
 #include "zip.h"
 
 using namespace std;

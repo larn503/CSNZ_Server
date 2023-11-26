@@ -1,9 +1,10 @@
 #pragma once
 
 #include "interface/ichannelmanager.h"
+#include "manager.h"
 
 #include "channel/channelserver.h"
-#include "manager/usermanager.h"
+//#include "manager/usermanager.h"
 #include "user/user.h"
 
 class CChannelManager : public CBaseManager<IChannelManager>
@@ -40,3 +41,5 @@ private:
 	bool OnUserInviteRequest(CReceivePacket* msg, IUser* user);
 	bool OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user);
 };
+
+extern class CChannelManager* g_pChannelManager;

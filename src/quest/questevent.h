@@ -1,8 +1,7 @@
 #pragma once
 
 #include "room/gamematch.h"
-
-extern CPacketManager* g_pPacketManager;
+#include "manager/packetmanager.h"
 
 class CQuestEvent;
 class CQuestEventTask;

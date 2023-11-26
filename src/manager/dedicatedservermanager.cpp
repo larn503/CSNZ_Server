@@ -1,4 +1,6 @@
 #include "dedicatedservermanager.h"
+#include "usermanager.h"
+#include "packetmanager.h"
 
 CDedicatedServer::CDedicatedServer(IExtendedSocket* socket, int ip, int port)
 {

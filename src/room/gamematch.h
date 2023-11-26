@@ -1,7 +1,11 @@
 #pragma once
 
 #include "user/user.h"
+#include "user/userinventoryitem.h"
+
 #include "room/room.h"
+
+class CUserInventoryItem;
 
 class CGameMatchUserStat
 {

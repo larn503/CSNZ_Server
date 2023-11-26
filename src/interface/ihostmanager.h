@@ -1,5 +1,10 @@
 #pragma once
 
+#include "imanager.h"
+
+class IUser;
+class CGameMatch;
+
 class IHostManager : public IBaseManager
 {
 public:

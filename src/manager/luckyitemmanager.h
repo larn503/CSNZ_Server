@@ -25,3 +25,5 @@ private:
 	std::vector<ItemBoxItem> m_Items;
 	std::vector<ItemBox*> m_ItemBoxes;
 };
+
+extern class CLuckyItemManager* g_pLuckyItemManager;

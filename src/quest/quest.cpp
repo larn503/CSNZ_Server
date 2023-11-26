@@ -1,4 +1,7 @@
 #include "quest.h"
+#include "manager/questmanager.h"
+#include "manager/packetmanager.h"
+#include "manager/userdatabase.h"
 
 using namespace std;
 

@@ -1,7 +1,12 @@
 #pragma once
 
 #include <mutex>
+#include "manager.h"
 #include "interface/idedicatedservermanager.h"
+
+class IRoom;
+class IExtendedSocket;
+class CReceivePacket;
 
 class CDedicatedServer
 {
@@ -47,3 +52,5 @@ private:
 	std::mutex hMutex;
 	std::vector<CDedicatedServer*> vServerPools;
 };
+
+extern class CDedicatedServerManager* g_pDedicatedServerManager;

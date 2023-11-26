@@ -1,6 +1,12 @@
 #include "hostmanager.h"
 #include "packetmanager.h"
+#include "dedicatedservermanager.h"
+#include "usermanager.h"
+#include "userdatabase.h"
+#include "itemmanager.h"
 #include "serverconfig.h"
+
+#include "user/userinventoryitem.h"
 
 using namespace std;
 
@@ -123,7 +129,6 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 	return false;
 }
-
 
 bool CHostManager::OnSaveData(CReceivePacket* msg, CGameMatch* gamematch)
 {

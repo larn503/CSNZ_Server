@@ -3,8 +3,6 @@
 #include "interface/iuser.h"
 
 #include "net/extendedsocket.h"
-#include "manager/userdatabase.h"
-#include "user/userinventoryitem.h"
 #include "channel/channel.h"
 #include "definitions.h"
 

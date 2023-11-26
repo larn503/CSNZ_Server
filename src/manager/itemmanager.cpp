@@ -1,5 +1,12 @@
-#include "serverinstance.h"
 #include "itemmanager.h"
+
+#include "serverinstance.h"
+#include "packetmanager.h"
+#include "userdatabase.h"
+#include "luckyitemmanager.h"
+
+#include "user/userinventoryitem.h"
+
 #include "csvtable.h"
 #include "serverconfig.h"
 #include "keyvalues.hpp"

@@ -1,5 +1,13 @@
 #pragma once
 
+#include "imanager.h"
+
+class CReceivePacket;
+class IExtendedSocket;
+struct Product;
+struct SubProduct;
+class IUser;
+
 class IShopManager : public IBaseManager
 {
 public:

@@ -1,5 +1,9 @@
 #pragma once
 
+#include "common/buffer.h"
+
+class IUser;
+
 struct unk33_data
 {
 	int unk1;

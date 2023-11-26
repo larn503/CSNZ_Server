@@ -1,6 +1,12 @@
 #include "userdatabase_sqlite.h"
 #include "serverconfig.h"
+#include "usermanager.h"
+#include "packetmanager.h"
+#include "itemmanager.h"
+#include "questmanager.h"
+
 #include "user/userfastbuy.h"
+#include "user/userinventoryitem.h"
 #ifdef WIN32
 #include <direct.h>
 #else
@@ -5391,7 +5397,7 @@ void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 				else
 				{
 					// add to notice list
-					g_pUserDatabase->UpdateExpiryNotices(userID, item.m_nItemID);
+					UpdateExpiryNotices(userID, item.m_nItemID);
 
 					// RemoveItem() should be used
 					item.Reset();

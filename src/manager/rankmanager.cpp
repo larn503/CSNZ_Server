@@ -1,4 +1,7 @@
 #include "rankmanager.h"
+#include "usermanager.h"
+#include "packetmanager.h"
+#include "userdatabase.h"
 
 using namespace std;
 

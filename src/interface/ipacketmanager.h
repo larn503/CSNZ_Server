@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+class CChannel;
 class CUserInventoryItem;
 class IUser;
 class CSendPacket;

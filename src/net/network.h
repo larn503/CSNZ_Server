@@ -24,7 +24,7 @@
 #define INVALID_SOCKET -1
 #endif
 
-#include "extendedsocket.h"
+#include "interface/iextendedsocket.h"
 
 class CNetwork
 {
@@ -58,3 +58,5 @@ public:
 
 	std::vector<IExtendedSocket*> m_Sessions;
 };
+
+extern class CNetwork* g_pNetwork;

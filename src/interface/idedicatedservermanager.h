@@ -1,7 +1,9 @@
 #pragma once
 
-#include "idedicatedservermanager.h"
+#include "imanager.h"
 
+class CDedicatedServer;
+class IRoom;
 class IDedicatedServerManager : public IBaseManager
 {
 public:

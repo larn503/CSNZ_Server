@@ -1,4 +1,9 @@
 #include "roomsettings.h"
+#include "definitions.h"
+#include "manager/userdatabase.h"
+
+#include "user/user.h"
+#include "user/userinventoryitem.h"
 
 CRoomSettings::CRoomSettings()
 {

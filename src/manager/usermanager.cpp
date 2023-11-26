@@ -2,6 +2,15 @@
 #include "channelmanager.h"
 #include "userdatabase.h"
 #include "itemmanager.h"
+#include "packetmanager.h"
+#include "shopmanager.h"
+#include "minigamemanager.h"
+#include "luckyitemmanager.h"
+#include "clanmanager.h"
+#include "questmanager.h"
+
+#include "user/userinventoryitem.h"
+
 #include "csvtable.h"
 #include "serverinstance.h"
 #include "serverconfig.h"

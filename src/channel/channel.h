@@ -2,6 +2,8 @@
 
 #include "room/room.h"
 
+class CChannelServer;
+
 class CChannel
 {
 public:

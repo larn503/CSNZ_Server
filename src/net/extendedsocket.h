@@ -1,7 +1,6 @@
 #pragma once
 
 #include "interface/iextendedsocket.h"
-#include "main.h"
 #include "common/buffer.h"
 
 #define MAX_SEQUENCE 255

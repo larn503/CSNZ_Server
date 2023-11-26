@@ -1,4 +1,10 @@
 #include "clanmanager.h"
+#include "manager/usermanager.h"
+#include "manager/packetmanager.h"
+#include "manager/userdatabase.h"
+
+#include "user/userinventoryitem.h"
+
 #include "serverconfig.h"
 
 using namespace std;

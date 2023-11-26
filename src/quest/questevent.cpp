@@ -1,4 +1,6 @@
 #include "questevent.h"
+#include "manager/questmanager.h"
+#include "manager/userdatabase.h"
 
 using namespace std;
 

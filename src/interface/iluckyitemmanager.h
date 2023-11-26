@@ -1,5 +1,11 @@
 #pragma once
 
+#include "imanager.h"
+
+class IUser;
+struct ItemBox;
+struct ItemBoxItem;
+
 class ILuckyItemManager : public IBaseManager
 {
 public:

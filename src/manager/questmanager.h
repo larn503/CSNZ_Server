@@ -1,8 +1,8 @@
 #pragma once
 
 #include "interface/iquestmanager.h"
+#include "manager.h"
 
-#include "usermanager.h"
 #include "definitions.h"
 #include "quest/quest.h"
 #include "quest/questevent.h"
@@ -60,3 +60,5 @@ private:
 	std::vector<CQuestEvent*> m_EventQuests;
 	std::vector<CQuest*> m_ClanQuests;
 };
+
+extern class CQuestManager* g_pQuestManager;

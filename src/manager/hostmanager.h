@@ -1,6 +1,8 @@
 #pragma once
 
 #include "interface/ihostmanager.h"
+#include "manager.h"
+
 #include "user/user.h"
 
 class CHostManager : public CBaseManager<IHostManager>
@@ -30,3 +32,5 @@ private:
 	bool OnUserSpawn(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnRoundStart(CReceivePacket* msg, IExtendedSocket* socket);
 };
+
+extern class CHostManager* g_pHostManager;

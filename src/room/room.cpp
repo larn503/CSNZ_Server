@@ -1,8 +1,12 @@
 #include "room.h"
 #include "manager/channelmanager.h"
 #include "manager/packetmanager.h"
+#include "manager/dedicatedservermanager.h"
+#include "manager/userdatabase.h"
 #include "serverconfig.h"
 #include "common/utils.h"
+
+#include "user/userinventoryitem.h"
 
 using namespace std;
 

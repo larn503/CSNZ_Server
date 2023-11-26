@@ -1,5 +1,14 @@
 #pragma once
 
+#include "imanager.h"
+
+class IExtendedSocket;
+class IUser;
+class CUserInventoryItem;
+struct RewardItem;
+struct RewardNotice;
+struct Reward;
+
 class IItemManager : public IBaseManager
 {
 public:

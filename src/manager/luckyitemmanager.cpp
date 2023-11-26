@@ -2,6 +2,8 @@
 #include "itemmanager.h"
 #include "csvtable.h"
 #include "packetmanager.h"
+#include "userdatabase.h"
+
 #include "nlohmann/json.hpp"
 #include "keyvalues.hpp"
 
@@ -98,6 +100,23 @@ void CLuckyItemManager::LoadLuckyItems()
 	catch (exception& ex)
 	{
 		g_pConsole->Error("CLuckyItemManager::LoadLuckyItems: an error occured while parsing ItemBox.json: %s\n", ex.what());
+	}
+
+	// sort rate groups in descending order and check if sum of the all rate more than 1
+	for (auto& itemBox : m_ItemBoxes)
+	{
+		int totalRate = 0;
+		for (auto& rateGroup : itemBox->rates)
+		{
+			totalRate += rateGroup.rate;
+			if (totalRate > 100)
+			{
+				g_pConsole->Warn("CLuckyItemManager::LoadLuckyItems: total rate for %d is more than 100\n", itemBox->itemId);
+				break;
+			}
+		}
+
+		sort(itemBox->rates.begin(), itemBox->rates.end(), [](const ItemBoxRate& a, const ItemBoxRate& b) { return a.rate > b.rate; });
 	}
 }
 
@@ -231,12 +250,11 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 		return 0;
 	}
 
-	int openedDecoderCount = 0;
-	Randomer randomRate(itemBox->rates.size() - 1);
+	int openedDecoders = 0;
 	ItemBoxOpenResult result;
 	result.itemBoxItemId = itemBoxID;
 
-	for (int i = 0; i < itemBoxOpenCount; i++)
+	for (openedDecoders = 0; openedDecoders < itemBoxOpenCount; openedDecoders++)
 	{
 		if (g_pUserDatabase->IsInventoryFull(user->GetID()))
 		{
@@ -244,27 +262,40 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 			break;
 		}
 
-		int randRate;
-		while (true)
-		{
-			randRate = randomRate();
+		// generate random number from 1 to 100
+		int rateNum = rand() % 100 + 1;
+		int randRateIdx = -1;
+		int tempRate = 0;
 
-			if (yesOrNo(itemBox->rates[randRate].rate))
+		// rates must be sorted in descending order!
+		// go through rates and add to tempRate current rate value
+		for (size_t i = 0; i < itemBox->rates.size(); i++)
+		{
+			tempRate += itemBox->rates[i].rate;
+
+			// check if random number less or equal to tempRate
+			if (rateNum <= tempRate)
 			{
+				// if yes, then you found your rate group
+				randRateIdx = i;
 				break;
 			}
 		}
 
-		ItemBoxRate rate;
-		rate = itemBox->rates[randRate];
+		// looks like itembox config is wrong
+		if (randRateIdx == -1)
+		{
+			g_pPacketManager->SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
+			return 0;
+		}
 
+		ItemBoxRate rate = itemBox->rates[randRateIdx];
+		
+		// get random item and duration from rate group (probability is the same for each item)
 		Randomer randomItem{ rate.items.size() - 1 };
 		Randomer randomDuration{ rate.duration.size() - 1 };
-		int randDuration = randomDuration();
-		int randItem = randomItem();
-
-		int itemID = rate.items[randItem];
-		int duration = rate.duration[randDuration];
+		int itemID = rate.items[randomItem()];
+		int duration = rate.duration[randomDuration()];
 
 		int status = g_pItemManager->AddItem(user->GetID(), user, itemID, 1, duration);
 		if (status < 0)
@@ -288,14 +319,12 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 				g_pPacketManager->SendUMsgSystemReply(u->GetExtendedSocket(), 2, item.grade == ItemBoxGrades::PREMIUM ? "LOTTERY_WIN_PREMIUM" : "LOTTERY_WIN_PREMIUM_NUM", vector<string>{ character.gameName, to_string(item.itemId) });
 			}
 		}
-
-		openedDecoderCount++;
 	}
 
 	if (result.items.size())
 		g_pPacketManager->SendItemOpenDecoderResult(user->GetExtendedSocket(), result);
 
-	return openedDecoderCount;
+	return openedDecoders;
 }
 
 vector<ItemBox*>& CLuckyItemManager::GetItemBoxes()

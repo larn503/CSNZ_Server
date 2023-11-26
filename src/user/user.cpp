@@ -1,5 +1,7 @@
 #include "user.h"
+#include "manager/userdatabase.h"
 #include "manager/packetmanager.h"
+#include "manager/questmanager.h"
 #include "serverconfig.h"
 
 using namespace std;

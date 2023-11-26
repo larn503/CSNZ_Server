@@ -1,8 +1,6 @@
 #pragma once
 
-#include "main.h"
 #include "common/buffer.h"
-#include "definitions.h"
 
 class CSendPacket
 {

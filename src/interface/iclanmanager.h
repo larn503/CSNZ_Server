@@ -1,5 +1,9 @@
 #pragma once
 
+#include "imanager.h"
+
+class IUser;
+
 class IClanManager : public IBaseManager
 {
 public:

@@ -1,5 +1,7 @@
 #include "minigamemanager.h"
 #include "packetmanager.h"
+#include "userdatabase.h"
+#include "itemmanager.h"
 #include "serverconfig.h"
 
 using namespace std;

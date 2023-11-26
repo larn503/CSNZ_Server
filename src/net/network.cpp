@@ -1,4 +1,5 @@
 #include "network.h"
+#include "extendedsocket.h"
 #include "serverinstance.h"
 #include "serverconfig.h"
 

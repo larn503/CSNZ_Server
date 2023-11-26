@@ -1,20 +1,7 @@
 #pragma once
 
 #include "interface/iserverinstance.h"
-
-#include "net/extendedsocket.h"
-#include "manager/packetmanager.h"
-#include "manager/usermanager.h"
-#include "manager/channelmanager.h"
-#include "manager/itemmanager.h"
-#include "manager/shopmanager.h"
-#include "manager/luckyitemmanager.h"
-#include "manager/hostmanager.h"
-#include "manager/dedicatedservermanager.h"
-#include "manager/questmanager.h"
-#include "manager/minigamemanager.h"
-#include "manager/clanmanager.h"
-#include "manager/rankmanager.h"
+#include "csvtable.h"
 
 class CServerInstance : public IServerInstance
 {
@@ -56,6 +43,12 @@ private:
 	tm* m_pCurrentLocalTime;
 	time_t m_nUptime;
 };
+
+extern CServerInstance* g_pServerInstance;
+
+extern CCSVTable* g_pItemTable;
+extern CCSVTable* g_pMapListTable;
+extern CCSVTable* g_pGameModeListTable;
 
 void* ReadConsoleThread(void*);
 void* ListenThread(void*);

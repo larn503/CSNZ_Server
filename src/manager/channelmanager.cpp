@@ -1,10 +1,18 @@
 #include "channelmanager.h"
+
 #include "itemmanager.h"
-#include "common/buildnum.h"
 #include "packetmanager.h"
+#include "minigamemanager.h"
+#include "userdatabase.h"
 #include "serverinstance.h"
+#include "dedicatedservermanager.h"
+
+#include "user/userinventoryitem.h"
+
 #include "csvtable.h"
 #include "serverconfig.h"
+#include "common/buildnum.h"
+
 #include <chrono>
 
 using namespace std;
