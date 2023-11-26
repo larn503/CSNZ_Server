@@ -112,7 +112,7 @@ bool CShopManager::LoadProducts()
 						subProduct.productID = productTypeId++;
 						subProduct.price = jSubProduct.value("Price", 0);
 						subProduct.additionalPoints = jSubProduct.value("AdditionalPoints", 0);
-						subProduct.additionalClanPoints = jSubProduct.value("AdditionaClanPoints", 0);
+						subProduct.additionalClanPoints = jSubProduct.value("AdditionalClanPoints", 0);
 						subProduct.adType = jSubProduct.value("AdType", 0);
 						product.subProducts.push_back(subProduct);
 					}
