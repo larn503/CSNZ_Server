@@ -2,6 +2,7 @@
 #include "../console.h"
 #include "gui.h"
 #include "interface/ievent.h"
+#include "../consolecommands.h"
 
 #include <ui_consoletab.h>
 #include <QKeyEvent>
@@ -17,18 +18,19 @@ CConsoleTab::CConsoleTab(QWidget* parent) : QWidget(parent)
 
 	m_pCommandHistory = new QCompleter();
 
-	// completer example
-	QStringList cmdList = { "users", "kickall", "crash", "shutdown", "status",
-							"sendnotice", "giverewardtoall", "togglegamemaster", "ban",
-							"unban", "ipban", "unipban", "hban", "unhban",
-							"dbsave", "dbreload", "shopreload"};
-	m_pCommandList = new QCompleter(cmdList);
+	m_pCommandList = new QCompleter(m_CmdList);
 	m_pUI->Entry->setCompleter(m_pCommandList);
 
 	m_pUI->Entry->installEventFilter(this);
 
 	connect(m_pUI->SubmitBtn, &QPushButton::clicked, this, &CConsoleTab::SubmitClicked);
 	connect(m_pUI->Entry, SIGNAL(textEdited(const QString&)), this, SLOT(TextChanged(const QString&)));
+
+	// get cmd list
+	g_pEvent->AddEventFunction([]()
+		{
+			GUI()->OnCommandListUpdated(CmdList()->GetCommandList());
+		});
 }
 
 CConsoleTab::~CConsoleTab()
@@ -120,4 +122,19 @@ bool CConsoleTab::eventFilter(QObject* obj, QEvent* event)
 		}
 	}
 	return QObject::eventFilter(obj, event);
+}
+
+void CConsoleTab::OnCommandListUpdated(const std::vector<std::string>& cmdList)
+{
+	m_CmdList.clear();
+	for (auto& str : cmdList)
+	{
+		m_CmdList.push_back(QString::fromStdString(str));
+	}
+
+	if (m_pCommandList)
+		delete m_pCommandList;
+
+	m_pCommandList = new QCompleter(m_CmdList);
+	m_pUI->Entry->setCompleter(m_pCommandList);
 }

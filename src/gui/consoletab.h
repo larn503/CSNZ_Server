@@ -21,9 +21,11 @@ public slots:
 	void SubmitClicked();
 	void TextChanged(const QString& text);
 	bool eventFilter(QObject* obj, QEvent* event);
+	void OnCommandListUpdated(const std::vector<std::string>& cmdList);
 
 private:
 	Ui::ConsoleTab* m_pUI;
 	QCompleter* m_pCommandList;
 	QCompleter* m_pCommandHistory;
+	QStringList m_CmdList;
 };

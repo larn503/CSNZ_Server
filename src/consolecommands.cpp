@@ -29,9 +29,9 @@ CCommandList::~CCommandList()
 	g_pCommandList = NULL;
 }
 
-std::vector<std::string> CCommandList::GetCommandList()
+vector<string> CCommandList::GetCommandList()
 {
-	std::vector<std::string> cmdlist;
+	vector<string> cmdlist;
 	for (auto cmd : m_Commands)
 	{
 		cmdlist.push_back(cmd->GetName());
@@ -47,10 +47,10 @@ void CCommandList::AddCommand(CCommand* cmd)
 
 void CCommandList::RemoveCommand(CCommand* cmd)
 {
-	m_Commands.erase(std::remove(std::begin(m_Commands), std::end(m_Commands), cmd), std::end(m_Commands));
+	m_Commands.erase(remove(begin(m_Commands), end(m_Commands), cmd), end(m_Commands));
 }
 
-CCommand* CCommandList::GetCommand(const std::string& name)
+CCommand* CCommandList::GetCommand(const string& name)
 {
 	for (auto cmd : m_Commands)
 	{
@@ -63,7 +63,7 @@ CCommand* CCommandList::GetCommand(const std::string& name)
 	return NULL;
 }
 
-CCommand::CCommand(const std::string& name, const std::string& desc, const std::string& usage, const std::function<void(CCommand*, const std::vector<std::string>&)>& func)
+CCommand::CCommand(const string& name, const string& desc, const string& usage, const function<void(CCommand*, const vector<string>&)>& func)
 {
 	m_Name = name;
 	m_Description = desc;
@@ -78,38 +78,38 @@ CCommand::~CCommand()
 	g_pCommandList->RemoveCommand(this);
 }
 
-std::string CCommand::GetName()
+string CCommand::GetName()
 {
 	return m_Name;
 }
 
-std::string CCommand::GetDescription()
+string CCommand::GetDescription()
 {
 	return m_Description;
 }
 
-std::string CCommand::GetUsage()
+string CCommand::GetUsage()
 {
 	return m_Usage;
 }
 
-void CCommand::Exec(const std::vector<std::string>& args)
+void CCommand::Exec(const vector<string>& args)
 {
 	m_Func(this, args);
 }
 
-void CommandHelp(CCommand* cmd, const std::vector<std::string>& args)
+void CommandHelp(CCommand* cmd, const vector<string>& args)
 {
 	printf("Command list:\n");
 
-	std::vector<std::string> cmdList = g_pCommandList->GetCommandList();
+	vector<string> cmdList = g_pCommandList->GetCommandList();
 	for (auto& name : cmdList)
 	{
 		printf("%s\n", name.c_str());
 	}
 }
 
-void CommandUsers(CCommand* cmd, const std::vector<std::string>& args)
+void CommandUsers(CCommand* cmd, const vector<string>& args)
 {
 	g_pConsole->Log(va("%-6s|%-32s|%-8s|%-6s|%-15s| (online: %d | connected: %d)\n",
 		"UserID", "Username/IP", "Uptime", "Status", "IP Address", g_pUserManager->GetUsers().size(), g_pNetwork->m_Sessions.size()));
@@ -138,17 +138,17 @@ void CommandUsers(CCommand* cmd, const std::vector<std::string>& args)
 	}
 }
 
-void CommandKickAll(CCommand* cmd, const std::vector<std::string>& args)
+void CommandKickAll(CCommand* cmd, const vector<string>& args)
 {
 	g_pUserManager->DisconnectAllFromServer();
 }
 
-void CommandCrash(CCommand* cmd, const std::vector<std::string>& args)
+void CommandCrash(CCommand* cmd, const vector<string>& args)
 {
 	*(int*)0 = NULL;
 }
 
-void CommandShutdown(CCommand* cmd, const std::vector<std::string>& args)
+void CommandShutdown(CCommand* cmd, const vector<string>& args)
 {
 	// kick user from game
 	for (auto channel : g_pChannelManager->channelServers)
@@ -168,18 +168,18 @@ void CommandShutdown(CCommand* cmd, const std::vector<std::string>& args)
 	g_pServerInstance->SetServerActive(false);
 }
 
-void CommandGiveRewardToAll(CCommand* cmd, const std::vector<std::string>& args)
+void CommandGiveRewardToAll(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
 	int rewardID = stoi(args[1]);
 	if (rewardID <= 0)
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -190,11 +190,11 @@ void CommandGiveRewardToAll(CCommand* cmd, const std::vector<std::string>& args)
 	}
 }
 
-void CommandSendNotice(CCommand* cmd, const std::vector<std::string>& args)
+void CommandSendNotice(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -209,11 +209,11 @@ void CommandSendNotice(CCommand* cmd, const std::vector<std::string>& args)
 	g_pConsole->Log("Sent to %d online users: %s\n", g_pUserManager->GetUsers().size(), out.c_str());
 }
 
-void CommandBan(CCommand* cmd, const std::vector<std::string>& args)
+void CommandBan(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 5 || !isNumber(args[1]) || !isNumber(args[2]) || !isNumber(args[4]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -224,7 +224,7 @@ void CommandBan(CCommand* cmd, const std::vector<std::string>& args)
 
 	if (!g_pUserDatabase->IsUserExists(userID))
 	{
-		printf("[Ban] User does not exist\n");
+		g_pConsole->Log("[Ban] User does not exist\n");
 		return;
 	}
 
@@ -252,11 +252,11 @@ void CommandBan(CCommand* cmd, const std::vector<std::string>& args)
 	}
 }
 
-void CommandUnban(CCommand* cmd, const std::vector<std::string>& args)
+void CommandUnban(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -273,22 +273,22 @@ void CommandUnban(CCommand* cmd, const std::vector<std::string>& args)
 	}
 	else
 	{
-		printf("[UnBan] Failed to find user(%d).\n", userID);
+		g_pConsole->Log("[UnBan] Failed to find user(%d).\n", userID);
 	}
 }
 
-void CommandHban(CCommand* cmd, const std::vector<std::string>& args)
+void CommandHban(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
 	int userID = stoi(args[1]);
 	if (!g_pUserDatabase->IsUserExists(userID))
 	{
-		printf("[HBan] User does not exist\n");
+		g_pConsole->Log("[HBan] User does not exist\n");
 		return;
 	}
 
@@ -304,11 +304,11 @@ void CommandHban(CCommand* cmd, const std::vector<std::string>& args)
 	}
 }
 
-void CommandUnhban(CCommand* cmd, const std::vector<std::string>& args)
+void CommandUnhban(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -317,18 +317,18 @@ void CommandUnhban(CCommand* cmd, const std::vector<std::string>& args)
 	g_pUserDatabase->UpdateHWIDBanList(hwid, true);
 }
 
-void CommandIpban(CCommand* cmd, const std::vector<std::string>& args)
+void CommandIpban(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
 	int userID = stoi(args[1]);
 	if (!g_pUserDatabase->IsUserExists(userID))
 	{
-		printf(OBFUSCATE("[IPBan] User does not exist\n"));
+		g_pConsole->Log(OBFUSCATE("[IPBan] User does not exist\n"));
 		return;
 	}
 
@@ -344,29 +344,29 @@ void CommandIpban(CCommand* cmd, const std::vector<std::string>& args)
 	}
 }
 
-void CommandUnipban(CCommand* cmd, const std::vector<std::string>& args)
+void CommandUnipban(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
 	g_pUserDatabase->UpdateIPBanList(args[1], true);
 }
 
-void CommandToggleGameMaster(CCommand* cmd, const std::vector<std::string>& args)
+void CommandToggleGameMaster(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
 	int userID = stoi(args[1]);
 	if (!g_pUserDatabase->IsUserExists(userID))
 	{
-		printf(OBFUSCATE("[ToggleGM] User does not exist\n"));
+		g_pConsole->Log(OBFUSCATE("[ToggleGM] User does not exist\n"));
 		return;
 	}
 
@@ -380,7 +380,7 @@ void CommandToggleGameMaster(CCommand* cmd, const std::vector<std::string>& args
 	g_pUserDatabase->UpdateCharacterExtended(userID, character);
 }
 
-void CommandShopReload(CCommand* cmd, const std::vector<std::string>& args)
+void CommandShopReload(CCommand* cmd, const vector<string>& args)
 {
 	g_pShopManager->Init();
 	// send shop update to users
@@ -390,7 +390,7 @@ void CommandShopReload(CCommand* cmd, const std::vector<std::string>& args)
 	g_pConsole->Log("Sent shop update to: %d\n", g_pUserManager->GetUsers().size());
 }
 
-void CommandDbReload(CCommand* cmd, const std::vector<std::string>& args)
+void CommandDbReload(CCommand* cmd, const vector<string>& args)
 {
 	g_pServerInstance->Init();
 	g_pUserDatabase->Init();
@@ -417,7 +417,7 @@ void CommandDbReload(CCommand* cmd, const std::vector<std::string>& args)
 	g_pConsole->Log("Database reload successfull.\n");
 }
 
-void CommandBans(CCommand* cmd, const std::vector<std::string>& args)
+void CommandBans(CCommand* cmd, const vector<string>& args)
 {
 	ostringstream log;
 	log << va(OBFUSCATE("\n%-5s|%-5s|%-32s|%-8s|%-6s|%-7s\n"), ("UID"), ("Type"), ("Reason"), ("HWID Ban"), ("IP Ban"), ("Acc Ban"));
@@ -464,15 +464,15 @@ void CommandBans(CCommand* cmd, const std::vector<std::string>& args)
 	g_pConsole->Log(log.str().c_str());
 }
 
-void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
+void CommandGiveItem(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 3)
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
-	int itemID, userID, count = 1, duration = 0;
+	int itemID = 0, userID, count = 1, duration = 0;
 	if (isNumber(args[1]))
 	{
 		userID = stoi(args[1]);
@@ -486,7 +486,7 @@ void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
 
 	if (!userID)
 	{
-		printf(OBFUSCATE("[GiveItem] User not found.\n"));
+		g_pConsole->Log(OBFUSCATE("[GiveItem] User not found.\n"));
 		return;
 	}
 
@@ -495,7 +495,7 @@ void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
 
 	if (itemID <= 0)
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -544,16 +544,16 @@ void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
 	};
 }
 
-void CommandStatus(CCommand* cmd, const std::vector<std::string>& args)
+void CommandStatus(CCommand* cmd, const vector<string>& args)
 {
 	g_pConsole->Log("%s\n", g_pServerInstance->GetMainInfo());
 }
 
-void CommandSendEvent(CCommand* cmd, const std::vector<std::string>& args)
+void CommandSendEvent(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 3 || !isNumber(args[1]) || !isNumber(args[2]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -563,18 +563,18 @@ void CommandSendEvent(CCommand* cmd, const std::vector<std::string>& args)
 	IUser* user = g_pUserManager->GetUserById(userID);
 	if (!user)
 	{
-		printf("User is offline");
+		g_pConsole->Log("User is offline");
 		return;
 	}
 
 	g_pPacketManager->SendEventAdd(user->GetExtendedSocket(), num);
 }
 
-void CommandSendEvent2(CCommand* cmd, const std::vector<std::string>& args)
+void CommandSendEvent2(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -582,7 +582,7 @@ void CommandSendEvent2(CCommand* cmd, const std::vector<std::string>& args)
 	IUser* user = g_pUserManager->GetUserById(userID);
 	if (!user)
 	{
-		printf("User is offline");
+		g_pConsole->Log("User is offline");
 		return;
 	}
 
@@ -596,11 +596,11 @@ void CommandSendEvent2(CCommand* cmd, const std::vector<std::string>& args)
 	g_pPacketManager->SendMiniGameWeaponReleaseUpdate(user->GetExtendedSocket(), g_pServerConfig->weaponRelease, rows, characters, totalCharacterCount);
 }
 
-void CommandSendInventory(CCommand* cmd, const std::vector<std::string>& args)
+void CommandSendInventory(CCommand* cmd, const vector<string>& args)
 {
 	if (args.size() < 2 || !isNumber(args[1]))
 	{
-		printf("%s\n", cmd->GetUsage().c_str());
+		g_pConsole->Log("%s\n", cmd->GetUsage().c_str());
 		return;
 	}
 
@@ -608,7 +608,7 @@ void CommandSendInventory(CCommand* cmd, const std::vector<std::string>& args)
 	IUser* user = g_pUserManager->GetUserById(userID);
 	if (!user)
 	{
-		printf("User is offline");
+		g_pConsole->Log("User is offline");
 		return;
 	}
 

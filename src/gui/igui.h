@@ -24,7 +24,7 @@ public:
 	virtual void ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError = false) = 0;
 	virtual void ShowMainWindow() = 0;
 	virtual void OnSessionListUpdated(const std::vector<Session>& sessions) = 0;
-	//virtual void OnRoomListUpdated(const std::vector<Room>& rooms) = 0;
+	virtual void OnCommandListUpdated(const std::vector<std::string>& cmdList) = 0;
 };
 
 inline IGUI* GUI()

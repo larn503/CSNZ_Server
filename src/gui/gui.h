@@ -27,6 +27,7 @@ public:
 	virtual void ShowMessageBox(const std::string& title, const std::string& msg, bool fatalError = false);
 	virtual void ShowMainWindow();
 	virtual void OnSessionListUpdated(const std::vector<Session>& sessions);
+	virtual void OnCommandListUpdated(const std::vector<std::string>& cmdList);
 
 private:
 	QApplication* m_pApplication;

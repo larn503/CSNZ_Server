@@ -188,7 +188,7 @@ void CServerInstance::OnCommand(const string& command)
 	istringstream iss(command);
 	vector<string> args((istream_iterator<string>(iss)), istream_iterator<string>());
 
-	if (args.size() == 0)
+	if (args.empty())
 		return;
 
 	CCommand* cmd = CmdList()->GetCommand(command);

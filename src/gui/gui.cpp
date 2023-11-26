@@ -116,3 +116,9 @@ void CGUI::OnSessionListUpdated(const std::vector<Session>& sessions)
 	if (m_pMainWindow)
 		QMetaObject::invokeMethod(m_pMainWindow->GetSessionTab(), "OnSessionListUpdated", Q_ARG(const std::vector<Session>&, sessions));
 }
+
+void CGUI::OnCommandListUpdated(const std::vector<std::string>& cmdList)
+{
+	if (m_pMainWindow)
+		QMetaObject::invokeMethod(m_pMainWindow->GetConsoleTab(), "OnCommandListUpdated", Q_ARG(const std::vector<std::string>&, cmdList));
+}
