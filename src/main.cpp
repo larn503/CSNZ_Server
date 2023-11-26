@@ -5,6 +5,7 @@
 #ifdef USE_GUI
 #include "gui/igui.h"
 #endif
+#include "manager/manager.h"
 
 CConsole* g_pConsole;
 CServerInstance* g_pServerInstance;
