@@ -1749,7 +1749,12 @@ RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int
 
 	if (reward->select == false && !ignoreClient)
 	{
-		g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
+		//if (!reward->zbsReward)
+		//	g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
+		if (user->GetRoomData() && user->GetRoomData()->m_bIsIngame)
+			g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description, true);
+		else
+			g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
 	}
 
 	return rewardNotice;
