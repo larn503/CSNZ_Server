@@ -149,7 +149,7 @@ public:
 	int IsUserExists(const std::string&, bool searchByUserName = true);
 
 	// suspect system
-	int SuspectAddAction(std::vector<unsigned char>& hwid, int actionID);
+	int SuspectAddAction(const std::vector<unsigned char>& hwid, int actionID);
 	int IsUserSuspect(int userID);
 
 	virtual void OnMinuteTick(time_t curTime);

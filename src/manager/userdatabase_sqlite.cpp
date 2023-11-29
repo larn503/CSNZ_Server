@@ -5328,7 +5328,7 @@ int CUserDatabaseSQLite::IsUserExists(const string& userName, bool searchByUserN
 // adds user suspect action to suspect actions list
 // actionID(0 - DLLMOD, 1 - old client build, 2 - more than 2 accounts with the same HWID)
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::SuspectAddAction(vector<unsigned char>& hwid, int actionID)
+int CUserDatabaseSQLite::SuspectAddAction(const vector<unsigned char>& hwid, int actionID)
 {
 	try
 	{

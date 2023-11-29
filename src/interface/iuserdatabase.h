@@ -136,7 +136,7 @@ public:
 	virtual int IsUserExists(const std::string& userName, bool searchByUserName = true) = 0;
 
 	// suspect system
-	virtual int SuspectAddAction(std::vector<unsigned char>& hwid, int actionID) = 0;
+	virtual int SuspectAddAction(const std::vector<unsigned char>& hwid, int actionID) = 0;
 	virtual int IsUserSuspect(int userID) = 0;
 
 	virtual void OnMinuteTick(time_t curTime) = 0;
