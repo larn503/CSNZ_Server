@@ -84,6 +84,7 @@ target_include_directories(PROJECTNAME PUBLIC
 	"thirdparty/KeyValues/include"
 	"thirdparty/wolfssl"
 	"thirdparty/zip/src"
+	"thirdparty/rapidcsv/src"
 )
 
 target_precompile_headers(PROJECTNAME PRIVATE main.h)

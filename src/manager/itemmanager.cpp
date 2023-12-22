@@ -35,8 +35,8 @@ bool CItemManager::Init()
 			return false;
 	}
 
-	m_pReinforceMaxLvTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxLv.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
-	m_pReinforceMaxExpTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxEXP.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true));
+	m_pReinforceMaxLvTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxLv.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams(), true);
+	m_pReinforceMaxExpTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxEXP.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams(), true);
 
 	if (m_pReinforceMaxLvTable->IsLoadFailed() || m_pReinforceMaxExpTable->IsLoadFailed())
 	{

@@ -13,3 +13,6 @@
 [submodule "src/thirdparty/zip"]
 	path = src/thirdparty/zip
 	url = https://github.com/kuba--/zip
+[submodule "src/thirdparty/rapidcsv"]
+	path = src/thirdparty/rapidcsv
+	url = https://github.com/d99kris/rapidcsv
