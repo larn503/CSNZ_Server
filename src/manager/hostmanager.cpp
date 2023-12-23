@@ -170,8 +170,8 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 		remove_if(
 			inGameItems.begin(),
 			inGameItems.end(),
-			[](CUserInventoryItem& item) -> bool { // TODO: improve condition
-				return !(item.m_nItemID && item.m_nInUse && g_pItemTable->GetRowValueByItemID<int>((const char*)OBFUSCATE("InGameItem"), to_string(item.m_nItemID)));
+			[](const CUserInventoryItem& item) -> bool { // TODO: improve condition
+				return !(item.m_nItemID && item.m_nInUse && g_pItemTable->GetCell<int>(OBFUSCATE("InGameItem"), to_string(item.m_nItemID)));
 			}
 		),
 		inGameItems.end()

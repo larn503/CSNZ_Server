@@ -1,10 +1,3 @@
 #include "csvtable.h"
 
 using namespace std;
-
-bool CCSVTable::IsRowValueExists(string columnName, string rowValue)
-{
-	vector<string> column = GetColumn<string>(columnName);
-
-	return (find(column.begin(), column.end(), rowValue) != column.end());
-}

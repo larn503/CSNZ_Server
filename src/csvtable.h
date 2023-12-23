@@ -54,12 +54,12 @@ public:
 		}
 	}
 
-	template<class T> T GetRowValueByItemID(std::string columnName, std::string itemId)
+	bool IsRowValueExists(const std::string& columnName, const std::string& rowValue)
 	{
-		return GetCell<T>(columnName, itemId);
-	}
+		std::vector<std::string> column = GetColumn<std::string>(columnName);
 
-	bool IsRowValueExists(std::string columnName, std::string rowValue);
+		return (std::find(column.begin(), column.end(), rowValue) != column.end());
+	}
 
 	bool IsLoadFailed()
 	{

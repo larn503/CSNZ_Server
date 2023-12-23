@@ -333,7 +333,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (items.empty())
 			return false;
 
-		string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
+		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
 
 		if (className != "Equipment")
 			return false;
@@ -349,7 +349,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (items.empty())
 			return false;
 
-		string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
+		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
 
 		if (className != "Class")
 			return false;
@@ -467,7 +467,7 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	//g_pPacketManager->SendItemUnk1(socket);
 	//g_pPacketManager->SendItemUnk3(socket);
 
-	g_pPacketManager->SendEventUnk2(socket); // turn on main menu skin
+	g_pPacketManager->SendEventMainMenuSkin(socket, g_pServerConfig->mainMenuSkinEvent);
 	g_pPacketManager->SendEventUnk(socket);
 	g_pPacketManager->SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
 
@@ -975,7 +975,7 @@ bool CUserManager::OnReportPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 #if 0
-	IUser* user = GetUserByUuid(socket->GetUUID());
+	IUser* user = GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -1001,7 +1001,7 @@ bool CUserManager::OnReportPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	}
 
 	// TODO:
-	//g_pUserDatabase->SuspectAddAction(user->GetExtendedSocket()->GetHWID(), 0);
+	g_pUserDatabase->SuspectAddAction(user->GetExtendedSocket()->GetHWID(), 0);
 #endif
 	return true;
 }

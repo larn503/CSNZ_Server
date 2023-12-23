@@ -267,6 +267,12 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	if (highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT) {
 		mutationLimit = inPacket.readUInt8();
 	}
+	if (highMidFlag & ROOM_HIGHMID_UNK78) {
+		unk78 = inPacket.readUInt8();
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK79) {
+		unk79 = inPacket.readUInt8();
+	}
 	if (highFlag & ROOM_HIGH_UNK77) {
 		unk77 = inPacket.readUInt8();
 	}
@@ -362,7 +368,9 @@ void CRoomSettings::Init()
 	fireBomb = 0;
 	mutationRestrictSize = 0;
 	mutationLimit = 0;
-	unk77 = 0;
+	unk77 = 0; // high flag
+	unk78 = 0; // high mid flag
+	unk79 = 0;
 }
 
 std::vector<int> split(const std::string& s, char delimiter)
@@ -1780,7 +1788,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 		{
 			for (int i = 0; i < mapPlaylistSize; i++)
 			{
-				if (!g_pMapListTable->IsRowValueExists(";map_id", std::to_string(mapPlaylist[i].mapId)))
+				if (g_pMapListTable->GetRowIdx(std::to_string(mapPlaylist[i].mapId)) < 0)
 				{
 					g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with an invalid mapId in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId);
 					lowFlag &= ~ROOM_LOW_MAPID;
@@ -1830,7 +1838,7 @@ bool CRoomSettings::CheckSettings(IUser* user)
 		return false;
 	}
 
-	if (!g_pGameModeListTable->IsRowValueExists(";mode_id", std::to_string(gameModeId)))
+	if (g_pGameModeListTable->GetRowIdx(std::to_string(gameModeId)) < 0)
 	{
 		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 		return false;
@@ -1842,7 +1850,7 @@ bool CRoomSettings::CheckSettings(IUser* user)
 		return false;
 	}
 
-	if (!g_pMapListTable->IsRowValueExists(";map_id", std::to_string(mapId)))
+	if (g_pMapListTable->GetRowIdx(std::to_string(mapId)) < 0)
 	{
 		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId);
 		return false;
@@ -1939,7 +1947,7 @@ bool CRoomSettings::CheckSettings(IUser* user)
 
 		for (int i = 0; i < mapPlaylistSize; i++)
 		{
-			if (!g_pMapListTable->IsRowValueExists(";map_id", std::to_string(mapPlaylist[i].mapId)))
+			if (g_pMapListTable->GetRowIdx(std::to_string(mapPlaylist[i].mapId)) < 0)
 			{
 				g_pConsole->Warn("User '%d, %s' tried to create a new room with an invalid mapId in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId);
 				return false;
@@ -1995,7 +2003,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 {
 	if (lowFlag & ROOM_LOW_GAMEMODEID && gameModeId != roomSettings->gameModeId)
 	{
-		if (!g_pGameModeListTable->IsRowValueExists(";mode_id", std::to_string(gameModeId)))
+		if (g_pGameModeListTable->GetRowIdx(std::to_string(gameModeId)) < 0)
 		{
 			g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 			return false;
@@ -2009,7 +2017,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 
 		if (lowFlag & ROOM_LOW_MAPID && mapId != roomSettings->mapId)
 		{
-			if (!g_pMapListTable->IsRowValueExists(";map_id", std::to_string(mapId)))
+			if (g_pMapListTable->GetRowIdx(std::to_string(mapId)) < 0)
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId, gameModeId);
 				return false;
@@ -2038,7 +2046,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 	{
 		if (lowFlag & ROOM_LOW_MAPID && mapId != roomSettings->mapId)
 		{
-			if (!g_pMapListTable->IsRowValueExists(";map_id", std::to_string(mapId)))
+			if (g_pMapListTable->GetRowIdx(std::to_string(mapId)) < 0)
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId, roomSettings->gameModeId);
 				return false;

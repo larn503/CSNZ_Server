@@ -386,7 +386,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		if (!item.m_nItemID)
 			return false;
 
-		string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(item.m_nItemID));
+		string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 
 		if (inventoryType == 1) // switch status
 		{
@@ -410,7 +410,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 			// turn on status of the desired item
 			item.m_nStatus = 1;
 
-			string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(item.m_nItemID));
+			string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 			if (className == "LobbyBG")
 			{
 				CUserCharacter character = user->GetCharacter(UFLAG_NAMEPLATE);
@@ -600,7 +600,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	if (g_pUserDatabase->IsInventoryFull(userID))
 		return ITEM_ADD_INVENTORY_FULL;
 
-	if (!g_pItemTable->IsRowValueExists("ID", to_string(itemID)))
+	if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
 		return ITEM_ADD_UNKNOWN_ITEMID;
 
 	if (count <= 0)
@@ -667,8 +667,8 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		duration = currentTimestamp + duration * CSO_24_HOURS_IN_MINUTES; // !!! items must have inuse = 1 and status = 1
 
 	// Category: 1 - pistols, 2 - shotguns, 3 - SMG, 4 - rifle, 5 - machine guns, 6 - equipment,  7 - class, 12 - costume, 13 - weapon parts, 
-	int useType = g_pItemTable->GetRowValueByItemID<int>(OBFUSCATE("UseType"), to_string(itemID));
-	int category = g_pItemTable->GetRowValueByItemID<int>("Category", to_string(itemID));
+	int useType = g_pItemTable->GetCell<int>(OBFUSCATE("UseType"), to_string(itemID));
+	int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 	// countable items with use button
 	if ((category == 9 && (useType == 0 || useType == 1 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 	{
@@ -705,7 +705,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		return ITEM_ADD_SUCCESS;
 	}
 
-	string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
+	string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
 	if (category == 12 || className == "Tattoo")
 	{
 		CUserCostumeLoadout loadout;
@@ -764,7 +764,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		}
 		else if (className == "ZombieSkinCostume")
 		{
-			zombieSkinType = g_pItemTable->GetRowValueByItemID<int>("ZombieSkin", to_string(itemID));
+			zombieSkinType = g_pItemTable->GetCell<int>("ZombieSkin", to_string(itemID));
 			if (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)
 			{
 				g_pConsole->Warn("CItemManager::AddItem: can't setup zb costume loadout (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)!!!\n");
@@ -917,7 +917,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			break;
 		}
 
-		if (!g_pItemTable->IsRowValueExists("ID", to_string(itemID)))
+		if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
 			continue;
 
 		if (count <= 0)
@@ -999,8 +999,8 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			duration = currentTimestamp + duration * CSO_24_HOURS_IN_MINUTES;
 
 		// Category: 1 - pistols, 2 - shotguns, 3 - SMG, 4 - rifle, 5 - machine guns, 6 - equipment,  7 - class, 12 - costume, 13 - weapon parts, 
-		int useType = g_pItemTable->GetRowValueByItemID<int>(OBFUSCATE("UseType"), to_string(itemID));
-		int category = g_pItemTable->GetRowValueByItemID<int>("Category", to_string(itemID));
+		int useType = g_pItemTable->GetCell<int>(OBFUSCATE("UseType"), to_string(itemID));
+		int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 		// countable items with use button
 		if ((category == 9 && (useType == 0 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 		{
@@ -1039,7 +1039,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			continue;
 		}
 
-		string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID));
+		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
 		if (category == 12 || className == "Tattoo")
 		{
 			CUserCostumeLoadout loadout;
@@ -1095,7 +1095,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			}
 			else if (className == "ZombieSkinCostume")
 			{
-				zombieSkinType = g_pItemTable->GetRowValueByItemID<int>("ZombieSkin", to_string(itemID));
+				zombieSkinType = g_pItemTable->GetCell<int>("ZombieSkin", to_string(itemID));
 				if (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)
 				{
 					g_pConsole->Warn("CItemManager::AddItem: can't setup zb costume loadout (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)!!!\n");
@@ -1249,8 +1249,8 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 		return ITEM_USE_BAD_SLOT;
 	}
 
-	string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(item.m_nItemID));
-	string name = g_pItemTable->GetRowValueByItemID<string>("Name", to_string(item.m_nItemID));
+	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
+	string name = g_pItemTable->GetCell<string>("Name", to_string(item.m_nItemID));
 
 	if (!CanUseItem(item))
 	{
@@ -1287,7 +1287,7 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 	}
 	default:
 	{
-		int category = g_pItemTable->GetRowValueByItemID<int>("Category", to_string(item.m_nItemID));
+		int category = g_pItemTable->GetCell<int>("Category", to_string(item.m_nItemID));
 		if (category < 9 || category == 11) // if extentable item(should be moved to onitemuse)
 		{
 			bool extend = false;
@@ -1342,7 +1342,7 @@ bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 
 	item.m_nCount -= count;
 
-	int rewardID = g_pItemTable->GetRowValueByItemID<int>("rewardID", to_string(item.m_nItemID));
+	int rewardID = g_pItemTable->GetCell<int>("rewardID", to_string(item.m_nItemID));
 	if (rewardID)
 	{
 		RewardNotice notice = {};
@@ -1481,7 +1481,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 		}
 	}
 
-	string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(item.m_nItemID));
+	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 	if (className == "LobbyBG")
 	{
 		CUserCharacter character = user->GetCharacter(UFLAG_NAMEPLATE);
@@ -1806,13 +1806,13 @@ void CItemManager::InsertExp(IUser* user, CUserInventoryItem& targetItem, vector
 		static vector<int> itemsExp{0, 10, 20, 50, 100, 200, 500};
 		int totalExp = 0;
 
-		int grade = g_pItemTable->GetRowValueByItemID<int>("ItemGrade", to_string(targetItem.m_nItemID));
+		int grade = g_pItemTable->GetCell<int>("ItemGrade", to_string(targetItem.m_nItemID));
 		vector<int> row = m_pReinforceMaxExpTable->GetRow<int>(to_string(targetItem.m_nEnhancementLevel));
 		int expToUpgrade = row[grade];
 
 		for (auto& i : items)
 		{
-			int grade = g_pItemTable->GetRowValueByItemID<int>("ItemGrade", to_string(i.m_nItemID));
+			int grade = g_pItemTable->GetCell<int>("ItemGrade", to_string(i.m_nItemID));
 			switch (i.m_nItemID)
 			{
 			case 8481: // WeaponReinforceExp100
@@ -1828,8 +1828,8 @@ void CItemManager::InsertExp(IUser* user, CUserInventoryItem& targetItem, vector
 
 			if (!grade)
 			{
-				string targetItemName = g_pItemTable->GetRowValueByItemID<string>("Name", to_string(targetItem.m_nItemID));
-				string enhName = g_pItemTable->GetRowValueByItemID<string>("Name", to_string(i.m_nItemID));
+				string targetItemName = g_pItemTable->GetCell<string>("Name", to_string(targetItem.m_nItemID));
+				string enhName = g_pItemTable->GetCell<string>("Name", to_string(i.m_nItemID));
 				if (enhName.find("Enh") == 0)
 				{
 					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "this material is under dev");
@@ -1967,7 +1967,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			return false;
 		}
 
-		int itemEnhLevelMax = m_pReinforceMaxLvTable->GetRowValueByItemID<int>("TotalMaxLv", to_string(targetItem.m_nItemID));
+		int itemEnhLevelMax = m_pReinforceMaxLvTable->GetCell<int>("TotalMaxLv", to_string(targetItem.m_nItemID));
 		//int itemEnhLevelMax = g_pItemTable->GetRowValueByItemID<int>("EnhWeapon", to_string(targetItem->m_nItemID));
 		if (/*antiEnhAttribute == -1 && */itemEnhLevel >= itemEnhLevelMax)
 		{
@@ -1976,7 +1976,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			return false;
 		}
 
-		int grade = g_pItemTable->GetRowValueByItemID<int>("ItemGrade", to_string(targetItem.m_nItemID)); // get target item grade
+		int grade = g_pItemTable->GetCell<int>("ItemGrade", to_string(targetItem.m_nItemID)); // get target item grade
 		vector<int> row = m_pReinforceMaxExpTable->GetRow<int>(to_string(targetItem.m_nEnhancementLevel));
 		int expToUpgrade = row[grade]; // get max exp upgrade value for the target item
 
@@ -2115,7 +2115,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			int totalExp = 0;
 			for (auto& i : items)
 			{
-				int grade = g_pItemTable->GetRowValueByItemID<int>("ItemGrade", to_string(i.m_nItemID));
+				int grade = g_pItemTable->GetCell<int>("ItemGrade", to_string(i.m_nItemID));
 				if (!grade)
 				{
 					switch (i.m_nItemID)
@@ -2139,7 +2139,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 				OnItemUse(user, i); // used as exp for target item
 			}
 
-			int grade = g_pItemTable->GetRowValueByItemID<int>("ItemGrade", to_string(targetItem.m_nItemID));
+			int grade = g_pItemTable->GetCell<int>("ItemGrade", to_string(targetItem.m_nItemID));
 			vector<int> row = m_pReinforceMaxExpTable->GetRow<int>(to_string(targetItem.m_nEnhancementLevel));
 			int expToUpgrade = row[grade];
 
@@ -2340,8 +2340,8 @@ bool CItemManager::OnWeaponPaintRequest(IUser* user, CReceivePacket* msg)
 	if (!weapon.m_nItemID || !paint.m_nItemID)
 		return false;
 
-	string weaponClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(weapon.m_nItemID));
-	string paintClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(paint.m_nItemID));
+	string weaponClassName = g_pItemTable->GetCell<string>("ClassName", to_string(weapon.m_nItemID));
+	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paint.m_nItemID));
 
 	if (weaponClassName != "Equipment" || paintClassName != "WeaponPaintItem")
 		return false;
@@ -2381,8 +2381,8 @@ bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 	if (!weapon.m_nItemID)
 		return false;
 
-	string weaponClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(weapon.m_nItemID));
-	string paintClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(paintID));
+	string weaponClassName = g_pItemTable->GetCell<string>("ClassName", to_string(weapon.m_nItemID));
+	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paintID));
 
 	if (weaponClassName != "Equipment" || (paintClassName != "WeaponPaintItem" && paintClassName != "WeaponPaintRemoveItem"))
 		return false;
@@ -2466,8 +2466,8 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 		if (!weapon.m_nItemID || !part.m_nItemID)
 			return false;
 
-		string weaponClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(weapon.m_nItemID));
-		string partClassName = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(part.m_nItemID));
+		string weaponClassName = g_pItemTable->GetCell<string>("ClassName", to_string(weapon.m_nItemID));
+		string partClassName = g_pItemTable->GetCell<string>("ClassName", to_string(part.m_nItemID));
 
 		if (weaponClassName != "Equipment" || partClassName != "WeaponParts")
 			return false;
@@ -2614,8 +2614,8 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 
 	vector<CUserInventoryItem> items; // temp vector
 
-	string className = g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(item.m_nItemID));
-	int zombieSkinID = className == "ZombieSkinCostume" ? g_pItemTable->GetRowValueByItemID<int>("ZombieSkin", to_string(item.m_nItemID)) : -1;
+	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
+	int zombieSkinID = className == "ZombieSkinCostume" ? g_pItemTable->GetCell<int>("ZombieSkin", to_string(item.m_nItemID)) : -1;
 
 	CUserCostumeLoadout loadout;
 	if (g_pUserDatabase->GetCostumeLoadout(user->GetID(), loadout) <= 0)

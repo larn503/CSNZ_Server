@@ -158,4 +158,6 @@ public:
 	std::vector<int> mutationRestrict;
 	int mutationLimit;
 	int unk77;
+	int unk78;
+	int unk79;
 };

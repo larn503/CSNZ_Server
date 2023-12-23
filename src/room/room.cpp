@@ -460,6 +460,12 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	if (newSettings.highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT) {
 		m_pSettings->mutationLimit = newSettings.mutationLimit;
 	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK78) {
+		m_pSettings->unk78 = newSettings.unk78;
+	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK79) {
+		m_pSettings->unk79 = newSettings.unk79;
+	}
 	if (newSettings.highFlag & ROOM_HIGH_UNK77) {
 		m_pSettings->unk77 = newSettings.unk77;
 	}
@@ -841,7 +847,7 @@ void CRoom::HostStartGame()
 	if (m_pSettings->isZbCompetitive)
 	{
 		vector<int> zbCompetitiveMaps;
-		vector<int> column = g_pMapListTable->GetColumn<int>(";map_name");
+		vector<int> column = g_pMapListTable->GetColumn<int>("map_name");
 		for (auto mapID : column)
 		{
 			if (g_pMapListTable->GetCell<int>("zb_competitive", std::to_string(mapID)))

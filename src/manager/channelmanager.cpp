@@ -581,16 +581,18 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			}
 			else if (args[0] == (char*)OBFUSCATE("/addallitems"))
 			{
-				vector<int> items = g_pItemTable->GetColumn<int>(OBFUSCATE("ID"));
+				vector<string> items = g_pItemTable->GetRowNames();
 				vector<RewardItem> rewardItems;
 				CUserInventoryItem userItem;
+				int itemID = 0;
 				for (auto item : items)
 				{
-					if (userItem.IsItemDefaultOrPseudo(item))
+					itemID = stoi(item);
+					if (userItem.IsItemDefaultOrPseudo(itemID))
 						continue;
 
 					RewardItem rewardItem;
-					rewardItem.itemID = item;
+					rewardItem.itemID = itemID;
 					rewardItem.count = 1;
 					rewardItem.duration = 0;
 					rewardItems.push_back(rewardItem);
@@ -932,6 +934,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 
 					if (!roomSettings->CheckSettings(user))
 					{
+						g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Unable to create a room due to incorrect settings");
 						delete roomSettings;
 						return false;
 					}
@@ -1118,6 +1121,7 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 	CRoomSettings* roomSettings = new CRoomSettings(msg->GetData());
 	if (!roomSettings->CheckSettings(user))
 	{
+		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Unable to create a room due to incorrect settings");
 		delete roomSettings;
 		return false;
 	}
@@ -1521,7 +1525,7 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 	{
 		int itemID = msg->ReadUInt16();
 
-		if (g_pItemTable->GetRowValueByItemID<string>("ClassName", to_string(itemID)) == "zbsaddonitem")
+		if (g_pItemTable->GetCell<string>("ClassName", to_string(itemID)) == "zbsaddonitem")
 		{
 			vector<CUserInventoryItem> items;
 			if (g_pUserDatabase->GetInventoryItemsByID(user->GetID(), itemID, items) == 1
