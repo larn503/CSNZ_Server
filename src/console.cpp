@@ -22,7 +22,26 @@ CConsole::CConsole()
 		printf("getcwd failed: %s", strerror(errno));
 	}
 
-	snprintf(m_szServerLogPath, sizeof(m_szServerLogPath), "%s/%s", cwd, "Server.log");
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), "%s/Logs", cwd);
+
+#ifdef WIN32
+	_mkdir(path);
+#else 
+	mkdir(path, 0755);
+#endif
+
+	time_t currTime = time(NULL);
+	struct tm* pTime = localtime(&currTime);
+
+	snprintf(m_szServerLogPath, sizeof(m_szServerLogPath), "%s/Server_%d-%.2d-%.2d %.2d-%.2d-%.2d.log", path,
+		pTime->tm_year + 1900,	/* Year less 2000 */
+		pTime->tm_mon + 1,		/* month (0 - 11 : 0 = January) */
+		pTime->tm_mday,			/* day of month (1 - 31) */
+		pTime->tm_hour,			/* hour (0 - 23) */
+		pTime->tm_min,		    /* minutes (0 - 59) */
+		pTime->tm_sec		    /* seconds (0 - 59) */
+	);
 
 	FILE* file = fopen(m_szServerLogPath, "w");
 	if (file)
