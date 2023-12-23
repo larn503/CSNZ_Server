@@ -1480,7 +1480,7 @@ enum RankReplyCode
 // LUCKY ITEM
 struct ItemBoxRate
 {
-	int rate;
+	double rate;
 	int grade;
 	std::vector<int> duration;
 	std::vector<int> items;
@@ -1489,6 +1489,7 @@ struct ItemBoxRate
 struct ItemBox
 {
 	int itemId;
+	double totalRate;
 	std::vector<ItemBoxRate> rates;
 };
 

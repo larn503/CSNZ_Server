@@ -70,13 +70,14 @@ void CLuckyItemManager::LoadLuckyItems()
 			if (!jItem.contains("Rate"))
 				continue;
 
+			itemBox->totalRate = 0;
 			ordered_json jRates = jItem["Rate"];
 			for (auto& iRate : jRates.items())
 			{
 				ordered_json jRate = iRate.value();
 
 				ItemBoxRate rate = {};
-				rate.rate = stof(iRate.key());
+				rate.rate = stod(iRate.key());
 				rate.grade = jRate.value("Grade", 0);
 
 				rate.duration = jRate.value("Duration", rate.duration);
@@ -91,8 +92,19 @@ void CLuckyItemManager::LoadLuckyItems()
 					m_Items.push_back(item);
 				}
 
+				// check if sum of the all rate more than 100%
+				itemBox->totalRate += rate.rate;
+				if (itemBox->totalRate > 100.0f)
+				{
+					g_pConsole->Warn("CLuckyItemManager::LoadLuckyItems: total rate for %d is more than 100\n", itemBox->itemId);
+					break;
+				}
+
 				itemBox->rates.push_back(rate);
 			}
+
+			// sort rate groups
+			sort(itemBox->rates.begin(), itemBox->rates.end(), [](const ItemBoxRate& a, const ItemBoxRate& b) { return a.rate < b.rate; });
 
 			m_ItemBoxes.push_back(itemBox);
 		}
@@ -102,22 +114,59 @@ void CLuckyItemManager::LoadLuckyItems()
 		g_pConsole->Error("CLuckyItemManager::LoadLuckyItems: an error occured while parsing ItemBox.json: %s\n", ex.what());
 	}
 
-	// sort rate groups in descending order and check if sum of the all rate more than 1
+	// normilize all values
 	for (auto& itemBox : m_ItemBoxes)
 	{
-		int totalRate = 0;
 		for (auto& rateGroup : itemBox->rates)
 		{
-			totalRate += rateGroup.rate;
-			if (totalRate > 100)
-			{
-				g_pConsole->Warn("CLuckyItemManager::LoadLuckyItems: total rate for %d is more than 100\n", itemBox->itemId);
-				break;
-			}
+			rateGroup.rate /= itemBox->totalRate;
 		}
-
-		sort(itemBox->rates.begin(), itemBox->rates.end(), [](const ItemBoxRate& a, const ItemBoxRate& b) { return a.rate > b.rate; });
 	}
+
+	// verify probabilities
+	//std::random_device rd;
+	//std::mt19937 gen(rd());
+	//std::uniform_real_distribution<> dis(0, 1);
+
+	//int occur = 0;
+	//int total = 0;
+	//while (true)
+	//{
+	//	double rateNum = dis(gen);
+	//	double sum = 0;
+	//	size_t randRateIdx = -1;
+
+	//	for (size_t i = 0; i < m_ItemBoxes[0]->rates.size(); i++)
+	//	{
+	//		sum += m_ItemBoxes[0]->rates[i].rate;
+
+	//		if (sum >= rateNum)
+	//		{
+	//			randRateIdx = i;
+	//			total++;
+	//			break;
+	//		}
+	//	}
+
+	//	ItemBoxRate rate = m_ItemBoxes[0]->rates[randRateIdx];
+
+	//	Randomer randomItem{ rate.items.size() - 1 };
+	//	Randomer randomDuration{ rate.duration.size() - 1 };
+	//	int itemID = rate.items[randomItem()];
+	//	int duration = rate.duration[randomDuration()];
+	//	if (itemID == 8356 && duration == -1)
+	//	{
+	//		occur++;
+	//	}
+
+	//	if (occur == 1000)
+	//	{
+	//		break;
+	//	}
+	//}
+
+	//double prob = (double)occur / (double)total;
+	//printf("%f\n", prob);
 }
 
 bool CLuckyItemManager::KVToJson()
@@ -254,6 +303,11 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 	ItemBoxOpenResult result;
 	result.itemBoxItemId = itemBoxID;
 
+	// setup randomizer
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> dis(0, 1);
+
 	for (openedDecoders = 0; openedDecoders < itemBoxOpenCount; openedDecoders++)
 	{
 		if (g_pUserDatabase->IsInventoryFull(user->GetID()))
@@ -262,19 +316,19 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 			break;
 		}
 
-		// generate random number from 1 to 100
-		int rateNum = rand() % 100 + 1;
-		int randRateIdx = -1;
-		int tempRate = 0;
+		// generate random number from 0 to 1
+		double rateNum = dis(gen);
+		double sum = 0;
+		size_t randRateIdx = -1;
 
-		// rates must be sorted in descending order!
-		// go through rates and add to tempRate current rate value
+		// rates must be sorted in ascending order!
+		// go through rates and add to sum current rate value
 		for (size_t i = 0; i < itemBox->rates.size(); i++)
 		{
-			tempRate += itemBox->rates[i].rate;
+			sum += itemBox->rates[i].rate;
 
 			// check if random number less or equal to tempRate
-			if (rateNum <= tempRate)
+			if (sum >= rateNum)
 			{
 				// if yes, then you found your rate group
 				randRateIdx = i;
