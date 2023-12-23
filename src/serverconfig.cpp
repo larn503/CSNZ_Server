@@ -47,7 +47,7 @@ CServerConfig::~CServerConfig()
 const char* defaultServerConfig = R"(
 {
 	"HostName": "CSO Server",
-	"Description": "123",
+	"Description": "",
 	"Port": "30002",
 	"TCPSendBufferSize": 131072,
 	"MaxPlayers": 100,
@@ -55,13 +55,16 @@ const char* defaultServerConfig = R"(
 	"RestartOnCrash": false,
 	"InventorySlotMax": 3000,
 	"CheckClientBuild": false,
+	"AllowedClientTimestamp": 0,
+	"AllowedLauncherVersion": 67,
 	"MaxRegistrationsPerIP": 3,
+	"Crypt": false,
+	"MainMenuSkinEvent": 0,
 	"Metadata": {
 		"Maplist": true,
 		"ClientTable": true,
 		"Unk3": true,
 		"ItemBox": true,
-		"WeaponPaint": true,
 		"Unk8": true,
 		"MatchOption": true,
 		"Unk15": true,
@@ -70,6 +73,7 @@ const char* defaultServerConfig = R"(
 		"Encyclopedia": false,
 		"GameModeList": true,
 		"ProgressUnlock": true,
+		"WeaponPaint": true,
 		"ReinforceMaxLvl": true,
 		"ReinforceMaxEXP": true,
 		"ReinforceItemsExp": true,
@@ -234,6 +238,24 @@ const char* defaultServerConfig = R"(
 				"4": 31
 			},
 			"8": {
+				"1": 12,
+				"2": 2,
+				"3": 161,
+				"4": 31
+			},
+			"9": {
+				"1": 12,
+				"2": 2,
+				"3": 161,
+				"4": 31
+			},
+			"10": {
+				"1": 12,
+				"2": 2,
+				"3": 161,
+				"4": 31
+			},
+			"11": {
 				"1": 12,
 				"2": 2,
 				"3": 161,
@@ -434,403 +456,405 @@ const char* defaultServerConfig = R"(
 		"1": {
 			"Type": 1,
 			"Name": "Server information",
-			"Description": "Welcome to the CSO server. Report about bugs in vk group: vk.com/csnz_server",
-			"StartDate": 1743618984,
-			"EndDate": 1743618984
+			"Description": "Welcome to the CSO server. Report about bugs in vk group: vk.com/csnz_server"
 		}
 	},
 	"GameMatch": {
 		"CalcResults": {
 			"GameModeCoefficient": {
 				"0": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"1": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"2": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"3": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"4": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"5": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"8": {
-					"Exp":		300,
-					"Points":	270
+					"Exp": 300,
+					"Points": 270
 				},
 				"9": {
-					"Exp":		300,
-					"Points":	270
+					"Exp": 300,
+					"Points": 270
 				},
 				"10": {
-					"Exp":		210,
-					"Points":	180
+					"Exp": 210,
+					"Points": 180
 				},
 				"12": {
-					"Exp":		55,
-					"Points":	50
+					"Exp": 55,
+					"Points": 50
 				},
 				"14": {
-					"Exp":		300,
-					"Points":	270
+					"Exp": 300,
+					"Points": 270
 				},
 				"15": {
-					"Exp":		5,
-					"Points":	2
+					"Exp": 5,
+					"Points": 2
 				},
 				"16": {
-					"Exp":		60,
-					"Points":	30
+					"Exp": 60,
+					"Points": 30
 				},
 				"17": {
-					"Exp":		10,
-					"Points":	4
+					"Exp": 10,
+					"Points": 4
 				},
 				"19": {
-					"Exp":		210,
-					"Points":	180
+					"Exp": 210,
+					"Points": 180
 				},
 				"20": {
-					"Exp":		320,
-					"Points":	290
+					"Exp": 320,
+					"Points": 290
 				},
 				"21": {
-					"Exp":		210,
-					"Points":	180
+					"Exp": 210,
+					"Points": 180
 				},
 				"22": {
-					"Exp":		240,
-					"Points":	210
+					"Exp": 240,
+					"Points": 210
 				},
 				"23": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"24": {
-					"Exp":		300,
-					"Points":	270
+					"Exp": 300,
+					"Points": 270
 				},
 				"25": {
-					"Exp":		230,
-					"Points":	200
+					"Exp": 230,
+					"Points": 200
 				},
 				"26": {
-					"Exp":		20,
-					"Points":	8
+					"Exp": 20,
+					"Points": 8
 				},
 				"27": {
-					"Exp":		240,
-					"Points":	210
+					"Exp": 240,
+					"Points": 210
 				},
 				"28": {
-					"Exp":		20,
-					"Points":	8
+					"Exp": 20,
+					"Points": 8
 				},
 				"29": {
-					"Exp":		310,
-					"Points":	260
+					"Exp": 310,
+					"Points": 260
 				}
 			},
 			"BonusPercentage": {
 				"Items": {
 					"73": {
-						"Exp":		50,
-						"Points":	50
+						"Exp": 50,
+						"Points": 50
 					},
 					"59": {
-						"Exp":		50
+						"Exp": 50
 					},
 					"108": {
-						"Points":	50
+						"Points": 50
 					},
 					"180": {
-						"Exp":		50,
-						"Points":	50
+						"Exp": 50,
+						"Points": 50
 					},
 					"181": {
-						"Points":	50
+						"Points": 50
 					},
 					"182": {
-						"Exp":		50
+						"Exp": 50
 					}
 				},
 				"Classes": {
 					"55": {
-						"Exp":		20,
-						"Points":	20
+						"Exp": 20,
+						"Points": 20
 					},
 					"47": {
-						"Exp":		5,
-						"Points":	5
+						"Exp": 5,
+						"Points": 5
 					},
 					"48": {
-						"Exp":		20
+						"Exp": 20
 					},
 					"154": {
-						"Exp":		10,
-						"Points":	10
+						"Exp": 10,
+						"Points": 10
 					},
 					"155": {
-						"Exp":		10,
-						"Points":	10
+						"Exp": 10,
+						"Points": 10
 					},
 					"362": {
-						"Exp":		20,
-						"Points":	10
+						"Exp": 20,
+						"Points": 10
 					},
 					"376": {
-						"Exp":		10
+						"Exp": 10
 					},
 					"377": {
-						"Exp":		10
+						"Exp": 10
 					}
 				}
 			}
 		}
+	},
+	"Room": {
+		"HostConnectingMethod": 0,
+		"ValidateSettings": false
 	},
 	"MiniGames": {
 		"Bingo": {
 			"Active": false,
 			"Items": {
 				"564": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"457": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"458": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"565": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"363": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"483": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"355": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"242": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"416": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"365": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"38": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"187": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"304": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"463": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"261": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"372": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"589": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"237": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"233": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"677": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"531": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"158": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"164": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"163": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"21": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"4": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"306": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"8": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"15": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"14": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"471": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"472": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"473": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"557": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"558": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"559": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"561": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"676": {
-					"Count":	30,
-					"Duration":	0
+					"Count": 30,
+					"Duration": 0
 				},
 				"65": {
-					"Count":	1,
-					"Duration":	0
+					"Count": 1,
+					"Duration": 0
 				},
 				"418": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"419": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"388": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"390": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"391": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"1035": {
-					"Count":	5,
-					"Duration":	0
+					"Count": 5,
+					"Duration": 0
 				},
 				"510": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"511": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"512": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"73": {
-					"Count":	1,
-					"Duration":	15
+					"Count": 1,
+					"Duration": 15
 				},
 				"59": {
-					"Count":	1,
-					"Duration":	15
+					"Count": 1,
+					"Duration": 15
 				},
 				"108": {
-					"Count":	1,
-					"Duration":	15
+					"Count": 1,
+					"Duration": 15
 				},
 				"46": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"48": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"56": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"362": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"376": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				},
 				"377": {
-					"Count":	1,
-					"Duration":	30
+					"Count": 1,
+					"Duration": 30
 				}
 			}
 		},
@@ -838,31 +862,31 @@ const char* defaultServerConfig = R"(
 			"Active": false,
 			"Items": {
 				"566": {
-					"Name":	"DAGGER",
-					"Duration":	0
+					"Name": "DAGGER",
+					"Duration": 0
 				},
 				"567": {
-					"Name":	"GALIL",
+					"Name": "GALIL",
 					"Duration": 30
 				},
 				"568": {
-					"Name":	"FAMAS",
+					"Name": "FAMAS",
 					"Duration": 30
 				},
 				"569": {
-					"Name":	"QBB95",
+					"Name": "QBB95",
 					"Duration": 30
 				},
 				"570": {
-					"Name":	"GLOCK",
+					"Name": "GLOCK",
 					"Duration": 30
 				},
 				"571": {
-					"Name":	"USP45",
+					"Name": "USP45",
 					"Duration": 30
 				},
 				"173": {
-					"Name":	"DEC",
+					"Name": "DEC",
 					"Count": 30
 				}
 			},
@@ -893,20 +917,22 @@ const char* defaultServerConfig = R"(
 			]
 		}
 	},
+	"FlockingFlyerType": 0,
+	"NameBlacklist": [],
 	"Surveys": {
 		"1": {
-			"Title":	"User survey",
+			"Title": "User survey",
 			"Questions": {
 				"1": {
-					"Question":		"Do you like CSN:S?",
-					"AnswerType":			0, // 0 - check box, 1 - text entry (16-bit unk field added), 2 - unknown
-					"AnswerCheckBoxType":	1, // 0 - can't choose answer, 1 - choose only one, 2 - multiple choose
+					"Question": "Do you like CSN:S?",
+					"AnswerType": 0, // 0 - check box, 1 - text entry (16-bit unk field added), 2 - unknown
+					"AnswerCheckBoxType": 1, // 0 - can't choose answer, 1 - choose only one, 2 - multiple choose
 					"Answers": {
 						"1": {
-							"Answer":	"Yes"
+							"Answer": "Yes"
 						},
 						"2": {
-							"Answer":	"No"
+							"Answer": "No"
 						}
 					}
 				}

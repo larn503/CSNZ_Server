@@ -1,20 +1,23 @@
 {
 	"HostName": "CSO Server",
-	"Description": "123",
+	"Description": "",
 	"Port": "30002",
 	"TCPSendBufferSize": 131072,
 	"MaxPlayers": 100,
-	"WelcomeMessage": "vk.com/csnz_server",
+	"WelcomeMessage": "https://discord.gg/EvUAY6D",
 	"RestartOnCrash": false,
 	"InventorySlotMax": 3000,
 	"CheckClientBuild": false,
+	"AllowedClientTimestamp": 0,
+	"AllowedLauncherVersion": 67,
 	"MaxRegistrationsPerIP": 3,
+	"Crypt": false,
+	"MainMenuSkinEvent": 0,
 	"Metadata": {
 		"Maplist": true,
 		"ClientTable": true,
 		"Unk3": true,
 		"ItemBox": true,
-		"WeaponPaint": true,
 		"Unk8": true,
 		"MatchOption": true,
 		"Unk15": true,
@@ -23,6 +26,7 @@
 		"Encyclopedia": false,
 		"GameModeList": true,
 		"ProgressUnlock": true,
+		"WeaponPaint": true,
 		"ReinforceMaxLvl": true,
 		"ReinforceMaxEXP": true,
 		"ReinforceItemsExp": true,
@@ -187,6 +191,24 @@
 				"4": 31
 			},
 			"8": {
+				"1": 12,
+				"2": 2,
+				"3": 161,
+				"4": 31
+			},
+			"9": {
+				"1": 12,
+				"2": 2,
+				"3": 161,
+				"4": 31
+			},
+			"10": {
+				"1": 12,
+				"2": 2,
+				"3": 161,
+				"4": 31
+			},
+			"11": {
 				"1": 12,
 				"2": 2,
 				"3": 161,
@@ -387,9 +409,7 @@
 		"1": {
 			"Type": 1,
 			"Name": "Server information",
-			"Description": "Welcome to the CSO server. Report about bugs in vk group: vk.com/csnz_server",
-			"StartDate": 1743618984,
-			"EndDate": 1743618984
+			"Description": "Welcome to the CSO server. Report about bugs in vk group: vk.com/csnz_server"
 		}
 	},
 	"GameMatch": {
@@ -553,9 +573,13 @@
 			}
 		}
 	},
+	"Room": {
+		"HostConnectingMethod": 0,
+		"ValidateSettings": false
+	},
 	"MiniGames": {
 		"Bingo": {
-			"Active": true,
+			"Active": false,
 			"Items": {
 				"564": {
 					"Count": 1,
@@ -846,6 +870,8 @@
 			]
 		}
 	},
+	"FlockingFlyerType": 0,
+	"NameBlacklist": [],
 	"Surveys": {
 		"1": {
 			"Title": "User survey",
