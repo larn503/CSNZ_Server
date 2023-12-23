@@ -5972,7 +5972,7 @@ void CPacketManager::SendClanStorageHistory(IExtendedSocket* socket)
 	for (int i = 0; i < 1; i++)
 	{
 		msg->WriteUInt32(1);
-		msg->WriteString("Jusic");
+		msg->WriteString("a");
 		msg->WriteUInt8(1);
 		msg->WriteUInt16(1);
 		msg->WriteUInt16(1);

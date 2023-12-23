@@ -25,9 +25,11 @@ bool CQuestManager::Init()
 {
 	Shutdown();
 
+#ifndef PUBLIC_RELEASE
 	LoadQuests();
 	LoadEventQuests();
 	LoadClanQuests();
+#endif
 
 	return true;
 }

@@ -117,7 +117,7 @@ set(EXECUTABLE_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/../bin)
 
 # define max numbers of connected users by changing FD_SETSIZE
 if (CSO_SERVER_PUBLIC)
-	add_definitions(-DFD_SETSIZE=30)
+	add_definitions(-DFD_SETSIZE=40)
 	add_definitions(-DPUBLIC_RELEASE)
 else()
 	add_definitions(-DFD_SETSIZE=1024)

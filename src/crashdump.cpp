@@ -99,7 +99,7 @@ LONG __stdcall ExceptionFilter(EXCEPTION_POINTERS* pep)
 		pTime->tm_sec		    /* seconds (0 - 59) */
 	);
 
-#ifndef PUBLIC_RELEASE
+#ifndef PROTECTION
 	bool isMdmpGenerated = true;
 	if (!WriteMiniDump(pep, MiniDumpWithFullMemory, name))
 	{

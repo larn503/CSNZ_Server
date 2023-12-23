@@ -5324,7 +5324,6 @@ int CUserDatabaseSQLite::IsUserExists(const string& userName, bool searchByUserN
 	return userID;
 }
 
-#ifndef PUBLIC_RELEASE
 // adds user suspect action to suspect actions list
 // actionID(0 - DLLMOD, 1 - old client build, 2 - more than 2 accounts with the same HWID)
 // returns 0 == database error, 1 on success
@@ -5369,7 +5368,6 @@ int CUserDatabaseSQLite::IsUserSuspect(int userID)
 
 	return 0;
 }
-#endif
 
 // processes user database every minute
 void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
