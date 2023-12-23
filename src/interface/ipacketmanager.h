@@ -156,7 +156,7 @@ public:
 
 	virtual void SendEventAdd(IExtendedSocket* socket, int eventsFlag) = 0;
 	virtual void SendEventUnk(IExtendedSocket* socket) = 0;
-	virtual void SendEventUnk2(IExtendedSocket* socket) = 0;
+	virtual void SendEventMainMenuSkin(IExtendedSocket* socket, int skin) = 0;
 
 	virtual void SendMiniGameBingoUpdate(IExtendedSocket* socket, const UserBingo& bingo, const std::vector<UserBingoSlot>& slots, const std::vector<UserBingoPrizeSlot>& prizes) = 0;
 	virtual void SendMiniGameWeaponReleaseUpdate(IExtendedSocket* socket, const WeaponReleaseConfig& cfg, const std::vector<UserWeaponReleaseRow>& rows, const std::vector<UserWeaponReleaseCharacter>& characters, int totalCount) = 0;

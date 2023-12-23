@@ -35,8 +35,8 @@ bool CItemManager::Init()
 			return false;
 	}
 
-	m_pReinforceMaxLvTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxLv.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams(), true);
-	m_pReinforceMaxExpTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxEXP.csv"), rapidcsv::LabelParams(), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams(), true);
+	m_pReinforceMaxLvTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxLv.csv"), rapidcsv::LabelParams(0, 0), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams(), true);
+	m_pReinforceMaxExpTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxEXP.csv"), rapidcsv::LabelParams(0, 0), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams(), true);
 
 	if (m_pReinforceMaxLvTable->IsLoadFailed() || m_pReinforceMaxExpTable->IsLoadFailed())
 	{
@@ -1926,7 +1926,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			return false;
 		}
 
-		if (!m_pReinforceMaxLvTable->IsRowValueExists("Id", to_string(targetItem.m_nItemID)))
+		if (m_pReinforceMaxLvTable->GetRowIdx(to_string(targetItem.m_nItemID)) < 0)
 		{
 			//result.msg = "CSO_REINFORCE_ERR_NOT_REINFORCE_ITEM";
 			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
@@ -2060,7 +2060,12 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		// update client item
 		vector<CUserInventoryItem> items;
 		targetItem.PushItem(items, targetItem);
-		g_pUserDatabase->UpdateInventoryItem(user->GetID(), targetItem);
+		if (g_pUserDatabase->UpdateInventoryItem(user->GetID(), targetItem) <= 0)
+		{
+			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			return false;
+		}
+
 		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
 
 		result.itemSlot = EnhancementTargetItemSlot;
@@ -2206,7 +2211,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			return false;
 		}
 
-		if (!m_pReinforceMaxLvTable->IsRowValueExists("Id", to_string(targetItem.m_nItemID)))
+		if (m_pReinforceMaxLvTable->GetRowIdx(to_string(targetItem.m_nItemID)) < 0)
 		{
 			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;

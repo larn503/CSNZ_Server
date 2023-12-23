@@ -31,8 +31,6 @@ public:
 	int metadataToSend;
 	DefaultUser defUser;
 	std::vector<Notice_s> notices;
-	//std::vector<RewardItem> dailyRewardsItems;
-	//std::vector<RewardItem> dailyRewardsRandomItems;
 	ServerConfigGameMatch_s gameMatch;
 	ServerConfigRoom_s room;
 	int activeMiniGamesFlag;
@@ -42,6 +40,7 @@ public:
 	std::vector<std::string> nameBlacklist;
 	std::vector<Survey> surveys;
 	bool crypt;
+	int mainMenuSkinEvent;
 };
 
 extern class CServerConfig* g_pServerConfig;

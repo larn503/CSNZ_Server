@@ -421,6 +421,7 @@ struct ServerConfigGameMatch_s
 struct ServerConfigRoom_s
 {
 	int connectingMethod; // 0 - connecting to the dedicated server (host restart functionality is unavailable), 1 - connecting to the server hosted by user
+	bool validateSettings;
 	std::vector<std::string> roomDefaultTitles;
 };
 
@@ -1382,10 +1383,14 @@ enum UserSurveyAnswerResult
 #define	ROOM_HIGHMID_FIREBOMB			(1<<0)
 #define	ROOM_HIGHMID_MUTATIONRESTRICT	(1<<1)
 #define	ROOM_HIGHMID_MUTATIONLIMIT		(1<<2)
+#define	ROOM_HIGHMID_UNK78				(1<<3)
+#define	ROOM_HIGHMID_UNK79				(1<<4)
+#define	ROOM_HIGHMID_ALL_SAFE			(ROOM_HIGHMID_FIREBOMB | ROOM_HIGHMID_MUTATIONRESTRICT | ROOM_HIGHMID_MUTATIONLIMIT | ROOM_HIGHMID_UNK78 | ROOM_HIGHMID_UNK79)
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
 #define	ROOM_HIGH_UNK77					(1<<31)
+#define ROOM_HIGH_ALL_SAFE				(ROOM_HIGH_UNK77)
 #define ROOM_HIGH_ALL					(-1)
 
 // ROOM LIST FLAGS
@@ -1430,10 +1435,13 @@ enum UserSurveyAnswerResult
 #define	RLHFLAG_FIREBOMB		(1<<7)
 #define	RLHFLAG_UNK7			(1<<8)
 #define	RLHFLAG_UNK8			(1<<9)
+#define	RLHFLAG_UNK9			(1<<10)
+#define	RLHFLAG_UNK10			(1<<11)
+#define RLHFLAG_ALL_SAFE		RLHFLAG_UNK | RLHFLAG_ISZBCOMPETITIVE | RLHFLAG_ZBAUTOHUNTING | RLHFLAG_UNK4 | RLHFLAG_UNK5 | RLHFLAG_FIREBOMB | RLHFLAG_UNK7 | RLHFLAG_UNK8 | RLHFLAG_UNK9 | RLHFLAG_UNK10 // all flags that are supported by the server
 #define RLHFLAG_ALL				(-1)
 
 // inventory related
-#define LOADOUT_COUNT 9
+#define LOADOUT_COUNT 12
 #define LOADOUT_SLOT_COUNT 4
 #define BUYMENU_COUNT 17
 #define BUYMENU_SLOT_COUNT 9

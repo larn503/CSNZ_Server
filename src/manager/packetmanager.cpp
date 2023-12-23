@@ -1986,6 +1986,12 @@ void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 	if (hFlag & RLHFLAG_UNK8) {
 		msg->WriteUInt8(0);
 	}
+	if (hFlag & RLHFLAG_UNK9) {
+		msg->WriteUInt8(0);
+	}
+	if (hFlag & RLHFLAG_UNK10) {
+		msg->WriteUInt8(0);
+	}
 
 	// studio related
 	if (roomSettings->mapId == 254)
@@ -2019,7 +2025,7 @@ void CPacketManager::SendRoomListFull(IExtendedSocket* socket, const vector<IRoo
 
 	for (auto room : rooms)
 	{
-		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL);
+		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL_SAFE);
 	}
 
 	socket->Send(msg);
@@ -2609,6 +2615,12 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 	if (highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT) {
 		msg->WriteUInt8(newSettings->mutationLimit);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK78) {
+		msg->WriteUInt8(newSettings->unk78);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK79) {
+		msg->WriteUInt8(newSettings->unk79);
 	}
 	if (highFlag & ROOM_HIGH_UNK77) {
 		msg->WriteUInt8(newSettings->unk77);
@@ -3377,12 +3389,12 @@ void CPacketManager::SendEventUnk(IExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendEventUnk2(IExtendedSocket* socket)
+void CPacketManager::SendEventMainMenuSkin(IExtendedSocket* socket, int skin)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Event);
 	msg->BuildHeader();
 	msg->WriteUInt8(3);
-	msg->WriteUInt32(8); // 5 - christmas, 6 - halloween, 7 - halloween + snow
+	msg->WriteUInt32(skin); // 5 - christmas, 6 - halloween, 7 - halloween + snow, 8 - easter bunny
 	socket->Send(msg);
 }
 
@@ -3548,12 +3560,22 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(LOADOUT_COUNT);
 	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // items in loadout
 
-	for (auto &loadout : loadouts.m_Loadouts)
+	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
-		msg->WriteUInt16(loadout[0]);
-		msg->WriteUInt16(loadout[1]);
-		msg->WriteUInt16(loadout[2]);
-		msg->WriteUInt16(loadout[3]);
+		if (i < loadouts.m_Loadouts.size())
+		{
+			for (int j = 0; j < loadouts.m_Loadouts[i].size(); j++)
+			{
+				msg->WriteUInt16(loadouts.m_Loadouts[i][j]);
+			}
+		}
+		else
+		{
+			msg->WriteUInt16(0);
+			msg->WriteUInt16(0);
+			msg->WriteUInt16(0);
+			msg->WriteUInt16(0);
+		}
 	}
 
 	socket->Send(msg);

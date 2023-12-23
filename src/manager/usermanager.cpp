@@ -467,7 +467,9 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	//g_pPacketManager->SendItemUnk1(socket);
 	//g_pPacketManager->SendItemUnk3(socket);
 
-	g_pPacketManager->SendEventMainMenuSkin(socket, g_pServerConfig->mainMenuSkinEvent);
+	if (g_pServerConfig->mainMenuSkinEvent > 0)
+		g_pPacketManager->SendEventMainMenuSkin(socket, g_pServerConfig->mainMenuSkinEvent);
+
 	g_pPacketManager->SendEventUnk(socket);
 	g_pPacketManager->SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
 

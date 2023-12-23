@@ -29,6 +29,7 @@ CServerConfig::CServerConfig()
 	defUser.passwordBoxes = 0;
 	defUser.mileagePoints = 0;
 	room.connectingMethod = 0;
+	room.validateSettings = false;
 	activeMiniGamesFlag = 0;
 	metadataToSend = 0;
 	flockingFlyerType = 0;
@@ -36,6 +37,7 @@ CServerConfig::CServerConfig()
 	allowedClientTimestamp = 0;
 	maxRegistrationsPerIP = 0;
 	crypt = false;
+	mainMenuSkinEvent = 0;
 }
 
 CServerConfig::~CServerConfig()
@@ -49,7 +51,7 @@ const char* defaultServerConfig = R"(
 	"Port": "30002",
 	"TCPSendBufferSize": 131072,
 	"MaxPlayers": 100,
-	"WelcomeMessage": "vk.com/csnz_server",
+	"WelcomeMessage": "https://discord.gg/EvUAY6D",
 	"RestartOnCrash": false,
 	"InventorySlotMax": 3000,
 	"CheckClientBuild": false,
@@ -945,6 +947,7 @@ bool CServerConfig::Load()
 		allowedLauncherVersion = cfg.value("AllowedLauncherVersion", 67);
 		maxRegistrationsPerIP = cfg.value("MaxRegistrationsPerIP", 1);
 		crypt = cfg.value("Crypt", false);
+		mainMenuSkinEvent = cfg.value("MainMenuSkinEvent", 0);
 		if (cfg.contains("Metadata"))
 		{
 			ordered_json jMetadata = cfg["Metadata"];
@@ -1178,6 +1181,7 @@ bool CServerConfig::Load()
 		{
 			json jRoom = cfg["Room"];
 			room.connectingMethod = jRoom.value("HostConnectingMethod", 0);
+			room.validateSettings = jRoom.value("ValidateSettings", false);
 		}
 
 		if (cfg.contains("MiniGames"))

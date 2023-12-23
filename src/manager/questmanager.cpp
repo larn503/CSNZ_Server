@@ -222,7 +222,7 @@ void CQuestManager::LoadEventQuests()
 	}
 	catch (exception& ex)
 	{
-		g_pConsole->Error("CQuestManager::LoadEventQuests: an error occured while parsing ItemBox.json: %s\n", ex.what());
+		g_pConsole->Error("CQuestManager::LoadEventQuests: an error occured while parsing EventQuests.json: %s\n", ex.what());
 	}
 }
 

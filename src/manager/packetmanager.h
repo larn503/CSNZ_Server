@@ -183,7 +183,7 @@ public:
 
 	void SendEventAdd(IExtendedSocket* socket, int eventsFlag);
 	void SendEventUnk(IExtendedSocket* socket);
-	void SendEventUnk2(IExtendedSocket* socket);
+	void SendEventMainMenuSkin(IExtendedSocket* socket, int skin);
 
 	void SendMiniGameBingoUpdate(IExtendedSocket* socket, const UserBingo& bingo, const std::vector<UserBingoSlot>& slots, const std::vector<UserBingoPrizeSlot>& prizes);
 	void SendMiniGameWeaponReleaseUpdate(IExtendedSocket* socket, const WeaponReleaseConfig& cfg, const std::vector<UserWeaponReleaseRow>& rows, const std::vector<UserWeaponReleaseCharacter>& characters, int totalCount);

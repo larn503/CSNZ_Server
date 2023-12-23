@@ -14,6 +14,7 @@
 	"AllowedClientTimestamp": <int>, // allowed timestamp of client libraries: hw.dll, client.dll, mp.dll, cstrike-online.exe, gameui.dll, vgui2.dll (CheckClientBuild must be true to work)
 	"AllowedLauncherVersion": <int>, // allowed launcher version (def. 67) (CheckClientBuild must be true to work)
 	"MaxRegistrationsPerIP": <int>, // the maximum number of users that can be registered on the same IP (def. 1)
+	"MainMenuSkinEvent": <int>, // main menu skin event (5 - christmas, 6 - halloween, 7 - halloween + snow, 8 - easter bunny) (def. 0)
 	"DefaultUser": { // DefaultUser (default values that apply to the user after registration and character creation)
 		"GameMaster": <bool>, // game master (admin) privilege (def. false)
 		"Level": <int>, // (def. 1)
@@ -77,7 +78,8 @@
 	},
 
 	"Room": { // room configuration
-		"HostConnectingMethod": <int> // method that will be used to connect to the game host, 0 - direct connection (host restart functionality is unavailable), 1 - peer to peer connection (def. 0)
+		"HostConnectingMethod": <int>, // method that will be used to connect to the game host, 0 - direct connection (host restart functionality is unavailable), 1 - peer to peer connection (def. 0)
+		"ValidateSettings": <bool> // validate room settings (def. false)
 	},
 
 	"MiniGames": { // mini games configuration
