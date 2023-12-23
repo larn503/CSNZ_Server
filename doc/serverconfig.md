@@ -32,7 +32,7 @@
 				// 28, 252, 29, 30, 31, 200, 201, 214, 8222, 215, 216, 163, 8115, 390, 391, /*characters*/ 40, 41, 42, 43, 44, 49, 50, 51, 52, 53})
 		"PseudoDefaultItems": [<int>], // (array) the same as DefaultItems but user can do whatever they want with these items (except remove). (def. {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 161, 525})
 		// !!! Changing PseudoDefaultItems only affects new users!
-		"Loadouts": { // loadout list, max. 9 loadout (array) (def. empty)
+		"Loadouts": { // loadout list, max. 12 loadout (array) (def. empty)
 			"<int>": { // loadout slot
 				"1": <int>, // itemID for 1 slot (def. 0)
 				"2": <int>, // itemID for 2 slot (def. 0)
@@ -78,7 +78,7 @@
 	},
 
 	"Room": { // room configuration
-		"HostConnectingMethod": <int>, // method that will be used to connect to the game host, 0 - direct connection (host restart functionality is unavailable), 1 - peer to peer connection (def. 0)
+		"HostConnectingMethod": <int>, // method that will be used to connect to the game host, 0 - direct connection/dedicated server (host restart functionality is unavailable), 1 - peer to peer connection (def. 0)
 		"ValidateSettings": <bool> // validate room settings (def. false)
 	},
 
