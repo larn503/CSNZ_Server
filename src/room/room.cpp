@@ -13,7 +13,6 @@ using namespace std;
 CRoom::CRoom(int roomId, IUser* hostUser, CChannel* channel, CRoomSettings* settings)
 {
 	m_nID = roomId;
-	m_pHostUser = hostUser;
 	m_pGameMatch = NULL;
 
 	m_pParentChannel = channel;
@@ -22,7 +21,7 @@ CRoom::CRoom(int roomId, IUser* hostUser, CChannel* channel, CRoomSettings* sett
 
 	m_Status = RoomStatus::STATUS_WAITING;
 
-	AddUser(m_pHostUser);
+	AddUser(hostUser);
 
 	m_pServer = NULL;
 }

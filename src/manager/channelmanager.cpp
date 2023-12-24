@@ -1210,7 +1210,7 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 
 		room->SendNewUser(u, user);
 		//room->SendUserReadyStatus(user, u);
-		//room->SendTeamChange(u, user, (RoomTeamNum)2);
+		room->SendTeamChange(u, user, user->GetRoomData()->m_Team);
 	}
 
 	// hide user from channel users list
