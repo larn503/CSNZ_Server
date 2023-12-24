@@ -1119,7 +1119,7 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 	}
 
 	CRoomSettings* roomSettings = new CRoomSettings(msg->GetData());
-	if (g_pServerConfig->room.validateSettings && !roomSettings->CheckSettings(user))
+	if (!roomSettings->CheckSettings(user))
 	{
 		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Unable to create a room due to incorrect settings");
 		delete roomSettings;
@@ -1456,7 +1456,7 @@ bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, IUser* user)
 	}
 
 	CRoomSettings newSettings(msg->GetData());
-	if (g_pServerConfig->room.validateSettings && !newSettings.CheckNewSettings(user, roomSettings))
+	if (!newSettings.CheckNewSettings(user, roomSettings))
 		return false;
 
 	currentRoom->UpdateSettings(newSettings);

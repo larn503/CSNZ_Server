@@ -388,7 +388,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 		string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 
-		if (inventoryType == 1) // switch status
+		if (inventoryType == 1 || className == "LobbyBG" || className == "zbRespawnEffect" || className == "CombatInfoItem") // switch status
 		{
 			vector<CUserInventoryItem> itemsWithSameID;
 			g_pUserDatabase->GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID);
@@ -410,7 +410,6 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 			// turn on status of the desired item
 			item.m_nStatus = 1;
 
-			string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 			if (className == "LobbyBG")
 			{
 				CUserCharacter character = user->GetCharacter(UFLAG_NAMEPLATE);

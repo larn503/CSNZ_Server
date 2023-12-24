@@ -30,8 +30,8 @@ public:
 	CRoomSettings(Buffer& inPacket);
 
 	void Init();
-	int GetGameModeDefaultSetting(int gameModeId, std::string setting);
-	int GetMapSetting(int mapId, std::string setting);
+	int GetGameModeDefaultSetting(int gameModeId, const std::string& setting);
+	int GetMapSetting(int mapId, const std::string& setting);
 	int GetGameModeDefaultArmsRestriction(int gameModeId);
 	int GetMapDefaultArmsRestriction(int mapId);
 	int GetDefaultBuyTime(int gameModeId);
@@ -54,7 +54,7 @@ public:
 	void LoadDefaultSettings(int gameModeId, int mapId);
 	void LoadZbCompetitiveSettings(int gameModeId);
 	void LoadNewSettings(int gameModeId, int mapId, IUser* user, int changeFlag = 0);
-	bool IsSettingValid(int gameModeId, std::string setting, int value);
+	bool IsSettingValid(int gameModeId, const std::string& setting, int value);
 	bool IsLeagueRuleWinLimitValid(int winLimit);
 	bool IsBuyTimeValid(int gameModeId, int buyTime);
 	bool IsStartingCashValid(int gameModeId, int startingCash);

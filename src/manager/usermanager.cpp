@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define SUPPORTED_CLIENT_BUILD "23.12.23"
+#define SUPPORTED_CLIENT_BUILD "24.12.23"
 
 CUserManager::CUserManager(int maxPlayers) : CBaseManager("UserManager", true)
 {

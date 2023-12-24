@@ -81,7 +81,7 @@ void CRoom::AddUser(IUser* user)
 {
 	if (m_Users.size() <= 0) // make new user host if there are no users in room
 	{
-		m_pHostUser = user;
+		UpdateHost(user); // call this to update event items room settings
 	}
 
 	m_Users.push_back(user);
@@ -787,6 +787,7 @@ void CRoom::SendRemovedUser(IUser* deletedUser)
 	}
 }
 
+// TODO: remove unnecessary send calls or group it into one
 void CRoom::UpdateHost(IUser* newHost)
 {
 	m_pHostUser = newHost;

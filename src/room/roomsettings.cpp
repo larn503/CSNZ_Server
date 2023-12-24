@@ -1,9 +1,13 @@
-#include "roomsettings.h"
+ï»¿#include "roomsettings.h"
 #include "definitions.h"
 #include "manager/userdatabase.h"
 
 #include "user/user.h"
 #include "user/userinventoryitem.h"
+
+#include "serverconfig.h"
+
+using namespace std;
 
 CRoomSettings::CRoomSettings()
 {
@@ -373,13 +377,13 @@ void CRoomSettings::Init()
 	unk79 = 0;
 }
 
-std::vector<int> split(const std::string& s, char delimiter)
+vector<int> split(const string& s, char delimiter)
 {
-	std::vector<int> splits;
-	std::string split;
-	std::istringstream ss(s);
+	vector<int> splits;
+	string split;
+	istringstream ss(s);
 
-	while (std::getline(ss, split, delimiter))
+	while (getline(ss, split, delimiter))
 	{
 		splits.push_back(atoi(split.c_str()));
 	}
@@ -387,9 +391,9 @@ std::vector<int> split(const std::string& s, char delimiter)
 	return splits;
 }
 
-bool CRoomSettings::IsSettingValid(int gameModeId, std::string setting, int value)
+bool CRoomSettings::IsSettingValid(int gameModeId, const string& setting, int value)
 {
-	std::vector<int> validValues = split(g_pGameModeListTable->GetCell<std::string>(setting, std::to_string(gameModeId)), '|');
+	vector<int> validValues = split(g_pGameModeListTable->GetCell<string>(setting, to_string(gameModeId)), '|');
 
 	if (validValues.empty())
 		return true;
@@ -472,9 +476,9 @@ bool CRoomSettings::IsZombieItem(int itemId)
 	return false;
 }
 
-bool CRoomSettings::IsZbLimitValid(const std::vector<int>& zbLimit)
+bool CRoomSettings::IsZbLimitValid(const vector<int>& zbLimit)
 {
-	bool empty = std::all_of(zbLimit.begin(), zbLimit.end(), [](int i) { return i == 0; });
+	bool empty = all_of(zbLimit.begin(), zbLimit.end(), [](int i) { return i == 0; });
 	if (!empty)
 	{
 		for (int i = 0; i < 4; i++)
@@ -497,9 +501,9 @@ bool CRoomSettings::IsZbLimitValid(const std::vector<int>& zbLimit)
 	return true;
 }
 
-bool CRoomSettings::IsMutationRestrictValid(const std::vector<int>& mutationRestrict)
+bool CRoomSettings::IsMutationRestrictValid(const vector<int>& mutationRestrict)
 {
-	bool empty = std::all_of(mutationRestrict.begin(), mutationRestrict.end(), [](int i) { return i == -1; });
+	bool empty = all_of(mutationRestrict.begin(), mutationRestrict.end(), [](int i) { return i == -1; });
 	if (!empty)
 	{
 		for (int i = 0; i < 4; i++)
@@ -522,7 +526,7 @@ bool CRoomSettings::IsMutationRestrictValid(const std::vector<int>& mutationRest
 	return true;
 }
 
-bool CRoomSettings::IsMapPlaylistValid(const std::vector<mapPlaylist_data>& mapPlaylist)
+bool CRoomSettings::IsMapPlaylistValid(const vector<mapPlaylist_data>& mapPlaylist)
 {
 	for (size_t i = 0; i < mapPlaylist.size(); i++)
 	{
@@ -555,16 +559,16 @@ bool CRoomSettings::CanChangeFriendlyFire(int gameModeId)
 	return (gameModeId == 0 || gameModeId == 3 || gameModeId == 8 || gameModeId == 9 || gameModeId == 14 || gameModeId == 19 || gameModeId == 30 || gameModeId == 32 || gameModeId == 37 || gameModeId == 40 || gameModeId == 45 || gameModeId == 49 || gameModeId == 51 || gameModeId == 53 || gameModeId == 54 || gameModeId == 57);
 }
 
-int CRoomSettings::GetGameModeDefaultSetting(int gameModeId, std::string setting)
+int CRoomSettings::GetGameModeDefaultSetting(int gameModeId, const string& setting)
 {
-	std::vector<int> validValues = split(g_pGameModeListTable->GetCell<std::string>(setting, std::to_string(gameModeId)), '|');
+	vector<int> validValues = split(g_pGameModeListTable->GetCell<string>(setting, to_string(gameModeId)), '|');
 
 	return validValues.size() == 4 ? validValues[2] : 0;
 }
 
-int CRoomSettings::GetMapSetting(int mapId, std::string setting)
+int CRoomSettings::GetMapSetting(int mapId, const string& setting)
 {
-	return g_pMapListTable->GetCell<int>(setting, std::to_string(mapId));
+	return g_pMapListTable->GetCell<int>(setting, to_string(mapId));
 }
 
 int CRoomSettings::GetGameModeDefaultArmsRestriction(int gameModeId)
@@ -574,7 +578,7 @@ int CRoomSettings::GetGameModeDefaultArmsRestriction(int gameModeId)
 
 int CRoomSettings::GetMapDefaultArmsRestriction(int mapId)
 {
-	return g_pMapListTable->GetCell<int>("weapon_restrict_deault", std::to_string(mapId));
+	return g_pMapListTable->GetCell<int>("weapon_restrict_deault", to_string(mapId));
 }
 
 int CRoomSettings::GetDefaultBuyTime(int gameModeId)
@@ -830,7 +834,7 @@ bool CRoomSettings::IsVoxelGameMode(int gameModeId)
 	return (gameModeId == 38 || gameModeId == 39 || gameModeId == 49 || gameModeId == 52 || gameModeId == 53);
 }
 
-std::string CRoomSettings::GetGameModeNameByID(int gameModeId)
+string CRoomSettings::GetGameModeNameByID(int gameModeId)
 {
 	if (IsFunGameMode(gameModeId))
 		return "map_FunMode";
@@ -888,20 +892,20 @@ std::string CRoomSettings::GetGameModeNameByID(int gameModeId)
 
 bool CRoomSettings::IsMapValid(int gameModeId, int mapId)
 {
-	std::string gameModeName = GetGameModeNameByID(gameModeId);
+	string gameModeName = GetGameModeNameByID(gameModeId);
 
 	if (gameModeName.empty())
 		return false;
 
-	int id = g_pMapListTable->GetCell<int>(gameModeName, std::to_string(mapId));
+	int id = g_pMapListTable->GetCell<int>(gameModeName, to_string(mapId));
 
 	if (!id)
 		return false;
 
-	if (gameModeName == "map_FunMode" && g_pMapListTable->GetCell<int>("\"Fun_Subtype(Ãà±¸ 16, Ã§¸°Áö 12, ¾ÆÀÌÅÛÀü 19, ¹ÙÁÖÄ«Àü 21, ¸ÞÅ»¾Æ·¹³ª 18, ÆÄÀÌÆ®¾ßµå 31, ºñ½ºÆ® 27, ¼­µçµ¥½º 34, ¼ú·¡Àâ±â 37)\"", std::to_string(mapId)) != gameModeId)
+	if (gameModeName == "map_FunMode" && g_pMapListTable->GetCell<int>("Fun_Subtype(ì¶•êµ¬ 16, ì±Œë¦°ì§€ 12, ì•„ì´í…œì „ 19, ë°”ì£¼ì¹´ì „ 21, ë©”íƒˆì•„ë ˆë‚˜ 18, íŒŒì´íŠ¸ì•¼ë“œ 31, ë¹„ìŠ¤íŠ¸ 27, ì„œë“ ë°ìŠ¤ 34, ìˆ ëž˜ìž¡ê¸° 37)", to_string(mapId)) != gameModeId)
 		return false;
 
-	if (gameModeName == "playroom" && g_pMapListTable->GetCell<int>("playroom_modeID", std::to_string(mapId)) != gameModeId)
+	if (gameModeName == "playroom" && g_pMapListTable->GetCell<int>("playroom_modeID", to_string(mapId)) != gameModeId)
 		return false;
 
 	return true;
@@ -999,6 +1003,12 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 	mutationRestrict.clear();
 	mutationLimit = gameModeId == 45 ? 40 : 0;
 	unk77 = 0;
+
+	if (!winLimit)
+		winLimit = GetGameModeDefaultSetting(gameModeId, "mode_win_limit_id");
+
+	if (!killLimit)
+		killLimit = GetGameModeDefaultSetting(gameModeId, "mode_kill_limit_id");
 
 	if (isZbCompetitive)
 	{
@@ -1202,7 +1212,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 	if (changeFlag & ROOM_LOW_GAMEMODEID)
 	{
 		lowFlag |= ROOM_LOW_MAXPLAYERS;
-		maxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", std::to_string(gameModeId));
+		maxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", to_string(gameModeId));
 
 		lowFlag |= ROOM_LOW_WINLIMIT;
 		winLimit = GetGameModeDefaultSetting(gameModeId, "mode_win_limit_id");
@@ -1321,7 +1331,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 	{
 		if (lowFlag & ROOM_LOW_MAXPLAYERS)
 		{
-			int gameModeMinPlayers = g_pGameModeListTable->GetCell<int>("mode_minplayer", std::to_string(gameModeId));
+			int gameModeMinPlayers = g_pGameModeListTable->GetCell<int>("mode_minplayer", to_string(gameModeId));
 			if (maxPlayers < gameModeMinPlayers)
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with maxPlayers < gameModeMinPlayers: %d, maxPlayers: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeMinPlayers, maxPlayers);
@@ -1329,7 +1339,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 			}
 			else
 			{
-				int gameModeMaxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", std::to_string(gameModeId));
+				int gameModeMaxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", to_string(gameModeId));
 				if (maxPlayers > gameModeMaxPlayers)
 				{
 					g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with maxPlayers > gameModeMaxPlayers: %d, maxPlayers: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeMaxPlayers, maxPlayers);
@@ -1528,7 +1538,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 			}
 			else
 			{
-				int mapMaxZsDifficulty = g_pMapListTable->GetCell<int>("ZSmaxDifficulty", std::to_string(mapId));
+				int mapMaxZsDifficulty = g_pMapListTable->GetCell<int>("ZSmaxDifficulty", to_string(mapId));
 				if (zsDifficulty > mapMaxZsDifficulty)
 				{
 					g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with zsDifficulty > mapMaxZsDifficulty: %d, zsDifficulty: %d, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapMaxZsDifficulty, zsDifficulty, mapId);
@@ -1683,7 +1693,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 	if (changeFlag & ROOM_LOW_MAPID)
 	{
 		lowFlag |= ROOM_LOW_MAXPLAYERS;
-		maxPlayers = g_pMapListTable->GetCell<int>("max_player", std::to_string(mapId));
+		maxPlayers = g_pMapListTable->GetCell<int>("max_player", to_string(mapId));
 
 		lowFlag |= ROOM_LOW_ARMSRESTRICTION;
 		int restriction = GetMapDefaultArmsRestriction(mapId);
@@ -1702,7 +1712,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 	{
 		if (lowFlag & ROOM_LOW_MAXPLAYERS)
 		{
-			int mapMaxPlayers = g_pMapListTable->GetCell<int>("max_player", std::to_string(mapId));
+			int mapMaxPlayers = g_pMapListTable->GetCell<int>("max_player", to_string(mapId));
 			if (maxPlayers > mapMaxPlayers)
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with maxPlayers > mapMaxPlayers: %d, maxPlayers: %d\n", user->GetID(), user->GetUsername().c_str(), mapMaxPlayers, maxPlayers);
@@ -1788,7 +1798,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 		{
 			for (int i = 0; i < mapPlaylistSize; i++)
 			{
-				if (g_pMapListTable->GetRowIdx(std::to_string(mapPlaylist[i].mapId)) < 0)
+				if (g_pMapListTable->GetRowIdx(to_string(mapPlaylist[i].mapId)) < 0)
 				{
 					g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with an invalid mapId in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId);
 					lowFlag &= ~ROOM_LOW_MAPID;
@@ -1832,167 +1842,161 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 
 bool CRoomSettings::CheckSettings(IUser* user)
 {
-	if (!(lowFlag & ROOM_LOW_ROOMNAME && lowFlag & ROOM_LOW_PASSWORD && lowFlag & ROOM_LOW_GAMEMODEID && lowFlag & ROOM_LOW_MAPID && lowFlag & ROOM_LOW_MAXPLAYERS && lowFlag & ROOM_LOW_WINLIMIT && lowFlag & ROOM_LOW_KILLLIMIT))
+	if (g_pServerConfig->room.validateSettings)
 	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room without necessary settings\n", user->GetID(), user->GetUsername().c_str());
-		return false;
-	}
-
-	if (g_pGameModeListTable->GetRowIdx(std::to_string(gameModeId)) < 0)
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
-		return false;
-	}
-
-	if (gameModeId != 39 && !IsFunGameMode(gameModeId) && !g_pGameModeListTable->GetCell<int>("mode_select_ui_order", std::to_string(gameModeId)))
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
-		return false;
-	}
-
-	if (g_pMapListTable->GetRowIdx(std::to_string(mapId)) < 0)
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId);
-		return false;
-	}
-
-	if (!IsMapValid(gameModeId, mapId))
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId, gameModeId);
-		return false;
-	}
-
-	int mapMaxPlayers = g_pMapListTable->GetCell<int>("max_player", std::to_string(mapId));
-	if (maxPlayers > mapMaxPlayers)
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with maxPlayers > mapMaxPlayers: %d, maxPlayers: %d, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapMaxPlayers, maxPlayers, mapId);
-		return false;
-	}
-
-	int gameModeMinPlayers = g_pGameModeListTable->GetCell<int>("mode_minplayer", std::to_string(gameModeId));
-	if (maxPlayers < gameModeMinPlayers)
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with maxPlayers < gameModeMinPlayers: %d, maxPlayers: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeMinPlayers, maxPlayers, gameModeId);
-		return false;
-	}
-
-	int gameModeMaxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", std::to_string(gameModeId));
-	if (maxPlayers > gameModeMaxPlayers)
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with maxPlayers > gameModeMaxPlayers: %d, maxPlayers: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeMaxPlayers, maxPlayers, gameModeId);
-		return false;
-	}
-
-	if (!winLimit)
-		winLimit = GetGameModeDefaultSetting(gameModeId, "mode_win_limit_id");
-
-	if (!IsSettingValid(gameModeId, "mode_win_limit_id", winLimit))
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid winLimit: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), winLimit, gameModeId);
-		return false;
-	}
-
-	if (!killLimit)
-		killLimit = GetGameModeDefaultSetting(gameModeId, "mode_kill_limit_id");
-
-	if (!IsSettingValid(gameModeId, "mode_kill_limit_id", killLimit))
-	{
-		g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid killLimit: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), killLimit, gameModeId);
-		return false;
-	}
-
-	if (lowMidFlag & ROOM_LOWMID_RANDOMMAP)
-	{
-		if (!IsRandomMapAllowed(gameModeId) && randomMap != 0)
+		if (!(lowFlag & ROOM_LOW_ROOMNAME && lowFlag & ROOM_LOW_PASSWORD && lowFlag & ROOM_LOW_GAMEMODEID && lowFlag & ROOM_LOW_MAPID && lowFlag & ROOM_LOW_MAXPLAYERS && lowFlag & ROOM_LOW_WINLIMIT && lowFlag & ROOM_LOW_KILLLIMIT))
 		{
-			g_pConsole->Warn("User '%d, %s' tried to create a new room with gameModeId which doesn't allow randomMap, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
+			g_pConsole->Warn("User '%d, %s' tried to create a new room without necessary settings\n", user->GetID(), user->GetUsername().c_str());
 			return false;
 		}
 
-		if (randomMap > 2)
-			randomMap = 2;
-	}
-
-	if (lowMidFlag & ROOM_LOWMID_MAPPLAYLIST)
-	{
-		if (mapPlaylistSize < 2)
+		if (g_pGameModeListTable->GetRowIdx(to_string(gameModeId)) < 0)
 		{
-			g_pConsole->Warn("User '%d, %s' tried to create a new room with mapPlaylistSize < 2, mapPlaylistSize: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylistSize);
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 			return false;
 		}
 
-		if (!IsMapPlaylistAllowed(gameModeId))
+		if (gameModeId != 39 && !IsFunGameMode(gameModeId) && !g_pGameModeListTable->GetCell<int>("mode_select_ui_order", to_string(gameModeId)))
 		{
-			g_pConsole->Warn("User '%d, %s' tried to create a new room with gameModeId which doesn't allow mapPlaylist, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 			return false;
 		}
 
-		if (mapPlaylistSize > 5)
+		if (g_pMapListTable->GetRowIdx(to_string(mapId)) < 0)
 		{
-			g_pConsole->Warn("User '%d, %s' tried to create a new room with mapPlaylistSize > 5, mapPlaylistSize: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylistSize);
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId);
 			return false;
 		}
 
-		if (!IsMapPlaylistValid(mapPlaylist))
+		if (!IsMapValid(gameModeId, mapId))
 		{
-			g_pConsole->Warn("User '%d, %s' tried to create a new room with duplicate mapIds in mapPlaylist\n", user->GetID(), user->GetUsername().c_str());
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId, gameModeId);
 			return false;
 		}
 
-		if (mapId != mapPlaylist[0].mapId)
+		int mapMaxPlayers = g_pMapListTable->GetCell<int>("max_player", to_string(mapId));
+		if (maxPlayers > mapMaxPlayers)
 		{
-			g_pConsole->Warn("User '%d, %s' tried to create a new room with mapId which isn't the first in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId);
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with maxPlayers > mapMaxPlayers: %d, maxPlayers: %d, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapMaxPlayers, maxPlayers, mapId);
 			return false;
 		}
 
-		for (int i = 0; i < mapPlaylistSize; i++)
+		int gameModeMinPlayers = g_pGameModeListTable->GetCell<int>("mode_minplayer", to_string(gameModeId));
+		if (maxPlayers < gameModeMinPlayers)
 		{
-			if (g_pMapListTable->GetRowIdx(std::to_string(mapPlaylist[i].mapId)) < 0)
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with maxPlayers < gameModeMinPlayers: %d, maxPlayers: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeMinPlayers, maxPlayers, gameModeId);
+			return false;
+		}
+
+		int gameModeMaxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", to_string(gameModeId));
+		if (maxPlayers > gameModeMaxPlayers)
+		{
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with maxPlayers > gameModeMaxPlayers: %d, maxPlayers: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeMaxPlayers, maxPlayers, gameModeId);
+			return false;
+		}
+
+		if (!winLimit)
+			winLimit = GetGameModeDefaultSetting(gameModeId, "mode_win_limit_id");
+
+		if (!IsSettingValid(gameModeId, "mode_win_limit_id", winLimit))
+		{
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid winLimit: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), winLimit, gameModeId);
+			return false;
+		}
+
+		if (!killLimit)
+			killLimit = GetGameModeDefaultSetting(gameModeId, "mode_kill_limit_id");
+
+		if (!IsSettingValid(gameModeId, "mode_kill_limit_id", killLimit))
+		{
+			g_pConsole->Warn("User '%d, %s' tried to create a new room with invalid killLimit: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), killLimit, gameModeId);
+			return false;
+		}
+
+		if (lowMidFlag & ROOM_LOWMID_RANDOMMAP)
+		{
+			if (!IsRandomMapAllowed(gameModeId) && randomMap != 0)
 			{
-				g_pConsole->Warn("User '%d, %s' tried to create a new room with an invalid mapId in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId);
+				g_pConsole->Warn("User '%d, %s' tried to create a new room with gameModeId which doesn't allow randomMap, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 				return false;
 			}
 
-			if (!IsMapValid(gameModeId, mapPlaylist[i].mapId))
-			{
-				g_pConsole->Warn("User '%d, %s' tried to create a new room with an invalid mapId in mapPlaylist, mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId, gameModeId);
-				return false;
-			}
-
-			if (GetMapDefaultArmsRestriction(mapPlaylist[i].mapId) != 0)
-			{
-				g_pConsole->Warn("User '%d, %s' tried to create a new room with mapId which isn't allowed in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId);
-				return false;
-			}
+			if (randomMap > 2)
+				randomMap = 2;
 		}
-	}
 
-	if (gameModeId == 15)
-	{
-		if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY)
+		if (lowMidFlag & ROOM_LOWMID_MAPPLAYLIST)
 		{
-			int mapMaxZsDifficulty = g_pMapListTable->GetCell<int>("ZSmaxDifficulty", std::to_string(mapId));
-			if (zsDifficulty > mapMaxZsDifficulty)
+			if (mapPlaylistSize < 2)
 			{
-				g_pConsole->Warn("User '%d, %s' tried to create a new room with zsDifficulty > mapMaxZsDifficulty: %d, zsDifficulty: %d, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapMaxZsDifficulty, zsDifficulty, mapId);
+				g_pConsole->Warn("User '%d, %s' tried to create a new room with mapPlaylistSize < 2, mapPlaylistSize: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylistSize);
+				return false;
+			}
+
+			if (!IsMapPlaylistAllowed(gameModeId))
+			{
+				g_pConsole->Warn("User '%d, %s' tried to create a new room with gameModeId which doesn't allow mapPlaylist, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
+				return false;
+			}
+
+			if (mapPlaylistSize > 5)
+			{
+				g_pConsole->Warn("User '%d, %s' tried to create a new room with mapPlaylistSize > 5, mapPlaylistSize: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylistSize);
+				return false;
+			}
+
+			if (!IsMapPlaylistValid(mapPlaylist))
+			{
+				g_pConsole->Warn("User '%d, %s' tried to create a new room with duplicate mapIds in mapPlaylist\n", user->GetID(), user->GetUsername().c_str());
+				return false;
+			}
+
+			if (mapId != mapPlaylist[0].mapId)
+			{
+				g_pConsole->Warn("User '%d, %s' tried to create a new room with mapId which isn't the first in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId);
+				return false;
+			}
+
+			for (int i = 0; i < mapPlaylistSize; i++)
+			{
+				if (g_pMapListTable->GetRowIdx(to_string(mapPlaylist[i].mapId)) < 0)
+				{
+					g_pConsole->Warn("User '%d, %s' tried to create a new room with an invalid mapId in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId);
+					return false;
+				}
+
+				if (!IsMapValid(gameModeId, mapPlaylist[i].mapId))
+				{
+					g_pConsole->Warn("User '%d, %s' tried to create a new room with an invalid mapId in mapPlaylist, mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId, gameModeId);
+					return false;
+				}
+
+				if (GetMapDefaultArmsRestriction(mapPlaylist[i].mapId) != 0)
+				{
+					g_pConsole->Warn("User '%d, %s' tried to create a new room with mapId which isn't allowed in mapPlaylist, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapPlaylist[i].mapId);
+					return false;
+				}
+			}
+		}
+
+		if (gameModeId == 15)
+		{
+			if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY)
+			{
+				int mapMaxZsDifficulty = g_pMapListTable->GetCell<int>("ZSmaxDifficulty", to_string(mapId));
+				if (zsDifficulty > mapMaxZsDifficulty)
+				{
+					g_pConsole->Warn("User '%d, %s' tried to create a new room with zsDifficulty > mapMaxZsDifficulty: %d, zsDifficulty: %d, mapId: %d\n", user->GetID(), user->GetUsername().c_str(), mapMaxZsDifficulty, zsDifficulty, mapId);
+					return false;
+				}
+			}
+			else
+			{
+				g_pConsole->Warn("User '%d, %s' tried to create a new Zombie Scenario room without necessary settings\n", user->GetID(), user->GetUsername().c_str());
 				return false;
 			}
 		}
-		else
-		{
-			g_pConsole->Warn("User '%d, %s' tried to create a new Zombie Scenario room without necessary settings\n", user->GetID(), user->GetUsername().c_str());
-			return false;
-		}
 	}
-
-	if (gameModeId == 3 || gameModeId == 4 || gameModeId == 5 || gameModeId == 15 || gameModeId == 24)
-	{
-		CUserInventoryItem item;
-		sd = g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), 439 /* BigHeadEvent */, item);
-	}
-
-	CUserInventoryItem item;
-	superRoom = g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), 8357 /* superRoom */, item);
 
 	LoadDefaultSettings(gameModeId, mapId);
 
@@ -2003,13 +2007,13 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 {
 	if (lowFlag & ROOM_LOW_GAMEMODEID && gameModeId != roomSettings->gameModeId)
 	{
-		if (g_pGameModeListTable->GetRowIdx(std::to_string(gameModeId)) < 0)
+		if (g_pGameModeListTable->GetRowIdx(to_string(gameModeId)) < 0)
 		{
 			g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 			return false;
 		}
 
-		if (gameModeId != 39 && !IsFunGameMode(gameModeId) && !g_pGameModeListTable->GetCell<int>("mode_select_ui_order", std::to_string(gameModeId)))
+		if (gameModeId != 39 && !IsFunGameMode(gameModeId) && !g_pGameModeListTable->GetCell<int>("mode_select_ui_order", to_string(gameModeId)))
 		{
 			g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), gameModeId);
 			return false;
@@ -2017,7 +2021,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 
 		if (lowFlag & ROOM_LOW_MAPID && mapId != roomSettings->mapId)
 		{
-			if (g_pMapListTable->GetRowIdx(std::to_string(mapId)) < 0)
+			if (g_pMapListTable->GetRowIdx(to_string(mapId)) < 0)
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId, gameModeId);
 				return false;
@@ -2046,7 +2050,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 	{
 		if (lowFlag & ROOM_LOW_MAPID && mapId != roomSettings->mapId)
 		{
-			if (g_pMapListTable->GetRowIdx(std::to_string(mapId)) < 0)
+			if (g_pMapListTable->GetRowIdx(to_string(mapId)) < 0)
 			{
 				g_pConsole->Warn("User '%d, %s' tried to update a room\'s settings with invalid mapId: %d, gameModeId: %d\n", user->GetID(), user->GetUsername().c_str(), mapId, roomSettings->gameModeId);
 				return false;
