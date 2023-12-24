@@ -77,13 +77,11 @@ typedef HINSTANCE(WINAPI* SHELLEXECUTE)
 	LPCSTR lpParameters,
 	LPCSTR lpDirectory,
 	INT nShowCmd
-	);
+);
+
 LONG __stdcall ExceptionFilter(EXCEPTION_POINTERS* pep)
 {
 	printf("ExceptionFilter called\n");
-
-	if (g_pConsole)
-		g_pConsole->Log("Last packet function: %s()\n", g_pConsole->GetLastPacket());
 
 	time_t currTime = time(NULL);
 	struct tm* pTime = localtime(&currTime);
@@ -101,24 +99,36 @@ LONG __stdcall ExceptionFilter(EXCEPTION_POINTERS* pep)
 
 #ifndef PROTECTION
 	bool isMdmpGenerated = true;
-	if (!WriteMiniDump(pep, MiniDumpWithFullMemory, name))
+	if (!WriteMiniDump(pep, MiniDumpNormal, name))
 	{
-		if (g_pConsole)
-			g_pConsole->Log(OBFUSCATE("WriteMiniDump(MiniDumpWithFullMemory) failed, GetLastError: %d\n"), GetLastError());
+		snprintf(name, sizeof(name) / sizeof(char),
+			"%d-%.2d-%.2d %.2d-%.2d-%.2d_FULL",
+			pTime->tm_year + 1900,	/* Year less 2000 */
+			pTime->tm_mon + 1,		/* month (0 - 11 : 0 = January) */
+			pTime->tm_mday,			/* day of month (1 - 31) */
+			pTime->tm_hour,			/* hour (0 - 23) */
+			pTime->tm_min,		    /* minutes (0 - 59) */
+			pTime->tm_sec		    /* seconds (0 - 59) */
+		);
 
-		if (!WriteMiniDump(pep, MiniDumpNormal, name))
+		if (!WriteMiniDump(pep, MiniDumpWithFullMemory, name))
 		{
 			if (g_pConsole)
-				g_pConsole->Log(OBFUSCATE("WriteMiniDump(MiniDumpNormal) failed, GetLastError: %d\n"), GetLastError());
+				g_pConsole->Log(OBFUSCATE("WriteMiniDump(MiniDumpWithFullMemory) failed, GetLastError: %d\n"), GetLastError());
 
 			isMdmpGenerated = false;
 		}
+
+		// it is not safe to do that
+		if (g_pConsole)
+			g_pConsole->Log(OBFUSCATE("WriteMiniDump(MiniDumpNormal) failed, GetLastError: %d\n"), GetLastError());
 	}
 #endif
 
 	if (g_pConsole)
 	{
-		g_pConsole->Log("%s\nTrying to shutdown the server\n", g_pServerInstance->GetMainInfo());
+		g_pConsole->Log("Last packet function: %s()\n", g_pConsole->GetLastPacket());
+		g_pConsole->Log("Trying to shutdown the server\n");
 	}
 
 	ForceEndServer();
