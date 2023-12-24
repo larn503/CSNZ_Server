@@ -23,8 +23,8 @@ public:
 	virtual unsigned char* GetCryptIV() = 0;
 	virtual void SetIP(const std::string& addr) = 0;
 	virtual void SetHWID(const std::vector<unsigned char>& hwid) = 0;
-	virtual std::string GetIP() = 0;
-	virtual std::vector<unsigned char> GetHWID() = 0;
+	virtual const std::string& GetIP() = 0;
+	virtual const std::vector<unsigned char>& GetHWID() = 0;
 	virtual int GetSeq() = 0;
 	virtual int LoggerGetSeq() = 0;
 	virtual void ResetSeq() = 0;

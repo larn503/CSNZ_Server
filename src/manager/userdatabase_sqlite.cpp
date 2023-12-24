@@ -326,8 +326,7 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		queryInsertUserSession.bind(1, userID);
 		queryInsertUserSession.bind(2, socket->GetIP());
 		queryInsertUserSession.bind(3, ""); // TODO: remove
-		void* hwid = socket->GetHWID().data();
-		queryInsertUserSession.bind(4, hwid, socket->GetHWID().size());
+		queryInsertUserSession.bind(4, socket->GetHWID().data(), socket->GetHWID().size());
 		queryInsertUserSession.bind(5, UserStatus::STATUS_MENU);
 		queryInsertUserSession.bind(6, 0);
 		queryInsertUserSession.exec();

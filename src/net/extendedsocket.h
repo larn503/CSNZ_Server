@@ -32,8 +32,8 @@ public:
 	bool SetupCrypt();
 	void SetIP(const std::string& addr) { m_IP = addr; }
 	void SetHWID(const std::vector<unsigned char>& hwid) { m_HWID = hwid; }
-	std::string GetIP() { return m_IP; }
-	std::vector<unsigned char> GetHWID() { return m_HWID; }
+	const std::string& GetIP() { return m_IP; }
+	const std::vector<unsigned char>& GetHWID() { return m_HWID; }
 	void SetCryptInput(bool val) { m_bCryptInput = val; }
 	void SetCryptOutput(bool val) { m_bCryptOutput = val; }
 	unsigned char* GetCryptKey() { return m_pCryptKey; }
