@@ -191,7 +191,7 @@ void CServerInstance::OnCommand(const string& command)
 	if (args.empty())
 		return;
 
-	CCommand* cmd = CmdList()->GetCommand(command);
+	CCommand* cmd = CmdList()->GetCommand(args[0]);
 	if (cmd)
 	{
 		cmd->Exec(args);
