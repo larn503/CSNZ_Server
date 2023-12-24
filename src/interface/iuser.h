@@ -27,6 +27,8 @@ struct UserData
 class IUser
 {
 public:
+	virtual ~IUser() {}
+
 	virtual void SetCurrentChannel(CChannel* channel) = 0;
 	virtual void SetLastChannelServer(CChannelServer* channelServer) = 0;
 	virtual void SetStatus(UserStatus newStatus) = 0;

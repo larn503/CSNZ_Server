@@ -16,6 +16,8 @@ class CReceivePacket;
 class IExtendedSocket
 {
 public:
+	virtual ~IExtendedSocket() {}
+
 	virtual bool SetupCrypt() = 0;
 	virtual void SetCryptInput(bool val) = 0;
 	virtual void SetCryptOutput(bool val) = 0;
