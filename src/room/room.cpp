@@ -79,12 +79,11 @@ bool CRoom::HasUser(IUser* user)
 
 void CRoom::AddUser(IUser* user)
 {
-	if (m_Users.size() <= 0) // make new user host if there are no users in room
+	m_Users.push_back(user);
+	if (m_Users.size() == 1)
 	{
 		UpdateHost(user); // call this to update event items room settings
 	}
-
-	m_Users.push_back(user);
 
 	user->SetRoomData(new CRoomUser(user, RoomTeamNum::CounterTerrorist, RoomReadyStatus::READY_STATUS_NO));
 	user->SetStatus(UserStatus::STATUS_INROOM);
@@ -755,6 +754,39 @@ void CRoom::SendPlayerLeaveIngame(IUser* user)
 	g_pPacketManager->SendRoomPlayerLeaveIngame(user->GetExtendedSocket());
 }
 
+void CRoom::CheckForHostItems()
+{
+	if (!m_pHostUser)
+		return;
+
+	CUserInventoryItem item;
+	m_pSettings->superRoom = g_pUserDatabase->GetFirstActiveItemByItemID(m_pHostUser->GetID(), 8357 /* superRoom */, item);
+
+	for (auto u : m_Users)
+	{
+		g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SUPERROOM);
+	}
+
+	CUserInventoryItem item2;
+	m_pSettings->c4Timer = g_pUserDatabase->GetFirstActiveItemByItemID(m_pHostUser->GetID(), 112 /* c4Timer */, item2);
+
+	for (auto u : m_Users)
+	{
+		g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_C4TIMER);
+	}
+
+	if (m_pSettings->gameModeId == 3 || m_pSettings->gameModeId == 4 || m_pSettings->gameModeId == 5 || m_pSettings->gameModeId == 15 || m_pSettings->gameModeId == 24)
+	{
+		CUserInventoryItem item;
+		m_pSettings->sd = g_pUserDatabase->GetFirstActiveItemByItemID(m_pHostUser->GetID(), 439 /* BigHeadEvent */, item);
+
+		for (auto u : m_Users)
+		{
+			g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SD);
+		}
+	}
+}
+
 void CRoom::OnUserRemoved(IUser* user)
 {
 	if (m_pGameMatch)
@@ -802,32 +834,7 @@ void CRoom::UpdateHost(IUser* newHost)
 		m_pGameMatch->OnHostChanged(newHost);
 	}
 
-	CUserInventoryItem item;
-	m_pSettings->superRoom = g_pUserDatabase->GetFirstActiveItemByItemID(newHost->GetID(), 8357 /* superRoom */, item);
-
-	for (auto u : m_Users)
-	{
-		g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SUPERROOM);
-	}
-
-	CUserInventoryItem item2;
-	m_pSettings->c4Timer = g_pUserDatabase->GetFirstActiveItemByItemID(newHost->GetID(), 112 /* c4Timer */, item2);
-
-	for (auto u : m_Users)
-	{
-		g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_C4TIMER);
-	}
-
-	if (m_pSettings->gameModeId == 3 || m_pSettings->gameModeId == 4 || m_pSettings->gameModeId == 5 || m_pSettings->gameModeId == 15 || m_pSettings->gameModeId == 24)
-	{
-		CUserInventoryItem item;
-		m_pSettings->sd = g_pUserDatabase->GetFirstActiveItemByItemID(newHost->GetID(), 439 /* BigHeadEvent */, item);
-
-		for (auto u : m_Users)
-		{
-			g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SD);
-		}
-	}
+	CheckForHostItems();
 }
 
 bool CRoom::FindAndUpdateNewHost()

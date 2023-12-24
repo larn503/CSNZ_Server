@@ -371,7 +371,7 @@ int CExtendedSocket::GetBytesSent()
 	return m_nBytesSent;
 }
 
-std::vector<CSendPacket*> CExtendedSocket::GetPacketsToSend()
+std::vector<CSendPacket*>& CExtendedSocket::GetPacketsToSend()
 {
 	return m_SendPackets;
 }

@@ -87,6 +87,8 @@ public:
 	void SendRoomStatus(IUser* user);
 	void SendPlayerLeaveIngame(IUser* user);
 
+	void CheckForHostItems();
+
 	int GetID();
 	IUser* GetHostUser();
 	std::vector<IUser*> GetUsers();

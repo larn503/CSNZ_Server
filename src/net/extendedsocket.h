@@ -53,7 +53,7 @@ public:
 	int GetReadResult();
 	int GetBytesReceived();
 	int GetBytesSent();
-	std::vector<CSendPacket*> GetPacketsToSend();
+	std::vector<CSendPacket*>& GetPacketsToSend();
 	GuestData_s& GetGuestData();
 
 private:

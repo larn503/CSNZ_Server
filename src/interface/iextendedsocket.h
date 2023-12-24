@@ -42,6 +42,6 @@ public:
 	virtual int GetReadResult() = 0;
 	virtual int GetBytesReceived() = 0;
 	virtual int GetBytesSent() = 0;
-	virtual std::vector<CSendPacket*> GetPacketsToSend() = 0;
+	virtual std::vector<CSendPacket*>& GetPacketsToSend() = 0;
 	virtual GuestData_s& GetGuestData() = 0;
 };
