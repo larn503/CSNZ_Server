@@ -1,0 +1,16 @@
+#pragma once
+
+#define MAX_SEQUENCE 255
+#define MAX_RECEIVE_LEN 15000
+
+#define PACKET_MAX_SIZE 0x10000
+#define PACKET_HEADER_SIZE 4 // without packet ID
+
+#define TCP_PACKET_SIGNATURE 'U'
+
+// not sure about them
+#define UDP_HOLEPUNCH_PACKET_SIGNATURE_1 'W'
+#define UDP_HOLEPUNCH_PACKET_SIGNATURE_2 'X'
+#define UDP_HOLEPUNCH_PACKET_SIGNATURE_3 '`'
+
+#define TCP_CONNECTED_MESSAGE "~SERVERCONNECTED\n"

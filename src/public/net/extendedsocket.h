@@ -1,13 +1,7 @@
 #pragma once
 
-#include "interface/iextendedsocket.h"
+#include "interface/net/iextendedsocket.h"
 #include "common/buffer.h"
-
-#define MAX_SEQUENCE 255
-#define MAX_RECEIVE_LEN 15000
-
-#define PACKET_MAX_SIZE 0x10000
-#define PACKET_HEADER_SIZE 4
 
 struct GuestData_s
 {
@@ -23,10 +17,14 @@ class CSendPacket;
 class CReceivePacket;
 struct WOLFSSL_EVP_CIPHER_CTX;
 
+/**
+ * Class that extends client sockets and sockets returned by accept() to store additional information
+ * such as IP, some statistics, etc and to manage packets
+ */
 class CExtendedSocket : public IExtendedSocket
 {
 public:
-	CExtendedSocket(unsigned int id);
+	CExtendedSocket(SOCKET socket, unsigned int id = 0);
 	~CExtendedSocket();
 
 	bool SetupCrypt();
@@ -41,12 +39,15 @@ public:
 	int GetSeq();
 	int LoggerGetSeq();
 	void ResetSeq();
+	int Read(char* buf, int len);
 	CReceivePacket* Read();
-	int Send(std::vector<unsigned char>& buffer);
-	int Send(CSendPacket* msg, bool forceSend = false);
+	int Send(std::vector<unsigned char>& buffer, bool serverHelloMsg = false);
+	int Send(CSendPacket* msg, bool ignoreQueue = false);
+
+	// tcp client method
+	bool OnServerConnected();
 
 	unsigned int GetID();
-	void SetSocket(SOCKET socket);
 	SOCKET GetSocket();
 	void SetMsg(CReceivePacket* msg);
 	CReceivePacket* GetMsg();
@@ -66,8 +67,9 @@ private:
 	GuestData_s m_GuestData;
 
 	CReceivePacket* m_pMsg;
-	int m_nPacketToReceiveFullSize;
+	
 	int m_nPacketReceivedSize;
+	
 	int m_nReadResult;
 	int m_nNextExpectedSeq; // TODO: we need it?
 

@@ -31,11 +31,10 @@ public:
 	virtual int LoggerGetSeq() = 0;
 	virtual void ResetSeq() = 0;
 	virtual CReceivePacket* Read() = 0;
-	virtual int Send(std::vector<unsigned char>& buffer) = 0;
+	virtual int Send(std::vector<unsigned char>& buffer, bool serverHelloMsg = false) = 0;
 	virtual int Send(CSendPacket* msg, bool forceSend = false) = 0;
 
 	virtual unsigned int GetID() = 0;
-	virtual void SetSocket(SOCKET socket) = 0;
 	virtual SOCKET GetSocket() = 0;
 	virtual void SetMsg(CReceivePacket* msg) = 0;
 	virtual CReceivePacket* GetMsg() = 0;

@@ -1,10 +1,5 @@
 #pragma once
 
-#define TCP_PACKET_SIGNATURE = 'U';
-#define UDP_HOLEPUNCHER_PACKET_SIGNATURE = 'W';
-#define UDP_HOLEPUNCHER2_PACKET_SIGNATURE = 'X';
-#define UDP_HOLEPUNCHER3_PACKET_SIGNATURE = '`';
-
 #include "user/userloadout.h"
 
 #include <string>
@@ -13,7 +8,7 @@
 #define CSO_24_HOURS_IN_MINUTES 1440
 #define CSO_24_HOURS_IN_SECONDS 86400
 
-#define LOG_PACKET g_pConsole->SetLastPacket(__FUNCTION__);
+#define LOG_PACKET Console().SetLastPacket(__FUNCTION__);
 
 enum PacketId
 {
