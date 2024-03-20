@@ -6,7 +6,16 @@
 
 class CManager : public IManager
 {
+private:
+	CManager() = default;
+	CManager(const CManager&) = delete;
+	CManager(CManager&&) = delete;
+	CManager& operator=(const CManager&) = delete;
+	CManager& operator=(CManager&&) = delete;
+
 public:
+	static CManager& GetInstance();
+
 	bool InitAll();
 	void ShutdownAll();
 	void AddManager(IBaseManager* pElem);
@@ -16,7 +25,7 @@ public:
 	void MinuteTick(time_t curTime);
 
 private:
-	std::vector<IBaseManager*> m_List;
+	std::vector<IBaseManager*> m_Managers;
 };
 
 extern CManager& Manager();

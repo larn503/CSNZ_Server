@@ -2,15 +2,21 @@
 
 using namespace std;
 
+// singleton
 CManager& Manager()
 {
-	static CManager x;
-	return x;
+	return CManager::GetInstance();
+}
+
+CManager& CManager::GetInstance()
+{
+	static CManager mgr;
+	return mgr;
 }
 
 bool CManager::InitAll()
 {
-	for (auto p : m_List)
+	for (auto p : m_Managers)
 	{
 		if (!p->Init())
 			return false;
@@ -21,7 +27,7 @@ bool CManager::InitAll()
 
 void CManager::ShutdownAll()
 {
-	for (auto p : m_List)
+	for (auto p : m_Managers)
 	{
 		p->Shutdown();
 	}
@@ -29,17 +35,17 @@ void CManager::ShutdownAll()
 
 void CManager::AddManager(IBaseManager* pElem)
 {
-	m_List.push_back(pElem);
+	m_Managers.push_back(pElem);
 }
 
 void CManager::RemoveManager(IBaseManager* pElem)
 {
-	m_List.erase(remove(m_List.begin(), m_List.end(), pElem), m_List.end());
+	m_Managers.erase(remove(m_Managers.begin(), m_Managers.end(), pElem), m_Managers.end());
 }
 
 IBaseManager* CManager::GetManager(const string& name)
 {
-	for (auto p : m_List)
+	for (auto p : m_Managers)
 	{
 		if (p->GetName() == name)
 			return p;
@@ -50,7 +56,7 @@ IBaseManager* CManager::GetManager(const string& name)
 
 void CManager::SecondTick(time_t curTime)
 {
-	for (auto p : m_List)
+	for (auto p : m_Managers)
 	{
 		if (p->ShouldDoSecondTick())
 			p->OnSecondTick(curTime);
@@ -59,7 +65,7 @@ void CManager::SecondTick(time_t curTime)
 
 void CManager::MinuteTick(time_t curTime)
 {
-	for (auto p : m_List)
+	for (auto p : m_Managers)
 	{
 		if (p->ShouldDoMinuteTick())
 			p->OnMinuteTick(curTime);
