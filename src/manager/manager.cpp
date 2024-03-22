@@ -35,6 +35,17 @@ void CManager::ShutdownAll()
 
 void CManager::AddManager(IBaseManager* pElem)
 {
+	// check for duplicate by manager name
+	/// @fixme: should duplicate pointers be checked?
+	for (auto p : m_Managers)
+	{
+		if (p->GetName() == pElem->GetName())
+		{
+			Console().Error("CManager::AddManager: %s duplicate!!", pElem->GetName());
+			return;
+		}
+	}
+
 	m_Managers.push_back(pElem);
 }
 
