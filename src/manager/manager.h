@@ -2,8 +2,13 @@
 
 #include <vector>
 #include <string>
+
 #include "interface/imanager.h"
 
+/**
+ * Class for controlling all managers (init/shutdown all managers at the same time, calling tick method for all managers).
+ * Only one instance allowed.
+ */
 class CManager : public IManager
 {
 private:
@@ -30,7 +35,9 @@ private:
 
 extern CManager& Manager();
 
-// Base manager implmentation
+/**
+ * Class that represents base manager. Every manager must inherit this class and every manager interface must inherit base manager interface.
+ */
 template<class IInterface>
 class CBaseManager : public IInterface
 {
@@ -47,6 +54,7 @@ public:
 	virtual ~CBaseManager()
 	{
 		printf("~CBaseManager called, %p\n\n", this);
+
 		Manager().RemoveManager(this);
 	}
 
