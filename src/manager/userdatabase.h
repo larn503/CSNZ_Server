@@ -10,8 +10,6 @@
 #error No database defined
 #endif
 
-//...
-#define DB_PROXY
 #ifndef DB_PROXY
 #ifdef DB_SQLITE
 extern CUserDatabaseSQLite g_UserDatabase;

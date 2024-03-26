@@ -1,4 +1,3 @@
-#define DB_PROXY
 #ifdef DB_PROXY
 #include "userdatabase.h"
 #include "userdatabase_shared.h"
