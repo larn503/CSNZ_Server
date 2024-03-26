@@ -11,6 +11,8 @@ using ordered_json = nlohmann::ordered_json;
 
 #define EVENT_QUESTS_VERSION 1
 
+CQuestManager g_QuestManager;
+
 CQuestManager::CQuestManager() : CBaseManager("QuestManager")
 {
 }
@@ -18,13 +20,10 @@ CQuestManager::CQuestManager() : CBaseManager("QuestManager")
 CQuestManager::~CQuestManager()
 {
 	printf("~CQuestManager\n");
-	Shutdown();
 }
 
 bool CQuestManager::Init()
 {
-	Shutdown();
-
 #ifndef PUBLIC_RELEASE
 	LoadQuests();
 	LoadEventQuests();
@@ -241,7 +240,7 @@ void CQuestManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -267,7 +266,7 @@ void CQuestManager::OnTitlePacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -454,7 +453,7 @@ void CQuestManager::OnQuestTaskFinished(IUser* user, UserQuestTaskProgress& task
 		return;
 
 	UserQuestProgress questProgress = {};
-	if (g_pUserDatabase->GetQuestProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
+	if (g_UserDatabase.GetQuestProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
 		return;
 
 	questProgress.status = UserQuestStatus::QUEST_DONE;
@@ -464,13 +463,13 @@ void CQuestManager::OnQuestTaskFinished(IUser* user, UserQuestTaskProgress& task
 
 void CQuestManager::OnQuestEventTaskFinished(IUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task, CQuestEvent* quest)
 {
-	g_pItemManager->GiveReward(user->GetID(), user, task->GetRewardID());
+	g_ItemManager.GiveReward(user->GetID(), user, task->GetRewardID());
 
 	if (!quest->IsAllTaskFinished(user))
 		return;
 
 	UserQuestProgress questProgress = {};
-	if (g_pUserDatabase->GetQuestEventProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
+	if (g_UserDatabase.GetQuestEventProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
 		return;
 
 	questProgress.status = UserQuestStatus::QUEST_DONE;
@@ -486,12 +485,12 @@ void CQuestManager::OnQuestFinished(IUser* user, CQuest* quest, UserQuestProgres
 
 		user->UpdateAchievementList(titleID);
 
-		g_pPacketManager->SendTitle(user->GetExtendedSocket(), titleID);
+		g_PacketManager.SendTitle(user->GetExtendedSocket(), titleID);
 	}
 	else if (quest->GetType() == QuestType::QUEST_DAILY)
 	{
 		UserQuestStat stat = {};
-		g_pUserDatabase->GetQuestStat(user->GetID(), 0x8 | 0x20, stat);
+		g_UserDatabase.GetQuestStat(user->GetID(), 0x8 | 0x20, stat);
 		stat.dailyMissionsCompletedToday++;
 
 		// move it to new func?
@@ -505,12 +504,12 @@ void CQuestManager::OnQuestFinished(IUser* user, CQuest* quest, UserQuestProgres
 		if (stat.dailyMissionsCompletedToday == dailyQuestsCount)
 			stat.dailyMissionsCleared++;
 
-		g_pUserDatabase->UpdateQuestStat(user->GetID(), 0x8 | 0x20, stat);
-		g_pPacketManager->SendQuestUpdateQuestStat(user->GetExtendedSocket(), 0x8 | 0x20, 0, stat);
+		g_UserDatabase.UpdateQuestStat(user->GetID(), 0x8 | 0x20, stat);
+		g_PacketManager.SendQuestUpdateQuestStat(user->GetExtendedSocket(), 0x8 | 0x20, 0, stat);
 	}
 
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
 
 	Console().Log(OBFUSCATE("[User '%s'] completed quest %d, %s, room id: %d\n"), user->GetLogName(), quest->GetID(), quest->GetName().c_str(), user->GetCurrentRoom() ? user->GetCurrentRoom()->GetID() : 0);
 }
@@ -531,16 +530,16 @@ void CQuestManager::OnReceiveReward(IUser* user, int rewardID, int questID)
 
 	QuestReward_s reward = GetQuestReward(quest, rewardID);
 	if (reward.rewardID)
-		g_pItemManager->GiveReward(user->GetID(), user, reward.rewardID);
+		g_ItemManager.GiveReward(user->GetID(), user, reward.rewardID);
 
 	questProgress.status = UserQuestStatus::QUEST_DONE_AND_REWARD_RECEIVED;
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
 
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 
 	CUserCharacter character = user->GetCharacter(UFLAG_ACHIEVEMENT);
 	UserQuestStat stat = {};
-	g_pPacketManager->SendQuestUpdateQuestStat(user->GetExtendedSocket(), 1, character.honorPoints, stat); // update honor stat
+	g_PacketManager.SendQuestUpdateQuestStat(user->GetExtendedSocket(), 1, character.honorPoints, stat); // update honor stat
 }
 
 void CQuestManager::OnSpecialMissionRequest(IUser* user, CReceivePacket* msg)
@@ -557,9 +556,9 @@ void CQuestManager::OnSpecialMissionRequest(IUser* user, CReceivePacket* msg)
 		return;
 
 	questProgress.status = UserQuestStatus::QUEST_IN_PROGRESS;
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
 
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 
 	Console().Log(OBFUSCATE("[User '%s'] CQuestManager::OnSpecialMissionRequest: %d\n"), user->GetLogName(), questID);
 }
@@ -576,8 +575,8 @@ void CQuestManager::OnSetFavouriteRequest(IUser* user, CReceivePacket* msg)
 	UserQuestProgress questProgress = GetUserQuestProgress(quest, user->GetID());
 	questProgress.favourite = favourite;
 
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 }
 
 void CQuestManager::OnTitleSetPrefixRequest(IUser* user, CReceivePacket* msg)
@@ -683,7 +682,7 @@ UserQuestProgress CQuestManager::GetUserQuestProgress(CQuest* quest, int userID)
 	int questID = quest->GetID();
 
 	UserQuestProgress progress = {};
-	if (g_pUserDatabase->GetQuestProgress(userID, questID, progress))
+	if (g_UserDatabase.GetQuestProgress(userID, questID, progress))
 	{
 		return progress;
 	}
@@ -700,7 +699,7 @@ UserQuestTaskProgress CQuestManager::GetUserQuestTaskProgress(CQuest* quest, int
 	int questID = quest->GetID();
 
 	UserQuestTaskProgress questTaskProgress = {};
-	if (g_pUserDatabase->GetQuestTaskProgress(userID, questID, taskID, questTaskProgress))
+	if (g_UserDatabase.GetQuestTaskProgress(userID, questID, taskID, questTaskProgress))
 	{
 		return questTaskProgress;
 	}

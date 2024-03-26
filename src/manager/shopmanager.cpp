@@ -10,20 +10,19 @@ using ordered_json = nlohmann::ordered_json;
 
 #define SHOP_JSON_VERSION 1
 
+CShopManager g_ShopManager;
+
 CShopManager::CShopManager() : CBaseManager("ShopManager")
 {
 }
 
 CShopManager::~CShopManager()
 {
-	//Shutdown();
 	printf("~CShopManager\n");
 }
 
 bool CShopManager::Init()
 {
-	Shutdown();
-
 	KVToJson();
 
 	if (!LoadProducts())
@@ -260,7 +259,7 @@ void CShopManager::OnShopPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -299,7 +298,7 @@ bool CShopManager::BuyProduct(IUser* user, int productTypeId, int productId)
 	if (!subProduct.productID)
 	{
 		// unknown sub product
-		g_pPacketManager->SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_NOITEM);
+		g_PacketManager.SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_NOITEM);
 		return false;
 	}
 
@@ -309,7 +308,7 @@ bool CShopManager::BuyProduct(IUser* user, int productTypeId, int productId)
 		if (character.points < subProduct.price)
 		{
 			// not enough points
-			g_pPacketManager->SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_NO_POINT);
+			g_PacketManager.SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_NO_POINT);
 			return false;
 		}
 	}
@@ -318,21 +317,21 @@ bool CShopManager::BuyProduct(IUser* user, int productTypeId, int productId)
 		CUserCharacter character = user->GetCharacter(UFLAG_CASH);
 		if (character.cash < subProduct.price)
 		{
-			g_pPacketManager->SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_NO_POINT);
+			g_PacketManager.SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_NO_POINT);
 			return false;
 		}
 	}
 
 	for (auto& item : subProduct.items)
 	{
-		int status = g_pItemManager->AddItem(user->GetID(), user, item.itemID, item.count, item.duration);
+		int status = g_ItemManager.AddItem(user->GetID(), user, item.itemID, item.count, item.duration);
 		switch (status)
 		{
 		case ITEM_ADD_INVENTORY_FULL:
-			g_pPacketManager->SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_INVENTORY_FULL);
+			g_PacketManager.SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_INVENTORY_FULL);
 			return false;
 		case ITEM_ADD_UNKNOWN_ITEMID:
-			g_pPacketManager->SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_SYSTEM_ERROR);
+			g_PacketManager.SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_SYSTEM_ERROR);
 			return false;
 		}
 	}
@@ -349,7 +348,7 @@ bool CShopManager::BuyProduct(IUser* user, int productTypeId, int productId)
 			user->UpdatePoints(subProduct.additionalPoints);
 	}
 
-	g_pPacketManager->SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_OK);
+	g_PacketManager.SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_OK);
 
 	return true;
 }

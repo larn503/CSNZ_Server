@@ -15,7 +15,7 @@ CQuestEventBaseCondition::CQuestEventBaseCondition(CQuestEventTask* task, int id
 bool CQuestEventBaseCondition::Event_Internal(IUser* user)
 {
 	UserQuestTaskProgress progress = {};
-	if (g_pUserDatabase->GetQuestEventTaskProgress(user->GetID(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), progress) <= 0)
+	if (g_UserDatabase.GetQuestEventTaskProgress(user->GetID(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), progress) <= 0)
 		return false;
 
 	if (progress.unitsDone >= m_pTask->GetGoal())
@@ -46,7 +46,7 @@ CQuestEventTask::CQuestEventTask(CQuestEvent* quest, int id, int goal)
 void CQuestEventTask::IncrementCount(IUser* user, int count, bool setForce)
 {
 	UserQuestTaskProgress progress = {};
-	if (g_pUserDatabase->GetQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
+	if (g_UserDatabase.GetQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
 		return;
 
 	if (count < 0)
@@ -60,7 +60,7 @@ void CQuestEventTask::IncrementCount(IUser* user, int count, bool setForce)
 		progress.finished = true;
 	}
 
-	if (g_pUserDatabase->UpdateQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), progress) > 0)
+	if (g_UserDatabase.UpdateQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), progress) > 0)
 	{
 #if 0
 		Console().Log(LOG_USER, CON_LOG, "[User '%s'] CQuestEventTask::IncrementCount: quest name: %s, done: %d, goal: %d\n", user->GetLogName(), m_pQuest->GetName().c_str(), progress.unitsDone, m_nGoal);
@@ -95,7 +95,7 @@ void CQuestEventTask::AddCondition(CQuestEventBaseCondition* condition)
 
 void CQuestEventTask::ApplyProgress(IUser* user, UserQuestTaskProgress& progress)
 {
-	if (g_pUserDatabase->UpdateQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), progress) <= 0)
+	if (g_UserDatabase.UpdateQuestEventTaskProgress(user->GetID(), m_pQuest->GetID(), progress) <= 0)
 		return;
 }
 
@@ -273,7 +273,7 @@ CQuestEvent* CQuestEventTask::GetQuest()
 
 bool CQuestEventTask::IsFinished(IUser* user)
 {
-	if (!g_pUserDatabase->IsQuestEventTaskFinished(user->GetID(), m_pQuest->GetID(), m_nID))
+	if (!g_UserDatabase.IsQuestEventTaskFinished(user->GetID(), m_pQuest->GetID(), m_nID))
 		return false;
 
 	return true;
@@ -430,7 +430,7 @@ void CQuestEvent::OnUserLogin(IUser* user)
 
 void CQuestEvent::OnTaskDone(IUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* doneTask)
 {
-	g_pQuestManager->OnQuestEventTaskFinished(user, taskProgress, doneTask, this);
+	g_QuestManager.OnQuestEventTaskFinished(user, taskProgress, doneTask, this);
 }
 
 bool CQuestEvent::IsAllTaskFinished(IUser* user)

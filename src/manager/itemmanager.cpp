@@ -17,6 +17,8 @@ using namespace std;
 
 #define ITEM_REWARDS_VERSION 1
 
+CItemManager g_ItemManager;
+
 CItemManager::CItemManager() : CBaseManager("ItemManager", true, true)
 {
 	m_pReinforceMaxLvTable = NULL;
@@ -26,7 +28,6 @@ CItemManager::CItemManager() : CBaseManager("ItemManager", true, true)
 CItemManager::~CItemManager()
 {
 	printf("~CItemManager\n");
-	Shutdown();
 }
 
 bool CItemManager::Init()
@@ -365,7 +366,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (!user)
 	{
 		return false;
@@ -383,7 +384,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 		// TODO: shit
 		CUserInventoryItem item;
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(itemSlot), item);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(itemSlot), item);
 
 		if (!item.m_nItemID)
 			return false;
@@ -393,7 +394,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		if (inventoryType == 1 || className == "LobbyBG" || className == "zbRespawnEffect" || className == "CombatInfoItem") // switch status
 		{
 			vector<CUserInventoryItem> itemsWithSameID;
-			g_pUserDatabase->GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID);
+			g_UserDatabase.GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID);
 
 			vector<CUserInventoryItem> items;
 
@@ -404,7 +405,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 				{
 					i.m_nStatus = 0;
 
-					g_pUserDatabase->UpdateInventoryItem(user->GetID(), i);
+					g_UserDatabase.UpdateInventoryItem(user->GetID(), i);
 					i.PushItem(items, i);
 				}
 			}
@@ -431,13 +432,13 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					if (character.nameplateID)
 					{
 						CUserInventoryItem item1;
-						g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), character.nameplateID, item1);
+						g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.nameplateID, item1);
 
 						if (item1.m_nItemID)
 						{
 							item1.m_nInUse = 0;
 
-							g_pUserDatabase->UpdateInventoryItem(user->GetID(), item1);
+							g_UserDatabase.UpdateInventoryItem(user->GetID(), item1);
 							item1.PushItem(items, item1);
 						}
 					}
@@ -465,13 +466,13 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					if (character.zbRespawnEffect)
 					{
 						CUserInventoryItem item1;
-						g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), character.zbRespawnEffect, item1);
+						g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.zbRespawnEffect, item1);
 
 						if (item1.m_nItemID)
 						{
 							item1.m_nInUse = 0;
 
-							g_pUserDatabase->UpdateInventoryItem(user->GetID(), item1);
+							g_UserDatabase.UpdateInventoryItem(user->GetID(), item1);
 							item1.PushItem(items, item1);
 						}
 					}
@@ -499,13 +500,13 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					if (character.killerMarkEffect)
 					{
 						CUserInventoryItem item1;
-						g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), character.killerMarkEffect, item1);
+						g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.killerMarkEffect, item1);
 
 						if (item1.m_nItemID)
 						{
 							item1.m_nInUse = 0;
 
-							g_pUserDatabase->UpdateInventoryItem(user->GetID(), item1);
+							g_UserDatabase.UpdateInventoryItem(user->GetID(), item1);
 							item1.PushItem(items, item1);
 						}
 					}
@@ -515,11 +516,11 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 				}
 			}
 
-			g_pUserDatabase->UpdateInventoryItem(user->GetID(), item);
+			g_UserDatabase.UpdateInventoryItem(user->GetID(), item);
 			item.PushItem(items, item);
 
 			// send inventory update to user
-			g_pPacketManager->SendInventoryAdd(socket, items);
+			g_PacketManager.SendInventoryAdd(socket, items);
 		}
 		else if (inventoryType == 8 || className == "Tattoo")
 		{
@@ -559,7 +560,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		int a2 = msg->ReadUInt16();
 
 		vector<CUserInventoryItem> items;
-		g_pUserDatabase->GetInventoryItemsByID(user->GetID(), 676, items);
+		g_UserDatabase.GetInventoryItemsByID(user->GetID(), 676, items);
 
 		if (items.size() == 0)
 			return false;
@@ -598,7 +599,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	int itemStatus = 1;
 	int itemInUse = 1;
 
-	if (g_pUserDatabase->IsInventoryFull(userID))
+	if (g_UserDatabase.IsInventoryFull(userID))
 		return ITEM_ADD_INVENTORY_FULL;
 
 	if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
@@ -617,12 +618,12 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		{
 			CUserCharacter character;
 			character.flag = UFLAG_PASSWORDBOXES;
-			if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+			if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 				return ITEM_ADD_DB_ERROR;
 
 			character.passwordBoxes += count;
 
-			if (g_pUserDatabase->UpdateCharacter(userID, character) <= 0)
+			if (g_UserDatabase.UpdateCharacter(userID, character) <= 0)
 				return ITEM_ADD_DB_ERROR;
 		}
 		else
@@ -635,7 +636,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	}
 
 	vector<CUserInventoryItem> itemsWithSameID;
-	if (g_pUserDatabase->GetInventoryItemsByID(userID, itemID, itemsWithSameID) <= -1)
+	if (g_UserDatabase.GetInventoryItemsByID(userID, itemID, itemsWithSameID) <= -1)
 		return ITEM_ADD_DB_ERROR;
 
 	int currentTimestamp = g_pServerInstance->GetCurrentTime();
@@ -680,7 +681,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 			CUserInventoryItem& item = itemsWithSameID[0];
 			item.m_nCount += count;
 
-			if (g_pUserDatabase->UpdateInventoryItem(userID, item) <= 0)
+			if (g_UserDatabase.UpdateInventoryItem(userID, item) <= 0)
 				return ITEM_ADD_DB_ERROR;
 
 			item.PushItem(items, item);
@@ -695,13 +696,13 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 			// push item to vector after adding item to db!
 			item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
-			if (g_pUserDatabase->AddInventoryItem(userID, items.back()) <= 0)
+			if (g_UserDatabase.AddInventoryItem(userID, items.back()) <= 0)
 				return ITEM_ADD_DB_ERROR;
 		}
 
 		// update client inventory
 		if (user)
-			g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+			g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 		return ITEM_ADD_SUCCESS;
 	}
@@ -710,7 +711,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	if (category == 12 || className == "Tattoo")
 	{
 		CUserCostumeLoadout loadout;
-		if (g_pUserDatabase->GetCostumeLoadout(userID, loadout) <= 0)
+		if (g_UserDatabase.GetCostumeLoadout(userID, loadout) <= 0)
 			return ITEM_ADD_DB_ERROR;
 
 		int zombieSkinType = -1;
@@ -796,7 +797,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 			}
 		}
 
-		if (g_pUserDatabase->UpdateCostumeLoadout(userID, loadout, zombieSkinType) <= 0)
+		if (g_UserDatabase.UpdateCostumeLoadout(userID, loadout, zombieSkinType) <= 0)
 			return ITEM_ADD_DB_ERROR;
 	}
 
@@ -841,14 +842,14 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
 	// add new item to db
-	if (g_pUserDatabase->AddInventoryItem(userID, items.back()) <= 0)
+	if (g_UserDatabase.AddInventoryItem(userID, items.back()) <= 0)
 	{
 		return ITEM_ADD_DB_ERROR;
 	}
 
 	// send inventory update to user
 	if (user)
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 	if (itemID == 8357) // superRoom
 	{
@@ -865,7 +866,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 
 					for (auto u : currentRoom->GetUsers())
 					{
-						g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
 					}
 				}
 			}
@@ -886,7 +887,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 
 					for (auto u : currentRoom->GetUsers())
 					{
-						g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
 					}
 				}
 			}
@@ -900,7 +901,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 {
 	vector<CUserInventoryItem> updatedItems;
 
-	SQLite::Transaction trans = g_pUserDatabase->CreateTransaction();
+	g_UserDatabase.CreateTransaction();
 
 	int result = ITEM_ADD_SUCCESS;
 	for (auto& item : items)
@@ -912,7 +913,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		int duration = item.duration;
 		int count = item.count;
 
-		if (g_pUserDatabase->IsInventoryFull(userID))
+		if (g_UserDatabase.IsInventoryFull(userID))
 		{
 			result = ITEM_ADD_INVENTORY_FULL;
 			break;
@@ -934,7 +935,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			{
 				CUserCharacter character;
 				character.flag = UFLAG_PASSWORDBOXES;
-				if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+				if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 				{
 					result = ITEM_ADD_DB_ERROR;
 					break;
@@ -942,7 +943,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 				character.passwordBoxes += count;
 
-				if (g_pUserDatabase->UpdateCharacter(userID, character) <= 0)
+				if (g_UserDatabase.UpdateCharacter(userID, character) <= 0)
 				{
 					result = ITEM_ADD_DB_ERROR;
 					break;
@@ -959,7 +960,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		}
 
 		vector<CUserInventoryItem> itemsWithSameID;
-		g_pUserDatabase->GetInventoryItemsByID(userID, itemID, itemsWithSameID);
+		g_UserDatabase.GetInventoryItemsByID(userID, itemID, itemsWithSameID);
 
 		int currentTimestamp = g_pServerInstance->GetCurrentTime();
 
@@ -1013,7 +1014,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 				item.PushItem(updatedItems, item);
 
-				if (g_pUserDatabase->UpdateInventoryItem(userID, updatedItems.back()) <= 0)
+				if (g_UserDatabase.UpdateInventoryItem(userID, updatedItems.back()) <= 0)
 				{
 					result = ITEM_ADD_DB_ERROR;
 					break;
@@ -1030,7 +1031,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 				item.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
 				// add new item to db
-				if (g_pUserDatabase->AddInventoryItem(userID, updatedItems.back()) <= 0)
+				if (g_UserDatabase.AddInventoryItem(userID, updatedItems.back()) <= 0)
 				{
 					result = ITEM_ADD_DB_ERROR;
 					break;
@@ -1044,7 +1045,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		if (category == 12 || className == "Tattoo")
 		{
 			CUserCostumeLoadout loadout;
-			if (g_pUserDatabase->GetCostumeLoadout(userID, loadout) <= 0)
+			if (g_UserDatabase.GetCostumeLoadout(userID, loadout) <= 0)
 			{
 				result = ITEM_ADD_DB_ERROR;
 				break;
@@ -1125,7 +1126,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 				}
 			}
 
-			if (g_pUserDatabase->UpdateCostumeLoadout(userID, loadout, zombieSkinType) <= 0)
+			if (g_UserDatabase.UpdateCostumeLoadout(userID, loadout, zombieSkinType) <= 0)
 			{
 				result = ITEM_ADD_DB_ERROR;
 				break;
@@ -1172,7 +1173,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		CUserInventoryItem newItems;
 		newItems.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 
-		if (g_pUserDatabase->AddInventoryItem(userID, updatedItems.back()) <= 0)
+		if (g_UserDatabase.AddInventoryItem(userID, updatedItems.back()) <= 0)
 		{
 			result = ITEM_ADD_DB_ERROR;
 			break;
@@ -1193,7 +1194,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 						for (auto u : currentRoom->GetUsers())
 						{
-							g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
+							g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
 						}
 					}
 				}
@@ -1214,7 +1215,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 						for (auto u : currentRoom->GetUsers())
 						{
-							g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
+							g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
 						}
 					}
 				}
@@ -1222,10 +1223,10 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		}
 	}
 
-	if (result == ITEM_ADD_SUCCESS && g_pUserDatabase->CommitTransaction(trans) == true)
+	if (result == ITEM_ADD_SUCCESS && g_UserDatabase.CommitTransaction() == true)
 	{
 		if (user && !updatedItems.empty())
-			g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), updatedItems);
+			g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), updatedItems);
 	}
 	else
 	{
@@ -1244,7 +1245,7 @@ bool CItemManager::CanUseItem(const CUserInventoryItem& item)
 int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int additionalArg2)
 {
 	CUserInventoryItem item;
-	if (!g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item))
+	if (!g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item))
 	{
 		Console().Log(OBFUSCATE("CItemManager::UseItem: item == NULL, slot: %d\n"), slot);
 		return ITEM_USE_BAD_SLOT;
@@ -1261,7 +1262,7 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 
 	if (className == "LotteryKeyItem")
 	{
-		int openedDecoderCount = g_pLuckyItemManager->OpenItemBox(user, item.m_nItemID, additionalArg);
+		int openedDecoderCount = g_LuckyItemManager.OpenItemBox(user, item.m_nItemID, additionalArg);
 		if (openedDecoderCount)
 		{
 			OnItemUse(user, item, openedDecoderCount);
@@ -1279,7 +1280,7 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 	case 676:
 	{
 		CUserInventoryItem targetItem;
-		if (!g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(additionalArg), targetItem))
+		if (!g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(additionalArg), targetItem))
 			return ITEM_USE_BAD_SLOT;
 
 		if (ExtendItem(user->GetID(), user, targetItem, additionalArg2, true))
@@ -1293,7 +1294,7 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 		{
 			bool extend = false;
 			vector<CUserInventoryItem> items;
-			g_pUserDatabase->GetInventoryItemsByID(user->GetID(), item.m_nItemID, items);
+			g_UserDatabase.GetInventoryItemsByID(user->GetID(), item.m_nItemID, items);
 			for (auto& i : items)
 			{
 				if (i.m_nStatus == 1)
@@ -1318,12 +1319,12 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 			if (item.m_nExpiryDate && !extend)
 				item.ConvertDurationToExpiryDate();
 
-			g_pUserDatabase->UpdateInventoryItem(user->GetID(), item);
+			g_UserDatabase.UpdateInventoryItem(user->GetID(), item);
 
 			items.clear();
 			item.PushItem(items, item);
 
-			g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+			g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 		}
 		else
 		{
@@ -1353,7 +1354,7 @@ bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 		}
 
 		if (notice.status)
-			g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), notice);
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), notice);
 	}
 
 	if (item.m_nCount == 0)
@@ -1365,9 +1366,9 @@ bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 		vector<CUserInventoryItem> items;
 		item.PushItem(items, item);
 
-		g_pUserDatabase->UpdateInventoryItem(user->GetID(), item);
+		g_UserDatabase.UpdateInventoryItem(user->GetID(), item);
 
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 	}
 
 	return true;
@@ -1385,7 +1386,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 	if (item.m_nStatus && item.m_nInUse)
 	{
 		vector<CUserInventoryItem> itemsWithSameID;
-		g_pUserDatabase->GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
+		g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
 
 		for (auto& i : itemsWithSameID)
 		{
@@ -1397,10 +1398,10 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 
 				i.PushItem(items, i); // push item to temp vector
 
-				g_pUserDatabase->UpdateInventoryItem(userID, i);
+				g_UserDatabase.UpdateInventoryItem(userID, i);
 
 				if (user)
-					g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+					g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 				break;
 			}
@@ -1415,7 +1416,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the superRoom flag
 			{
 				vector<CUserInventoryItem> itemsWithSameID;
-				g_pUserDatabase->GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
+				g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
 				if (itemsWithSameID.size() == 1)
 				{
 					CRoomSettings* roomSettings = currentRoom->GetSettings();
@@ -1423,7 +1424,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 
 					for (auto u : currentRoom->GetUsers())
 					{
-						g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
 					}
 				}
 			}
@@ -1437,7 +1438,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the sd flag
 			{
 				vector<CUserInventoryItem> itemsWithSameID;
-				g_pUserDatabase->GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
+				g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
 				if (itemsWithSameID.size() == 1)
 				{
 					CRoomSettings* roomSettings = currentRoom->GetSettings();
@@ -1448,7 +1449,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 
 						for (auto u : currentRoom->GetUsers())
 						{
-							g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
+							g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
 						}
 					}
 				}
@@ -1463,7 +1464,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the c4Timer flag
 			{
 				vector<CUserInventoryItem> itemsWithSameID;
-				g_pUserDatabase->GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
+				g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
 				if (itemsWithSameID.size() == 1)
 				{
 					CRoomSettings* roomSettings = currentRoom->GetSettings();
@@ -1474,7 +1475,7 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 
 						for (auto u : currentRoom->GetUsers())
 						{
-							g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_C4TIMER);
+							g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_C4TIMER);
 						}
 					}
 				}
@@ -1531,10 +1532,10 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 		return false;
 	}
 
-	g_pUserDatabase->UpdateInventoryItem(userID, item);
+	g_UserDatabase.UpdateInventoryItem(userID, item);
 
 	if (user)
-		g_pPacketManager->SendInventoryRemove(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryRemove(user->GetExtendedSocket(), items);
 
 	return true;
 }
@@ -1544,7 +1545,7 @@ bool CItemManager::OpenDecoder(IUser* user, int count, int slot)
 	int status = UseItem(user, slot, count);
 
 	if (status < 0)
-		g_pPacketManager->SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
+		g_PacketManager.SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
 
 	return true;
 }
@@ -1569,7 +1570,7 @@ int CItemManager::ExtendItem(int userID, IUser* user, CUserInventoryItem& item, 
 		item.m_nExpiryDate += addontialTime;
 	}
 
-	if (g_pUserDatabase->UpdateInventoryItem(userID, item) <= 0)
+	if (g_UserDatabase.UpdateInventoryItem(userID, item) <= 0)
 		return -1; // db error
 
 	vector<CUserInventoryItem> items;
@@ -1577,7 +1578,7 @@ int CItemManager::ExtendItem(int userID, IUser* user, CUserInventoryItem& item, 
 
 	// update client inventory
 	if (user)
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 	return 1;
 }
@@ -1595,7 +1596,7 @@ bool CItemManager::OnDisassembleRequest(IUser* user, CReceivePacket* msg)
 		Console().Warn("CItemManager::OnDisassembleRequest: %d, %d, %d, %d\n", unk, unk2, slot, unk3);
 
 		CUserInventoryItem item;
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item);
 		if (item.m_nSlot)
 		{
 			RemoveItem(user->GetID(), user, item);
@@ -1640,7 +1641,7 @@ RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int
 
 	if (user == NULL)
 	{
-		g_pUserDatabase->UpdateRewardNotices(userID, rewardID);
+		g_UserDatabase.UpdateRewardNotices(userID, rewardID);
 
 		return rewardNotice;
 	}
@@ -1658,7 +1659,7 @@ RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int
 	}
 	else if (reward->select == true)
 	{
-		g_pPacketManager->SendUMsgRewardSelect(user->GetExtendedSocket(), reward);
+		g_PacketManager.SendUMsgRewardSelect(user->GetExtendedSocket(), reward);
 		rewardNotice.status = false;
 		return rewardNotice;
 	}
@@ -1751,11 +1752,11 @@ RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int
 	if (reward->select == false && !ignoreClient)
 	{
 		//if (!reward->zbsReward)
-		//	g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
+		//	g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
 		if (user->GetRoomData() && user->GetRoomData()->m_bIsIngame)
-			g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description, true);
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description, true);
 		else
-			g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
 	}
 
 	return rewardNotice;
@@ -1764,7 +1765,7 @@ RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int
 void CItemManager::OnNicknameChangeUse(IUser* user, string newNickname)
 {
 	vector<CUserInventoryItem> items;
-	g_pUserDatabase->GetInventoryItemsByID(user->GetID(), 65/*nickname changer*/, items);
+	g_UserDatabase.GetInventoryItemsByID(user->GetID(), 65/*nickname changer*/, items);
 
 	if (!items.size())
 	{
@@ -1772,19 +1773,19 @@ void CItemManager::OnNicknameChangeUse(IUser* user, string newNickname)
 		return;
 	}
 
-	if (g_pItemManager->CanUseItem(items[0]))
+	if (g_ItemManager.CanUseItem(items[0]))
 	{
-		int replyCode = g_pUserManager->ChangeUserNickname(user, newNickname);
-		g_pPacketManager->SendUpdateInfoNicknameChangeReply(user->GetExtendedSocket(), replyCode);
+		int replyCode = g_UserManager.ChangeUserNickname(user, newNickname);
+		g_PacketManager.SendUpdateInfoNicknameChangeReply(user->GetExtendedSocket(), replyCode);
 
 		if (replyCode < 0)
 			return;
 
-		g_pItemManager->UseItem(user, items[0].GetGameSlot());
+		g_ItemManager.UseItem(user, items[0].GetGameSlot());
 	}
 	else
 	{
-		g_pPacketManager->SendUpdateInfoNicknameChangeReply(user->GetExtendedSocket(), 8);
+		g_PacketManager.SendUpdateInfoNicknameChangeReply(user->GetExtendedSocket(), 8);
 	}
 }
 
@@ -1833,7 +1834,7 @@ void CItemManager::InsertExp(IUser* user, CUserInventoryItem& targetItem, vector
 				string enhName = g_pItemTable->GetCell<string>("Name", to_string(i.m_nItemID));
 				if (enhName.find("Enh") == 0)
 				{
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "this material is under dev");
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "this material is under dev");
 					// TODO: get itemID of original weapon from enhance material (like Enhbuffm4 -> buffm4 -> 809)
 					//grade = g_pItemTable->GetRowValueByItemName<int>("Grade", enhName.substr(3));
 				}
@@ -1849,13 +1850,13 @@ void CItemManager::InsertExp(IUser* user, CUserInventoryItem& targetItem, vector
 		targetItem.m_nEnhancementExp += totalExp > expToUpgrade ? expToUpgrade : totalExp; // wrong???
 		if (targetItem.m_nEnhancementExp > 0)
 		{
-			g_pUserDatabase->UpdateInventoryItem(user->GetID(), targetItem);
+			g_UserDatabase.UpdateInventoryItem(user->GetID(), targetItem);
 
 			vector<CUserInventoryItem> items;
 			targetItem.PushItem(items, targetItem);
 
 			// update client inventory
-			g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+			g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 		}
 	}
 }
@@ -1903,10 +1904,10 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			int unk = msg->ReadUInt8();
 
 			CUserInventoryItem item;
-			g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(msg->ReadUInt16()), item);
+			g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(msg->ReadUInt16()), item);
 			if (!item.m_nSlot)
 			{
-				g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+				g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 				return false;
 			}
 
@@ -1914,23 +1915,23 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		}
 
 		CUserInventoryItem targetItem;
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), targetItem.GameSlotToSlot(EnhancementTargetItemSlot), targetItem);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), targetItem.GameSlotToSlot(EnhancementTargetItemSlot), targetItem);
 		if (!targetItem.m_nSlot)
 		{
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
 		if (targetItem.m_nEnhancementLevel >= 9)
 		{
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
 		if (m_pReinforceMaxLvTable->GetRowIdx(to_string(targetItem.m_nItemID)) < 0)
 		{
 			//result.msg = "CSO_REINFORCE_ERR_NOT_REINFORCE_ITEM";
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -1943,7 +1944,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		if (itemEnhanceInfo.empty())
 		{
 			//result.msg = "CSO_REINFORCE_ERR_NOT_REINFORCE_ITEM";
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -1964,7 +1965,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		if (itemEnhLevel >= 9)
 		{
 			//result.msg = "CSO_REINFORCE_ERR_NEED_MORE_POWERFUL_MATERIAL";
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -1973,7 +1974,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		if (/*antiEnhAttribute == -1 && */itemEnhLevel >= itemEnhLevelMax)
 		{
 			//result.msg = "CSO_REINFORCE_ERR_MAX_LEVEL";
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -2061,24 +2062,24 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		// update client item
 		vector<CUserInventoryItem> items;
 		targetItem.PushItem(items, targetItem);
-		if (g_pUserDatabase->UpdateInventoryItem(user->GetID(), targetItem) <= 0)
+		if (g_UserDatabase.UpdateInventoryItem(user->GetID(), targetItem) <= 0)
 		{
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 		result.itemSlot = EnhancementTargetItemSlot;
 
-		g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+		g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 
 		// send system notification
 		/*if (result.enhLevel == 8)
 		{
-			for (auto u : g_pUserManager->users)
+			for (auto u : g_UserManager.users)
 			{
-				g_pPacketManager->SendUMsgSystemReply(u->GetExtendedSocket(), UMsgPacketType::SystemReply_Green, SystemReplyMsg::REINFORCE_MAX_SUCCESS, vector<string> { user->GetData()->gameName.c_str(), to_string(itemToEnhance->m_nItemID) });
+				g_PacketManager.SendUMsgSystemReply(u->GetExtendedSocket(), UMsgPacketType::SystemReply_Green, SystemReplyMsg::REINFORCE_MAX_SUCCESS, vector<string> { user->GetData()->gameName.c_str(), to_string(itemToEnhance->m_nItemID) });
 			}
 		}*/
 
@@ -2094,7 +2095,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		vector<CUserInventoryItem> items;
 
 		CUserInventoryItem targetItem;
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), targetItem.GameSlotToSlot(EnhancementTargetItemSlot), targetItem);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), targetItem.GameSlotToSlot(EnhancementTargetItemSlot), targetItem);
 		if (!targetItem.m_nSlot)
 		{
 			return false;
@@ -2103,10 +2104,10 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		for (int i = 0; i < EXPMaterialCount; i++)
 		{
 			CUserInventoryItem item;
-			g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(msg->ReadUInt16()), targetItem);
+			g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(msg->ReadUInt16()), targetItem);
 			if (!item.m_nSlot)
 			{
-				g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+				g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 				return false;
 			}
 
@@ -2152,19 +2153,19 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			targetItem.m_nEnhancementExp += totalExp > expToUpgrade ? expToUpgrade : totalExp; // wrong???
 			if (targetItem.m_nEnhancementExp > 0)
 			{
-				g_pUserDatabase->UpdateInventoryItem(user->GetID(), targetItem);
+				g_UserDatabase.UpdateInventoryItem(user->GetID(), targetItem);
 
 				vector<CUserInventoryItem> items;
 				targetItem.PushItem(items, targetItem);
 
 				// update client inventory
-				g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+				g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 			}
 		}
 
 		result.status = EnhanceStatus::ENHANCE_INSERT_EXP;
 
-		g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+		g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 
 		break;
 	}
@@ -2174,10 +2175,10 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		int enhanceTargetItemSlot = msg->ReadUInt16();
 
 		CUserInventoryItem targetItem;
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), targetItem.GameSlotToSlot(enhanceTargetItemSlot), targetItem);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), targetItem.GameSlotToSlot(enhanceTargetItemSlot), targetItem);
 		if (!targetItem.m_nItemID)
 		{
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -2185,10 +2186,10 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		int enhanceMaterialSlot = msg->ReadUInt16();
 
 		CUserInventoryItem materialItem;
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), materialItem.GameSlotToSlot(enhanceMaterialSlot), materialItem);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), materialItem.GameSlotToSlot(enhanceMaterialSlot), materialItem);
 		if (!materialItem.m_nItemID)
 		{
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -2208,13 +2209,13 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		if (itemEnhLevel <= 0)
 		{
 			// nothing to decrease
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
 		if (m_pReinforceMaxLvTable->GetRowIdx(to_string(targetItem.m_nItemID)) < 0)
 		{
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -2227,7 +2228,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 		// should never get here
 		if (itemEnhanceInfo.empty())
 		{
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -2257,7 +2258,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			antiEnhAttribute = 5;
 			break;
 		default:
-			g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+			g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 			return false;
 		}
 
@@ -2290,7 +2291,7 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			if (!itemEnhanceAttributes[antiEnhAttribute])
 			{
 				// CSO_WeaponEnhance_CantAddEnhacer_Anti_ZeroLevel
-				g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+				g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 				return false;
 			}
 
@@ -2312,15 +2313,15 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 
 		OnItemUse(user, materialItem);
 
-		g_pUserDatabase->UpdateInventoryItem(user->GetID(), targetItem);
+		g_UserDatabase.UpdateInventoryItem(user->GetID(), targetItem);
 
 		vector<CUserInventoryItem> items;
 		targetItem.PushItem(items, targetItem);
 
 		// update client inventory
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
-		g_pPacketManager->SendItemEnhanceResult(user->GetExtendedSocket(), result);
+		g_PacketManager.SendItemEnhanceResult(user->GetExtendedSocket(), result);
 
 		break;
 	}
@@ -2340,8 +2341,8 @@ bool CItemManager::OnWeaponPaintRequest(IUser* user, CReceivePacket* msg)
 	CUserInventoryItem weapon;
 	CUserInventoryItem paint;
 
-	g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
-	g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), paint.GameSlotToSlot(paintSlot), paint);
+	g_UserDatabase.GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
+	g_UserDatabase.GetInventoryItemBySlot(user->GetID(), paint.GameSlotToSlot(paintSlot), paint);
 
 	if (!weapon.m_nItemID || !paint.m_nItemID)
 		return false;
@@ -2359,18 +2360,18 @@ bool CItemManager::OnWeaponPaintRequest(IUser* user, CReceivePacket* msg)
 	weapon.m_nPaintID = paint.m_nItemID;
 	weapon.m_nPaintIDList.push_back(paint.m_nItemID);
 
-	g_pUserDatabase->UpdateInventoryItem(user->GetID(), weapon);
+	g_UserDatabase.UpdateInventoryItem(user->GetID(), weapon);
 
 	vector<CUserInventoryItem> items;
 	weapon.PushItem(items, weapon);
 
 	// update client inventory
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 	// remove paint item
 	OnItemUse(user, paint);
 
-	g_pPacketManager->SendItemWeaponPaintReply(user->GetExtendedSocket());
+	g_PacketManager.SendItemWeaponPaintReply(user->GetExtendedSocket());
 
 	return true;
 }
@@ -2382,7 +2383,7 @@ bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 
 	CUserInventoryItem weapon;
 
-	g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
+	g_UserDatabase.GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
 
 	if (!weapon.m_nItemID)
 		return false;
@@ -2404,15 +2405,15 @@ bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 
 	weapon.m_nPaintID = paintID;
 
-	g_pUserDatabase->UpdateInventoryItem(user->GetID(), weapon);
+	g_UserDatabase.UpdateInventoryItem(user->GetID(), weapon);
 
 	vector<CUserInventoryItem> items;
 	weapon.PushItem(items, weapon);
 
 	// update client inventory
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
-	g_pPacketManager->SendItemWeaponPaintReply(user->GetExtendedSocket());
+	g_PacketManager.SendItemWeaponPaintReply(user->GetExtendedSocket());
 
 	return true;
 }
@@ -2429,7 +2430,7 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 		int weaponSlot = msg->ReadUInt16();
 
 		CUserInventoryItem weapon;
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
 
 		if (!weapon.m_nItemID)
 			return false;
@@ -2447,13 +2448,13 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 			Console().Error("OnPartEquipRequest: wrong part id: %d\n", partID);
 		}
 
-		g_pUserDatabase->UpdateInventoryItem(user->GetID(), weapon);
+		g_UserDatabase.UpdateInventoryItem(user->GetID(), weapon);
 
 		vector<CUserInventoryItem> items;
 		weapon.PushItem(items, weapon);
 
 		// update client inventory
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 		break;
 	}
@@ -2466,8 +2467,8 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 		CUserInventoryItem weapon;
 		CUserInventoryItem part;
 
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
-		g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), part.GameSlotToSlot(partSlot), part);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), weapon.GameSlotToSlot(weaponSlot), weapon);
+		g_UserDatabase.GetInventoryItemBySlot(user->GetID(), part.GameSlotToSlot(partSlot), part);
 
 		if (!weapon.m_nItemID || !part.m_nItemID)
 			return false;
@@ -2485,18 +2486,18 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 		else
 			Console().Error("OnPartEquipRequest: wrong part id: %d\n", partID);
 
-		g_pUserDatabase->UpdateInventoryItem(user->GetID(), weapon);
+		g_UserDatabase.UpdateInventoryItem(user->GetID(), weapon);
 
 		vector<CUserInventoryItem> items;
 		weapon.PushItem(items, weapon);
 
 		// update client inventory
-		g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 		// remove part item
 		OnItemUse(user, part);
 
-		g_pPacketManager->SendItemPartCheck(user->GetExtendedSocket(), weaponSlot, partSlot);
+		g_PacketManager.SendItemPartCheck(user->GetExtendedSocket(), weaponSlot, partSlot);
 		break;
 	}
 	default:
@@ -2512,7 +2513,7 @@ bool CItemManager::OnSwitchInUseRequest(IUser* user, CReceivePacket* msg)
 	int slot = msg->ReadUInt16();
 
 	CUserInventoryItem item;
-	g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item);
+	g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item);
 
 	if (!item.m_nItemID)
 		return false;
@@ -2520,7 +2521,7 @@ bool CItemManager::OnSwitchInUseRequest(IUser* user, CReceivePacket* msg)
 	item.m_nInUse = 1;
 
 	vector<CUserInventoryItem> itemsWithSameID;
-	g_pUserDatabase->GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID);
+	g_UserDatabase.GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID);
 
 	bool updateStatus = 1;
 	for (auto& i : itemsWithSameID)
@@ -2536,13 +2537,13 @@ bool CItemManager::OnSwitchInUseRequest(IUser* user, CReceivePacket* msg)
 
 	item.ConvertDurationToExpiryDate();
 
-	g_pUserDatabase->UpdateInventoryItem(user->GetID(), item);
+	g_UserDatabase.UpdateInventoryItem(user->GetID(), item);
 
 	vector<CUserInventoryItem> items;
 	item.PushItem(items, item);
 
 	// send inventory update to user
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 	return true;
 }
@@ -2553,20 +2554,20 @@ bool CItemManager::OnLockItemRequest(IUser* user, CReceivePacket* msg)
 	int slot = msg->ReadUInt16();
 
 	CUserInventoryItem item;
-	g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item);
+	g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(slot), item);
 
 	if (!item.m_nItemID)
 		return false;
 
 	item.m_nLockStatus = item.m_nLockStatus ? 0 : 1;
 
-	g_pUserDatabase->UpdateInventoryItem(user->GetID(), item);
+	g_UserDatabase.UpdateInventoryItem(user->GetID(), item);
 
 	vector<CUserInventoryItem> items;
 	item.PushItem(items, item);
 
 	// send inventory update to user
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 	return true;
 }
@@ -2574,7 +2575,7 @@ bool CItemManager::OnLockItemRequest(IUser* user, CReceivePacket* msg)
 void CItemManager::OnUserLogin(IUser* user)
 {
 	vector<int> rewardsNotices;
-	g_pUserDatabase->GetRewardNotices(user->GetID(), rewardsNotices);
+	g_UserDatabase.GetRewardNotices(user->GetID(), rewardsNotices);
 
 	for (int rewardID : rewardsNotices)
 		GiveReward(user->GetID(), user, rewardID);
@@ -2583,17 +2584,17 @@ void CItemManager::OnUserLogin(IUser* user)
 	if (rewardsNotices.size())
 	{
 		rewardsNotices.clear();
-		g_pUserDatabase->UpdateRewardNotices(user->GetID(), 0);
+		g_UserDatabase.UpdateRewardNotices(user->GetID(), 0);
 	}
 
 	vector<int> expiryNotices;
-	g_pUserDatabase->GetExpiryNotices(user->GetID(), expiryNotices);
+	g_UserDatabase.GetExpiryNotices(user->GetID(), expiryNotices);
 	if (expiryNotices.size())
 	{
-		g_pPacketManager->SendUMsgExpiryNotice(user->GetExtendedSocket(), expiryNotices);
+		g_PacketManager.SendUMsgExpiryNotice(user->GetExtendedSocket(), expiryNotices);
 
 		expiryNotices.clear();
-		g_pUserDatabase->UpdateExpiryNotices(user->GetID(), 0);
+		g_UserDatabase.UpdateExpiryNotices(user->GetID(), 0);
 	}
 }
 
@@ -2613,7 +2614,7 @@ void CItemManager::OnRewardSelect(CReceivePacket* msg, IUser* user)
 void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 {
 	CUserInventoryItem item;
-	g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(gameSlot), item);
+	g_UserDatabase.GetInventoryItemBySlot(user->GetID(), item.GameSlotToSlot(gameSlot), item);
 
 	if (!item.m_nItemID)
 		return;
@@ -2624,7 +2625,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 	int zombieSkinID = className == "ZombieSkinCostume" ? g_pItemTable->GetCell<int>("ZombieSkin", to_string(item.m_nItemID)) : -1;
 
 	CUserCostumeLoadout loadout;
-	if (g_pUserDatabase->GetCostumeLoadout(user->GetID(), loadout) <= 0)
+	if (g_UserDatabase.GetCostumeLoadout(user->GetID(), loadout) <= 0)
 		return;
 
 	// unequip costume if item already in use
@@ -2672,7 +2673,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_nHeadCostumeID)
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_nHeadCostumeID, activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_nHeadCostumeID, activeCostumeItem);
 			}
 			loadout.m_nHeadCostumeID = item.m_nItemID;
 		}
@@ -2680,7 +2681,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_nBackCostumeID)
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_nBackCostumeID, activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_nBackCostumeID, activeCostumeItem);
 			}
 			loadout.m_nBackCostumeID = item.m_nItemID;
 		}
@@ -2688,7 +2689,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_nArmCostumeID)
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_nArmCostumeID, activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_nArmCostumeID, activeCostumeItem);
 			}
 			loadout.m_nArmCostumeID = item.m_nItemID;
 		}
@@ -2696,7 +2697,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_nPelvisCostumeID)
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_nPelvisCostumeID, activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_nPelvisCostumeID, activeCostumeItem);
 			}
 			loadout.m_nPelvisCostumeID = item.m_nItemID;
 		}
@@ -2704,7 +2705,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_nFaceCostumeID)
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_nFaceCostumeID, activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_nFaceCostumeID, activeCostumeItem);
 			}
 			loadout.m_nFaceCostumeID = item.m_nItemID;
 		}
@@ -2712,7 +2713,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_ZombieSkinCostumeID.count(zombieSkinID) && loadout.m_ZombieSkinCostumeID[zombieSkinID])
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_ZombieSkinCostumeID[zombieSkinID], activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_ZombieSkinCostumeID[zombieSkinID], activeCostumeItem);
 			}
 			loadout.m_ZombieSkinCostumeID[zombieSkinID] = item.m_nItemID;
 		}
@@ -2720,7 +2721,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_nTattooID)
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_nTattooID, activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_nTattooID, activeCostumeItem);
 			}
 			loadout.m_nTattooID = item.m_nItemID;
 		}
@@ -2728,7 +2729,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		{
 			if (loadout.m_nPetCostumeID)
 			{
-				g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), loadout.m_nPetCostumeID, activeCostumeItem);
+				g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), loadout.m_nPetCostumeID, activeCostumeItem);
 			}
 			loadout.m_nPetCostumeID = item.m_nItemID;
 		}
@@ -2739,7 +2740,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 			activeCostumeItem.m_nStatus = 1;
 
 			activeCostumeItem.PushItem(items, activeCostumeItem);
-			g_pUserDatabase->UpdateInventoryItem(user->GetID(), activeCostumeItem);
+			g_UserDatabase.UpdateInventoryItem(user->GetID(), activeCostumeItem);
 		}
 
 		item.m_nInUse = 1;
@@ -2750,12 +2751,12 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		item.m_nStatus = 1;
 	}
 
-	g_pUserDatabase->UpdateCostumeLoadout(user->GetID(), loadout, zombieSkinID);
+	g_UserDatabase.UpdateCostumeLoadout(user->GetID(), loadout, zombieSkinID);
 
 	item.PushItem(items, item);
 
-	g_pUserDatabase->UpdateInventoryItem(user->GetID(), item);
+	g_UserDatabase.UpdateInventoryItem(user->GetID(), item);
 
 	// send inventory update to user
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 }

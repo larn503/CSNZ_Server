@@ -14,6 +14,7 @@ public:
 	~CServerInstance();
 
 	bool Init();
+	bool Reload();
 	bool LoadConfigs();
 	void UnloadConfigs();
 

@@ -18,6 +18,8 @@
 
 using namespace std;
 
+CChannelManager g_ChannelManager;
+
 CChannelManager::CChannelManager() : CBaseManager("ChannelManager")
 {
 	channelServers.push_back(new CChannelServer("Channel server", 1, 1, 1));
@@ -27,10 +29,10 @@ bool CChannelManager::OnChannelListPacket(IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 	{
-		g_pPacketManager->SendServerList(socket);
+		g_PacketManager.SendServerList(socket);
 
 		return false;
 	}
@@ -51,7 +53,7 @@ bool CChannelManager::OnChannelListPacket(IExtendedSocket* socket)
 
 	Console().Log("User '%d, %s' requested server list, sending...\n", user->GetID(), user->GetUsername().c_str());
 
-	g_pPacketManager->SendServerList(socket);
+	g_PacketManager.SendServerList(socket);
 
 	return true;
 }
@@ -60,7 +62,7 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -78,7 +80,7 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 	case InRoomType::OnConnectionFailure:
 		return OnConnectionFailure(user);
 	case InRoomType::UserInviteListRequest:
-		g_pPacketManager->SendRoomInviteUserList(socket, user);
+		g_PacketManager.SendRoomInviteUserList(socket, user);
 		break;
 	case InRoomType::JoinRoomRequest:
 		return OnJoinRoomRequest(msg, user);
@@ -91,7 +93,7 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 	case InRoomType::UserInviteRequest:
 		return OnUserInviteRequest(msg, user);
 	case InRoomType::RoomListRequest:
-		g_pPacketManager->SendRoomListFull(socket, channelServers[0]->GetChannels()[0]->GetRooms());
+		g_PacketManager.SendRoomListFull(socket, channelServers[0]->GetChannels()[0]->GetRooms());
 		break;
 	case 27:
 		break;
@@ -109,7 +111,7 @@ bool CChannelManager::OnRoomListPacket(CReceivePacket* msg, IExtendedSocket* soc
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (!user)
 	{
 		return false;
@@ -142,8 +144,8 @@ void CChannelManager::JoinChannel(IUser* user, int channelServerID, int channelI
 	{
 		/*if (transfer && user->GetLastChannelServer() != channelServer && !channelServer->ip.empty())
 		{
-			g_pPacketManager->SendTransfer(user->GetExtendedSocket(), channelServer->ip, channelServer->port, user->GetUsername());
-			g_pUserDatabase->AddToRestoreList(user->GetID(), channelServer->index, channel->m_nIndex);
+			g_PacketManager.SendTransfer(user->GetExtendedSocket(), channelServer->ip, channelServer->port, user->GetUsername());
+			g_UserDatabase.AddToRestoreList(user->GetID(), channelServer->index, channel->m_nIndex);
 			return;
 		}*/
 
@@ -158,12 +160,12 @@ void CChannelManager::JoinChannel(IUser* user, int channelServerID, int channelI
 	{
 		//char error[256];
 		//sprintf(error, "If you see this message, pls write to dev this: '0x%X (0x2)'", user->m_pCurrentChannel);
-		//g_pUserManager->SendNoticeMsgBoxToUuid(socket, error);
+		//g_UserManager.SendNoticeMsgBoxToUuid(socket, error);
 	}
 
 	Console().Log("User '%d, %s' requested room list successfully, sending...\n", user->GetID(), user->GetUsername().c_str());
 
-	g_pPacketManager->SendRoomListFull(user->GetExtendedSocket(), channel->GetRooms());
+	g_PacketManager.SendRoomListFull(user->GetExtendedSocket(), channel->GetRooms());
 }
 
 void CChannelManager::EndAllGames()
@@ -229,15 +231,15 @@ bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, IUser* userSender)
 	string userNameDest = msg->ReadString();
 	string message = msg->ReadString();
 
-	IUser* userDest = g_pUserManager->GetUserByNickname(userNameDest);
+	IUser* userDest = g_UserManager.GetUserByNickname(userNameDest);
 	if (!userDest)
 	{
 		// send no user reply
-		g_pPacketManager->SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_USER_NOT_FOUND", vector<string>{ userNameDest });
+		g_PacketManager.SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_USER_NOT_FOUND", vector<string>{ userNameDest });
 	}
 	else if (userDest->GetExtendedSocket() == socket)
 	{
-		g_pPacketManager->SendUMsgNoticeMessageInChat(socket, "You can't send whisper to yourself.");
+		g_PacketManager.SendUMsgNoticeMessageInChat(socket, "You can't send whisper to yourself.");
 		// you can't send whisper message to yourself
 	}
 	else
@@ -247,7 +249,7 @@ bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, IUser* userSender)
 		if (characterExtendedSender.banSettings & 4)
 		{
 			// you can't send whisper message if you're blocking all whisper
-			g_pPacketManager->SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_SENDER_USING_BAN_CHAT_ALL");
+			g_PacketManager.SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_SENDER_USING_BAN_CHAT_ALL");
 		}
 		else
 		{
@@ -256,13 +258,13 @@ bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, IUser* userSender)
 			if (characterExtendedDest.banSettings & 4)
 			{
 				// you can't send whisper message if dest is blocking all whisper
-				g_pPacketManager->SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_LISTENER_USING_BAN_CHAT_ALL");
+				g_PacketManager.SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_Red, "MSG_TELL_LISTENER_USING_BAN_CHAT_ALL");
 			}
 			else
 			{
-				g_pPacketManager->SendUMsgWhisperMessage(socket, message, userNameDest, userSender, 0);
+				g_PacketManager.SendUMsgWhisperMessage(socket, message, userNameDest, userSender, 0);
 				CUserCharacter character = userSender->GetCharacter(UFLAG_GAMENAME);
-				g_pPacketManager->SendUMsgWhisperMessage(userDest->GetExtendedSocket(), message, character.gameName, userDest, 1);
+				g_PacketManager.SendUMsgWhisperMessage(userDest->GetExtendedSocket(), message, character.gameName, userDest, 1);
 			}
 		}
 	}
@@ -318,26 +320,26 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				string login = args[1];
 				string password = args[2];
 
-				int loginResult = g_pUserManager->LoginUser(socket, login, password);
+				int loginResult = g_UserManager.LoginUser(socket, login, password);
 				switch (loginResult)
 				{
 				case LOGIN_DB_ERROR:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("DB_QUERY_FAILED"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("DB_QUERY_FAILED"));
 					break;
 				case LOGIN_NO_SUCH_USER:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Wrong password or username."));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Wrong password or username."));
 					break;
 				case LOGIN_USER_BANNED:
 					g_pServerInstance->DisconnectClient(socket);
 					break;
 				case LOGIN_SERVER_CANNOT_VALIDATE_CLIENT:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Failed to validate client. Contact administrator and try to reinstall the game."));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Failed to validate client. Contact administrator and try to reinstall the game."));
 					break;
 				}
 			}
 			else
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/login arguments: <username> <password>"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/login arguments: <username> <password>"));
 			}
 		}
 		else if (args[0] == (char*)OBFUSCATE("/register"))
@@ -347,32 +349,32 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				string login = args[1];
 				string password = args[2];
 
-				int regResult = g_pUserManager->RegisterUser(socket, login, password);
+				int regResult = g_UserManager.RegisterUser(socket, login, password);
 				switch (regResult)
 				{
 				case REGISTER_DB_ERROR:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("DB_QUERY_FAILED"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("DB_QUERY_FAILED"));
 					break;
 				case REGISTER_OK:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("You have successfully registered."));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("You have successfully registered."));
 					break;
 				case REGISTER_USERNAME_EXIST:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("User with this username already exists."));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("User with this username already exists."));
 					break;
 				case REGISTER_USERNAME_WRONG:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Username must contain at least 5 characters and not more than 15, English letters."));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Username must contain at least 5 characters and not more than 15, English letters."));
 					break;
 				case REGISTER_PASSWORD_WRONG:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Password must contain at least 5 characters and not more than 15, not only numbers"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Password must contain at least 5 characters and not more than 15, not only numbers"));
 					break;
 				case REGISTER_IP_LIMIT:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("You have exceeded the account limit for one IP"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("You have exceeded the account limit for one IP"));
 					break;
 				}
 			}
 			else
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/register arguments: <username> <password>"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/register arguments: <username> <password>"));
 			}
 		}
 	}
@@ -385,26 +387,26 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				char buf[128];
 				snprintf(buf, sizeof(buf), OBFUSCATE("Server build: %s"), build_number());
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, buf);
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, buf);
 				return true;
 			}
 			else if (args[0] == (char*)OBFUSCATE("/help"))
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Available commands: /help, /version, /giveitem, /additem, /removeitem, /getfreeslots, /sendnotice, /addallitems"));
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addexp, /status, /ban, /hban, /ipban, /unban, /getuid, /tournament, /givereward, /giverewardtoall"));
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addwpnreleasechar, /addpoints, /givepoints, /weaponrelease"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Available commands: /help, /version, /giveitem, /additem, /removeitem, /getfreeslots, /sendnotice, /addallitems"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addexp, /status, /ban, /hban, /ipban, /unban, /getuid, /tournament, /givereward, /giverewardtoall"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addwpnreleasechar, /addpoints, /givepoints, /weaponrelease"));
 				return true;
 			}
 			else if (args[0] == (char*)OBFUSCATE("/disconnect"))
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Not implemented\n"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Not implemented\n"));
 				return true;
 			}
 			else if (args[0] == (char*)OBFUSCATE("/getfreeslots"))
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Not implemented\n"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Not implemented\n"));
 				return true;
-				//g_pPacketManager->SendUMsgNoticeMessageInChat(socket, va("You still have %d spaces.", uData->inventory->AvailableInventorySpace()));
+				//g_PacketManager.SendUMsgNoticeMessageInChat(socket, va("You still have %d spaces.", uData->inventory->AvailableInventorySpace()));
 			}
 			else if (args[0] == (char*)OBFUSCATE("/additem"))
 			{
@@ -412,13 +414,13 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 
 				if (!(args.size() >= 2))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/additem usage: /additem <itemID> <count> <duration>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/additem usage: /additem <itemID> <count> <duration>"));
 					return true;
 				}
 
 				if (!isNumber(args[1]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/additem usage: /additem <itemID> <count> <duration>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/additem usage: /additem <itemID> <count> <duration>"));
 					return true;
 				}
 
@@ -447,17 +449,17 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 						return true;
 				}
 
-				int status = g_pItemManager->AddItem(user->GetID(), user, itemID, count, duration); // add permanent item by default
+				int status = g_ItemManager.AddItem(user->GetID(), user, itemID, count, duration); // add permanent item by default
 				switch (status)
 				{
 				case ITEM_ADD_INVENTORY_FULL:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Your inventory is full"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Your inventory is full"));
 					break;
 				case ITEM_ADD_UNKNOWN_ITEMID:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Item ID you wrote does not exist in the item database"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Item ID you wrote does not exist in the item database"));
 					break;
 				case ITEM_ADD_DB_ERROR:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
 					break;
 				case ITEM_ADD_SUCCESS:
 					// send notification about new item
@@ -472,7 +474,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 					rewardNotice.points = 0;
 					rewardNotice.honorPoints = 0;
 					rewardNotice.items.push_back(rewardItem);
-					g_pPacketManager->SendUMsgRewardNotice(socket, rewardNotice);
+					g_PacketManager.SendUMsgRewardNotice(socket, rewardNotice);
 
 					break;
 				}
@@ -483,7 +485,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (!(args.size() >= 3))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/giveitem usage: /giveitem <gameName/userID> <itemID> <count> <duration>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/giveitem usage: /giveitem <gameName/userID> <itemID> <count> <duration>"));
 					return true;
 				}
 
@@ -497,17 +499,17 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 					if (iss.fail())
 						return true;
 
-					if (!g_pUserDatabase->IsUserExists(userID))
+					if (!g_UserDatabase.IsUserExists(userID))
 						userID = 0;
 				}
 				else
 				{
-					userID = g_pUserDatabase->IsUserExists(args[1], false);
+					userID = g_UserDatabase.IsUserExists(args[1], false);
 				}
 
 				if (!userID)
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User not found."));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User not found."));
 					return true;
 				}
 
@@ -536,18 +538,18 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 						return true;
 				}
 
-				IUser* user = g_pUserManager->GetUserById(userID);
-				int status = g_pItemManager->AddItem(userID, user, itemID, count, duration); // add permanent item by default
+				IUser* user = g_UserManager.GetUserById(userID);
+				int status = g_ItemManager.AddItem(userID, user, itemID, count, duration); // add permanent item by default
 				switch (status)
 				{
 				case ITEM_ADD_INVENTORY_FULL:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("User's inventory is full"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("User's inventory is full"));
 					break;
 				case ITEM_ADD_UNKNOWN_ITEMID:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Item ID you wrote does not exist in the item database"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Item ID you wrote does not exist in the item database"));
 					break;
 				case ITEM_ADD_DB_ERROR:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
 					break;
 				case ITEM_ADD_SUCCESS:
 				{
@@ -570,8 +572,8 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 					}
 					else
 					{
-						g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice);
-						g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "", "", true);
+						g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice);
+						g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "", "", true);
 					}
 
 					break;
@@ -599,17 +601,17 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 					rewardItems.push_back(rewardItem);
 				}
 
-				int status = g_pItemManager->AddItems(user->GetID(), user, rewardItems);
+				int status = g_ItemManager.AddItems(user->GetID(), user, rewardItems);
 				switch (status)
 				{
 				case ITEM_ADD_SUCCESS:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Done"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Done"));
 					break;
 				case ITEM_ADD_INVENTORY_FULL:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Your inventory is full"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Your inventory is full"));
 					break;
 				case ITEM_ADD_DB_ERROR:
-					g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Database error"));
 					break;
 				}
 
@@ -624,7 +626,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 						int itemID = stoi(args[1]);
 
 						vector<CUserInventoryItem> items;
-						g_pUserDatabase->GetInventoryItemsByID(user->GetID(), itemID, items);
+						g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items);
 
 						if (items.size() > 0)
 						{
@@ -633,17 +635,17 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 								int slot = stoi(args[2]);
 								if (slot >= (int)items.size())
 								{
-									g_pPacketManager->SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("You have written an invalid slot ID %d"), slot));
+									g_PacketManager.SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("You have written an invalid slot ID %d"), slot));
 									return true;
 								}
 
-								if (!g_pItemManager->RemoveItem(user->GetID(), user, items[slot]))
+								if (!g_ItemManager.RemoveItem(user->GetID(), user, items[slot]))
 								{
-									g_pPacketManager->SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("Item (%d, %d) cannot be removed"), itemID, slot));
+									g_PacketManager.SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("Item (%d, %d) cannot be removed"), itemID, slot));
 									return true;
 								}
 
-								g_pPacketManager->SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("Item (%d, %d) removed"), itemID, slot));
+								g_PacketManager.SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("Item (%d, %d) removed"), itemID, slot));
 								return true;
 							}
 
@@ -661,18 +663,18 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 							string result;
 							for (auto const& s : texts) { result += s; }
 
-							g_pPacketManager->SendUMsgNoticeMessageInChat(socket, result);
+							g_PacketManager.SendUMsgNoticeMessageInChat(socket, result);
 						}
 						else
 						{
-							g_pPacketManager->SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("Items with %d ID cannot be found in your inventory"), itemID));
+							g_PacketManager.SendUMsgNoticeMessageInChat(socket, va(OBFUSCATE("Items with %d ID cannot be found in your inventory"), itemID));
 						}
 					}
 					return true;
 				}
 				else
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/removeitem usage: /removeitem <itemID>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/removeitem usage: /removeitem <itemID>"));
 					return true;
 				}
 			}
@@ -681,7 +683,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				string text = message;
 				text.erase(0, strlen(OBFUSCATE("/sendnotice ")));
 				
-				g_pUserManager->SendNoticeMsgBoxToAll(text);
+				g_UserManager.SendNoticeMsgBoxToAll(text);
 
 				return true;
 			}
@@ -694,7 +696,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				}
 				catch (exception& ex)
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addexp out of range!"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addexp out of range!"));
 					Console().Warn("/addexp out of range! %s\n", ex.what());
 					return true;
 				}
@@ -703,7 +705,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			}
 			else if (args[0] == (char*)OBFUSCATE("/status"))
 			{
-				g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, g_pServerInstance->GetMainInfo());
+				g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, g_pServerInstance->GetMainInfo());
 
 				return true;
 			}
@@ -711,7 +713,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (!(args.size() >= 5) || !isNumber(args[1]) || !isNumber(args[2]) || !isNumber(args[4]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/ban usage: /ban <userID> <type> <reason> <term>. Ban user's account"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/ban usage: /ban <userID> <type> <reason> <term>. Ban user's account"));
 					return true;
 				}
 
@@ -720,9 +722,9 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				string reason = args[3];
 				int term = atoi(args[4].c_str());
 
-				if (!g_pUserDatabase->IsUserExists(userID))
+				if (!g_UserDatabase.IsUserExists(userID))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
 					return true;
 				}
 
@@ -736,21 +738,21 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				ban.reason = reason;
 				ban.term = term * CSO_24_HOURS_IN_MINUTES + g_pServerInstance->GetCurrentTime();
 
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
 					// disconnect user right now
-					g_pUserManager->DisconnectUser(user);
+					g_UserManager.DisconnectUser(user);
 				}
 
-				g_pUserDatabase->UpdateUserBan(userID, ban);
+				g_UserDatabase.UpdateUserBan(userID, ban);
 
 				CUserCharacter character = {};
 				character.flag = UFLAG_GAMENAME;
-				g_pUserDatabase->GetCharacter(userID, character);
+				g_UserDatabase.GetCharacter(userID, character);
 				if (banType == 1)
 				{
-					g_pUserManager->SendNoticeMessageToAll(va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
+					g_UserManager.SendNoticeMessageToAll(va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
 				}
 
 				return true;
@@ -759,29 +761,29 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (!(args.size() >= 2) || !isNumber(args[1]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/hban usage: /hban <userID>. Ban user by HWID"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/hban usage: /hban <userID>. Ban user by HWID"));
 					return true;
 				}
 
 				int userID = atoi(args[1].c_str());
 
-				if (!g_pUserDatabase->IsUserExists(userID))
+				if (!g_UserDatabase.IsUserExists(userID))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
 					return true;
 				}
 
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
-					g_pUserManager->DisconnectUser(user);
+					g_UserManager.DisconnectUser(user);
 				}
 
 				CUserData data;
 				data.flag |= UDATA_FLAG_LASTHWID;
-				g_pUserDatabase->GetUserData(userID, data);
+				g_UserDatabase.GetUserData(userID, data);
 
-				g_pUserDatabase->UpdateHWIDBanList(data.lastHWID);
+				g_UserDatabase.UpdateHWIDBanList(data.lastHWID);
 
 				return true;
 			}
@@ -789,29 +791,29 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (!(args.size() >= 2) || !isNumber(args[1]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/ipban usage: /ipban <userID>. Ban user by IP"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/ipban usage: /ipban <userID>. Ban user by IP"));
 					return true;
 				}
 
 				int userID = atoi(args[1].c_str());
 
-				if (!g_pUserDatabase->IsUserExists(userID))
+				if (!g_UserDatabase.IsUserExists(userID))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
 					return true;
 				}
 
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
-					g_pUserManager->DisconnectUser(user);
+					g_UserManager.DisconnectUser(user);
 				}
 
 				CUserData data;
 				data.flag |= UDATA_FLAG_LASTIP;
-				g_pUserDatabase->GetUserData(userID, data);
+				g_UserDatabase.GetUserData(userID, data);
 
-				g_pUserDatabase->UpdateIPBanList(data.lastIP);
+				g_UserDatabase.UpdateIPBanList(data.lastIP);
 
 				return true;
 			}
@@ -819,33 +821,33 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (!(args.size() >= 2) || !isNumber(args[1]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/unban usage: /unban <userID>. Unban last IP, HWID and user account"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/unban usage: /unban <userID>. Unban last IP, HWID and user account"));
 					return true;
 				}
 
 				int userID = atoi(args[1].c_str());
-				if (!g_pUserDatabase->IsUserExists(userID))
+				if (!g_UserDatabase.IsUserExists(userID))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
 					return true;
 				}
 
 				UserBan ban;
-				if (g_pUserDatabase->GetUserBan(userID, ban))
+				if (g_UserDatabase.GetUserBan(userID, ban))
 				{
 					ban.banType = 0;
 					ban.reason = "";
 					ban.term = 0;
 
-					g_pUserDatabase->UpdateUserBan(userID, ban);
+					g_UserDatabase.UpdateUserBan(userID, ban);
 				}
 
 				CUserData data;
 				data.flag |= UDATA_FLAG_LASTIP | UDATA_FLAG_LASTHWID;
-				g_pUserDatabase->GetUserData(userID, data);
+				g_UserDatabase.GetUserData(userID, data);
 
-				g_pUserDatabase->UpdateIPBanList(data.lastIP, true);
-				g_pUserDatabase->UpdateHWIDBanList(data.lastHWID, true);
+				g_UserDatabase.UpdateIPBanList(data.lastIP, true);
+				g_UserDatabase.UpdateHWIDBanList(data.lastHWID, true);
 
 				return true;
 			}
@@ -853,18 +855,18 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (!(args.size() >= 2))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/getuid usage: /getuid <gameName>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/getuid usage: /getuid <gameName>"));
 					return true;
 				}
 
-				int userID = g_pUserDatabase->IsUserExists(args[1], false);
+				int userID = g_UserDatabase.IsUserExists(args[1], false);
 				if (!userID)
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
 					return true;
 				}
 
-				g_pPacketManager->SendUMsgNoticeMessageInChat(socket, va("%d", userID));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, va("%d", userID));
 
 				return true;
 			}
@@ -876,7 +878,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 
 				character = user->GetCharacter(UFLAG_TOURNAMENT);
 
-				g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, character.tournament ? (char*)OBFUSCATE("Tournament HUD is ON") : (char*)OBFUSCATE("Tournament HUD is OFF"));
+				g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, character.tournament ? (char*)OBFUSCATE("Tournament HUD is ON") : (char*)OBFUSCATE("Tournament HUD is OFF"));
 
 				return true;
 			}
@@ -884,7 +886,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (args.size() <= 2 || !isNumber(args[1]) || !isNumber(args[2]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/givereward usage: /givereward <userID> <rewardID>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/givereward usage: /givereward <userID> <rewardID>"));
 					return true;
 				}
 
@@ -893,7 +895,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				if (rewardID <= 0 || userID <= 0)
 					return true;
 
-				g_pItemManager->GiveReward(userID, g_pUserManager->GetUserById(userID), rewardID);
+				g_ItemManager.GiveReward(userID, g_UserManager.GetUserById(userID), rewardID);
 
 				return true;
 			}
@@ -901,7 +903,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (args.size() <= 1 || !isNumber(args[1]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/giverewardtoall usage: giverewardtoall <rewardID>. Give a reward from ItemRewards.txt to all users' accounts"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/giverewardtoall usage: giverewardtoall <rewardID>. Give a reward from ItemRewards.txt to all users' accounts"));
 					return true;
 				}
 
@@ -909,10 +911,10 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				if (rewardID <= 0)
 					return true;
 
-				auto users = g_pUserDatabase->GetUsers();
+				auto users = g_UserDatabase.GetUsers();
 				for (auto userID : users)
 				{
-					g_pItemManager->GiveReward(userID, g_pUserManager->GetUserById(userID), rewardID);
+					g_ItemManager.GiveReward(userID, g_UserManager.GetUserById(userID), rewardID);
 				}
 
 				return true;
@@ -935,7 +937,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 
 					if (g_pServerConfig->room.validateSettings && !roomSettings->CheckSettings(user))
 					{
-						g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Unable to create a room due to incorrect settings");
+						g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Unable to create a room due to incorrect settings");
 						delete roomSettings;
 						return false;
 					}
@@ -954,11 +956,11 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (args.size() <= 2 || !isNumber(args[2]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addwpnreleasechar usage: /addwpnreleasechar <char> <count>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addwpnreleasechar usage: /addwpnreleasechar <char> <count>"));
 					return true;
 				}
 
-				g_pMiniGameManager->WeaponReleaseAddCharacter(user, args[1][0], stoi(args[2]));
+				g_MiniGameManager.WeaponReleaseAddCharacter(user, args[1][0], stoi(args[2]));
 
 				return true;
 			}
@@ -966,7 +968,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (args.size() <= 1 || !isNumber(args[1]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addpoints usage: /addpoints <points>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/addpoints usage: /addpoints <points>"));
 					return true;
 				}
 
@@ -980,20 +982,20 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (args.size() <= 2 || !isNumber(args[1]) || !isNumber(args[2]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/givepoints usage: /givepoints <userID> <points>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/givepoints usage: /givepoints <userID> <points>"));
 					return true;
 				}
 
 				int userID = stoi(args[1]);
 				int points = stoi(args[2]);
 
-				if (!g_pUserDatabase->IsUserExists(userID))
+				if (!g_UserDatabase.IsUserExists(userID))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User does not exist"));
 					return true;
 				}
 
-				IUser* userDest = g_pUserManager->GetUserById(userID);
+				IUser* userDest = g_UserManager.GetUserById(userID);
 				if (userDest)
 				{
 					userDest->UpdatePoints(points);
@@ -1002,17 +1004,17 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				{
 					CUserCharacter character = {};
 					character.flag = UFLAG_POINTS;
-					if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+					if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 					{
-						g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User character does not exist"));
+						g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User character does not exist"));
 						return true;
 					}
 
 					character.points += points;
 
-					if (g_pUserDatabase->UpdateCharacter(userID, character) <= 0)
+					if (g_UserDatabase.UpdateCharacter(userID, character) <= 0)
 					{
-						g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User character does not exist"));
+						g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User character does not exist"));
 						return true;
 					}
 				}
@@ -1023,7 +1025,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (args.size() <= 2 || !isNumber(args[1]) || !isNumber(args[2]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setitemstatus usage: /setitemstatus <slot> <status>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setitemstatus usage: /setitemstatus <slot> <status>"));
 					return true;
 				}
 
@@ -1031,9 +1033,9 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				int status = stoi(args[2]);
 
 				CUserInventoryItem item;
-				if (g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), slot, item) <= 0 || !item.m_nItemID)
+				if (g_UserDatabase.GetInventoryItemBySlot(user->GetID(), slot, item) <= 0 || !item.m_nItemID)
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Item does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Item does not exist"));
 					return true;
 				}
 
@@ -1041,13 +1043,13 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				vector<CUserInventoryItem> items;
 				items.push_back(item);
 
-				if (g_pUserDatabase->UpdateInventoryItem(user->GetID(), item) <= 0)
+				if (g_UserDatabase.UpdateInventoryItem(user->GetID(), item) <= 0)
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
 					return true;
 				}
 
-				g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+				g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 				return true;
 			}
@@ -1055,7 +1057,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			{
 				if (args.size() <= 2 || !isNumber(args[1]) || !isNumber(args[2]))
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setiteminuse usage: /setiteminuse <slot> <inUse>"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setiteminuse usage: /setiteminuse <slot> <inUse>"));
 					return true;
 				}
 
@@ -1063,9 +1065,9 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				int inUse = stoi(args[2]);
 
 				CUserInventoryItem item;
-				if (g_pUserDatabase->GetInventoryItemBySlot(user->GetID(), slot, item) <= 0 || !item.m_nItemID)
+				if (g_UserDatabase.GetInventoryItemBySlot(user->GetID(), slot, item) <= 0 || !item.m_nItemID)
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Item does not exist"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Item does not exist"));
 					return true;
 				}
 
@@ -1073,13 +1075,13 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				vector<CUserInventoryItem> items;
 				items.push_back(item);
 
-				if (g_pUserDatabase->UpdateInventoryItem(user->GetID(), item) <= 0)
+				if (g_UserDatabase.UpdateInventoryItem(user->GetID(), item) <= 0)
 				{
-					g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
 					return true;
 				}
 
-				g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+				g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 
 				return true;
 			}
@@ -1088,13 +1090,13 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 		if (args[0] == "/weaponrelease")
 		{
 			if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
-				g_pMiniGameManager->SendWeaponReleaseUpdate(user);
+				g_MiniGameManager.SendWeaponReleaseUpdate(user);
 			return true;
 		}
 		else if (args[0] == "/bingo")
 		{
 			if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_Bingo_NEW || g_pServerConfig->activeMiniGamesFlag & kEventFlag_Bingo)
-				g_pMiniGameManager->OnBingoUpdateRequest(user);
+				g_MiniGameManager.OnBingoUpdateRequest(user);
 			return true;
 		}
 	}
@@ -1122,7 +1124,7 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 	CRoomSettings* roomSettings = new CRoomSettings(msg->GetData());
 	if (!roomSettings->CheckSettings(user))
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Unable to create a room due to incorrect settings");
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Unable to create a room due to incorrect settings");
 		delete roomSettings;
 		return false;
 	}
@@ -1163,13 +1165,13 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 	IRoom* room = channel->GetRoomById(roomID);
 	if (room == NULL)
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_CLOSED"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_CLOSED"));
 		return false;
 	}
 
 	if (room->HasFreeSlots() == false)
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_FULL"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_FULL"));
 		return false;
 	}
 
@@ -1178,21 +1180,21 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 	{
 		if (room->GetSettings()->password != password)
 		{
-			g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_INVALID_PASSWD"));
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_INVALID_PASSWD"));
 			return false;
 		}
 	}
 
 	CUserCharacterExtended hostCharacterExtended = room->GetHostUser()->GetCharacterExtended(EXT_UFLAG_BANSETTINGS);
-	if (hostCharacterExtended.banSettings & 1 && g_pUserDatabase->IsInBanList(room->GetHostUser()->GetID(), user->GetID()))
+	if (hostCharacterExtended.banSettings & 1 && g_UserDatabase.IsInBanList(room->GetHostUser()->GetID(), user->GetID()))
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_BAN"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_BAN"));
 		return false;
 	}
 
 	if (room->IsUserKicked(user->GetID()))
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_KICKED"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_KICKED"));
 		return false;
 	}
 
@@ -1283,7 +1285,7 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 		if (currentRoom->GetServer())
 		{
 			server->SetRoom(NULL);
-			g_pPacketManager->SendHostStop(server->GetSocket());
+			g_PacketManager.SendHostStop(server->GetSocket());
 		}
 	}
 	else
@@ -1295,7 +1297,7 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 
 	// add user to channel user list back
 	currentChannel->UserJoin(user, true);
-	g_pPacketManager->SendLobbyJoin(user->GetExtendedSocket(), currentChannel);
+	g_PacketManager.SendLobbyJoin(user->GetExtendedSocket(), currentChannel);
 
 	return true;
 }
@@ -1316,7 +1318,7 @@ bool CChannelManager::OnToggleReadyRequest(IUser* user)
 	// inform every user in the room of the changes
 	for (auto u : room->GetUsers())
 	{
-		g_pPacketManager->SendRoomSetPlayerReady(u->GetExtendedSocket(), user, readyStatus);
+		g_PacketManager.SendRoomSetPlayerReady(u->GetExtendedSocket(), user, readyStatus);
 	}
 
 	return true;
@@ -1349,13 +1351,13 @@ bool CChannelManager::OnConnectionFailure(IUser* user)
 
 		Console().Log("User '%d, %s' unsuccessfully tried to connect to the game match(%s:%d)\n", user->GetID(), user->GetUsername().c_str(), ip.c_str(), server->GetPort());
 
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "ROOM_JOIN_FAILED_INVALID_GAME_IP");
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "ROOM_JOIN_FAILED_INVALID_GAME_IP");
 	}
 	else
 	{
 		Console().Log("User '%d, %s' unsuccessfully tried to connect to the game match(%s:%d)\n", user->GetID(), user->GetUsername().c_str(), hostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), hostUser->GetNetworkConfig().m_nExternalServerPort);
 
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), va("Cannot establish connection to %s:%d. Possible reasons:\n"
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), va("Cannot establish connection to %s:%d. Possible reasons:\n"
 			"1. Host connected to the master server with localhost(127.0.0.1) ip\n"
 			"2. Host has a closed %d port or 30002 port (TCP and UDP)\n"
 			"3. You are trying to connect to the host with private IP.\n"
@@ -1367,7 +1369,7 @@ bool CChannelManager::OnConnectionFailure(IUser* user)
 	RoomReadyStatus readyStatus = room->ToggleUserReadyStatus(user);
 	for (auto u : room->GetUsers())
 	{
-		g_pPacketManager->SendRoomSetPlayerReady(u->GetExtendedSocket(), user, readyStatus);
+		g_PacketManager.SendRoomSetPlayerReady(u->GetExtendedSocket(), user, readyStatus);
 	}
 
 	return true;
@@ -1384,7 +1386,7 @@ bool CChannelManager::OnGameStartRequest(IUser* user)
 	}
 
 	CRoomSettings* roomSettings = currentRoom->GetSettings();
-	g_pPacketManager->SendLeagueGaugePacket(user->GetExtendedSocket(), roomSettings->gameModeId);
+	g_PacketManager.SendLeagueGaugePacket(user->GetExtendedSocket(), roomSettings->gameModeId);
 
 	// send to the host game start request
 	if (currentRoom->GetHostUser() == user)
@@ -1401,7 +1403,7 @@ bool CChannelManager::OnGameStartRequest(IUser* user)
 	}
 	else
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_CLOSED"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_CLOSED"));
 	}
 
 	return false;
@@ -1481,7 +1483,7 @@ bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, IUser* user)
 	{
 		string userGameName = msg->ReadString();
 
-		IUser* destUser = g_pUserManager->GetUserByNickname(userGameName);
+		IUser* destUser = g_UserManager.GetUserByNickname(userGameName);
 		if (!destUser)
 		{
 			// user does not exists
@@ -1499,7 +1501,7 @@ bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, IUser* user)
 		}*/
 
 		CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
-		g_pPacketManager->SendSearchRoomNotice(destUser->GetExtendedSocket(), user->GetCurrentRoom(), character.gameName, inviteMsg);
+		g_PacketManager.SendSearchRoomNotice(destUser->GetExtendedSocket(), user->GetCurrentRoom(), character.gameName, inviteMsg);
 	}
 
 	return true;
@@ -1527,15 +1529,15 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 		if (g_pItemTable->GetCell<string>("ClassName", to_string(itemID)) == "zbsaddonitem")
 		{
 			vector<CUserInventoryItem> items;
-			if (g_pUserDatabase->GetInventoryItemsByID(user->GetID(), itemID, items) == 1
-				&& g_pItemManager->OnItemUse(user, items[0]))
+			if (g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items) == 1
+				&& g_ItemManager.OnItemUse(user, items[0]))
 			{
 				addons.push_back(itemID);
 			}
 		}
 	}
 
-	g_pUserDatabase->SetAddons(user->GetID(), addons);
+	g_UserDatabase.SetAddons(user->GetID(), addons);
 
 	return true;
 }

@@ -11,6 +11,8 @@
 
 using namespace std;
 
+CClanManager g_ClanManager;
+
 CClanManager::CClanManager() : CBaseManager("ClanManager")
 {
 }
@@ -81,7 +83,7 @@ bool CClanManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -179,9 +181,9 @@ bool CClanManager::OnClanListRequest(CReceivePacket* msg, IUser* user)
 	// TODO: handle GetClanList error?
 	vector<ClanList_s> clans;
 	int pageMax = 0;
-	g_pUserDatabase->GetClanList(clans, clanName, flag, gameModeID, playTime, pageID, pageMax);
+	g_UserDatabase.GetClanList(clans, clanName, flag, gameModeID, playTime, pageID, pageMax);
 
-	g_pPacketManager->SendClanList(user->GetExtendedSocket(), clans, pageID, pageMax);
+	g_PacketManager.SendClanList(user->GetExtendedSocket(), clans, pageID, pageMax);
 
 	if (unk3 != 0)
 	{
@@ -195,13 +197,13 @@ bool CClanManager::OnClanInfoRequest(CReceivePacket* msg, IUser* user)
 {
 	int clanID = msg->ReadUInt32();
 	Clan_s clan = {};
-	if (g_pUserDatabase->GetClanInfo(clanID, clan) <= 0)
+	if (g_UserDatabase.GetClanInfo(clanID, clan) <= 0)
 	{
 		// TODO: send failed reply
 		return false;
 	}
 
-	g_pPacketManager->SendClanInfo(user->GetExtendedSocket(), clan);
+	g_PacketManager.SendClanInfo(user->GetExtendedSocket(), clan);
 
 	return true;
 }
@@ -212,22 +214,22 @@ bool CClanManager::OnClanCreateRequest(CReceivePacket* msg, IUser* user)
 	string name = msg->ReadString();
 	if (name.size() < 3)
 	{
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_TOO_SHORT"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_TOO_SHORT"));
 		return false;
 	}
 	else if (name.size() > 20)
 	{
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_TOO_LONG"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_TOO_LONG"));
 		return false;
 	}
 	else if (name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890") != string::npos)
 	{
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_BAD_RESERVE"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_BAD_RESERVE"));
 		return false;
 	}
 	else if (findCaseInsensitive(name, g_pServerConfig->nameBlacklist))
 	{
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_INVALID_CHAR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_NAME_INVALID_CHAR"));
 		return false;
 	}
 
@@ -247,26 +249,26 @@ bool CClanManager::OnClanCreateRequest(CReceivePacket* msg, IUser* user)
 	clanCfg.expBoost = 5;
 	clanCfg.markChangeCount = 1;
 
-	int clanID = g_pUserDatabase->CreateClan(clanCfg);
+	int clanID = g_UserDatabase.CreateClan(clanCfg);
 	switch (clanID)
 	{
 	case -1:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_DUP_NAME"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_DUP_NAME"));
 		return false;
 	case -2:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_ALREADY_IN_CLAN"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_ALREADY_IN_CLAN"));
 		return false;
 	case -3:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_MORE_POINT"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_CREATE_MORE_POINT"));
 		return false;
 	case 0:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	}
 
 	user->UpdateClan(clanID);
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCreate, 1, NULL);
 
 	OnUserLogin(user);
 
@@ -279,36 +281,36 @@ bool CClanManager::OnClanJoinRequest(CReceivePacket* msg, IUser* user)
 	int clanID = msg->ReadUInt32();
 
 	string clanName;
-	int result = g_pUserDatabase->JoinClan(user->GetID(), clanID, clanName);
+	int result = g_UserDatabase.JoinClan(user->GetID(), clanID, clanName);
 	switch (result)
 	{
 	case 0: // db error
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	case -1: // user already in clan
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_EXIST_MEMBER"));
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_EXIST_MEMBER"));
 		return false;
 	case -2: // already sent join request
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_SAME_CLAN"));
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_SAME_CLAN"));
 		return false;
 	case -3: // not recruiting
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_NOT_ALLOWED"));
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_NOT_ALLOWED"));
 		return false;
 	case -4: // invite required
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_NEED_INVITE"));
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_NEED_INVITE"));
 		return false;
 	case -5: // approve required
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_NO_AUTH"));
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_NO_AUTH"));
 		return false;
 	case -6:
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_MAX_MEMBER"));
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 4, OBFUSCATE("CSO_CLAN_JOIN_MAX_MEMBER"));
 		return false;
 	case -7:
-		g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 2, clanName.c_str());
+		g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 2, clanName.c_str());
 		return false;
 	}
 
-	g_pPacketManager->SendClanJoinReply(user->GetExtendedSocket(), 0, NULL);
+	g_PacketManager.SendClanJoinReply(user->GetExtendedSocket(), 0, NULL);
 
 	user->UpdateClan(clanID);
 
@@ -321,18 +323,18 @@ bool CClanManager::OnClanCancelJoinRequest(CReceivePacket* msg, IUser* user)
 {
 	int clanID = msg->ReadUInt32();
 
-	int result = g_pUserDatabase->CancelJoin(user->GetID(), clanID);
+	int result = g_UserDatabase.CancelJoin(user->GetID(), clanID);
 	switch (result)
 	{
 	case 0: // db error
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCancelJoin, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCancelJoin, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	case -1: // user already in clan
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCancelJoin, 0, OBFUSCATE("CSO_CLAN_JOIN_CANCEL_NOT_APPLIED"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCancelJoin, 0, OBFUSCATE("CSO_CLAN_JOIN_CANCEL_NOT_APPLIED"));
 		return false;
 	}
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanCancelJoin, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanCancelJoin, 1, NULL);
 
 	return true;
 }
@@ -341,18 +343,18 @@ bool CClanManager::OnClanJoinApproveRequest(CReceivePacket* msg, IUser* user)
 {
 	string userName = msg->ReadString();
 
-	int result = g_pUserDatabase->ClanApprove(user->GetID(), userName);
+	int result = g_UserDatabase.ClanApprove(user->GetID(), userName);
 	switch (result)
 	{
 	case 0: // db error
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinApprove, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinApprove, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	case -1:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinApprove, 0, OBFUSCATE("CSO_CLAN_NOT_IN_APPLICANTS"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinApprove, 0, OBFUSCATE("CSO_CLAN_NOT_IN_APPLICANTS"));
 		return false;
 	}
 
-	IUser* targetUser = g_pUserManager->GetUserByUsername(userName);
+	IUser* targetUser = g_UserManager.GetUserByUsername(userName);
 	if (targetUser)
 	{
 		OnUserLogin(targetUser);
@@ -361,7 +363,7 @@ bool CClanManager::OnClanJoinApproveRequest(CReceivePacket* msg, IUser* user)
 	{
 		ClanUser targetMember{};
 		vector<ClanUser> users;
-		g_pUserDatabase->GetClanUserList(user->GetID(), true, users);
+		g_UserDatabase.GetClanUserList(user->GetID(), true, users);
 		for (auto member : users)
 		{
 			if (member.userName == userName)
@@ -375,15 +377,15 @@ bool CClanManager::OnClanJoinApproveRequest(CReceivePacket* msg, IUser* user)
 			if (!member.user)
 				continue;
 
-			g_pPacketManager->SendClanUpdateUserList(member.user->GetExtendedSocket(), targetMember);
+			g_PacketManager.SendClanUpdateUserList(member.user->GetExtendedSocket(), targetMember);
 		}
 	}
 
 	ClanUserJoinRequest targetMemberJr{};
 	targetMemberJr.userName = userName;
-	g_pPacketManager->SendClanUpdateJoinUserList(user->GetExtendedSocket(), targetMemberJr, true);
+	g_PacketManager.SendClanUpdateJoinUserList(user->GetExtendedSocket(), targetMemberJr, true);
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinApprove, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinApprove, 1, NULL);
 
 	return true;
 }
@@ -395,69 +397,69 @@ bool CClanManager::OnClanJoinResultRequest(CReceivePacket* msg, IUser* user)
 	{
 		string userName = msg->ReadString();
 
-		int result = g_pUserDatabase->ClanReject(user->GetID(), userName);
+		int result = g_UserDatabase.ClanReject(user->GetID(), userName);
 		switch (result)
 		{
 		case 0: // db error
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		case -1:
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_NOT_IN_APPLICANTS"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_NOT_IN_APPLICANTS"));
 			return false;
 		}
 
 		ClanUserJoinRequest clanUser;
 		clanUser.userName = userName;
-		g_pPacketManager->SendClanUpdateJoinUserList(user->GetExtendedSocket(), clanUser, true);
+		g_PacketManager.SendClanUpdateJoinUserList(user->GetExtendedSocket(), clanUser, true);
 	}
 	else if (type == 1)
 	{
-		int result = g_pUserDatabase->ClanRejectAll(user->GetID());
+		int result = g_UserDatabase.ClanRejectAll(user->GetID());
 		switch (result)
 		{
 		case 0: // db error
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		case -1:
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_NOT_IN_APPLICANTS"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 0, OBFUSCATE("CSO_CLAN_NOT_IN_APPLICANTS"));
 			return false;
 		}
 
-		g_pPacketManager->SendClanDeleteJoinUserList(user->GetExtendedSocket());
+		g_PacketManager.SendClanDeleteJoinUserList(user->GetExtendedSocket());
 	}
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanJoinResult, 1, NULL);
 
 	return true;
 }
 
 bool CClanManager::OnClanLeaveRequest(CReceivePacket* msg, IUser* user)
 {
-	int result = g_pUserDatabase->LeaveClan(user->GetID());
+	int result = g_UserDatabase.LeaveClan(user->GetID());
 	switch (result)
 	{
 	case -1:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanLeave, 0, OBFUSCATE("CSO_CLAN_NO_AUTH"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanLeave, 0, OBFUSCATE("CSO_CLAN_NO_AUTH"));
 		return false;
 	case 0:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanLeave, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanLeave, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	}
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanLeave, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanLeave, 1, NULL);
 
 	// send update to clan members
 	ClanUser clanUser = {};
 	clanUser.userName = user->GetUsername(); // TODO: rewrite
 
 	std::vector<ClanUser> users;
-	g_pUserDatabase->GetClanUserList(user->GetID(), true, users);
+	g_UserDatabase.GetClanUserList(user->GetID(), true, users);
 	for (auto member : users)
 	{
 		if (member.user)
 		{
-			g_pPacketManager->SendClanUpdateUserList(member.user->GetExtendedSocket(), clanUser, true);
-			g_pPacketManager->SendClanUpdateMemberUserList(member.user->GetExtendedSocket(), clanUser, true);
+			g_PacketManager.SendClanUpdateUserList(member.user->GetExtendedSocket(), clanUser, true);
+			g_PacketManager.SendClanUpdateMemberUserList(member.user->GetExtendedSocket(), clanUser, true);
 		}
 	}
 
@@ -478,34 +480,34 @@ bool CClanManager::OnClanInviteRequest(CReceivePacket* msg, IUser* user)
 	IUser* destUser = NULL;
 	int clanID = 0;
 	string gameName = msg->ReadString();
-	int result = g_pUserDatabase->ClanInvite(user->GetID(), gameName, destUser, clanID);
+	int result = g_UserDatabase.ClanInvite(user->GetID(), gameName, destUser, clanID);
 	switch (result)
 	{
 	case 0:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	case -1:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_INVITE_NO_AUTH"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_INVITE_NO_AUTH"));
 		return false;
 	case -2:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_INVITE_FAILED"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_INVITE_FAILED"));
 		return false;
 	case -3:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_INVITE_FAIL_NOT_EXIST"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_INVITE_FAIL_NOT_EXIST"));
 		return false;
 	case -4:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_CANT_INVITE_MASTER"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_CANT_INVITE_MASTER"));
 		return false;
 	case -5:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_CANT_INVITE_SAME_CLAN"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 0, OBFUSCATE("CSO_CLAN_CANT_INVITE_SAME_CLAN"));
 		return false;
 	}
 
 	Clan_s clan = {};
-	g_pUserDatabase->GetClan(user->GetID(), CFLAG_NAME, clan);
-	g_pPacketManager->SendClanInvite(destUser->GetExtendedSocket(), clan.name, clanID);
+	g_UserDatabase.GetClan(user->GetID(), CFLAG_NAME, clan);
+	g_PacketManager.SendClanInvite(destUser->GetExtendedSocket(), clan.name, clanID);
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanInvite, 1, NULL);
 
 	return true;
 }
@@ -518,17 +520,17 @@ bool CClanManager::OnClanChangeMemberGradeRequest(CReceivePacket* msg, IUser* us
 		return false;
 
 	ClanUser targetMember {};
-	int result = g_pUserDatabase->UpdateClanMemberGrade(user->GetID(), userName, newGrade, targetMember);
+	int result = g_UserDatabase.UpdateClanMemberGrade(user->GetID(), userName, newGrade, targetMember);
 	switch (result)
 	{
 	case -1: // not clan master
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 0, OBFUSCATE("CSO_CLAN_GRADE_NO_AUTH"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 0, OBFUSCATE("CSO_CLAN_GRADE_NO_AUTH"));
 		return false;
 	case -2:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 0, OBFUSCATE("CSO_CLAN_GRADE_OFFICER_NO_AUTH"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 0, OBFUSCATE("CSO_CLAN_GRADE_OFFICER_NO_AUTH"));
 		return false;
 	case 0:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	}
 
@@ -536,15 +538,15 @@ bool CClanManager::OnClanChangeMemberGradeRequest(CReceivePacket* msg, IUser* us
 	if (targetMember.user)
 	{
 		Clan_s clan = {};
-		if (g_pUserDatabase->GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_CLANMASTER | CFLAG_JOINMETHOD, clan) > 0)
+		if (g_UserDatabase.GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_CLANMASTER | CFLAG_JOINMETHOD, clan) > 0)
 		{
-			g_pPacketManager->SendClanUpdate(targetMember.user->GetExtendedSocket(), 1, newGrade, clan);
+			g_PacketManager.SendClanUpdate(targetMember.user->GetExtendedSocket(), 1, newGrade, clan);
 		}
 	}
 
-	g_pPacketManager->SendClanUpdateMemberUserList(user->GetExtendedSocket(), targetMember);
+	g_PacketManager.SendClanUpdateMemberUserList(user->GetExtendedSocket(), targetMember);
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanChangeMemberGrade, 1, NULL);
 
 	return true;
 }
@@ -553,41 +555,41 @@ bool CClanManager::OnClanKickMemberRequest(CReceivePacket* msg, IUser* user)
 {
 	string userName = msg->ReadString();
 
-	int result = g_pUserDatabase->ClanKick(user->GetID(), userName);
+	int result = g_UserDatabase.ClanKick(user->GetID(), userName);
 	switch (result)
 	{
 	case 0:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanKickMember, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanKickMember, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	case -1:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanKickMember, 0, OBFUSCATE("CSO_CLAN_NO_AUTH"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanKickMember, 0, OBFUSCATE("CSO_CLAN_NO_AUTH"));
 		return false;
 	}
 
 	ClanUser kickedMember {};
 	kickedMember.userName = userName;
 
-	IUser* targetUser = g_pUserManager->GetUserByUsername(userName);
+	IUser* targetUser = g_UserManager.GetUserByUsername(userName);
 	if (targetUser)
 	{
-		g_pPacketManager->SendClanKick(targetUser->GetExtendedSocket());
+		g_PacketManager.SendClanKick(targetUser->GetExtendedSocket());
 
 		targetUser->UpdateClan(0);
 	}
 
 	vector<ClanUser> users;
-	g_pUserDatabase->GetClanMemberList(user->GetID(), users);
+	g_UserDatabase.GetClanMemberList(user->GetID(), users);
 	for (auto member : users)
 	{
 		if (!member.user)
 			continue;
 
-		g_pPacketManager->SendClanUpdateUserList(member.user->GetExtendedSocket(), kickedMember, true);
+		g_PacketManager.SendClanUpdateUserList(member.user->GetExtendedSocket(), kickedMember, true);
 	}
 
-	g_pPacketManager->SendClanUpdateMemberUserList(user->GetExtendedSocket(), kickedMember, true);
+	g_PacketManager.SendClanUpdateMemberUserList(user->GetExtendedSocket(), kickedMember, true);
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanKickMember, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanKickMember, 1, NULL);
 
 	return true;
 }
@@ -607,46 +609,46 @@ bool CClanManager::OnClanUpdateMarkRequest(CReceivePacket* msg, IUser* user)
 		int unk2 = msg->ReadUInt8();
 
 		// TODO: display used marks
-		g_pPacketManager->SendClanMarkColor(user->GetExtendedSocket());
+		g_PacketManager.SendClanMarkColor(user->GetExtendedSocket());
 	}
 	else if (subType == 1)
 	{
 		Clan_s clan = {};
-		g_pUserDatabase->GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_MARKCHANGECOUNT, clan);
+		g_UserDatabase.GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_MARKCHANGECOUNT, clan);
 
 		if (!clan.markChangeCount)
 		{
-			g_pPacketManager->SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_NO_MARK_ITEM"));
+			g_PacketManager.SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_NO_MARK_ITEM"));
 			return false;
 		}
 
 		clan.markID = msg->ReadUInt32();
 		clan.markChangeCount--;
 
-		int result = g_pUserDatabase->IsClanWithMarkExists(clan.markID);
+		int result = g_UserDatabase.IsClanWithMarkExists(clan.markID);
 		switch (result)
 		{
 		case 0:
-			g_pPacketManager->SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		case 1:
-			g_pPacketManager->SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_MARK_DUP"));
+			g_PacketManager.SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_MARK_DUP"));
 			return false;
 		}
 
 		// CSO_CLAN_MARK_INVALID_SHAPE, CSO_CLAN_MARK_INVALID_COLOR
-		result = g_pUserDatabase->UpdateClan(user->GetID(), CFLAG_MARKID | CFLAG_MARKCHANGECOUNT, clan);
+		result = g_UserDatabase.UpdateClan(user->GetID(), CFLAG_MARKID | CFLAG_MARKCHANGECOUNT, clan);
 		switch (result)
 		{
 		case -1: // not clan master
-			g_pPacketManager->SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_GRADE_NO_AUTH"));
+			g_PacketManager.SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_GRADE_NO_AUTH"));
 			return false;
 		case 0:
-			g_pPacketManager->SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanMarkReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		}
 
-		g_pPacketManager->SendClanMarkReply(user->GetExtendedSocket(), 1, NULL);
+		g_PacketManager.SendClanMarkReply(user->GetExtendedSocket(), 1, NULL);
 		
 		CUserCharacter character = {};
 		character.clanID = clan.id;
@@ -654,7 +656,7 @@ bool CClanManager::OnClanUpdateMarkRequest(CReceivePacket* msg, IUser* user)
 		character.clanMarkID = clan.markID;
 		user->UpdateClientUserInfo(UFLAG_CLAN, character);
 
-		g_pPacketManager->SendClanUpdate(user->GetExtendedSocket(), 7, 0, clan);
+		g_PacketManager.SendClanUpdate(user->GetExtendedSocket(), 7, 0, clan);
 	}
 	else
 	{
@@ -677,26 +679,26 @@ bool CClanManager::OnClanUpdateConfigRequest(CReceivePacket* msg, IUser* user)
 
 		Clan_s clan = {};
 		clan.joinMethod = joinMethod;
-		int result = g_pUserDatabase->UpdateClan(user->GetID(), CFLAG_JOINMETHOD, clan);
+		int result = g_UserDatabase.UpdateClan(user->GetID(), CFLAG_JOINMETHOD, clan);
 		switch (result)
 		{
 		case -1: // not clan master
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_SETTING_NO_AUTH"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_SETTING_NO_AUTH"));
 			return false;
 		case 0:
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		}
 
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 1, NULL);
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 1, NULL);
 
 		// send this to all members..?
-		if (g_pUserDatabase->GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_CLANMASTER, clan) > 0)
+		if (g_UserDatabase.GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_CLANMASTER, clan) > 0)
 		{
 			ClanUser clanUser = {};
-			if (g_pUserDatabase->GetClanMember(user->GetID(), clanUser) > 0)
+			if (g_UserDatabase.GetClanMember(user->GetID(), clanUser) > 0)
 			{
-				g_pPacketManager->SendClanUpdate(user->GetExtendedSocket(), 1, clanUser.memberGrade, clan);
+				g_PacketManager.SendClanUpdate(user->GetExtendedSocket(), 1, clanUser.memberGrade, clan);
 			}
 		}
 	}
@@ -706,18 +708,18 @@ bool CClanManager::OnClanUpdateConfigRequest(CReceivePacket* msg, IUser* user)
 
 		Clan_s clan = {};
 		clan.region = region;
-		int result = g_pUserDatabase->UpdateClan(user->GetID(), CFLAG_REGION, clan);
+		int result = g_UserDatabase.UpdateClan(user->GetID(), CFLAG_REGION, clan);
 		switch (result)
 		{
 		case -1: // not clan master
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_SETTING_NO_AUTH"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_SETTING_NO_AUTH"));
 			return false;
 		case 0:
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		}
 
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 1, NULL);
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanUpdateConfig, 1, NULL);
 	}
 	else
 	{
@@ -736,27 +738,27 @@ bool CClanManager::OnClanSetNoticeRequest(CReceivePacket* msg, IUser* user)
 
 		Clan_s clan = {};
 		clan.noticeMsg = notice;
-		int result = g_pUserDatabase->UpdateClan(user->GetID(), CFLAG_NOTICEMSG, clan);
+		int result = g_UserDatabase.UpdateClan(user->GetID(), CFLAG_NOTICEMSG, clan);
 		switch (result)
 		{
 		case -1: // not clan master
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanSetNotice, 0, OBFUSCATE("CSO_CLAN_NOTICE_NO_AUTH"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanSetNotice, 0, OBFUSCATE("CSO_CLAN_NOTICE_NO_AUTH"));
 			return false;
 		case 0:
-			g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanSetNotice, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanSetNotice, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		}
 
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanSetNotice, 1, NULL);
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanSetNotice, 1, NULL);
 
 		// TODO: test this
 		vector<ClanUser> users;
-		g_pUserDatabase->GetClanUserList(user->GetID(), true, users);
+		g_UserDatabase.GetClanUserList(user->GetID(), true, users);
 		for (auto member : users)
 		{
 			if (member.user)
 			{
-				g_pPacketManager->SendClanUpdateNotice(member.user->GetExtendedSocket(), clan);
+				g_PacketManager.SendClanUpdateNotice(member.user->GetExtendedSocket(), clan);
 			}
 		}
 	}
@@ -773,24 +775,24 @@ bool CClanManager::OnClanStorageGiveItemRequest(CReceivePacket* msg, IUser* user
 	CUserInventoryItem item = {};
 	item.m_nSlot = slot;
 
-	int result = g_pUserDatabase->AddClanStorageItem(user->GetID(), storagePageID, item);
+	int result = g_UserDatabase.AddClanStorageItem(user->GetID(), storagePageID, item);
 	switch (result)
 	{
 	case -3: // storage page is full
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGiveItem, 0, OBFUSCATE("CSO_CLAN_GIVE_ITEM_EXCEED_LIMIT"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGiveItem, 0, OBFUSCATE("CSO_CLAN_GIVE_ITEM_EXCEED_LIMIT"));
 		return false;
 	case -1: // user not in clan or access grade is lower than user's member grade
 	case -2: // user inventory item does not exist
 	case 0: // db error
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGiveItem, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGiveItem, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	}
 
-	g_pPacketManager->SendInventoryRemove(user->GetExtendedSocket(), vector<CUserInventoryItem> {item}, false);
+	g_PacketManager.SendInventoryRemove(user->GetExtendedSocket(), vector<CUserInventoryItem> {item}, false);
 
-	//g_pPacketManager->SendClanStoragePage(user->GetExtendedSocket());
+	//g_PacketManager.SendClanStoragePage(user->GetExtendedSocket());
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGiveItem, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGiveItem, 1, NULL);
 
 	return true;
 }
@@ -801,34 +803,34 @@ bool CClanManager::OnClanStorageGetItemRequest(CReceivePacket* msg, IUser* user)
 	int slot = msg->ReadUInt16();
 
 	CUserInventoryItem item = {};
-	int result = g_pUserDatabase->GetClanStorageItem(user->GetID(), pageID, slot, item);
+	int result = g_UserDatabase.GetClanStorageItem(user->GetID(), pageID, slot, item);
 	switch (result)
 	{
 	case -1: // user not in clan or access grade is lower than user's member grade
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_SYSTEM_ERROR"));
 		return false;
 	case -2: // user inventory is full
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_INVENTORY_FULL"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_INVENTORY_FULL"));
 		return false;
 	case -3: // user already has the same permanent item
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_GET_ITEM_HAS_INFINITY_ITEM"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_GET_ITEM_HAS_INFINITY_ITEM"));
 		return false;
 	case -4: // user has exceed storage item limit
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_GET_ITEM_EXCEED_LIMIT"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_GET_ITEM_EXCEED_LIMIT"));
 		return false;
 	case -5: // user already has the same clan item
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_GET_ITEM_HAS_CLAN_ITEM"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_GET_ITEM_HAS_CLAN_ITEM"));
 		return false;
 	case 0: // db error
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	}
 
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), vector<CUserInventoryItem> {item});
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), vector<CUserInventoryItem> {item});
 
 	// TODO: send update?
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanGetItem, 1, NULL);
 
 	return true;
 }
@@ -841,44 +843,44 @@ bool CClanManager::OnClanStorageRequest(CReceivePacket* msg, IUser* user)
 		int storagePageID = msg->ReadUInt8();
 		ClanStoragePage storagePage = {};
 		storagePage.pageID = storagePageID;
-		if (g_pUserDatabase->GetClanStoragePage(user->GetID(), storagePage) <= 0)
+		if (g_UserDatabase.GetClanStoragePage(user->GetID(), storagePage) <= 0)
 		{
-			g_pPacketManager->SendClanStorageReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanStorageReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		}
 
-		g_pPacketManager->SendClanStoragePage(user->GetExtendedSocket(), storagePage);
+		g_PacketManager.SendClanStoragePage(user->GetExtendedSocket(), storagePage);
 	}
 	else if (type == 1) // request storage usage history
 	{
 		ClanStorageHistory storageHistory = {};
-		if (g_pUserDatabase->GetClanStorageHistory(user->GetID(), storageHistory) <= 0)
+		if (g_UserDatabase.GetClanStorageHistory(user->GetID(), storageHistory) <= 0)
 		{
-			g_pPacketManager->SendClanStorageReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+			g_PacketManager.SendClanStorageReply(user->GetExtendedSocket(), 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 			return false;
 		}
 
-		g_pPacketManager->SendClanStorageHistory(user->GetExtendedSocket()); // client crashes
+		g_PacketManager.SendClanStorageHistory(user->GetExtendedSocket()); // client crashes
 	}
 	else if (type == 2) // request storage set access grade 
 	{
 		int storagePageID = msg->ReadUInt8();
 		int accessGrade = msg->ReadUInt8();
 
-		g_pPacketManager->SendClanStorageReply(user->GetExtendedSocket(), 1, NULL);
+		g_PacketManager.SendClanStorageReply(user->GetExtendedSocket(), 1, NULL);
 
-		g_pUserDatabase->UpdateClanStorageAccessGrade(user->GetID(), storagePageID, accessGrade);
+		g_UserDatabase.UpdateClanStorageAccessGrade(user->GetID(), storagePageID, accessGrade);
 
 		vector<int> storageAccessGrade;
-		if (g_pUserDatabase->GetClanStorageAccessGrade(user->GetID(), storageAccessGrade) > 0)
+		if (g_UserDatabase.GetClanStorageAccessGrade(user->GetID(), storageAccessGrade) > 0)
 		{
 			vector<ClanUser> userList;
-			if (g_pUserDatabase->GetClanUserList(user->GetID(), true, userList) > 0)
+			if (g_UserDatabase.GetClanUserList(user->GetID(), true, userList) > 0)
 			{
 				for (auto clanUser : userList)
 				{
 					if (clanUser.user)
-						g_pPacketManager->SendClanStorageAccessGrade(clanUser.user->GetExtendedSocket(), storageAccessGrade);
+						g_PacketManager.SendClanStorageAccessGrade(clanUser.user->GetExtendedSocket(), storageAccessGrade);
 				}
 			}
 		}
@@ -896,31 +898,31 @@ bool CClanManager::OnClanStorageDeleteItem(CReceivePacket* msg, IUser* user)
 	int storagePageID = msg->ReadUInt8();
 	int slot = msg->ReadUInt16();
 
-	if (g_pUserDatabase->DeleteClanStorageItem(user->GetID(), storagePageID, slot) <= 0)
+	if (g_UserDatabase.DeleteClanStorageItem(user->GetID(), storagePageID, slot) <= 0)
 	{
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanDeleteItem, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanDeleteItem, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	}
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanDeleteItem, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanDeleteItem, 1, NULL);
 
 	return true;
 }
 
 bool CClanManager::OnClanDissolveRequest(CReceivePacket* msg, IUser* user)
 {
-	int result = g_pUserDatabase->DissolveClan(user->GetID());
+	int result = g_UserDatabase.DissolveClan(user->GetID());
 	switch (result)
 	{
 	case -1:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanDissolve, 0, OBFUSCATE("CSO_CLAN_NO_AUTH"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanDissolve, 0, OBFUSCATE("CSO_CLAN_NO_AUTH"));
 		return false;
 	case 0:
-		g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanDissolve, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
+		g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanDissolve, 0, OBFUSCATE("CSO_CLAN_DB_SYSTEM_ERROR"));
 		return false;
 	}
 
-	g_pPacketManager->SendClanReply(user->GetExtendedSocket(), RequestClanDissolve, 1, NULL);
+	g_PacketManager.SendClanReply(user->GetExtendedSocket(), RequestClanDissolve, 1, NULL);
 
 	user->UpdateClan(0);
 
@@ -933,18 +935,18 @@ bool CClanManager::OnClanDelegateMasterRequest(CReceivePacket* msg, IUser* user)
 {
 	string userName = msg->ReadString();
 
-	int result = g_pUserDatabase->ClanMasterDelegate(user->GetID(), userName);
+	int result = g_UserDatabase.ClanMasterDelegate(user->GetID(), userName);
 	switch (result)
 	{
 	case -1:
-		g_pPacketManager->SendClanMasterDelegate(user->GetExtendedSocket());
+		g_PacketManager.SendClanMasterDelegate(user->GetExtendedSocket());
 		return false;
 	case 0:
-		g_pPacketManager->SendClanMasterDelegate(user->GetExtendedSocket());
+		g_PacketManager.SendClanMasterDelegate(user->GetExtendedSocket());
 		return false;
 	}
 
-	g_pPacketManager->SendClanMasterDelegate(user->GetExtendedSocket());
+	g_PacketManager.SendClanMasterDelegate(user->GetExtendedSocket());
 
 	return true;
 }
@@ -952,7 +954,7 @@ bool CClanManager::OnClanDelegateMasterRequest(CReceivePacket* msg, IUser* user)
 bool CClanManager::OnClanMemberUserListRequest(CReceivePacket* msg, IUser* user)
 {
 	vector<ClanUser> users;
-	int result = g_pUserDatabase->GetClanMemberList(user->GetID(), users);
+	int result = g_UserDatabase.GetClanMemberList(user->GetID(), users);
 	switch (result)
 	{
 	case 0:
@@ -960,7 +962,7 @@ bool CClanManager::OnClanMemberUserListRequest(CReceivePacket* msg, IUser* user)
 	}
 
 	if (users.size())
-		g_pPacketManager->SendClanCreateMemberUserList(user->GetExtendedSocket(), users);
+		g_PacketManager.SendClanCreateMemberUserList(user->GetExtendedSocket(), users);
 
 	return true;
 }
@@ -968,7 +970,7 @@ bool CClanManager::OnClanMemberUserListRequest(CReceivePacket* msg, IUser* user)
 bool CClanManager::OnClanJoinUserListRequest(CReceivePacket* msg, IUser* user)
 {
 	vector<ClanUserJoinRequest> users;
-	int result = g_pUserDatabase->GetClanMemberJoinUserList(user->GetID(), users);
+	int result = g_UserDatabase.GetClanMemberJoinUserList(user->GetID(), users);
 	switch (result)
 	{
 	case 0:
@@ -976,7 +978,7 @@ bool CClanManager::OnClanJoinUserListRequest(CReceivePacket* msg, IUser* user)
 	}
 
 	if (users.size())
-		g_pPacketManager->SendClanCreateJoinUserList(user->GetExtendedSocket(), users);
+		g_PacketManager.SendClanCreateJoinUserList(user->GetExtendedSocket(), users);
 
 	return true;
 }
@@ -986,7 +988,7 @@ bool CClanManager::OnClanChatMessage(CReceivePacket* msg, IUser* user)
 	string message = msg->ReadString();
 
 	vector<ClanUser> userList;
-	if (g_pUserDatabase->GetClanUserList(user->GetID(), true, userList) <= 0 || userList.size() <= 0)
+	if (g_UserDatabase.GetClanUserList(user->GetID(), true, userList) <= 0 || userList.size() <= 0)
 	{
 		// failed
 		return false;
@@ -996,7 +998,7 @@ bool CClanManager::OnClanChatMessage(CReceivePacket* msg, IUser* user)
 	for (auto clanUser : userList)
 	{
 		if (clanUser.user)
-			g_pPacketManager->SendClanChatMessage(clanUser.user->GetExtendedSocket(), clanUser.character.gameName, message);
+			g_PacketManager.SendClanChatMessage(clanUser.user->GetExtendedSocket(), clanUser.character.gameName, message);
 	}
 
 	return true;
@@ -1005,13 +1007,13 @@ bool CClanManager::OnClanChatMessage(CReceivePacket* msg, IUser* user)
 void CClanManager::OnUserLogin(IUser* user)
 {
 	vector<ClanUser> userList;
-	if (g_pUserDatabase->GetClanUserList(user->GetID(), true, userList) <= 0 || userList.size() <= 0)
+	if (g_UserDatabase.GetClanUserList(user->GetID(), true, userList) <= 0 || userList.size() <= 0)
 	{
 		// failed
 		return;
 	}
 
-	g_pPacketManager->SendClanCreateUserList(user->GetExtendedSocket(), userList);
+	g_PacketManager.SendClanCreateUserList(user->GetExtendedSocket(), userList);
 
 	// TODO: move it to new func?
 	ClanUser loggedInUser = {};
@@ -1029,33 +1031,33 @@ void CClanManager::OnUserLogin(IUser* user)
 	{
 		if (clanUser.user && clanUser.user->GetID() != user->GetID())
 		{
-			g_pPacketManager->SendClanUpdateUserList(clanUser.user->GetExtendedSocket(), loggedInUser);
+			g_PacketManager.SendClanUpdateUserList(clanUser.user->GetExtendedSocket(), loggedInUser);
 		}
 	}
 
 	vector<ClanUser> users;
-	if (g_pUserDatabase->GetClanMemberList(user->GetID(), users) > 0 && users.size())
+	if (g_UserDatabase.GetClanMemberList(user->GetID(), users) > 0 && users.size())
 	{
-		g_pPacketManager->SendClanCreateMemberUserList(user->GetExtendedSocket(), users);
+		g_PacketManager.SendClanCreateMemberUserList(user->GetExtendedSocket(), users);
 	}
 
 	vector<ClanUserJoinRequest> usersJoin;
-	if (g_pUserDatabase->GetClanMemberJoinUserList(user->GetID(), usersJoin) > 0 && usersJoin.size())
+	if (g_UserDatabase.GetClanMemberJoinUserList(user->GetID(), usersJoin) > 0 && usersJoin.size())
 	{
-		g_pPacketManager->SendClanCreateJoinUserList(user->GetExtendedSocket(), usersJoin);
+		g_PacketManager.SendClanCreateJoinUserList(user->GetExtendedSocket(), usersJoin);
 	}
 
 	vector<int> storageAccessGrade;
-	if (g_pUserDatabase->GetClanStorageAccessGrade(user->GetID(), storageAccessGrade) > 0)
+	if (g_UserDatabase.GetClanStorageAccessGrade(user->GetID(), storageAccessGrade) > 0)
 	{
-		g_pPacketManager->SendClanStorageAccessGrade(user->GetExtendedSocket(), storageAccessGrade);
+		g_PacketManager.SendClanStorageAccessGrade(user->GetExtendedSocket(), storageAccessGrade);
 	}
 
 	Clan_s clan = {};
-	g_pUserDatabase->GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_TIME | CFLAG_GAMEMODEID | CFLAG_MAPID | CFLAG_REGION | CFLAG_JOINMETHOD | CFLAG_EXPBOOST | CFLAG_POINTBOOST | CFLAG_NOTICEMSG
+	g_UserDatabase.GetClan(user->GetID(), CFLAG_ID | CFLAG_NAME | CFLAG_TIME | CFLAG_GAMEMODEID | CFLAG_MAPID | CFLAG_REGION | CFLAG_JOINMETHOD | CFLAG_EXPBOOST | CFLAG_POINTBOOST | CFLAG_NOTICEMSG
 		| CFLAG_SCORE | CFLAG_MARKID | CFLAG_MARKCOLOR | CFLAG_CLANMASTER | CFLAG_MARKCHANGECOUNT | CFLAG_MAXMEMBERCOUNT | CFLAG_CHRONICLE, clan);
 
 	//ClanStoragePage storagePage;
-	//g_pUserDatabase->GetClanStoragePage(user->GetID(), );
-	g_pPacketManager->SendClanUpdate(user->GetExtendedSocket(), 0, loggedInUser.memberGrade, clan);
+	//g_UserDatabase.GetClanStoragePage(user->GetID(), );
+	g_PacketManager.SendClanUpdate(user->GetExtendedSocket(), 0, loggedInUser.memberGrade, clan);
 }

@@ -2,7 +2,6 @@
 #pragma once
 
 #include <SQLiteCpp/SQLiteCpp.h>
-#include <chrono>
 #include "manager.h"
 #include "interface/iuserdatabase.h"
 
@@ -175,18 +174,16 @@ public:
 
 	void WriteUserStatistic(const std::string& fdate, const std::string& sdate);
 
-	SQLite::Transaction CreateTransaction();
-	bool CommitTransaction(SQLite::Transaction& trans);
+	void CreateTransaction();
+	bool CommitTransaction();
 
 private:
 	bool CheckForTables();
 	bool UpgradeDatabase(int& currentDatabaseVer);
 	bool ExecuteOnce();
 
-	std::chrono::high_resolution_clock::time_point ExecCalcStart();
-	void ExecCalcEnd(std::chrono::high_resolution_clock::time_point startTime, const std::string& funcName);
-
 	SQLite::Database m_Database;
+	SQLite::Transaction* m_pTransaction;
 	bool m_bInited;
 };
 

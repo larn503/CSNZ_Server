@@ -292,4 +292,4 @@ private:
 	CBinMetadata* m_pUnk49;
 };
 
-extern CPacketManager* g_pPacketManager;
+extern CPacketManager g_PacketManager;

@@ -114,11 +114,11 @@ void CommandHelp(CCommand* cmd, const vector<string>& args)
 void CommandUsers(CCommand* cmd, const vector<string>& args)
 {
 	Console().Log(va("%-6s|%-32s|%-8s|%-6s|%-15s| (online: %d | connected: %d)\n",
-		"UserID", "Username/IP", "Uptime", "Status", "IP Address", g_pUserManager->GetUsers().size(), g_pServerInstance->GetClients().size()));
+		"UserID", "Username/IP", "Uptime", "Status", "IP Address", g_UserManager.GetUsers().size(), g_pServerInstance->GetClients().size()));
 
 	for (auto sock : g_pServerInstance->GetClients())
 	{
-		IUser* user = g_pUserManager->GetUserBySocket(sock);
+		IUser* user = g_UserManager.GetUserBySocket(sock);
 		if (user)
 		{
 			Console().Log(va("%-6d|%-32s|%-8s|%-6d|%-15s\n",
@@ -142,7 +142,7 @@ void CommandUsers(CCommand* cmd, const vector<string>& args)
 
 void CommandKickAll(CCommand* cmd, const vector<string>& args)
 {
-	g_pUserManager->DisconnectAllFromServer();
+	g_UserManager.DisconnectAllFromServer();
 }
 
 void CommandCrash(CCommand* cmd, const vector<string>& args)
@@ -153,7 +153,7 @@ void CommandCrash(CCommand* cmd, const vector<string>& args)
 void CommandShutdown(CCommand* cmd, const vector<string>& args)
 {
 	// kick user from game
-	for (auto channel : g_pChannelManager->channelServers)
+	for (auto channel : g_ChannelManager.channelServers)
 	{
 		for (auto sub : channel->GetChannels())
 		{
@@ -165,7 +165,7 @@ void CommandShutdown(CCommand* cmd, const vector<string>& args)
 		}
 	}
 
-	g_pUserManager->SendNoticeMsgBoxToAll("Server down for maintenance");
+	g_UserManager.SendNoticeMsgBoxToAll("Server down for maintenance");
 
 	g_pServerInstance->SetServerActive(false);
 }
@@ -185,10 +185,10 @@ void CommandGiveRewardToAll(CCommand* cmd, const vector<string>& args)
 		return;
 	}
 
-	auto users = g_pUserDatabase->GetUsers();
+	auto users = g_UserDatabase.GetUsers();
 	for (auto userID : users)
 	{
-		g_pItemManager->GiveReward(userID, g_pUserManager->GetUserById(userID), rewardID);
+		g_ItemManager.GiveReward(userID, g_UserManager.GetUserById(userID), rewardID);
 	}
 }
 
@@ -206,9 +206,9 @@ void CommandSendNotice(CCommand* cmd, const vector<string>& args)
 		out += ' ' + args[i];
 	}
 
-	g_pUserManager->SendNoticeMsgBoxToAll(out);
+	g_UserManager.SendNoticeMsgBoxToAll(out);
 
-	Console().Log("Sent to %d online users: %s\n", g_pUserManager->GetUsers().size(), out.c_str());
+	Console().Log("Sent to %d online users: %s\n", g_UserManager.GetUsers().size(), out.c_str());
 }
 
 void CommandBan(CCommand* cmd, const vector<string>& args)
@@ -224,7 +224,7 @@ void CommandBan(CCommand* cmd, const vector<string>& args)
 	string reason = args[3];
 	int term = stoi(args[4]);
 
-	if (!g_pUserDatabase->IsUserExists(userID))
+	if (!g_UserDatabase.IsUserExists(userID))
 	{
 		Console().Log("[Ban] User does not exist\n");
 		return;
@@ -238,19 +238,19 @@ void CommandBan(CCommand* cmd, const vector<string>& args)
 	ban.reason = reason;
 	ban.term = term * CSO_24_HOURS_IN_MINUTES + g_pServerInstance->GetCurrentTime(); // convert days to minutes
 
-	IUser* user = g_pUserManager->GetUserById(userID);
-	if (g_pUserDatabase->UpdateUserBan(userID, ban) > 0)
+	IUser* user = g_UserManager.GetUserById(userID);
+	if (g_UserDatabase.UpdateUserBan(userID, ban) > 0)
 	{
 		if (user)
-			g_pUserManager->DisconnectUser(user);
+			g_UserManager.DisconnectUser(user);
 	}
 
 	CUserCharacter character = {};
 	character.flag = UFLAG_GAMENAME;
-	g_pUserDatabase->GetCharacter(userID, character);
+	g_UserDatabase.GetCharacter(userID, character);
 	if (banType == 1)
 	{
-		g_pUserManager->SendNoticeMessageToAll(va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
+		g_UserManager.SendNoticeMessageToAll(va(OBFUSCATE("%s is banned. Reason: %s"), character.gameName.c_str(), reason.c_str()));
 	}
 }
 
@@ -265,13 +265,13 @@ void CommandUnban(CCommand* cmd, const vector<string>& args)
 	int userID = stoi(args[1]);
 
 	UserBan ban = {};
-	g_pUserDatabase->GetUserBan(userID, ban);
+	g_UserDatabase.GetUserBan(userID, ban);
 
 	if (ban.banType)
 	{
 		ban = {};
 
-		g_pUserDatabase->UpdateUserBan(userID, ban);
+		g_UserDatabase.UpdateUserBan(userID, ban);
 	}
 	else
 	{
@@ -288,7 +288,7 @@ void CommandHban(CCommand* cmd, const vector<string>& args)
 	}
 
 	int userID = stoi(args[1]);
-	if (!g_pUserDatabase->IsUserExists(userID))
+	if (!g_UserDatabase.IsUserExists(userID))
 	{
 		Console().Log("[HBan] User does not exist\n");
 		return;
@@ -296,13 +296,13 @@ void CommandHban(CCommand* cmd, const vector<string>& args)
 
 	CUserData data = {};
 	data.flag = UDATA_FLAG_LASTHWID;
-	if (g_pUserDatabase->GetUserData(userID, data) > 0)
+	if (g_UserDatabase.GetUserData(userID, data) > 0)
 	{
-		IUser* user = g_pUserManager->GetUserById(userID);
+		IUser* user = g_UserManager.GetUserById(userID);
 		if (user)
-			g_pUserManager->DisconnectUser(user);
+			g_UserManager.DisconnectUser(user);
 
-		g_pUserDatabase->UpdateHWIDBanList(data.lastHWID);
+		g_UserDatabase.UpdateHWIDBanList(data.lastHWID);
 	}
 }
 
@@ -316,7 +316,7 @@ void CommandUnhban(CCommand* cmd, const vector<string>& args)
 
 	vector<unsigned char> hwid(args[1].begin(), args[1].end());
 
-	g_pUserDatabase->UpdateHWIDBanList(hwid, true);
+	g_UserDatabase.UpdateHWIDBanList(hwid, true);
 }
 
 void CommandIpban(CCommand* cmd, const vector<string>& args)
@@ -328,7 +328,7 @@ void CommandIpban(CCommand* cmd, const vector<string>& args)
 	}
 
 	int userID = stoi(args[1]);
-	if (!g_pUserDatabase->IsUserExists(userID))
+	if (!g_UserDatabase.IsUserExists(userID))
 	{
 		Console().Log(OBFUSCATE("[IPBan] User does not exist\n"));
 		return;
@@ -336,13 +336,13 @@ void CommandIpban(CCommand* cmd, const vector<string>& args)
 
 	CUserData data = {};
 	data.flag = UDATA_FLAG_LASTIP;
-	if (g_pUserDatabase->GetUserData(userID, data) > 0)
+	if (g_UserDatabase.GetUserData(userID, data) > 0)
 	{
-		IUser* user = g_pUserManager->GetUserById(userID);
+		IUser* user = g_UserManager.GetUserById(userID);
 		if (user)
-			g_pUserManager->DisconnectUser(user);
+			g_UserManager.DisconnectUser(user);
 
-		g_pUserDatabase->UpdateIPBanList(data.lastIP);
+		g_UserDatabase.UpdateIPBanList(data.lastIP);
 	}
 }
 
@@ -354,7 +354,7 @@ void CommandUnipban(CCommand* cmd, const vector<string>& args)
 		return;
 	}
 
-	g_pUserDatabase->UpdateIPBanList(args[1], true);
+	g_UserDatabase.UpdateIPBanList(args[1], true);
 }
 
 void CommandToggleGameMaster(CCommand* cmd, const vector<string>& args)
@@ -366,7 +366,7 @@ void CommandToggleGameMaster(CCommand* cmd, const vector<string>& args)
 	}
 
 	int userID = stoi(args[1]);
-	if (!g_pUserDatabase->IsUserExists(userID))
+	if (!g_UserDatabase.IsUserExists(userID))
 	{
 		Console().Log(OBFUSCATE("[ToggleGM] User does not exist\n"));
 		return;
@@ -374,49 +374,49 @@ void CommandToggleGameMaster(CCommand* cmd, const vector<string>& args)
 
 	CUserCharacterExtended character = {};
 	character.flag = EXT_UFLAG_GAMEMASTER;
-	g_pUserDatabase->GetCharacterExtended(userID, character);
+	g_UserDatabase.GetCharacterExtended(userID, character);
 
 	character.gameMaster = character.gameMaster ? false : true;
 	Console().Log(OBFUSCATE("Updated '%d' gameMaster privilege to '%s'\n"), userID, character.gameMaster ? (const char*)OBFUSCATE("true") : (const char*)OBFUSCATE("false"));
 
-	g_pUserDatabase->UpdateCharacterExtended(userID, character);
+	g_UserDatabase.UpdateCharacterExtended(userID, character);
 }
 
 void CommandShopReload(CCommand* cmd, const vector<string>& args)
 {
-	g_pShopManager->Init();
+	g_ShopManager.Init();
 	// send shop update to users
-	for (auto u : g_pUserManager->GetUsers())
-		g_pPacketManager->SendShopUpdate(u->GetExtendedSocket(), g_pShopManager->GetProducts());
+	for (auto u : g_UserManager.GetUsers())
+		g_PacketManager.SendShopUpdate(u->GetExtendedSocket(), g_ShopManager.GetProducts());
 
-	Console().Log("Sent shop update to: %d\n", g_pUserManager->GetUsers().size());
+	Console().Log("Sent shop update to: %d\n", g_UserManager.GetUsers().size());
 }
 
 void CommandDbReload(CCommand* cmd, const vector<string>& args)
 {
-	g_pServerInstance->Init();
-	g_pUserDatabase->Init();
-	g_pItemManager->Init();
-	g_pShopManager->Init();
-	g_pLuckyItemManager->Init();
-	g_pQuestManager->Init();
-
-	// send userinfo to users
-	for (auto u : g_pUserManager->GetUsers())
+	if (!g_pServerInstance->Reload())
 	{
-		CUserCharacter character = u->GetCharacter(UFLAG_ALL);
-		g_pPacketManager->SendUserUpdateInfo(u->GetExtendedSocket(), u, character);
+		Console().Log("Failed to reload managers!\n");
+		g_pServerInstance->SetServerActive(false);
+		return;
 	}
 
-	Console().Log("Sent user update info to: %d\n", g_pUserManager->GetUsers().size());
+	// send userinfo to users
+	for (auto u : g_UserManager.GetUsers())
+	{
+		CUserCharacter character = u->GetCharacter(UFLAG_ALL);
+		g_PacketManager.SendUserUpdateInfo(u->GetExtendedSocket(), u, character);
+	}
+
+	Console().Log("Sent user update info to: %d\n", g_UserManager.GetUsers().size());
 
 	// send shop update to users
-	for (auto u : g_pUserManager->GetUsers())
-		g_pPacketManager->SendShopUpdate(u->GetExtendedSocket(), g_pShopManager->GetProducts());
+	for (auto u : g_UserManager.GetUsers())
+		g_PacketManager.SendShopUpdate(u->GetExtendedSocket(), g_ShopManager.GetProducts());
 
-	Console().Log("Sent shop update to: %d\n", g_pUserManager->GetUsers().size());
+	Console().Log("Sent shop update to: %d\n", g_UserManager.GetUsers().size());
 
-	Console().Log("Database reload successfull.\n");
+	Console().Log("Managers reload successfull.\n");
 }
 
 void CommandBans(CCommand* cmd, const vector<string>& args)
@@ -424,9 +424,9 @@ void CommandBans(CCommand* cmd, const vector<string>& args)
 	ostringstream log;
 	log << va(OBFUSCATE("\n%-5s|%-5s|%-32s|%-8s|%-6s|%-7s\n"), ("UID"), ("Type"), ("Reason"), ("HWID Ban"), ("IP Ban"), ("Acc Ban"));
 
-	map<int, UserBan> banList = g_pUserDatabase->GetUserBanList();
-	vector<string> ipBanList = g_pUserDatabase->GetIPBanList();
-	vector<vector<unsigned char>> hwidBanList = g_pUserDatabase->GetHWIDBanList();
+	map<int, UserBan> banList = g_UserDatabase.GetUserBanList();
+	vector<string> ipBanList = g_UserDatabase.GetIPBanList();
+	vector<vector<unsigned char>> hwidBanList = g_UserDatabase.GetHWIDBanList();
 
 	for (auto b : banList)
 	{
@@ -441,7 +441,7 @@ void CommandBans(CCommand* cmd, const vector<string>& args)
 			aCheck = true;
 
 		CUserData data = {};
-		g_pUserDatabase->GetUserData(userID, data);
+		g_UserDatabase.GetUserData(userID, data);
 
 		for (auto& i : ipBanList)
 		{
@@ -478,12 +478,12 @@ void CommandGiveItem(CCommand* cmd, const vector<string>& args)
 	if (isNumber(args[1]))
 	{
 		userID = stoi(args[1]);
-		if (!g_pUserDatabase->IsUserExists(userID))
+		if (!g_UserDatabase.IsUserExists(userID))
 			userID = 0;
 	}
 	else
 	{
-		userID = g_pUserDatabase->IsUserExists(args[1], false);
+		userID = g_UserDatabase.IsUserExists(args[1], false);
 	}
 
 	if (!userID)
@@ -507,8 +507,8 @@ void CommandGiveItem(CCommand* cmd, const vector<string>& args)
 	if (args.size() >= 5 && isNumber(args[4]))
 		duration = stoi(args[4]);
 
-	IUser* user = g_pUserManager->GetUserById(userID);
-	int status = g_pItemManager->AddItem(userID, user, itemID, count, duration); // add permanent item by default
+	IUser* user = g_UserManager.GetUserById(userID);
+	int status = g_ItemManager.AddItem(userID, user, itemID, count, duration); // add permanent item by default
 	switch (status)
 	{
 	case ITEM_ADD_INVENTORY_FULL:
@@ -537,8 +537,8 @@ void CommandGiveItem(CCommand* cmd, const vector<string>& args)
 		}
 		else
 		{
-			g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice);
-			g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "", "", true);
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice);
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "", "", true);
 		}
 
 		break;
@@ -562,14 +562,14 @@ void CommandSendEvent(CCommand* cmd, const vector<string>& args)
 	int userID = stoi(args[1]);
 	int num = stoi(args[2]);
 
-	IUser* user = g_pUserManager->GetUserById(userID);
+	IUser* user = g_UserManager.GetUserById(userID);
 	if (!user)
 	{
 		Console().Log("User is offline");
 		return;
 	}
 
-	g_pPacketManager->SendEventAdd(user->GetExtendedSocket(), num);
+	g_PacketManager.SendEventAdd(user->GetExtendedSocket(), num);
 }
 
 void CommandSendEvent2(CCommand* cmd, const vector<string>& args)
@@ -581,7 +581,7 @@ void CommandSendEvent2(CCommand* cmd, const vector<string>& args)
 	}
 
 	int userID = stoi(args[1]);
-	IUser* user = g_pUserManager->GetUserById(userID);
+	IUser* user = g_UserManager.GetUserById(userID);
 	if (!user)
 	{
 		Console().Log("User is offline");
@@ -592,10 +592,10 @@ void CommandSendEvent2(CCommand* cmd, const vector<string>& args)
 	vector<UserWeaponReleaseRow> rows;
 	int totalCharacterCount = 0;
 
-	g_pUserDatabase->GetWeaponReleaseCharacters(user->GetID(), characters, totalCharacterCount);
-	g_pUserDatabase->GetWeaponReleaseRows(user->GetID(), rows);
+	g_UserDatabase.GetWeaponReleaseCharacters(user->GetID(), characters, totalCharacterCount);
+	g_UserDatabase.GetWeaponReleaseRows(user->GetID(), rows);
 
-	g_pPacketManager->SendMiniGameWeaponReleaseUpdate(user->GetExtendedSocket(), g_pServerConfig->weaponRelease, rows, characters, totalCharacterCount);
+	g_PacketManager.SendMiniGameWeaponReleaseUpdate(user->GetExtendedSocket(), g_pServerConfig->weaponRelease, rows, characters, totalCharacterCount);
 }
 
 void CommandSendInventory(CCommand* cmd, const vector<string>& args)
@@ -607,7 +607,7 @@ void CommandSendInventory(CCommand* cmd, const vector<string>& args)
 	}
 
 	int userID = stoi(args[1]);
-	IUser* user = g_pUserManager->GetUserById(userID);
+	IUser* user = g_UserManager.GetUserById(userID);
 	if (!user)
 	{
 		Console().Log("User is offline");
@@ -615,10 +615,10 @@ void CommandSendInventory(CCommand* cmd, const vector<string>& args)
 	}
 
 	vector<CUserInventoryItem> items;
-	g_pUserDatabase->GetInventoryItems(user->GetID(), items);
+	g_UserDatabase.GetInventoryItems(user->GetID(), items);
 
-	g_pPacketManager->SendDefaultItems(user->GetExtendedSocket(), g_pUserManager->GetDefaultInventoryItems());
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendDefaultItems(user->GetExtendedSocket(), g_UserManager.GetDefaultInventoryItems());
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 }
 
 CCommand help("help", "Print command list", "", CommandHelp);

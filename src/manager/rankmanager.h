@@ -18,4 +18,4 @@ private:
 	bool OnRankUserInfoRequest(CReceivePacket* msg, IUser* user);
 };
 
-extern class CRankManager* g_pRankManager;
+extern CRankManager g_RankManager;

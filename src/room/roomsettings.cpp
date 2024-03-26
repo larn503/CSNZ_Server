@@ -1279,7 +1279,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 		if (gameModeId == 3 || gameModeId == 4 || gameModeId == 5 || gameModeId == 15 || gameModeId == 24)
 		{
 			CUserInventoryItem item;
-			sd = g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), 439 /* BigHeadEvent */, item);
+			sd = g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), 439 /* BigHeadEvent */, item);
 		}
 		else
 			sd = 0;
@@ -1443,7 +1443,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user, int 
 				if (gameModeId == 0 || gameModeId == 3 || gameModeId == 23)
 				{
 					CUserInventoryItem item;
-					c4Timer = g_pUserDatabase->GetFirstActiveItemByItemID(user->GetID(), 112 /* C4Sound */, item);
+					c4Timer = g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), 112 /* C4Sound */, item);
 				}
 				else
 				{

@@ -25,7 +25,7 @@ bool CChannel::UserJoin(IUser* user, bool unhide)
 			if (u == user || u->GetCurrentRoom())
 				continue;
 
-			g_pPacketManager->SendLobbyUserJoin(u->GetExtendedSocket(), user);
+			g_PacketManager.SendLobbyUserJoin(u->GetExtendedSocket(), user);
 		}
 
 		return true;
@@ -33,7 +33,7 @@ bool CChannel::UserJoin(IUser* user, bool unhide)
 
 	if ((int)m_Users.size() >= m_nMaxPlayers)
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("SERVER_SELECT_FAIL_LOBBY_FULL"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("SERVER_SELECT_FAIL_LOBBY_FULL"));
 
 		return false;
 	}
@@ -45,15 +45,15 @@ bool CChannel::UserJoin(IUser* user, bool unhide)
 		if (u == user)
 			continue;
 
-		g_pPacketManager->SendLobbyUserJoin(u->GetExtendedSocket(), user);
+		g_PacketManager.SendLobbyUserJoin(u->GetExtendedSocket(), user);
 	}
 
-	g_pPacketManager->SendLobbyJoin(user->GetExtendedSocket(), this);
-	g_pPacketManager->SendRoomListFull(user->GetExtendedSocket(), m_Rooms);
+	g_PacketManager.SendLobbyJoin(user->GetExtendedSocket(), this);
+	g_PacketManager.SendRoomListFull(user->GetExtendedSocket(), m_Rooms);
 
 	if (!m_LoginMsg.empty())
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), m_LoginMsg);
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), m_LoginMsg);
 	}
 
 	return true;
@@ -77,7 +77,7 @@ void CChannel::UserLeft(IUser* user, bool hide)
 		if (/*u == user || */u->GetCurrentRoom())
 			continue;
 
-		g_pPacketManager->SendLobbyUserLeft(u->GetExtendedSocket(), user);
+		g_PacketManager.SendLobbyUserLeft(u->GetExtendedSocket(), user);
 	}
 }
 
@@ -88,13 +88,13 @@ void CChannel::SendFullUpdateRoomList()
 		if (u->GetCurrentRoom())
 			continue;
 
-		g_pPacketManager->SendRoomListFull(u->GetExtendedSocket(), m_Rooms);
+		g_PacketManager.SendRoomListFull(u->GetExtendedSocket(), m_Rooms);
 	}
 }
 
 void CChannel::SendFullUpdateRoomList(IUser* user)
 {
-	g_pPacketManager->SendRoomListFull(user->GetExtendedSocket(), m_Rooms);
+	g_PacketManager.SendRoomListFull(user->GetExtendedSocket(), m_Rooms);
 }
 
 void CChannel::SendUpdateRoomList(IRoom* room)
@@ -104,7 +104,7 @@ void CChannel::SendUpdateRoomList(IRoom* room)
 		if (u->GetCurrentRoom())
 			continue;
 
-		g_pPacketManager->SendRoomListUpdate(u->GetExtendedSocket(), room);
+		g_PacketManager.SendRoomListUpdate(u->GetExtendedSocket(), room);
 	}
 }
 
@@ -115,7 +115,7 @@ void CChannel::SendAddRoomToRoomList(IRoom* room)
 		if (u->GetCurrentRoom())
 			continue;
 
-		g_pPacketManager->SendRoomListAdd(u->GetExtendedSocket(), room);
+		g_PacketManager.SendRoomListAdd(u->GetExtendedSocket(), room);
 	}
 }
 
@@ -126,7 +126,7 @@ void CChannel::SendRemoveFromRoomList(int roomId)
 		if (u->GetCurrentRoom())
 			continue;
 
-		g_pPacketManager->SendRoomListRemove(u->GetExtendedSocket(), roomId);
+		g_PacketManager.SendRoomListRemove(u->GetExtendedSocket(), roomId);
 	}
 }
 
@@ -134,7 +134,7 @@ void CChannel::SendLobbyMessageToAllUser(const std::string& senderName, const st
 {
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendUMsgLobbyMessage(u->GetExtendedSocket(), senderName, msg);
+		g_PacketManager.SendUMsgLobbyMessage(u->GetExtendedSocket(), senderName, msg);
 	}
 }
 
@@ -142,7 +142,7 @@ void CChannel::UpdateUserInfo(IUser* user, const CUserCharacter& character)
 {
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendUserUpdateInfo(u->GetExtendedSocket(), user, character);
+		g_PacketManager.SendUserUpdateInfo(u->GetExtendedSocket(), user, character);
 	}
 }
 

@@ -42,4 +42,4 @@ private:
 	bool OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user);
 };
 
-extern class CChannelManager* g_pChannelManager;
+extern CChannelManager g_ChannelManager;

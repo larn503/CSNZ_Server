@@ -32,4 +32,4 @@ private:
 	void OnWeaponReleaseGetJokerRequest(IUser* user);
 };
 
-extern class CMiniGameManager* g_pMiniGameManager;
+extern CMiniGameManager g_MiniGameManager;

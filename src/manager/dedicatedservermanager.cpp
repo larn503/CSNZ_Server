@@ -10,7 +10,7 @@ CDedicatedServer::CDedicatedServer(IExtendedSocket* socket, int ip, int port)
 	m_pRoom = NULL;
 	m_iLastMemory = 0;
 
-	g_pUserManager->SendMetadata(socket);
+	g_UserManager.SendMetadata(socket);
 }
 
 void CDedicatedServer::SetRoom(IRoom* room)
@@ -60,13 +60,13 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 		int port = msg->ReadUInt16();
 		int ip = msg->ReadUInt32(false);
 
-		g_pDedicatedServerManager->AddServer(new CDedicatedServer(socket, ip, port));
+		g_DedicatedServerManager.AddServer(new CDedicatedServer(socket, ip, port));
 
 		break;
 	}
 	case 1:
 	{
-		CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
+		CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
 		if (server)
 			server->SetMemoryUsage(msg->ReadUInt16());
 
@@ -87,14 +87,15 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 	return true;
 }
 
+CDedicatedServerManager g_DedicatedServerManager;
+
 CDedicatedServerManager::CDedicatedServerManager() : CBaseManager("DedicatedServerManager")
 {
 }
 
 CDedicatedServerManager::~CDedicatedServerManager()
 {
-	printf("~CItemManager\n");
-	Shutdown();
+	printf("~CDedicatedServerManager\n");
 }
 
 void CDedicatedServerManager::Shutdown()
@@ -102,7 +103,7 @@ void CDedicatedServerManager::Shutdown()
 	std::lock_guard<std::mutex> lg(hMutex);
 
 	for (auto s : vServerPools)
-		g_pPacketManager->SendHostServerStop(s->GetSocket());
+		g_PacketManager.SendHostServerStop(s->GetSocket());
 }
 
 CDedicatedServer* CDedicatedServerManager::GetAvailableServerFromPools(IRoom* room)

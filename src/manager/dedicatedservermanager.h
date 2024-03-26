@@ -53,4 +53,4 @@ private:
 	std::vector<CDedicatedServer*> vServerPools;
 };
 
-extern class CDedicatedServerManager* g_pDedicatedServerManager;
+extern CDedicatedServerManager g_DedicatedServerManager;

@@ -143,7 +143,7 @@ public:
 		{
 			if (tempProgress.unitsDone % m_pTask->GetNoticeGoal() == 0)
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(userStat->m_pUser->GetExtendedSocket(), va((char*)m_pTask->GetNoticeUserMsg().c_str(), tempProgress.unitsDone, m_pTask->GetGoal()));
+				g_PacketManager.SendUMsgNoticeMessageInChat(userStat->m_pUser->GetExtendedSocket(), va((char*)m_pTask->GetNoticeUserMsg().c_str(), tempProgress.unitsDone, m_pTask->GetGoal()));
 			}
 		}
 

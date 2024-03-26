@@ -1,4 +1,5 @@
 #include "userdatabase_sqlite.h"
+#include "userdatabase_shared.h"
 #include "serverconfig.h"
 #include "usermanager.h"
 #include "packetmanager.h"
@@ -23,10 +24,13 @@ using namespace std;
 #undef OBFUSCATE
 #define OBFUSCATE(data) (char*)AY_OBFUSCATE_KEY(data, 'F')
 
+CUserDatabaseSQLite g_UserDatabase;
+
 CUserDatabaseSQLite::CUserDatabaseSQLite()
-try : CBaseManager("UserDatabase", true, true), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
+try : CBaseManager(REAL_DATABASE_NAME, true, true), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {
 	m_bInited = false;
+	m_pTransaction = NULL;
 }
 catch (exception& e)
 {
@@ -243,8 +247,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		int userID = 0;
 		if (restoreData)
 		{
@@ -254,8 +256,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 
 			if (!queryGetUser.executeStep())
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 				return LOGIN_NO_SUCH_USER;
 			}
 
@@ -269,8 +269,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 
 			if (!queryGetUser.executeStep())
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 				return LOGIN_NO_SUCH_USER;
 			}
 
@@ -280,8 +278,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		GetUserBan(userID, ban);
 		if (ban.banType)
 		{
-			ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 			return LOGIN_USER_BANNED;
 		}
 
@@ -290,10 +286,10 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		queryGetUserSession.bind(1, userID);
 		if (queryGetUserSession.executeStep())
 		{
-			IUser* user = g_pUserManager->GetUserById(userID);
+			IUser* user = g_UserManager.GetUserById(userID);
 			if (user)
 			{
-				g_pUserManager->DisconnectUser(user);
+				g_UserManager.DisconnectUser(user);
 			}
 			else
 			{
@@ -308,8 +304,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 
 			if (!query.executeStep())
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 				return LOGIN_NO_SUCH_USER;
 			}
 
@@ -332,8 +326,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		queryInsertUserSession.bind(5, UserStatus::STATUS_MENU);
 		queryInsertUserSession.bind(6, 0);
 		queryInsertUserSession.exec();
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
 
 		return userID;
 	}
@@ -375,8 +367,6 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		SQLite::Statement queryuser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ?"));
 		queryuser.bind(1, userName);
 		queryuser.executeStep();
@@ -384,8 +374,6 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 		if (queryuser.hasRow())
 		{
 			queryuser.reset();
-
-			ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Register"));
 
 			return -1;
 		}
@@ -396,8 +384,6 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 			query.bind(1, ip);
 			if (query.executeStep() && (int)query.getColumn(0) >= g_pServerConfig->maxRegistrationsPerIP)
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Register"));
-
 				return -4;
 			}
 		}
@@ -414,8 +400,6 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserDist SET userIDNext = userIDNext + 1"));
 			query.exec();
 		}
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Register"));
 	}
 	catch (exception& e)
 	{
@@ -612,8 +596,6 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		if (item.m_nIsClanItem)
 		{
 			{
@@ -711,8 +693,6 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 
 			queryUpdateItem.exec();
 		}
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem"));
 	}
 	catch (exception& e)
 	{
@@ -727,8 +707,6 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		SQLite::Transaction transaction(m_Database);
 
 		for (auto& item : items)
@@ -833,8 +811,6 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 		}
 	
 		transaction.commit();
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem"));
 	}
 	catch (exception& e)
 	{
@@ -1167,8 +1143,6 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		DefaultUser defUser = g_pServerConfig->defUser;
 
 		SQLite::Transaction transcation(m_Database);
@@ -1259,12 +1233,10 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 		// init daily rewards
 		/*UserDailyRewards dailyReward = {};
 		dailyReward.canGetReward = true;
-		g_pItemManager->UpdateDailyRewardsRandomItems(dailyReward);
+		g_ItemManager.UpdateDailyRewardsRandomItems(dailyReward);
 		UpdateDailyRewards(userID, dailyReward);*/
 
 		transcation.commit();
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::CreateCharacter"));
 	}
 	catch (exception& e)
 	{
@@ -3597,7 +3569,7 @@ int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 
 		SQLite::Transaction transaction(m_Database);
 		{
-			IUser* user = g_pUserManager->GetUserById(clanCfg.masterUserID);
+			IUser* user = g_UserManager.GetUserById(clanCfg.masterUserID);
 			if (!user->UpdatePoints(-100000))
 			{
 				return 0;
@@ -4347,7 +4319,7 @@ int CUserDatabaseSQLite::GetClanUserList(int id, bool byUser, vector<ClanUser>& 
 			clanUser.userID = query.getColumn(0);
 			clanUser.character.gameName = (const char*)query.getColumn(1);
 			clanUser.userName = (const char*)query.getColumn(2);
-			clanUser.user = g_pUserManager->GetUserById(clanUser.userID);
+			clanUser.user = g_UserManager.GetUserById(clanUser.userID);
 			clanUser.memberGrade = query.getColumn(3);
 
 			users.push_back(clanUser);
@@ -4378,7 +4350,7 @@ int CUserDatabaseSQLite::GetClanMemberList(int userID, vector<ClanUser>& users)
 			clanUser.character.level = query.getColumn(4);
 			clanUser.character.kills = query.getColumn(5);
 			clanUser.character.deaths = query.getColumn(6);
-			clanUser.user = g_pUserManager->GetUserById(clanUser.userID);
+			clanUser.user = g_UserManager.GetUserById(clanUser.userID);
 
 			users.push_back(clanUser);
 		}
@@ -4625,7 +4597,7 @@ int CUserDatabaseSQLite::GetClanMember(int userID, ClanUser& clanUser)
 			clanUser.character.level = query.getColumn(4);
 			clanUser.character.kills = query.getColumn(5);
 			clanUser.character.deaths = query.getColumn(6);
-			clanUser.user = g_pUserManager->GetUserById(clanUser.userID);
+			clanUser.user = g_UserManager.GetUserById(clanUser.userID);
 		}
 	}
 	catch (exception& e)
@@ -4814,7 +4786,7 @@ int CUserDatabaseSQLite::UpdateClanMemberGrade(int userID, const string& targetU
 				targetMember.character.level = query.getColumn(4);
 				targetMember.character.kills = query.getColumn(5);
 				targetMember.character.deaths = query.getColumn(6);
-				targetMember.user = g_pUserManager->GetUserByUsername(targetUserName);
+				targetMember.user = g_UserManager.GetUserByUsername(targetUserName);
 			}
 		}
 	}
@@ -4968,7 +4940,7 @@ int CUserDatabaseSQLite::ClanInvite(int userID, const string& gameName, IUser*& 
 			}
 		}
 
-		destUser = g_pUserManager->GetUserById(destUserID);
+		destUser = g_UserManager.GetUserById(destUserID);
 		if (!destUser)
 		{
 			return -2; // user is offline(TODO: are there more conditions?)
@@ -5269,7 +5241,7 @@ bool CUserDatabaseSQLite::IsQuestEventTaskFinished(int userID, int questID, int 
 	catch (exception& e)
 	{
 		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsQuestEventTaskFinished: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return false;
 	}
 
 	return true;
@@ -5386,12 +5358,12 @@ void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 				CUserInventoryItem item(query.getColumn(1), query.getColumn(2), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0);
 				int userID = query.getColumn(0);
 
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
-					g_pPacketManager->SendUMsgExpiryNotice(user->GetExtendedSocket(), vector<int>{ item.m_nItemID });
+					g_PacketManager.SendUMsgExpiryNotice(user->GetExtendedSocket(), vector<int>{ item.m_nItemID });
 
-					g_pItemManager->RemoveItem(userID, user, item);
+					g_ItemManager.RemoveItem(userID, user, item);
 				}
 				else
 				{
@@ -5549,14 +5521,14 @@ void CUserDatabaseSQLite::OnDayTick()
 			while (query.executeStep())
 			{
 				int userID = query.getColumn(0);
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
 					Console().Log(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: TODO: fix user client-side quest update\n"));
 
 					vector<UserQuestProgress> progress;
 					GetQuestsProgress(userID, progress);
-					g_pPacketManager->SendQuests(user->GetExtendedSocket(), userID, g_pQuestManager->GetQuests(), progress, 0xFFFF, 0, 0, 0);
+					g_PacketManager.SendQuests(user->GetExtendedSocket(), userID, g_QuestManager.GetQuests(), progress, 0xFFFF, 0, 0, 0);
 				}
 			}
 		}
@@ -5574,14 +5546,14 @@ void CUserDatabaseSQLite::OnDayTick()
 			query.exec();
 		}
 		// update daily reward items
-		for (auto user : g_pUserManager->users)
+		for (auto user : g_UserManager.users)
 		{
 			UserDailyRewards dailyReward = {};
 			GetDailyRewards(user->GetID(), dailyReward);
-			g_pItemManager->UpdateDailyRewardsRandomItems(dailyReward);
+			g_ItemManager.UpdateDailyRewardsRandomItems(dailyReward);
 			UpdateDailyRewards(user->GetID(), dailyReward);
 
-			g_pPacketManager->SendItemDailyRewardsUpdate(user->GetExtendedSocket(), g_pServerConfig->dailyRewardsItems, dailyReward);
+			g_PacketManager.SendItemDailyRewardsUpdate(user->GetExtendedSocket(), g_pServerConfig->dailyRewardsItems, dailyReward);
 		}*/
 	}
 	catch (exception& e)
@@ -5635,14 +5607,14 @@ void CUserDatabaseSQLite::OnWeekTick()
 			while (query.executeStep())
 			{
 				int userID = query.getColumn(0);
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
 					Console().Warn(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: TODO: fix user client-side quest update\n"));
 
 					vector<UserQuestProgress> progress;
 					GetQuestsProgress(userID, progress);
-					g_pPacketManager->SendQuests(user->GetExtendedSocket(), userID, g_pQuestManager->GetQuests(), progress, 0xFFFF, 0xFFFF, 0, 0);
+					g_PacketManager.SendQuests(user->GetExtendedSocket(), userID, g_QuestManager.GetQuests(), progress, 0xFFFF, 0xFFFF, 0, 0);
 
 					/*vector<Quest_s> quests;
 					vector<UserQuestProgress> questsProgress;
@@ -5659,7 +5631,7 @@ void CUserDatabaseSQLite::OnWeekTick()
 					quest.id = progress.questID;
 					quests.push_back(quest);
 					}
-					g_pPacketManager->SendQuests(user->GetExtendedSocket(), userID, quests, questsProgress, 0x20, 0, 0, 0);*/
+					g_PacketManager.SendQuests(user->GetExtendedSocket(), userID, quests, questsProgress, 0x20, 0, 0, 0);*/
 				}
 			}
 		}
@@ -5772,16 +5744,16 @@ bool CUserDatabaseSQLite::IsIPBanned(const string& ip)
 		query.bind(1, ip);
 		if (!query.executeStep())
 		{
-			return 0;
+			return false;
 		}
 	}
 	catch (exception& e)
 	{
 		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsIPBanned: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 int CUserDatabaseSQLite::UpdateHWIDBanList(const vector<unsigned char>& hwid, bool remove)
@@ -5841,48 +5813,44 @@ bool CUserDatabaseSQLite::IsHWIDBanned(vector<unsigned char>& hwid)
 		statement.bind(1, hwid.data(), hwid.size());
 		if (!statement.executeStep())
 		{
-			return 0;
+			return false;
 		}
 	}
 	catch (exception& e)
 	{
 		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsHWIDBanned: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
-chrono::high_resolution_clock::time_point CUserDatabaseSQLite::ExecCalcStart()
+void CUserDatabaseSQLite::CreateTransaction()
 {
-	return chrono::high_resolution_clock::now();
+	if (!m_pTransaction)
+	{
+		m_pTransaction = new SQLite::Transaction(m_Database);
+	}
 }
 
-void CUserDatabaseSQLite::ExecCalcEnd(chrono::high_resolution_clock::time_point startTime, const string& funcName)
-{
-	auto end = chrono::high_resolution_clock::now();
-	auto duration = chrono::duration_cast<chrono::milliseconds>(end - startTime).count();
-
-	if (duration > 20)
-		Console().Warn(OBFUSCATE("%s func execution time: %d ms\n"), funcName.c_str(), duration);
-}
-
-SQLite::Transaction CUserDatabaseSQLite::CreateTransaction()
-{
-	return SQLite::Transaction(m_Database);
-}
-
-bool CUserDatabaseSQLite::CommitTransaction(SQLite::Transaction& trans)
+bool CUserDatabaseSQLite::CommitTransaction()
 {
 	try
 	{
-		trans.commit();
+		m_pTransaction->commit();
 	}
 	catch (exception& e)
 	{
 		Console().Error(OBFUSCATE("CUserDatabaseSQLite::CommitTransaction: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+
+		delete m_pTransaction;
+		m_pTransaction = NULL;
+
+		return false;
 	}
 
-	return 1;
+	delete m_pTransaction;
+	m_pTransaction = NULL;
+
+	return true;
 }

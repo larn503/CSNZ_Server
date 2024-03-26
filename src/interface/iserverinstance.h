@@ -9,6 +9,7 @@ class IExtendedSocket;
 class IServerInstance
 {
 public:
+	virtual bool Reload() = 0;
 	virtual time_t GetCurrentTime() = 0;
 	virtual tm* GetCurrentLocalTime() = 0;
 	virtual double GetMemoryInfo() = 0;

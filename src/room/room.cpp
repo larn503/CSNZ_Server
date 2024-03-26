@@ -34,7 +34,7 @@ CRoom::~CRoom()
 	if (m_pServer)
 	{
 		m_pServer->SetRoom(NULL);
-		g_pPacketManager->SendHostStop(m_pServer->GetSocket());
+		g_PacketManager.SendHostStop(m_pServer->GetSocket());
 	}
 }
 
@@ -233,7 +233,7 @@ void CRoom::SetStatus(RoomStatus newStatus)
 
 void CRoom::SendJoinNewRoom(IUser* user)
 {
-	g_pPacketManager->SendRoomCreateAndJoin(user->GetExtendedSocket(), this);
+	g_PacketManager.SendRoomCreateAndJoin(user->GetExtendedSocket(), this);
 }
 
 void CRoom::UpdateSettings(CRoomSettings& newSettings)
@@ -492,17 +492,17 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 
 				for (auto u : m_Users) // send gamemode update to all users
 				{
-					g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_GAMEMODEID);
+					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_GAMEMODEID);
 				}
 			}
 			else
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changegm usage: /changegm <gameMode>");
+				g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changegm usage: /changegm <gameMode>");
 			}
 		}
 		else
 		{
-			g_pPacketManager->SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changegm usage: /changegm <gameMode>");
+			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changegm usage: /changegm <gameMode>");
 		}
 
 		return;
@@ -522,17 +522,17 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 
 				for (auto u : m_Users)
 				{
-					g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
+					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
 				}
 			}
 			else
 			{
-				g_pPacketManager->SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemap usage: /changemap <mapId>");
+				g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemap usage: /changemap <mapId>");
 			}
 		}
 		else
 		{
-			g_pPacketManager->SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemap usage: /changemap <mapId>");
+			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemap usage: /changemap <mapId>");
 		}
 
 		return;
@@ -553,13 +553,13 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 
 				for (auto u : m_Users)
 				{
-					g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_BOT);
+					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_BOT);
 				}
 			}
 		}
 		else
 		{
-			g_pPacketManager->SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changebotscount usage: /changebotscount <enemy bots> <friendly bots>");
+			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changebotscount usage: /changebotscount <enemy bots> <friendly bots>");
 		}
 
 		return;
@@ -567,7 +567,7 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 
 	for (auto user : m_Users)
 	{
-		g_pPacketManager->SendUMsgRoomMessage(user->GetExtendedSocket(), senderName, message);
+		g_PacketManager.SendUMsgRoomMessage(user->GetExtendedSocket(), senderName, message);
 	}
 }
 
@@ -582,7 +582,7 @@ void CRoom::OnUserTeamMessage(CReceivePacket* msg, IUser* user)
 	{
 		if (userTeam == GetUserTeam(u))
 		{
-			g_pPacketManager->SendUMsgRoomTeamMessage(u->GetExtendedSocket(), character.gameName, message);
+			g_PacketManager.SendUMsgRoomTeamMessage(u->GetExtendedSocket(), character.gameName, message);
 		}
 	}
 }
@@ -609,7 +609,7 @@ void CRoom::KickUser(IUser* user)
 
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendRoomKick(u->GetExtendedSocket(), user->GetID());
+		g_PacketManager.SendRoomKick(u->GetExtendedSocket(), user->GetID());
 	}
 }
 
@@ -620,12 +620,12 @@ void CRoom::VoteKick(IUser* user, bool kick)
 
 void CRoom::SendRoomSettings(IUser* user)
 {
-	g_pPacketManager->SendRoomUpdateSettings(user->GetExtendedSocket(), m_pSettings);
+	g_PacketManager.SendRoomUpdateSettings(user->GetExtendedSocket(), m_pSettings);
 }
 
 void CRoom::SendUpdateRoomSettings(IUser* user, CRoomSettings* settings, int lowFlag, int lowMidFlag, int highMidFlag, int highFlag)
 {
-	g_pPacketManager->SendRoomUpdateSettings(user->GetExtendedSocket(), settings, lowFlag, lowMidFlag, highMidFlag, highFlag);
+	g_PacketManager.SendRoomUpdateSettings(user->GetExtendedSocket(), settings, lowFlag, lowMidFlag, highMidFlag, highFlag);
 }
 
 void CRoom::SendRoomUsersReadyStatus(IUser* user)
@@ -654,7 +654,7 @@ void CRoom::SendReadyStatusToAll(IUser* user)
 
 void CRoom::SendNewUser(IUser* user, IUser* newUser)
 {
-	g_pPacketManager->SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, RoomTeamNum::CounterTerrorist);
+	g_PacketManager.SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, RoomTeamNum::CounterTerrorist);
 }
 
 void CRoom::SendUserReadyStatus(IUser* user, IUser* player)
@@ -664,23 +664,23 @@ void CRoom::SendUserReadyStatus(IUser* user, IUser* player)
 		Console().Error("CRoom::SendUserReadyStatus: GetRoomData() == NULL, users count: %d\n", m_Users.size());
 		return;
 	}
-	g_pPacketManager->SendRoomSetPlayerReady(user->GetExtendedSocket(), player, player->GetRoomData()->m_Ready);
+	g_PacketManager.SendRoomSetPlayerReady(user->GetExtendedSocket(), player, player->GetRoomData()->m_Ready);
 }
 
 void CRoom::SendConnectHost(IUser* user, IUser* host)
 {
-	//g_pPacketManager->SendUDPHostData(user->GetExtendedSocket(), true, host->GetData()->userId, host->GetNetworkConfig().m_szExternalIpAddress, host->GetNetworkConfig().m_nExternalServerPort);
+	//g_PacketManager.SendUDPHostData(user->GetExtendedSocket(), true, host->GetData()->userId, host->GetNetworkConfig().m_szExternalIpAddress, host->GetNetworkConfig().m_nExternalServerPort);
 	if (g_pServerConfig->room.connectingMethod)
 	{
-		//g_pPacketManager->SendHostJoin(user->GetExtendedSocket(), host->GetData()->userId);
-		g_pPacketManager->SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
+		//g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host->GetData()->userId);
+		g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
 	}
 	else
 	{
 		if (m_pServer)
-			g_pPacketManager->SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetIP(), true, m_pServer->GetPort(), user->GetID());
+			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetIP(), true, m_pServer->GetPort(), user->GetID());
 		else
-			g_pPacketManager->SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
+			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
 	}
 }
 
@@ -694,23 +694,23 @@ void CRoom::SendStartMatch(IUser* host)
 {
 	if (g_pServerConfig->room.connectingMethod)
 	{
-		g_pPacketManager->SendHostGameStart(host->GetExtendedSocket(), host->GetID());
+		g_PacketManager.SendHostGameStart(host->GetExtendedSocket(), host->GetID());
 	}
 	else
 	{
-		m_pServer = g_pDedicatedServerManager->GetAvailableServerFromPools(this);
+		m_pServer = g_DedicatedServerManager.GetAvailableServerFromPools(this);
 
 		if (m_pServer)
 		{
-			g_pPacketManager->SendRoomCreateAndJoin(m_pServer->GetSocket(), this);
-			g_pPacketManager->SendHostGameStart(m_pServer->GetSocket(), m_pServer->GetPort());
+			g_PacketManager.SendRoomCreateAndJoin(m_pServer->GetSocket(), this);
+			g_PacketManager.SendHostGameStart(m_pServer->GetSocket(), m_pServer->GetPort());
 
-			g_pPacketManager->SendHostGameStart(host->GetExtendedSocket(), m_pServer->GetPort());
-			g_pPacketManager->SendHostServerJoin(host->GetExtendedSocket(), m_pServer->GetIP(), true, m_pServer->GetPort(), host->GetID());
+			g_PacketManager.SendHostGameStart(host->GetExtendedSocket(), m_pServer->GetPort());
+			g_PacketManager.SendHostServerJoin(host->GetExtendedSocket(), m_pServer->GetIP(), true, m_pServer->GetPort(), host->GetID());
 		}
 		else
 		{
-			g_pPacketManager->SendHostGameStart(host->GetExtendedSocket(), host->GetID());
+			g_PacketManager.SendHostGameStart(host->GetExtendedSocket(), host->GetID());
 		}
 	}
 
@@ -718,39 +718,39 @@ void CRoom::SendStartMatch(IUser* host)
 
 void CRoom::SendCloseResultWindow(IUser* user)
 {
-	g_pPacketManager->SendHostLeaveResultWindow(user->GetExtendedSocket());
+	g_PacketManager.SendHostLeaveResultWindow(user->GetExtendedSocket());
 }
 
 void CRoom::SendTeamChange(IUser* user, IUser* player, RoomTeamNum newTeamNum)
 {
-	g_pPacketManager->SendRoomSetUserTeam(user->GetExtendedSocket(), player, newTeamNum);
+	g_PacketManager.SendRoomSetUserTeam(user->GetExtendedSocket(), player, newTeamNum);
 }
 
 void CRoom::SendGameEnd(IUser* user)
 {
-	g_pPacketManager->SendHostStop(user->GetExtendedSocket());
-	g_pPacketManager->SendRoomGameResult(user->GetExtendedSocket(), this, m_pGameMatch);
+	g_PacketManager.SendHostStop(user->GetExtendedSocket());
+	g_PacketManager.SendRoomGameResult(user->GetExtendedSocket(), this, m_pGameMatch);
 
 	CGameMatchUserStat* stat = m_pGameMatch->GetGameUserStat(user);
 	if (stat)
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), va("m_nKills: %d\nm_nDeaths: %d\nm_nScore: %d", stat->m_nKills, stat->m_nDeaths, stat->m_nScore));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), va("m_nKills: %d\nm_nDeaths: %d\nm_nScore: %d", stat->m_nKills, stat->m_nDeaths, stat->m_nScore));
 	}
 }
 
 void CRoom::SendUserMessage(const string& senderName, const string& msg, IUser* user)
 {
-	g_pPacketManager->SendUMsgRoomMessage(user->GetExtendedSocket(), senderName, msg);
+	g_PacketManager.SendUMsgRoomMessage(user->GetExtendedSocket(), senderName, msg);
 }
 
 void CRoom::SendRoomStatus(IUser* user)
 {
-	g_pPacketManager->SendRoomUpdateSettings(user->GetExtendedSocket(), m_pSettings, ROOM_LOW_STATUS, ROOM_LOWMID_STATUSSYMBOL);
+	g_PacketManager.SendRoomUpdateSettings(user->GetExtendedSocket(), m_pSettings, ROOM_LOW_STATUS, ROOM_LOWMID_STATUSSYMBOL);
 }
 
 void CRoom::SendPlayerLeaveIngame(IUser* user)
 {
-	g_pPacketManager->SendRoomPlayerLeaveIngame(user->GetExtendedSocket());
+	g_PacketManager.SendRoomPlayerLeaveIngame(user->GetExtendedSocket());
 }
 
 void CRoom::CheckForHostItems()
@@ -759,29 +759,29 @@ void CRoom::CheckForHostItems()
 		return;
 
 	CUserInventoryItem item;
-	m_pSettings->superRoom = g_pUserDatabase->GetFirstActiveItemByItemID(m_pHostUser->GetID(), 8357 /* superRoom */, item);
+	m_pSettings->superRoom = g_UserDatabase.GetFirstActiveItemByItemID(m_pHostUser->GetID(), 8357 /* superRoom */, item);
 
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SUPERROOM);
+		g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SUPERROOM);
 	}
 
 	CUserInventoryItem item2;
-	m_pSettings->c4Timer = g_pUserDatabase->GetFirstActiveItemByItemID(m_pHostUser->GetID(), 112 /* c4Timer */, item2);
+	m_pSettings->c4Timer = g_UserDatabase.GetFirstActiveItemByItemID(m_pHostUser->GetID(), 112 /* c4Timer */, item2);
 
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_C4TIMER);
+		g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_C4TIMER);
 	}
 
 	if (m_pSettings->gameModeId == 3 || m_pSettings->gameModeId == 4 || m_pSettings->gameModeId == 5 || m_pSettings->gameModeId == 15 || m_pSettings->gameModeId == 24)
 	{
 		CUserInventoryItem item;
-		m_pSettings->sd = g_pUserDatabase->GetFirstActiveItemByItemID(m_pHostUser->GetID(), 439 /* BigHeadEvent */, item);
+		m_pSettings->sd = g_UserDatabase.GetFirstActiveItemByItemID(m_pHostUser->GetID(), 439 /* BigHeadEvent */, item);
 
 		for (auto u : m_Users)
 		{
-			g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SD);
+			g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_SD);
 		}
 	}
 }
@@ -814,7 +814,7 @@ void CRoom::SendRemovedUser(IUser* deletedUser)
 {
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendRoomPlayerLeave(u->GetExtendedSocket(), deletedUser->GetID());
+		g_PacketManager.SendRoomPlayerLeave(u->GetExtendedSocket(), deletedUser->GetID());
 	}
 }
 
@@ -825,7 +825,7 @@ void CRoom::UpdateHost(IUser* newHost)
 
 	for (auto u : m_Users)
 	{
-		g_pPacketManager->SendRoomSetHost(u->GetExtendedSocket(), newHost);
+		g_PacketManager.SendRoomSetHost(u->GetExtendedSocket(), newHost);
 	}
 
 	if (m_pGameMatch && m_pServer == NULL)
@@ -869,7 +869,7 @@ void CRoom::HostStartGame()
 
 		for (auto u : m_Users)
 		{
-			g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
+			g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
 		}
 	}
 
@@ -919,7 +919,7 @@ void CRoom::EndGame()
 	ResetStatusIngameUsers();
 
 	if (m_pServer)
-		g_pPacketManager->SendHostStop(m_pServer->GetSocket());
+		g_PacketManager.SendHostStop(m_pServer->GetSocket());
 
 	for (auto u : m_Users)
 	{
@@ -949,7 +949,7 @@ void CRoom::EndGame()
 
 				for (auto u : m_Users)
 				{
-					g_pPacketManager->SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2 | ROOM_LOWMID_MAPPLAYLISTINDEX);
+					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2 | ROOM_LOWMID_MAPPLAYLISTINDEX);
 				}
 				break;
 			}

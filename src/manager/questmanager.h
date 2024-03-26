@@ -61,4 +61,4 @@ private:
 	std::vector<CQuest*> m_ClanQuests;
 };
 
-extern class CQuestManager* g_pQuestManager;
+extern CQuestManager g_QuestManager;

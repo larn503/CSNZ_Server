@@ -19,12 +19,23 @@ using namespace std;
 
 #define SUPPORTED_CLIENT_BUILD "24.12.23"
 
-CUserManager::CUserManager(int maxPlayers) : CBaseManager("UserManager", true)
-{
-	m_Users.reserve(maxPlayers);
+CUserManager g_UserManager;
 
+CUserManager::CUserManager() : CBaseManager("UserManager", true)
+{
+}
+
+bool CUserManager::Init()
+{
 	for (size_t i = 0; i < g_pServerConfig->defUser.defaultItems.size(); i++)
 		m_DefaultItems.push_back(CUserInventoryItem(i, g_pServerConfig->defUser.defaultItems[i], 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0));
+
+	return true;
+}
+
+void CUserManager::Shutdown()
+{
+	m_DefaultItems.clear();
 }
 
 bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
@@ -43,7 +54,7 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 	socket->SetHWID(hwid);
 
-	if (g_pUserDatabase->IsHWIDBanned(hwid))
+	if (g_UserDatabase.IsHWIDBanned(hwid))
 	{
 		Console().Log("Client (%s) disconnected from the server due to banned HWID\n", socket->GetIP().c_str());
 
@@ -66,11 +77,11 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		unsigned char* key = socket->GetCryptKey();
 		unsigned char* iv = socket->GetCryptIV();
 
-		g_pPacketManager->SendCrypt(socket, 0, key, iv);
+		g_PacketManager.SendCrypt(socket, 0, key, iv);
 
 		socket->SetCryptOutput(true);
 
-		g_pPacketManager->SendCrypt(socket, 1, key, iv);
+		g_PacketManager.SendCrypt(socket, 1, key, iv);
 	}
 
 	return true;
@@ -136,7 +147,7 @@ bool CUserManager::OnOptionPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		CUserCharacterExtended character(EXT_UFLAG_CONFIG);
 		character.config = msg->ReadArray(msg->ReadUInt16());
 
-		g_pUserDatabase->UpdateCharacterExtended(user->GetID(), character);
+		g_UserDatabase.UpdateCharacterExtended(user->GetID(), character);
 		break;
 	}
 	case 2: // called when joining the game
@@ -164,20 +175,20 @@ bool CUserManager::OnVersionPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		{
 			Console().Log(OBFUSCATE("CUserManager::OnVersionPacket: user joined with outdated client build, rejecting...\n"));
 
-			g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("You cannot log on due to invalid client version.\nPatch the client and try it again."));
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("You cannot log on due to invalid client version.\nPatch the client and try it again."));
 
 #ifndef PUBLIC_RELEASE
 			Console().Warn("[SuspectNotice] detected suspect user '%s', reason: 1, %s\n", socket->GetIP().c_str(), launcherVersion != g_pServerConfig->allowedLauncherVersion ? "launcher version mismatch" : "client libraries timestamp mismatch");
 
 			/// @todo get HWID by ip
-			//g_pUserDatabase->SuspectAddAction(socket->GetIP(), 1);
+			//g_UserDatabase.SuspectAddAction(socket->GetIP(), 1);
 #endif
 			g_pServerInstance->DisconnectClient(socket);
 		}
 
 		GuestData_s& data = socket->GetGuestData();
 		if (!data.isGuest)
-			g_pPacketManager->SendVersion(socket, 0);
+			g_PacketManager.SendVersion(socket, 0);
 		else
 			SendGuestUserPacket(socket);
 
@@ -235,7 +246,7 @@ bool CUserManager::OnFavoriteSetFastBuy(CReceivePacket* msg, IUser* user)
 	for (int i = 0; i < 11; i++)
 		fastBuyItems.push_back(msg->ReadUInt16());
 
-	g_pUserDatabase->UpdateFastBuy(user->GetID(), fastBuySlot, fastBuyName, fastBuyItems);
+	g_UserDatabase.UpdateFastBuy(user->GetID(), fastBuySlot, fastBuyName, fastBuyItems);
 
 	return true;
 }
@@ -251,7 +262,7 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 		return false;
 	}
 
-	g_pUserDatabase->UpdateBookmark(user->GetID(), bookmarkSlot, itemID);
+	g_UserDatabase.UpdateBookmark(user->GetID(), bookmarkSlot, itemID);
 
 	return true;
 }
@@ -259,10 +270,10 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 void CUserManager::SendUserInventory(IUser* user)
 {
 	vector<CUserInventoryItem> items;
-	g_pUserDatabase->GetInventoryItems(user->GetID(), items);
+	g_UserDatabase.GetInventoryItems(user->GetID(), items);
 
-	g_pPacketManager->SendDefaultItems(user->GetExtendedSocket(), m_DefaultItems);
-	g_pPacketManager->SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendDefaultItems(user->GetExtendedSocket(), m_DefaultItems);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 }
 
 bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
@@ -289,7 +300,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		// change current loadout
 		character.flag = EXT_UFLAG_CURLOADOUT;
 		character.curLoadout = loadoutID;
-		g_pUserDatabase->UpdateCharacterExtended(user->GetID(), character);
+		g_UserDatabase.UpdateCharacterExtended(user->GetID(), character);
 		return true;
 	}
 	else if (loadoutType == (character.curLoadout + 1) * 10 ||
@@ -312,7 +323,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		}
 
 		vector<CUserInventoryItem> items;
-		g_pUserDatabase->GetInventoryItemsByID(user->GetID(), itemID, items);
+		g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items);
 
 		if (items.empty())
 			return false;
@@ -322,13 +333,13 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (className != "Equipment")
 			return false;
 
-		g_pUserDatabase->UpdateLoadout(user->GetID(), character.curLoadout, slot, itemID);
+		g_UserDatabase.UpdateLoadout(user->GetID(), character.curLoadout, slot, itemID);
 		return true;
 	}
 	else if (loadoutType == 0)
 	{
 		vector<CUserInventoryItem> items;
-		g_pUserDatabase->GetInventoryItemsByID(user->GetID(), itemID, items);
+		g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items);
 
 		if (items.empty())
 			return false;
@@ -341,7 +352,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		// change bg character...
 		character.flag = EXT_UFLAG_CHARACTERID;
 		character.characterID = itemID;
-		g_pUserDatabase->UpdateCharacterExtended(user->GetID(), character);
+		g_UserDatabase.UpdateCharacterExtended(user->GetID(), character);
 	}
 	else
 	{
@@ -369,7 +380,7 @@ bool CUserManager::OnFavoriteSetBuyMenu(CReceivePacket* msg, IUser* user)
 		return false;
 	}
 
-	g_pUserDatabase->UpdateBuyMenu(user->GetID(), subMenuID, subMenuSlot, itemID);
+	g_UserDatabase.UpdateBuyMenu(user->GetID(), subMenuID, subMenuSlot, itemID);
 
 	Console().Log(OBFUSCATE("User '%d' updated buy menu, %d, %d, %d\n"), user->GetID(), subMenuID, subMenuSlot, itemID);
 
@@ -382,7 +393,7 @@ int CUserManager::ChangeUserNickname(IUser* user, const string& newNickname, boo
 		return -1;
 	else if (newNickname.size() > 16)
 		return -2;
-	else if (g_pUserDatabase->IsUserExists(newNickname, false))
+	else if (g_UserDatabase.IsUserExists(newNickname, false))
 		return -3;
 	else if (newNickname.find_first_not_of((const char*)OBFUSCATE("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890")) != string::npos)
 		return -4;
@@ -396,9 +407,9 @@ int CUserManager::ChangeUserNickname(IUser* user, const string& newNickname, boo
 
 		// give	a user pseudo default items
 		for (auto itemID : g_pServerConfig->defUser.pseudoDefaultItems)
-			g_pItemManager->AddItem(user->GetID(), user, itemID, 1, 0);
+			g_ItemManager.AddItem(user->GetID(), user, itemID, 1, 0);
 
-		g_pItemManager->GiveReward(user->GetID(), user, 1001); // lvl box 1
+		g_ItemManager.GiveReward(user->GetID(), user, 1001); // lvl box 1
 	}
 	else
 	{
@@ -416,176 +427,176 @@ vector<CUserInventoryItem>& CUserManager::GetDefaultInventoryItems()
 
 void CUserManager::SendGuestUserPacket(IExtendedSocket* socket)
 {
-	g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Welcome to the CSN:S server. Enter /login <username> <password> to login to your account."));
-	g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("If you don't have an account enter /register <username> <password>"));
-	g_pPacketManager->SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Server developers: Jusic, Hardee, NekoMeow, Smilex_Gamer, xRiseless. Our Discord: https://discord.gg/EvUAY6D"));
+	g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Welcome to the CSN:S server. Enter /login <username> <password> to login to your account."));
+	g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("If you don't have an account enter /register <username> <password>"));
+	g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Server developers: Jusic, Hardee, NekoMeow, Smilex_Gamer, xRiseless. Our Discord: https://discord.gg/EvUAY6D"));
 }
 
 void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 {
 	IExtendedSocket* socket = user->GetExtendedSocket();
 
-	g_pPacketManager->SendUserStart(socket, user->GetID(), user->GetUsername(), character.gameName, true);
-	g_pPacketManager->SendUserUpdateInfo(socket, user, character);
+	g_PacketManager.SendUserStart(socket, user->GetID(), user->GetUsername(), character.gameName, true);
+	g_PacketManager.SendUserUpdateInfo(socket, user, character);
 
 	CUserCharacterExtended characterExtended = user->GetCharacterExtended(EXT_UFLAG_CONFIG | EXT_UFLAG_BANSETTINGS);
 	if (characterExtended.config.size())
-		g_pPacketManager->SendOption(socket, characterExtended.config);
+		g_PacketManager.SendOption(socket, characterExtended.config);
 
 	vector<string> banList;
-	g_pUserDatabase->GetBanList(user->GetID(), banList);
-	g_pPacketManager->SendBanList(socket, banList);
+	g_UserDatabase.GetBanList(user->GetID(), banList);
+	g_PacketManager.SendBanList(socket, banList);
 
-	g_pPacketManager->SendBanSettings(socket, characterExtended.banSettings);
-	g_pPacketManager->SendBanMaxSize(socket, BANLIST_MAX_SIZE);
+	g_PacketManager.SendBanSettings(socket, characterExtended.banSettings);
+	g_PacketManager.SendBanMaxSize(socket, BANLIST_MAX_SIZE);
 
 	SendMetadata(socket);
 
-	g_pPacketManager->SendGameMatchInfo(socket);
-	g_pPacketManager->SendGameMatchUnk(socket);
-	g_pPacketManager->SendGameMatchUnk9(socket);
+	g_PacketManager.SendGameMatchInfo(socket);
+	g_PacketManager.SendGameMatchUnk(socket);
+	g_PacketManager.SendGameMatchUnk9(socket);
 
-	//g_pPacketManager->SendQuestUnk1(socket);
-	//g_pPacketManager->SendQuestUnk11(socket);
+	//g_PacketManager.SendQuestUnk1(socket);
+	//g_PacketManager.SendQuestUnk11(socket);
 
-	//g_pPacketManager->SendItemUnk1(socket);
-	//g_pPacketManager->SendItemUnk3(socket);
+	//g_PacketManager.SendItemUnk1(socket);
+	//g_PacketManager.SendItemUnk3(socket);
 
 	if (g_pServerConfig->mainMenuSkinEvent > 0)
-		g_pPacketManager->SendEventMainMenuSkin(socket, g_pServerConfig->mainMenuSkinEvent);
+		g_PacketManager.SendEventMainMenuSkin(socket, g_pServerConfig->mainMenuSkinEvent);
 
-	g_pPacketManager->SendEventUnk(socket);
-	g_pPacketManager->SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
+	g_PacketManager.SendEventUnk(socket);
+	g_PacketManager.SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
 
 	if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
-		g_pMiniGameManager->SendWeaponReleaseUpdate(user);
+		g_MiniGameManager.SendWeaponReleaseUpdate(user);
 
 	SendUserInventory(user);
 	SendUserLoadout(user);
 	SendUserNotices(user);
 
-	g_pPacketManager->SendShopUpdate(socket, g_pShopManager->GetProducts());
-	g_pPacketManager->SendShopRecommendedProducts(socket, g_pShopManager->GetRecommendedProducts());
-	g_pPacketManager->SendShopPopularProducts(socket, g_pShopManager->GetPopularProducts());
+	g_PacketManager.SendShopUpdate(socket, g_ShopManager.GetProducts());
+	g_PacketManager.SendShopRecommendedProducts(socket, g_ShopManager.GetRecommendedProducts());
+	g_PacketManager.SendShopPopularProducts(socket, g_ShopManager.GetPopularProducts());
 
 	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \n
 	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \n");
-	g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, text);
+	g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, text);
 
 	if (!g_pServerConfig->welcomeMessage.empty())
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, g_pServerConfig->welcomeMessage);
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, g_pServerConfig->welcomeMessage);
 
-	g_pChannelManager->JoinChannel(user, g_pChannelManager->channelServers[0]->GetID(), g_pChannelManager->channelServers[0]->GetChannels()[0]->GetID(), false);
+	g_ChannelManager.JoinChannel(user, g_ChannelManager.channelServers[0]->GetID(), g_ChannelManager.channelServers[0]->GetChannels()[0]->GetID(), false);
 
 	for (auto& survey : g_pServerConfig->surveys)
 	{
-		if (!g_pUserDatabase->IsSurveyAnswered(user->GetID(), survey.id))
+		if (!g_UserDatabase.IsSurveyAnswered(user->GetID(), survey.id))
 		{
-			g_pPacketManager->SendUserSurvey(socket, survey);
+			g_PacketManager.SendUserSurvey(socket, survey);
 		}
 	}
 
-	g_pPacketManager->SendLeaguePacket(socket);
+	g_PacketManager.SendLeaguePacket(socket);
 }
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)
 {
 	int flag = g_pServerConfig->metadataToSend;
 	if (flag & kMetadataFlag_MapList)
-		g_pPacketManager->SendMetadataMaplist(socket);
+		g_PacketManager.SendMetadataMaplist(socket);
 	if (flag & kMetadataFlag_ClientTable)
-		g_pPacketManager->SendMetadataClientTable(socket);
+		g_PacketManager.SendMetadataClientTable(socket);
 	if (flag & kMetadataFlag_ModeList)
-		g_pPacketManager->SendMetadataModelist(socket);
+		g_PacketManager.SendMetadataModelist(socket);
 	if (flag & kMetadataFlag_Unk3)
-		g_pPacketManager->SendMetadataUnk3(socket);
+		g_PacketManager.SendMetadataUnk3(socket);
 	if (flag & kMetadataFlag_ItemBox)
-		g_pPacketManager->SendMetadataItemBox(socket, g_pLuckyItemManager->GetItems());
+		g_PacketManager.SendMetadataItemBox(socket, g_LuckyItemManager.GetItems());
 	if (flag & kMetadataFlag_WeaponPaint)
-		g_pPacketManager->SendMetadataWeaponPaint(socket);
+		g_PacketManager.SendMetadataWeaponPaint(socket);
 	if (flag & kMetadataFlag_Unk8)
-		g_pPacketManager->SendMetadataUnk8(socket);
+		g_PacketManager.SendMetadataUnk8(socket);
 	if (flag & kMetadataFlag_MatchOption)
-		g_pPacketManager->SendMetadataMatchOption(socket);
+		g_PacketManager.SendMetadataMatchOption(socket);
 	if (flag & kMetadataFlag_Unk15)
-		g_pPacketManager->SendMetadataUnk15(socket);
+		g_PacketManager.SendMetadataUnk15(socket);
 	if (flag & kMetadataFlag_WeaponParts)
-		g_pPacketManager->SendMetadataWeaponParts(socket);
+		g_PacketManager.SendMetadataWeaponParts(socket);
 	if (flag & kMetadataFlag_Unk20)
-		g_pPacketManager->SendMetadataUnk20(socket);
+		g_PacketManager.SendMetadataUnk20(socket);
 	if (flag & kMetadataFlag_Encyclopedia)
-		g_pPacketManager->SendMetadataEncyclopedia(socket);
+		g_PacketManager.SendMetadataEncyclopedia(socket);
 	if (flag & kMetadataFlag_GameModeList)
-		g_pPacketManager->SendMetadataGameModeList(socket);
+		g_PacketManager.SendMetadataGameModeList(socket);
 	if (flag & kMetadataFlag_ProgressUnlock)
-		g_pPacketManager->SendMetadataProgressUnlock(socket);
+		g_PacketManager.SendMetadataProgressUnlock(socket);
 	if (flag & kMetadataFlag_ReinforceMaxLvl)
-		g_pPacketManager->SendMetadataReinforceMaxLvl(socket);
+		g_PacketManager.SendMetadataReinforceMaxLvl(socket);
 	if (flag & kMetadataFlag_ReinforceMaxEXP)
-		g_pPacketManager->SendMetadataReinforceMaxEXP(socket);
+		g_PacketManager.SendMetadataReinforceMaxEXP(socket);
 	if (flag & kMetadataFlag_ReinforceItemsExp)
-		g_pPacketManager->SendMetadataReinforceItemsExp(socket);
+		g_PacketManager.SendMetadataReinforceItemsExp(socket);
 	if (flag & kMetadataFlag_Unk31)
-		g_pPacketManager->SendMetadataUnk31(socket); // client crash without this
+		g_PacketManager.SendMetadataUnk31(socket); // client crash without this
 	if (flag & kMetadataFlag_HonorMoneyShop)
-		g_pPacketManager->SendMetadataHonorMoneyShop(socket);
+		g_PacketManager.SendMetadataHonorMoneyShop(socket);
 	if (flag & kMetadataFlag_ItemExpireTime)
-		g_pPacketManager->SendMetadataItemExpireTime(socket);
+		g_PacketManager.SendMetadataItemExpireTime(socket);
 	if (flag & kMetadataFlag_ScenarioTX_Common)
-		g_pPacketManager->SendMetadataScenarioTX_Common(socket);
+		g_PacketManager.SendMetadataScenarioTX_Common(socket);
 	if (flag & kMetadataFlag_ScenarioTX_Dedi)
-		g_pPacketManager->SendMetadataScenarioTX_Dedi(socket);
+		g_PacketManager.SendMetadataScenarioTX_Dedi(socket);
 	if (flag & kMetadataFlag_ShopItemList_Dedi)
-		g_pPacketManager->SendMetadataShopItemList_Dedi(socket);
+		g_PacketManager.SendMetadataShopItemList_Dedi(socket);
 	if (flag & kMetadataFlag_ZBCompetitive)
-		g_pPacketManager->SendMetadataZBCompetitive(socket);
+		g_PacketManager.SendMetadataZBCompetitive(socket);
 	if (flag & kMetadataFlag_Unk43)
-		g_pPacketManager->SendMetadataUnk43(socket);
+		g_PacketManager.SendMetadataUnk43(socket);
 	if (flag & kMetadataFlag_Unk49)
-		g_pPacketManager->SendMetadataUnk49(socket);
+		g_PacketManager.SendMetadataUnk49(socket);
 	if (flag & kMetadataFlag_PPSystem)
-		g_pPacketManager->SendMetadataPPSystem(socket);
+		g_PacketManager.SendMetadataPPSystem(socket);
 	if (flag & kMetadataFlag_Item)
-		g_pPacketManager->SendMetadataItem(socket);
+		g_PacketManager.SendMetadataItem(socket);
 	if (flag & kMetadataFlag_CodisData)
-		g_pPacketManager->SendMetadataCodisData(socket);
+		g_PacketManager.SendMetadataCodisData(socket);
 	if (flag & kMetadataFlag_WeaponProp)
-		g_pPacketManager->SendMetadataWeaponProp(socket);
+		g_PacketManager.SendMetadataWeaponProp(socket);
 	if (flag & kMetadataFlag_Hash)
-		g_pPacketManager->SendMetadataHash(socket);
+		g_PacketManager.SendMetadataHash(socket);
 	if (flag & kMetadataFlag_RandomWeaponList)
-		g_pPacketManager->SendMetadataRandomWeaponList(socket);
+		g_PacketManager.SendMetadataRandomWeaponList(socket);
 }
 
 void CUserManager::SendUserLoadout(IUser* user)
 {
 	CUserLoadout loadout = {};
-	g_pUserDatabase->GetLoadouts(user->GetID(), loadout);
+	g_UserDatabase.GetLoadouts(user->GetID(), loadout);
 
 	// unknown size error
 	//vector<CUserFastBuy> fastBuy;
-	//g_pUserDatabase->GetFastBuy(user->GetID(), fastBuy);
+	//g_UserDatabase.GetFastBuy(user->GetID(), fastBuy);
 
 	vector<CUserBuyMenu> buyMenu;
-	g_pUserDatabase->GetBuyMenu(user->GetID(), buyMenu);
+	g_UserDatabase.GetBuyMenu(user->GetID(), buyMenu);
 
 	CUserCharacterExtended character(EXT_UFLAG_CURLOADOUT | EXT_UFLAG_CHARACTERID);
-	g_pUserDatabase->GetCharacterExtended(user->GetID(), character);
+	g_UserDatabase.GetCharacterExtended(user->GetID(), character);
 
 	vector<int> bookmark;
-	g_pUserDatabase->GetBookmark(user->GetID(), bookmark);
+	g_UserDatabase.GetBookmark(user->GetID(), bookmark);
 
-	g_pPacketManager->SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadout);
-	//g_pPacketManager->SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
-	g_pPacketManager->SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
-	g_pPacketManager->SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
+	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadout);
+	//g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
+	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
+	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 }
 
 void CUserManager::SendUserNotices(IUser* user)
 {
 	for (auto& notice : g_pServerConfig->notices)
 	{
-		g_pPacketManager->SendUMsgNotice(user->GetExtendedSocket(), notice);
+		g_PacketManager.SendUMsgNotice(user->GetExtendedSocket(), notice);
 	}
 }
 
@@ -601,31 +612,31 @@ bool CUserManager::OnCharacterPacket(CReceivePacket* msg, IExtendedSocket* socke
 	switch (replyCode)
 	{
 	case 0:
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("DB_QUERY_FAILED"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("DB_QUERY_FAILED"));
 		DisconnectUser(user);
 		return false;
 	case 1:
-		g_pPacketManager->SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATEOK);
+		g_PacketManager.SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATEOK);
 		break;
 	case -1:
-		g_pPacketManager->SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATE_ID_TOO_SHORT);
+		g_PacketManager.SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATE_ID_TOO_SHORT);
 		return false;
 	case -2:
-		g_pPacketManager->SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATE_ID_TOO_LONG);
+		g_PacketManager.SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATE_ID_TOO_LONG);
 		return false;
 	case -3:
-		g_pPacketManager->SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATE_ID_ALREADY_EXIST);
+		g_PacketManager.SendReply(user->GetExtendedSocket(), ServerReply::S_REPLY_CREATE_ID_ALREADY_EXIST);
 		return false;
 	case -4:
-		g_pPacketManager->SendReply(user->GetExtendedSocket(), 26); // 26? name blacklist
+		g_PacketManager.SendReply(user->GetExtendedSocket(), 26); // 26? name blacklist
 		return false;
 	}
 
 	CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
 
-	g_pItemManager->OnUserLogin(user);
-	g_pClanManager->OnUserLogin(user);
-	g_pQuestManager->OnUserLogin(user);
+	g_ItemManager.OnUserLogin(user);
+	g_ClanManager.OnUserLogin(user);
+	g_QuestManager.OnUserLogin(user);
 
 	SendLoginPacket(user, character);
 
@@ -642,22 +653,22 @@ bool CUserManager::OnUserMessage(CReceivePacket* msg, IExtendedSocket* socket)
 	switch (type)
 	{
 	case UMsgReceiveType::LobbyWhisperChat:
-		g_pChannelManager->OnWhisperMessage(msg, user);
+		g_ChannelManager.OnWhisperMessage(msg, user);
 		break;
 	case UMsgReceiveType::LobbyChat:
-		g_pChannelManager->OnLobbyMessage(msg, socket, user);
+		g_ChannelManager.OnLobbyMessage(msg, socket, user);
 		break;
 	case UMsgReceiveType::ClanChat:
 		Console().Warn("CUserManager::OnUserMessage: ClanChat!\n");
 		break;
 	case UMsgReceiveType::RoomChat:
-		g_pChannelManager->OnRoomUserMessage(msg, user);
+		g_ChannelManager.OnRoomUserMessage(msg, user);
 		break;
 	case UMsgReceiveType::RoomTeamChat:
-		g_pChannelManager->OnRoomTeamUserMessage(msg, user);
+		g_ChannelManager.OnRoomTeamUserMessage(msg, user);
 		break;
 	case UMsgReceiveType::RewardSelect:
-		g_pItemManager->OnRewardSelect(msg, user);
+		g_ItemManager.OnRewardSelect(msg, user);
 		break;
 	default:
 		Console().Warn("CUserManager::OnUserMessage: unknown request %d\n", type);
@@ -679,7 +690,7 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* sock
 	switch (msgType)
 	{
 	case UpdateInfoPacketType::RequestUpdateNickname:
-		g_pItemManager->OnNicknameChangeUse(user, msg->ReadString());
+		g_ItemManager.OnNicknameChangeUse(user, msg->ReadString());
 		break;
 	case UpdateInfoPacketType::RequestUpdateLocation:
 	{
@@ -716,26 +727,26 @@ void CUserManager::OnSecondTick(time_t curTime)
 void CUserManager::SendNoticeMessageToAll(const string& msg)
 {
 	for (auto u : m_Users)
-		g_pPacketManager->SendUMsgNoticeMessageInChat(u->GetExtendedSocket(), msg);
+		g_PacketManager.SendUMsgNoticeMessageInChat(u->GetExtendedSocket(), msg);
 }
 
 void CUserManager::SendNoticeMsgBoxToAll(const string& msg)
 {
 	for (auto u : m_Users)
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(u->GetExtendedSocket(), msg);
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(u->GetExtendedSocket(), msg);
 }
 
 int CUserManager::LoginUser(IExtendedSocket* socket, const string& userName, const string& password)
 {
 	UserBan ban = {};
-	int userID = g_pUserDatabase->Login(userName, password, socket, ban, NULL);
+	int userID = g_UserDatabase.Login(userName, password, socket, ban, NULL);
 	if (userID <= 0)
 	{
 		switch (userID)
 		{
 		case LOGIN_USER_BANNED:
 			if (ban.banType == 1) // ban with msg
-				g_pPacketManager->SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_MsgBox, "GM_CUT", vector<string>{ban.reason});
+				g_PacketManager.SendUMsgSystemReply(socket, UMsgPacketType::SystemReply_MsgBox, "GM_CUT", vector<string>{ban.reason});
 			break;
 		}
 		Console().Log(OBFUSCATE("Login failed (code: %d)\n"), userID);
@@ -746,7 +757,7 @@ int CUserManager::LoginUser(IExtendedSocket* socket, const string& userName, con
 	{
 		Console().Log("Login failed (code: %d)\n", LOGIN_USER_ALREADY_LOGGED_IN_UID);
 
-		g_pPacketManager->SendReply(socket, ServerReply::S_REPLY_PLAYING);
+		g_PacketManager.SendReply(socket, ServerReply::S_REPLY_PLAYING);
 
 		return LOGIN_USER_ALREADY_LOGGED_IN_UID;
 	}
@@ -755,7 +766,7 @@ int CUserManager::LoginUser(IExtendedSocket* socket, const string& userName, con
 	{
 		Console().Log("Login failed (code: %d)\n", LOGIN_USER_ALREADY_LOGGED_IN_UUID);
 
-		g_pPacketManager->SendReply(socket, ServerReply::S_REPLY_PLAYING);
+		g_PacketManager.SendReply(socket, ServerReply::S_REPLY_PLAYING);
 
 		return LOGIN_USER_ALREADY_LOGGED_IN_UUID;
 	}
@@ -765,7 +776,7 @@ int CUserManager::LoginUser(IExtendedSocket* socket, const string& userName, con
 	{
 		Console().Log("Login failed (code: %d)\n", LOGIN_SERVER_IS_FULL); // -5 (user limit)
 
-		g_pPacketManager->SendReply(socket, ServerReply::S_REPLY_EXCEED_MAX_CONNECTION);
+		g_PacketManager.SendReply(socket, ServerReply::S_REPLY_EXCEED_MAX_CONNECTION);
 
 		return LOGIN_SERVER_IS_FULL;
 	}
@@ -786,22 +797,22 @@ int CUserManager::LoginUser(IExtendedSocket* socket, const string& userName, con
 	data.lastIP = socket->GetIP();
 	data.lastHWID = socket->GetHWID();
 
-	g_pUserDatabase->UpdateUserData(userID, data);
+	g_UserDatabase.UpdateUserData(userID, data);
 		
-	g_pPacketManager->SendReply(socket, ServerReply::S_REPLY_YES);
+	g_PacketManager.SendReply(socket, ServerReply::S_REPLY_YES);
 
 	if (!newUser->IsCharacterExists())
 	{
-		g_pPacketManager->SendCharacter(socket);
+		g_PacketManager.SendCharacter(socket);
 	}
 	else
 	{
 		// continue login proccess
 		CUserCharacter character = newUser->GetCharacter(0xFFFFFFFF);
 
-		g_pItemManager->OnUserLogin(newUser);
-		g_pClanManager->OnUserLogin(newUser);
-		g_pQuestManager->OnUserLogin(newUser);
+		g_ItemManager.OnUserLogin(newUser);
+		g_ClanManager.OnUserLogin(newUser);
+		g_QuestManager.OnUserLogin(newUser);
 
 		SendLoginPacket(newUser, character);
 	}
@@ -816,7 +827,7 @@ int CUserManager::RegisterUser(IExtendedSocket* socket, const string& userName, 
 	if (userName.size() < 5 || userName.size() > 15 || userName.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890") != string::npos)
 		return REGISTER_USERNAME_WRONG;
 
-	int regResult = g_pUserDatabase->Register(userName, password, socket->GetIP());
+	int regResult = g_UserDatabase.Register(userName, password, socket->GetIP());
 	if (regResult < 0)
 	{
 		Console().Log("Register failed (code: %d)\n", regResult);
@@ -889,7 +900,7 @@ IUser* CUserManager::GetUserByUsername(const string& username)
 
 IUser* CUserManager::GetUserByNickname(const string& nickname)
 {
-	int userID = g_pUserDatabase->IsUserExists(nickname, false);
+	int userID = g_UserDatabase.IsUserExists(nickname, false);
 
 	return GetUserById(userID);
 }
@@ -978,13 +989,13 @@ bool CUserManager::OnReportPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	if (classificator == "spdcl" || classificator == "E0000002" || classificator == "E0000005" || classificator == "E0000006" || classificator == "UI002" || classificator == "UI003" || classificator == "UI001" || classificator == "UI000"
 		|| strstr(object.c_str(), "NG.dll") /*|| (classificator == "E0000008" && !strstr(object.c_str(), "Data = 0000000000.0000000000.0000000000") && !strstr(object.c_str(), "File = "))*/)
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "The game has detected suspicious activity on client side. Try to close apps and join connect the game again.");
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "The game has detected suspicious activity on client side. Try to close apps and join connect the game again.");
 
 		DisconnectUser(user);
 	}
 
 	/// @todo:
-	g_pUserDatabase->SuspectAddAction(user->GetExtendedSocket()->GetHWID(), 0);
+	g_UserDatabase.SuspectAddAction(user->GetExtendedSocket()->GetHWID(), 0);
 #endif
 	return true;
 }
@@ -1000,11 +1011,11 @@ bool CUserManager::OnAlarmPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	}
 
 	//vector<Notice_s> notices;
-	//g_pPacketManager->SendAlarm(socket, g_pServerConfig->notices);
+	//g_PacketManager.SendAlarm(socket, g_pServerConfig->notices);
 
 	//for (auto& notice : g_pServerConfig->notices)
 	//{
-	//	g_pPacketManager->SendUMsgNotice(socket, notice, 0);
+	//	g_PacketManager.SendUMsgNotice(socket, notice, 0);
 	//}
 
 	return true;
@@ -1082,11 +1093,11 @@ bool CUserManager::OnMessengerPacket(CReceivePacket* msg, IExtendedSocket* socke
 		/// @todo handle errors
 		string gameName = msg->ReadString();
 
-		int userID = g_pUserDatabase->IsUserExists(gameName, false);
+		int userID = g_UserDatabase.IsUserExists(gameName, false);
 
 		CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
 
-		g_pPacketManager->SendMessengerUserInfo(socket, userID, character);
+		g_PacketManager.SendMessengerUserInfo(socket, userID, character);
 		break;
 	}
 	default:
@@ -1105,11 +1116,11 @@ bool CUserManager::OnAddonPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		return false;
 
 	vector<int> addons;
-	g_pUserDatabase->GetAddons(user->GetID(), addons);
+	g_UserDatabase.GetAddons(user->GetID(), addons);
 
 	// update addon list on client side
 	if (!addons.empty())
-		g_pPacketManager->SendAddonPacket(socket, addons);
+		g_PacketManager.SendAddonPacket(socket, addons);
 
 	return true;
 }
@@ -1126,7 +1137,7 @@ bool CUserManager::OnLeaguePacket(CReceivePacket* msg, IExtendedSocket* socket)
 	switch (type)
 	{
 	case 0:
-		g_pPacketManager->SendLeaguePacket(socket);
+		g_PacketManager.SendLeaguePacket(socket);
 		break;
 	default:
 		Console().Warn(OBFUSCATE("[User '%s'] Unknown Packet_League type %d (len: %d)\n"), user->GetLogName(), type, msg->GetLength());
@@ -1154,7 +1165,7 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 		[surveyID](Survey& survey) { return survey.id == surveyID; });
 	if (surveyIt == g_pServerConfig->surveys.end())
 	{
-		g_pPacketManager->SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
+		g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
 		return;
 	}
 
@@ -1169,7 +1180,7 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 			[questionID](SurveyQuestion& question) { return question.id == questionID; });
 		if (surveyQuestion == surveyIt->questions.end())
 		{
-			g_pPacketManager->SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
+			g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
 			return;
 		}
 
@@ -1184,7 +1195,7 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 			int checkBoxAnswersCount = msg->ReadUInt8();
 			if (!checkBoxAnswersCount)
 			{
-				g_pPacketManager->SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
+				g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
 				return;
 			}
 
@@ -1196,7 +1207,7 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 					[answerID](SurveyQuestionAnswerCheckBox& answer) { return answer.id == answerID; });
 				if (checkBoxAnswer == surveyQuestion->answersCheckBox.end())
 				{
-					g_pPacketManager->SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
+					g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
 					return;
 				}
 
@@ -1207,12 +1218,12 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 		answer.questionsAnswers.push_back(questionAnswer);
 	}
 
-	if (g_pUserDatabase->SurveyAnswer(user->GetID(), answer) <= 0)
+	if (g_UserDatabase.SurveyAnswer(user->GetID(), answer) <= 0)
 	{
-		g_pPacketManager->SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_DB_ERROR);
+		g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_DB_ERROR);
 	}
 
-	g_pPacketManager->SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_OK);
+	g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_OK);
 }
 
 void CUserManager::OnBanAddNicknameRequest(CReceivePacket* msg, IUser* user)
@@ -1223,19 +1234,19 @@ void CUserManager::OnBanAddNicknameRequest(CReceivePacket* msg, IUser* user)
 	switch (result)
 	{
 	case 0:
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("DB_QUERY_FAILED")); // db error
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("DB_QUERY_FAILED")); // db error
 		break;
 	case 1:
-		g_pPacketManager->SendBanUpdateList(user->GetExtendedSocket(), gameName);
+		g_PacketManager.SendBanUpdateList(user->GetExtendedSocket(), gameName);
 		break;
 	case -1:
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_ADD_FAIL_NICKNAME_NOT_EXIST"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_ADD_FAIL_NICKNAME_NOT_EXIST"));
 		break;
 	case -2:
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_ADD_FAIL_ID_EXIST"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_ADD_FAIL_ID_EXIST"));
 		break;
 	case -3:
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_ADD_FAIL_MAX_NUMBER_EXCESS"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_ADD_FAIL_MAX_NUMBER_EXCESS"));
 		break;
 	}
 }
@@ -1248,13 +1259,13 @@ void CUserManager::OnBanRemoveNicknameRequest(CReceivePacket* msg, IUser* user)
 	switch (result)
 	{
 	case 0:
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("DB_QUERY_FAILED")); // db error
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("DB_QUERY_FAILED")); // db error
 		break;
 	case 1:
-		g_pPacketManager->SendBanUpdateList(user->GetExtendedSocket(), gameName, true);
+		g_PacketManager.SendBanUpdateList(user->GetExtendedSocket(), gameName, true);
 		break;
 	case -1:
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_REMOVE_FAIL_NICKNAME_NOT_EXIST"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BAN_REMOVE_FAIL_NICKNAME_NOT_EXIST"));
 		break;
 	}
 }
@@ -1265,5 +1276,5 @@ void CUserManager::OnBanSettingsRequest(CReceivePacket* msg, IUser* user)
 
 	user->UpdateBanSettings(settings);
 
-	g_pPacketManager->SendBanSettings(user->GetExtendedSocket(), settings);
+	g_PacketManager.SendBanSettings(user->GetExtendedSocket(), settings);
 }

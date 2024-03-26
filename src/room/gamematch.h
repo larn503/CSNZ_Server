@@ -105,10 +105,10 @@ public:
 	int m_nTerWinCount;
 	int m_nFirstPlaceUserId;
 
-	std::vector<unsigned char> m_SaveData;
-
 private:
 	int m_nSecondCounter;
+
+	std::vector<unsigned char> m_SaveData;
 
 	IRoom* m_pParentRoom;
 };
