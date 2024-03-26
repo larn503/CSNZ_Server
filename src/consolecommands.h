@@ -3,6 +3,10 @@
 #include <string>
 #include <vector>
 
+/**
+ * Class that represents command. Contains a name and function that will be executed by calling the Exec() method.
+ * When creating a command object, it's added to list of commands and you can find it by its name.
+ */
 class CCommand
 {
 public:
@@ -22,6 +26,9 @@ private:
 	std::function<void(CCommand*, const std::vector<std::string>&)> m_Func;
 };
 
+/**
+ * Class for managing commands (add, remove, get)
+ */
 class CCommandList
 {
 public:
@@ -37,6 +44,9 @@ private:
 	std::vector<CCommand*> m_Commands;
 };
 
+/**
+ * Singleton
+ */
 static CCommandList* CmdList()
 {
 	extern CCommandList* g_pCommandList;

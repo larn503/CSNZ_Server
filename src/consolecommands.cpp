@@ -31,6 +31,10 @@ CCommandList::~CCommandList()
 	g_pCommandList = NULL;
 }
 
+/**
+ * Gets all command names
+ * @return string vector of command names
+ */
 vector<string> CCommandList::GetCommandList()
 {
 	vector<string> cmdlist;
@@ -42,16 +46,29 @@ vector<string> CCommandList::GetCommandList()
 	return cmdlist;
 }
 
+/**
+ * Adds command to command list
+ * @param cmd Pointer to command object
+ */
 void CCommandList::AddCommand(CCommand* cmd)
 {
 	m_Commands.push_back(cmd);
 }
 
+/**
+ * Removes command from command list
+ * @param cmd Pointer to command object
+ */
 void CCommandList::RemoveCommand(CCommand* cmd)
 {
 	m_Commands.erase(remove(begin(m_Commands), end(m_Commands), cmd), end(m_Commands));
 }
 
+/**
+ * Gets command object by its name
+ * @param name Command name
+ * @return Pointer to command object, NULL if not found
+ */
 CCommand* CCommandList::GetCommand(const string& name)
 {
 	for (auto cmd : m_Commands)
@@ -65,6 +82,13 @@ CCommand* CCommandList::GetCommand(const string& name)
 	return NULL;
 }
 
+/**
+ * Constructor. Adds command to command list
+ * @param name Command name
+ * @param desc Command description
+ * @param usage Command usage (arguments)
+ * @param func Command function
+ */
 CCommand::CCommand(const string& name, const string& desc, const string& usage, const function<void(CCommand*, const vector<string>&)>& func)
 {
 	m_Name = name;
@@ -75,6 +99,9 @@ CCommand::CCommand(const string& name, const string& desc, const string& usage, 
 	g_pCommandList->AddCommand(this);
 }
 
+/**
+ * Destructor. Removes command from command list
+ */
 CCommand::~CCommand()
 {
 	g_pCommandList->RemoveCommand(this);
@@ -90,11 +117,19 @@ string CCommand::GetDescription()
 	return m_Description;
 }
 
+/**
+ * Gets command usage string, its arguments
+ * @return Usage string
+ */
 string CCommand::GetUsage()
 {
 	return m_Usage;
 }
 
+/**
+ * Executes command function with given arguments
+ * @param args String vector of command arguments
+ */
 void CCommand::Exec(const vector<string>& args)
 {
 	m_Func(this, args);
