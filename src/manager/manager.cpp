@@ -59,7 +59,7 @@ void CManager::AddManager(IBaseManager* pElem)
 	{
 		if (p->GetName() == pElem->GetName())
 		{
-			Console().Error("CManager::AddManager: %s duplicate!!", pElem->GetName().c_str());
+			Console().Error("CManager::AddManager: %s duplicate!!\n", pElem->GetName().c_str());
 			return;
 		}
 	}
