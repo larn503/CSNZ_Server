@@ -52,6 +52,12 @@ vector<string> CCommandList::GetCommandList()
  */
 void CCommandList::AddCommand(CCommand* cmd)
 {
+	if (GetCommand(cmd->GetName()))
+	{
+		Console().Warn("CCommandList::AddCommand: command %s duplicate!\n", cmd->GetName());
+		return;
+	}
+
 	m_Commands.push_back(cmd);
 }
 
