@@ -187,10 +187,8 @@ CReceivePacket* CExtendedSocket::Read()
 		recvResult = Read((char*)packetDataBuf.data(), PACKET_HEADER_SIZE);
 		if (recvResult < PACKET_HEADER_SIZE)
 		{
-			if (recvResult != 0)
+			if (recvResult > 0)
 				Console().Error("CExtendedSocket::Read(%s): result < PACKET_HEADER_SIZE, %d\n", GetIP().c_str(), GetNetworkError());
-
-			/// @fixme what if recvResult > 0?
 
 			return NULL;
 		}
