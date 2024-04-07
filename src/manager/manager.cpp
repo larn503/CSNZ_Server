@@ -1,9 +1,10 @@
 #include "manager.h"
+#include "common/console.h"
 
 using namespace std;
 
 /**
- * Manager singleton (the same as CManager::GetInstance())
+ * DEPRECATED! Manager singleton (the same as CManager::GetInstance())
  * @return reference to manager instance
  */
 CManager& Manager()
