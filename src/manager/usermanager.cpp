@@ -445,7 +445,8 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 
 	vector<string> banList;
 	g_UserDatabase.GetBanList(user->GetID(), banList);
-	g_PacketManager.SendBanList(socket, banList);
+	if (!banList.empty())
+		g_PacketManager.SendBanList(socket, banList);
 
 	g_PacketManager.SendBanSettings(socket, characterExtended.banSettings);
 	g_PacketManager.SendBanMaxSize(socket, BANLIST_MAX_SIZE);
@@ -501,7 +502,7 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)
 {
-	int flag = g_pServerConfig->metadataToSend;
+	uint64_t flag = g_pServerConfig->metadataToSend;
 	if (flag & kMetadataFlag_MapList)
 		g_PacketManager.SendMetadataMaplist(socket);
 	if (flag & kMetadataFlag_ClientTable)
@@ -566,6 +567,8 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 		g_PacketManager.SendMetadataHash(socket);
 	if (flag & kMetadataFlag_RandomWeaponList)
 		g_PacketManager.SendMetadataRandomWeaponList(socket);
+	if (flag & kMetadataFlag_ModeEvent)
+		g_PacketManager.SendMetadataModeEvent(socket);
 }
 
 void CUserManager::SendUserLoadout(IUser* user)

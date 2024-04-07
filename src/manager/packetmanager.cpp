@@ -91,6 +91,7 @@ bool CPacketManager::Init()
 	m_pItemZip = LoadBinaryMetadata("Item.csv", true);
 	m_pCodisDataZip = LoadBinaryMetadata("CodisData.csv", true);
 	m_pWeaponPropZip = LoadBinaryMetadata("WeaponProp.json", true);
+	m_pModeEventZip = LoadBinaryMetadata("ModeEvent.csv", true);
 	m_pPaintItemList = LoadBinaryMetadata("Metadata_PaintItemList.bin");
 	m_pReinforceItemsExp = LoadBinaryMetadata("Metadata_ReinforceItemsExp.bin");
 	m_pRandomWeaponList = LoadBinaryMetadata("Metadata_RandomWeaponList.bin");
@@ -105,7 +106,7 @@ bool CPacketManager::Init()
 	if (!m_pMapListZip || !m_pClientTableZip || !m_pWeaponPartsZip || !m_pMatchingZip || !m_pProgressUnlockZip || !m_pGameModeListZip ||
 		!m_pReinforceMaxLvlZip || !m_pReinforceMaxExpZip || !m_pItemExpireTimeZip || !m_pHonorMoneyShopZip || !m_pScenarioTX_CommonZip || !m_pScenarioTX_DediZip ||
 		!m_pShopItemList_DediZip || !m_pZBCompetitiveZip || !m_pPPSystemZip || !m_pItemZip || !m_pCodisDataZip || !m_pWeaponPropZip ||
-		!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49)
+		!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49 || !m_pModeEventZip)
 	{
 		Console().FatalError("Failed to load metadata\n");
 		return false;
@@ -152,6 +153,8 @@ void CPacketManager::Shutdown()
 		delete m_pCodisDataZip;
 	if (m_pWeaponPropZip)
 		delete m_pWeaponPropZip;
+	if (m_pModeEventZip)
+		delete m_pModeEventZip;
 
 	if (m_pPaintItemList)
 		delete m_pPaintItemList;
@@ -900,8 +903,8 @@ void CPacketManager::SendUserStart(IExtendedSocket* socket, int userID, const st
 	msg->WriteString(userName);
 	msg->WriteString(gameName);
 	msg->WriteUInt8(firstConnect); // first connect
-	msg->WriteUInt8(0);
-	msg->WriteUInt8(0);
+	msg->WriteUInt8(0); // country code
+	msg->WriteUInt8(0); // region code
 	msg->WriteUInt32(0); // 210429
 	socket->Send(msg);
 }
@@ -1470,6 +1473,22 @@ void CPacketManager::SendMetadataItem(IExtendedSocket* socket)
 
 	msg->WriteUInt16(m_pItemZip->GetBufSize());
 	msg->WriteData(m_pItemZip->GetBuf(), m_pItemZip->GetBufSize());
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMetadataModeEvent(IExtendedSocket* socket)
+{
+	if (!m_pModeEventZip)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(kPacket_Metadata_ModeEvent);
+
+	msg->WriteUInt16(m_pModeEventZip->GetBufSize());
+	msg->WriteData(m_pModeEventZip->GetBuf(), m_pModeEventZip->GetBufSize());
 
 	socket->Send(msg);
 }
@@ -3266,8 +3285,9 @@ void CPacketManager::SendHostGameStart(IExtendedSocket* socket, int userId)
 
 	msg->WriteUInt8(HostPacketType::GameStart);
 	msg->WriteUInt32(userId);
-	msg->WriteUInt8(0);
+	msg->WriteUInt8(0); // server category /// @todo investigate
 	msg->WriteUInt8(0); // enable nexon analytics(it write every step on the map like kill event etc)
+	msg->WriteUInt64(5555); // unk
 
 	socket->Send(msg);
 }
@@ -6719,7 +6739,7 @@ void CPacketManager::SendBanList(IExtendedSocket* socket, const vector<string>& 
 	CSendPacket* msg = g_PacketManager.CreatePacket(socket, PacketId::Ban);
 	msg->BuildHeader();
 	msg->WriteUInt8(BanPacketType::BanList);
-	msg->WriteUInt8(banList.size());
+	msg->WriteUInt16(banList.size());
 	for (auto& ban : banList)
 	{
 		msg->WriteString(ban);
