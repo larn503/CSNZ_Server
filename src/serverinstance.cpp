@@ -21,7 +21,7 @@
 
 #include "csvtable.h"
 #include "serverconfig.h"
-#include "consolecommands.h"
+#include "servercommands.h"
 #ifdef USE_GUI
 #include "gui/igui.h"
 #endif
@@ -250,7 +250,7 @@ void CServerInstance::OnCommand(const string& command)
 	if (args.empty())
 		return;
 
-	CCommand* cmd = CmdList()->GetCommand(args[0]);
+	CCommand* cmd = CmdList().GetCommand(args[0]);
 	if (cmd)
 	{
 		cmd->Exec(args);
