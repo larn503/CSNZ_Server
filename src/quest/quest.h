@@ -181,10 +181,10 @@ public:
 	}
 };
 
-class CQuestTaskMonsterKill : public CQuestBaseConditionGameMatch
+class CQuestConditionMonsterKill : public CQuestBaseConditionGameMatch
 {
 public:
-	CQuestTaskMonsterKill(CQuestTask* task, int id, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount, int monsterType) : CQuestBaseConditionGameMatch(task, id, temp, gameModes, maps, playerCount)
+	CQuestConditionMonsterKill(CQuestTask* task, int id, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount, int monsterType) : CQuestBaseConditionGameMatch(task, id, temp, gameModes, maps, playerCount)
 	{
 		m_nMonsterType = monsterType;
 	}

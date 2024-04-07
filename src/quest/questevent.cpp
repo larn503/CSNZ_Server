@@ -4,12 +4,14 @@
 
 using namespace std;
 
-CQuestEventBaseCondition::CQuestEventBaseCondition(CQuestEventTask* task, int id, int goal)
+CQuestEventBaseCondition::CQuestEventBaseCondition(CQuestEventTask* task, int eventType, int id, int goal)
 {
-	m_nEventType = 0;
+	m_nEventType = eventType;
 	m_pTask = task;
 	m_nID = id;
 	m_nGoalPoints = goal;
+
+	m_pTask->AddCondition(this);
 }
 
 bool CQuestEventBaseCondition::Event_Internal(IUser* user)
@@ -24,9 +26,14 @@ bool CQuestEventBaseCondition::Event_Internal(IUser* user)
 	return true;
 }
 
-void CQuestEventBaseCondition::SetEventType(int eventType)
+int CQuestEventBaseCondition::GetID()
 {
-	m_nEventType = eventType;
+	return m_nID;
+}
+
+int CQuestEventBaseCondition::GetGoalPoints()
+{
+	return m_nGoalPoints;
 }
 
 int CQuestEventBaseCondition::GetEventType()
@@ -37,10 +44,20 @@ int CQuestEventBaseCondition::GetEventType()
 CQuestEventTask::CQuestEventTask(CQuestEvent* quest, int id, int goal)
 {
 	m_pQuest = quest;
+	m_pQuest->AddTask(this);
+
 	m_nID = id;
 	m_nGoal = goal;
 	m_nRewardID = 0;
 	m_nNoticeGoal = 0;
+}
+
+CQuestEventTask::~CQuestEventTask()
+{
+	for (auto condition : m_Conditions)
+	{
+		delete condition;
+	}
 }
 
 void CQuestEventTask::IncrementCount(IUser* user, int count, bool setForce)
@@ -105,7 +122,7 @@ void CQuestEventTask::OnMinuteTick(CGameMatchUserStat* userStat, CGameMatch* gam
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_TIMEMATCH)
 		{
-			CQuestEventConditionTimeMatch* conditionTime = dynamic_cast<CQuestEventConditionTimeMatch*>(condition);
+			CQuestEventConditionTimeMatch* conditionTime = static_cast<CQuestEventConditionTimeMatch*>(condition);
 			conditionTime->OnMinuteTick(userStat, gameMatch);
 		}
 	}
@@ -117,7 +134,7 @@ void CQuestEventTask::OnKillEvent(CGameMatchUserStat* userStat, CGameMatch* game
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_KILL)
 		{
-			CQuestEventConditionKill* conditionKill = dynamic_cast<CQuestEventConditionKill*>(condition);
+			CQuestEventConditionKill* conditionKill = static_cast<CQuestEventConditionKill*>(condition);
 			conditionKill->OnKillEvent(userStat, gameMatch, killEvent);
 		}
 	}
@@ -129,7 +146,7 @@ void CQuestEventTask::OnBombExplode(CGameMatchUserStat* userStat, CGameMatch* ga
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_BOMBEXPLODE)
 		{
-			CQuestEventConditionBombExplode* conditionExplode = dynamic_cast<CQuestEventConditionBombExplode*>(condition);
+			CQuestEventConditionBombExplode* conditionExplode = static_cast<CQuestEventConditionBombExplode*>(condition);
 			conditionExplode->OnBombExplode(userStat, gameMatch);
 		}
 	}
@@ -141,7 +158,7 @@ void CQuestEventTask::OnBombDefuse(CGameMatchUserStat* userStat, CGameMatch* gam
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_BOMBDEFUSE)
 		{
-			CQuestEventConditionBombDefuse* conditionDefuse = dynamic_cast<CQuestEventConditionBombDefuse*>(condition);
+			CQuestEventConditionBombDefuse* conditionDefuse = static_cast<CQuestEventConditionBombDefuse*>(condition);
 			conditionDefuse->OnBombDefuse(userStat, gameMatch);
 		}
 	}
@@ -153,7 +170,7 @@ void CQuestEventTask::OnHostageEscape(CGameMatchUserStat* userStat, CGameMatch* 
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_HOSTAGEESCAPE)
 		{
-			CQuestEventConditionHostageEscape* conditionHostageEscape = dynamic_cast<CQuestEventConditionHostageEscape*>(condition);
+			CQuestEventConditionHostageEscape* conditionHostageEscape = static_cast<CQuestEventConditionHostageEscape*>(condition);
 			conditionHostageEscape->OnHostageEscape(userStat, gameMatch);
 		}
 	}
@@ -165,7 +182,7 @@ void CQuestEventTask::OnMonsterKill(CGameMatchUserStat* userStat, CGameMatch* ga
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_KILLMONSTER)
 		{
-			CQuestEventConditionKillMonster* conditionKillMonster = dynamic_cast<CQuestEventConditionKillMonster*>(condition);
+			CQuestEventConditionKillMonster* conditionKillMonster = static_cast<CQuestEventConditionKillMonster*>(condition);
 			conditionKillMonster->OnMonsterKill(userStat, gameMatch, monsterType);
 		}
 	}
@@ -177,7 +194,7 @@ void CQuestEventTask::OnMosquitoKill(CGameMatchUserStat* userStat, CGameMatch* g
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_KILLMOSQUITO)
 		{
-			CQuestEventConditionKillMosquito* conditionKillMosquito = dynamic_cast<CQuestEventConditionKillMosquito*>(condition);
+			CQuestEventConditionKillMosquito* conditionKillMosquito = static_cast<CQuestEventConditionKillMosquito*>(condition);
 			conditionKillMosquito->OnMosquitoKill(userStat, gameMatch);
 		}
 	}
@@ -189,7 +206,7 @@ void CQuestEventTask::OnKiteKill(CGameMatchUserStat* userStat, CGameMatch* gameM
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_KILLKITE)
 		{
-			CQuestEventConditionKillKite* conditionKillKite = dynamic_cast<CQuestEventConditionKillKite*>(condition);
+			CQuestEventConditionKillKite* conditionKillKite = static_cast<CQuestEventConditionKillKite*>(condition);
 			conditionKillKite->OnKiteKill(userStat, gameMatch);
 		}
 	}
@@ -201,7 +218,7 @@ void CQuestEventTask::OnLevelUpEvent(IUser* user, int level, int newLevel)
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_LEVELUP)
 		{
-			CQuestEventConditionLevelUp* conditionLevelUP = dynamic_cast<CQuestEventConditionLevelUp*>(condition);
+			CQuestEventConditionLevelUp* conditionLevelUP = static_cast<CQuestEventConditionLevelUp*>(condition);
 			conditionLevelUP->OnLevelUpEvent(user, level, newLevel);
 		}
 	}
@@ -218,7 +235,7 @@ void CQuestEventTask::OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* 
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_MATCHWIN)
 		{
-			CQuestEventConditionWin* conditionMatchWin = dynamic_cast<CQuestEventConditionWin*>(condition);
+			CQuestEventConditionWin* conditionMatchWin = static_cast<CQuestEventConditionWin*>(condition);
 			conditionMatchWin->OnMatchEndEvent(userStat, gameMatch, userTeam);
 		}
 	}
@@ -230,7 +247,7 @@ void CQuestEventTask::OnUserLogin(IUser* user)
 	{
 		if (condition->GetEventType() == QuestTaskEventType::EVENT_LOGIN)
 		{
-			CQuestEventConditionLogin* conditionLogin = dynamic_cast<CQuestEventConditionLogin*>(condition);
+			CQuestEventConditionLogin* conditionLogin = static_cast<CQuestEventConditionLogin*>(condition);
 			conditionLogin->OnUserLogin(user);
 		}
 	}
@@ -271,6 +288,11 @@ CQuestEvent* CQuestEventTask::GetQuest()
 	return m_pQuest;
 }
 
+const vector<CQuestEventBaseCondition*>& CQuestEventTask::GetConditions()
+{
+	return m_Conditions;
+}
+
 bool CQuestEventTask::IsFinished(IUser* user)
 {
 	if (!g_UserDatabase.IsQuestEventTaskFinished(user->GetID(), m_pQuest->GetID(), m_nID))
@@ -309,7 +331,7 @@ void CQuestEvent::AddTask(CQuestEventTask* task)
 
 CQuestEventTask* CQuestEvent::GetTask(int id)
 {
-	vector<CQuestEventTask*>::iterator taskIt = find_if(m_Tasks.begin(), m_Tasks.end(),
+	auto taskIt = find_if(m_Tasks.begin(), m_Tasks.end(),
 		[id](CQuestEventTask* task) { return id == task->GetID(); });
 
 	if (taskIt != m_Tasks.end())
