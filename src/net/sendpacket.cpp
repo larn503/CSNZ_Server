@@ -156,7 +156,7 @@ void CSendPacket::WriteWString(const wstring& str)
  * @param data
  * @param len
  */
-void CSendPacket::WriteData(void* data, int len)
+void CSendPacket::WriteData(void* data, size_t len)
 {
 	m_OutStream.writeData(data, len);
 }
