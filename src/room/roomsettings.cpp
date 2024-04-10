@@ -277,6 +277,9 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	if (highMidFlag & ROOM_HIGHMID_UNK79) {
 		unk79 = inPacket.readUInt8();
 	}
+	if (highMidFlag & ROOM_HIGHMID_UNK80) {
+		unk80 = inPacket.readUInt8();
+	}
 	if (highFlag & ROOM_HIGH_UNK77) {
 		unk77 = inPacket.readUInt8();
 	}
@@ -375,6 +378,7 @@ void CRoomSettings::Init()
 	unk77 = 0; // high flag
 	unk78 = 0; // high mid flag
 	unk79 = 0;
+	unk80 = 0;
 }
 
 vector<int> split(const string& s, char delimiter)

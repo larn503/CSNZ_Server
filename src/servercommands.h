@@ -523,6 +523,27 @@ void CommandSendInventory(CCommand* cmd, const std::vector<std::string>& args)
 	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 }
 
+void CommandSendPacket(CCommand* cmd, const std::vector<std::string>& args)
+{
+	if (args.size() < 3 || !isNumber(args[1]))
+	{
+		Console().Log("%s\n", cmd->GetUsage().c_str());
+		return;
+	}
+
+	int userID = stoi(args[1]);
+	IUser* user = g_UserManager.GetUserById(userID);
+	if (!user)
+	{
+		Console().Log("User is offline");
+		return;
+	}
+
+	std::string filename = args[2];
+
+	g_PacketManager.SendPacketFromFile(user->GetExtendedSocket(), filename);
+}
+
 CCommand help("help", "Print command list", "", CommandHelp);
 CCommand users("users", "Print connected client list", "", CommandUsers);
 CCommand kickall("kickall", "Kick all users", "", CommandKickAll);
@@ -545,3 +566,4 @@ CCommand status("status", "Print server status", "", CommandStatus);
 CCommand sendevent("sendevent", "Send event packet", "sendevent <userID> <event>", CommandSendEvent);
 CCommand sendevent2("sendevent2", "Send weapon release event update", "sendevent2 <userID>", CommandSendEvent2);
 CCommand sendinventory("sendinventory", "Send inventory packet to user by userID", "sendinventory <userID>", CommandSendInventory);
+CCommand sendpacket("sendpacket", "Send packet from file to user by userID", "sendpacket <userID> <filename>", CommandSendPacket);

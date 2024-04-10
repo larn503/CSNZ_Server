@@ -464,6 +464,9 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK79) {
 		m_pSettings->unk79 = newSettings.unk79;
 	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK80) {
+		m_pSettings->unk80 = newSettings.unk80;
+	}
 	if (newSettings.highFlag & ROOM_HIGH_UNK77) {
 		m_pSettings->unk77 = newSettings.unk77;
 	}

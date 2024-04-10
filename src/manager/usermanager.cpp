@@ -457,17 +457,13 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	g_PacketManager.SendGameMatchUnk(socket);
 	g_PacketManager.SendGameMatchUnk9(socket);
 
-	//g_PacketManager.SendQuestUnk1(socket);
-	//g_PacketManager.SendQuestUnk11(socket);
-
-	//g_PacketManager.SendItemUnk1(socket);
-	//g_PacketManager.SendItemUnk3(socket);
-
 	if (g_pServerConfig->mainMenuSkinEvent > 0)
 		g_PacketManager.SendEventMainMenuSkin(socket, g_pServerConfig->mainMenuSkinEvent);
 
 	g_PacketManager.SendEventUnk(socket);
-	g_PacketManager.SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
+
+	if (g_pServerConfig->activeMiniGamesFlag)
+		g_PacketManager.SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
 
 	if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
 		g_MiniGameManager.SendWeaponReleaseUpdate(user);
@@ -492,12 +488,13 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	for (auto& survey : g_pServerConfig->surveys)
 	{
 		if (!g_UserDatabase.IsSurveyAnswered(user->GetID(), survey.id))
-		{
 			g_PacketManager.SendUserSurvey(socket, survey);
-		}
 	}
 
 	g_PacketManager.SendLeaguePacket(socket);
+
+	// FROM ~X.03.24: without this packet, client doesn't show inventory and user info on top left, weird
+	g_PacketManager.SendUpdateInfo(socket);
 }
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)
@@ -893,9 +890,7 @@ IUser* CUserManager::GetUserByUsername(const string& username)
 	for (auto u : m_Users)
 	{
 		if (u->GetUsername() == username)
-		{
 			return u;
-		}
 	}
 
 	return NULL;
@@ -1164,8 +1159,8 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 	int surveyID = msg->ReadUInt32();
 	answer.surveyID = surveyID;
 
-	vector<Survey>::iterator surveyIt = find_if(g_pServerConfig->surveys.begin(), g_pServerConfig->surveys.end(),
-		[surveyID](Survey& survey) { return survey.id == surveyID; });
+	auto surveyIt = find_if(g_pServerConfig->surveys.begin(), g_pServerConfig->surveys.end(),
+		[surveyID](const Survey& survey) { return survey.id == surveyID; });
 	if (surveyIt == g_pServerConfig->surveys.end())
 	{
 		g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
@@ -1179,8 +1174,8 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 		int questionID = msg->ReadUInt8();
 		questionAnswer.questionID = questionID;
 
-		vector<SurveyQuestion>::iterator surveyQuestion = find_if(surveyIt->questions.begin(), surveyIt->questions.end(),
-			[questionID](SurveyQuestion& question) { return question.id == questionID; });
+		auto surveyQuestion = find_if(surveyIt->questions.begin(), surveyIt->questions.end(),
+			[questionID](const SurveyQuestion& question) { return question.id == questionID; });
 		if (surveyQuestion == surveyIt->questions.end())
 		{
 			g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);
@@ -1206,8 +1201,8 @@ void CUserManager::OnUserSurveyAnswerRequest(CReceivePacket* msg, IUser* user)
 			{
 				int answerID = msg->ReadUInt8();
 
-				vector<SurveyQuestionAnswerCheckBox>::iterator checkBoxAnswer = find_if(surveyQuestion->answersCheckBox.begin(), surveyQuestion->answersCheckBox.end(),
-					[answerID](SurveyQuestionAnswerCheckBox& answer) { return answer.id == answerID; });
+				auto checkBoxAnswer = find_if(surveyQuestion->answersCheckBox.begin(), surveyQuestion->answersCheckBox.end(),
+					[answerID](const SurveyQuestionAnswerCheckBox& answer) { return answer.id == answerID; });
 				if (checkBoxAnswer == surveyQuestion->answersCheckBox.end())
 				{
 					g_PacketManager.SendUserSurveyReply(user->GetExtendedSocket(), ANSWER_INVALID);

@@ -2646,6 +2646,9 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (highMidFlag & ROOM_HIGHMID_UNK79) {
 		msg->WriteUInt8(newSettings->unk79);
 	}
+	if (highMidFlag & ROOM_HIGHMID_UNK80) {
+		msg->WriteUInt8(newSettings->unk80);
+	}
 	if (highFlag & ROOM_HIGH_UNK77) {
 		msg->WriteUInt8(newSettings->unk77);
 	}
@@ -6888,4 +6891,45 @@ void CPacketManager::SendCrypt(IExtendedSocket* socket, int type, unsigned char*
 	msg->WriteData(iv, 64);
 
 	socket->Send(msg);
+}
+
+void CPacketManager::SendUpdateInfo(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::UpdateInfo);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(11);
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendPacketFromFile(IExtendedSocket* socket, const std::string& filename)
+{
+	FILE* file = fopen(filename.c_str(), "rb");
+	if (!file)
+		return;
+
+	fseek(file, 0, SEEK_END);
+	size_t len = ftell(file);
+	rewind(file);
+
+	if (!len || len > PACKET_MAX_SIZE)
+		return;
+
+	unsigned char* buf = new unsigned char[len];
+
+	if (fread(buf, 1, len, file) != len)
+	{
+		delete buf;
+		return;
+	}
+
+	CSendPacket* msg = CreatePacket(socket, buf[0]);
+	msg->BuildHeader();
+
+	msg->WriteData(buf + 1, len - 1);
+
+	socket->Send(msg);
+
+	delete buf;
 }

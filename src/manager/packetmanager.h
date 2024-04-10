@@ -260,6 +260,10 @@ public:
 
 	void SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv);
 
+	void SendUpdateInfo(IExtendedSocket* socket);
+
+	void SendPacketFromFile(IExtendedSocket* socket, const std::string& filename);
+
 private:
 	CBinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);
 
