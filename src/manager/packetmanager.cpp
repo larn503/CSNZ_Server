@@ -2268,7 +2268,7 @@ void CPacketManager::SendSearchRoomNotice(IExtendedSocket* socket, IRoom* room, 
 
 void CPacketManager::SendUserUpdateInfo(IExtendedSocket* socket, IUser* user, const CUserCharacter& character)
 {
-	CSendPacket* msg = CreatePacket(socket, PacketId::UserInfo);
+	CSendPacket* msg = CreatePacket(socket, PacketId::UserUpdateInfo);
 	msg->BuildHeader();
 	msg->WriteUInt32(user->GetID());
 
@@ -3149,7 +3149,7 @@ void CPacketManager::SendRoomWeaponSurvey(IExtendedSocket* socket, const vector<
 
 void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUserInventoryItem>& items)
 {
-	CSendPacket* msg = CreatePacket(socket, PacketId::Inventory_DefaultItems);
+	CSendPacket* msg = CreatePacket(socket, PacketId::DefaultItems);
 	msg->BuildHeader();
 	msg->WriteUInt16(items.size());
 	for (auto& item : items)

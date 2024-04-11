@@ -351,16 +351,16 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 	case PacketId::Version:
 		g_UserManager.OnVersionPacket(msg, s);
 		break;
-	case PacketId::Transfer:
+	case PacketId::CreateCharacter:
 		g_UserManager.OnCharacterPacket(msg, s);
 		break;
 	case PacketId::Login:
 		g_UserManager.OnLoginPacket(msg, s);
 		break;
-	case PacketId::RequestChannels:
+	case PacketId::RequestServerList:
 		g_ChannelManager.OnChannelListPacket(s);
 		break;
-	case PacketId::RequestRoomList:
+	case PacketId::RequestTransfer:
 		g_ChannelManager.OnRoomListPacket(msg, s);
 		break;
 	case PacketId::RecvCrypt:
