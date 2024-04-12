@@ -55,7 +55,7 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 	int type = msg->ReadUInt8();
 	switch (type)
 	{
-	case 0:
+	case HostServerPacketType::AddServer:
 	{
 		int port = msg->ReadUInt16();
 		int ip = msg->ReadUInt32(false);
@@ -64,7 +64,7 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 
 		break;
 	}
-	case 1:
+	case HostServerPacketType::MemoryUsage:
 	{
 		CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
 		if (server)
@@ -72,10 +72,19 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 
 		break;
 	}
-	case 2:
+	case HostServerPacketType::Unk2:
 	{
+		// Something related to a file named "rev.txt", what the fuck?
 		int unk = msg->ReadUInt32();
 		Console().Warn("CDedicatedServerManager::OnPacket(2): %d\n", unk);
+
+		break;
+	}
+	case HostServerPacketType::Unk3:
+	{
+		// Supposedly it's a variable size, but it doesn't tell what size it sends and it's always sending one byte, so...
+		int unk = msg->ReadUInt8();
+		Console().Warn("CDedicatedServerManager::OnPacket(3): %d\n", unk);
 
 		break;
 	}
@@ -161,4 +170,17 @@ void CDedicatedServerManager::RemoveServer(IExtendedSocket* socket)
 		room->SetServer(NULL);
 
 	vServerPools.erase(remove(vServerPools.begin(), vServerPools.end(), server), vServerPools.end());
+}
+
+void CDedicatedServerManager::TransferServer(IExtendedSocket* socket, const std::string& ipAddress, int port)
+{
+	CDedicatedServer* server = GetServerBySocket(socket);
+	if (!server)
+		return;
+
+	IRoom* room = server->GetRoom();
+	if (room)
+		room->SetServer(NULL);
+
+	g_PacketManager.SendHostServerTransfer(socket, ipAddress, port);
 }

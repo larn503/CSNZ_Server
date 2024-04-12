@@ -218,6 +218,7 @@ public:
 	void SendUDPHostData(IExtendedSocket* socket, bool host, int userID, const std::string& ipAddress, int port);
 
 	void SendHostServerStop(IExtendedSocket* socket);
+	void SendHostServerTransfer(IExtendedSocket* socket, const std::string& ipAddress, int port);
 
 	void SendClanList(IExtendedSocket* socket, const std::vector<ClanList_s>& clans, int pageID, int pageMax);
 	void SendClanInfo(IExtendedSocket* socket, const Clan_s& clan);

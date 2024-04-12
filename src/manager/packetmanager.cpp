@@ -5746,7 +5746,19 @@ void CPacketManager::SendHostServerStop(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::HostServer);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(0);
+	msg->WriteUInt8(HostServerPacketType::StopServer);
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendHostServerTransfer(IExtendedSocket* socket, const string& ipAddress, int port)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::HostServer);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(HostServerPacketType::TransferServer);
+	msg->WriteUInt32(ip_string_to_int(ipAddress), false);
+	msg->WriteUInt16(port);
 
 	socket->Send(msg);
 }

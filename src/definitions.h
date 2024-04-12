@@ -1545,3 +1545,14 @@ enum ItemBoxGrades
 #define REGISTER_USERNAME_WRONG -2
 #define REGISTER_PASSWORD_WRONG -3
 #define REGISTER_IP_LIMIT -4
+
+// Dedicated Server
+enum HostServerPacketType
+{
+	AddServer = 0,
+	StopServer = 0,
+	MemoryUsage = 1,
+	TransferServer = 1,
+	Unk2 = 2,
+	Unk3 = 3,
+};
