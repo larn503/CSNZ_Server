@@ -88,6 +88,14 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 
 		break;
 	}
+	case HostServerPacketType::Unk3:
+	{
+		// Supposedly it's a variable size, but it doesn't tell what size it sends and it's always sending one byte, so...
+		int unk = msg->ReadUInt8();
+		Console().Warn("CDedicatedServerManager::OnPacket(3): %d\n", unk);
+
+		break;
+	}
 	default:
 		Logger().Warn("Unknown host server request %d\n", type);
 		break;
