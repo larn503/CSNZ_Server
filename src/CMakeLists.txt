@@ -121,13 +121,8 @@ set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "Reset
 set_target_properties(PROJECTNAME PROPERTIES OUTPUT_NAME "CSNZ_Server")
 
 set(EXECUTABLE_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/../bin)
-
-# define max numbers of connected users by changing FD_SETSIZE
 if (SERVER_PUBLIC)
-	add_definitions(-DFD_SETSIZE=40)
-	add_definitions(-DPUBLIC_RELEASE)
-else()
-	add_definitions(-DFD_SETSIZE=1024)
+	target_compile_options(PROJECTNAME PRIVATE /DPUBLIC_RELEASE)
 endif()
 
 if (NOT WIN32)
