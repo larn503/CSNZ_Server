@@ -20,10 +20,6 @@ CTCPServer::CTCPServer() : m_ListenThread(ListenThread, this)
  	m_nNextClientIndex = 0;
 	m_nResult = 0;
 
-	FD_ZERO(&m_FdsRead);
-	FD_ZERO(&m_FdsWrite);
-	m_nMaxFD = 0;
-
 #ifdef WIN32
 	WSADATA wsaData;
 	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -77,7 +73,7 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 		freeaddrinfo(result);
 		return false;
 	}
-
+	
 	// Set the mode of the socket to be nonblocking
 	u_long iMode = 1;
 	m_nResult = ioctlsocket(m_Socket, FIONBIO, &iMode);
@@ -117,7 +113,10 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 		return false;
 	}
 
-	m_nMaxFD = m_Socket;
+	WSAPOLLFD fd{};
+	fd.fd = m_Socket;
+	fd.events = POLLRDNORM;
+	m_fds.push_back(fd);
 
 	m_bIsRunning = true;
 	
@@ -142,6 +141,8 @@ void CTCPServer::Stop()
 			delete client;
 		}
 
+		m_fds.clear();
+
 		closesocket(m_Socket);
 	}
 }
@@ -151,53 +152,32 @@ void CTCPServer::Stop()
  */
 void CTCPServer::Listen()
 {
-	FD_ZERO(&m_FdsWrite);
-	FD_ZERO(&m_FdsRead);
+	printf("[CTCPServer::Listen] %.4fms | m_fds.size(): %d\n", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - m_lastExecuteTime), m_fds.size());
+	m_lastExecuteTime = std::chrono::high_resolution_clock::now();
 
-	FD_SET(m_Socket, &m_FdsRead);
-
-	for (auto socket : m_Clients)
+	int result = WSAPoll(m_fds.data(), m_fds.size(), 1000);
+	if (result == SOCKET_ERROR)
 	{
-		if (socket->GetPacketsToSend().size())
-			FD_SET(socket->GetSocket(), &m_FdsWrite);
-
-		FD_SET(socket->GetSocket(), &m_FdsRead);
-
-		if ((int)socket->GetSocket() > m_nMaxFD)
-			m_nMaxFD = socket->GetSocket();
-	}
-
-	struct timeval tv;
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-
-	int activity = select(m_nMaxFD + 1, &m_FdsRead, &m_FdsWrite, NULL, &tv);
-	if (activity == SOCKET_ERROR)
-	{
-		Console().Error("select() failed with error: %d\n", GetNetworkError());
+		Console().Error("WSAPoll() failed with error: %d\n", GetNetworkError());
 
 		if (m_pListener)
 			m_pListener->OnTCPError(0);
-		
+
 		return;
 	}
-	else if (!activity) // timeout
-	{
+	// nothing happens
+	if (!result)
 		return;
-	}
 
 	if (m_pCriticalSection)
 		m_pCriticalSection->Enter();
 
-	for (int i = 0; i <= m_nMaxFD; i++)
-	{
-		if (FD_ISSET(i, &m_FdsRead))
-		{
-			if (m_Socket == i) // accept new client
-			{
+	for (auto it = m_fds.begin(); it != m_fds.end(); it++) {
+		if (it->revents & POLLRDNORM) {
+			if (it->fd == m_Socket) {
 				IExtendedSocket* socket = Accept(m_nNextClientIndex);
 				if (!socket)
-					break;
+					return;
 
 				Console().Log("Client (%d, %s) has been connected to the server\n", m_nNextClientIndex, socket->GetIP().c_str());
 
@@ -205,24 +185,32 @@ void CTCPServer::Listen()
 					m_pListener->OnTCPConnectionCreated(socket);
 
 				m_nNextClientIndex++;
+
+				WSAPOLLFD fd{};
+				fd.fd = socket->GetSocket();
+				fd.events = POLLRDNORM;
+				m_fds.push_back(fd);
+
+				// prevent crash
+				it = m_fds.begin();
 			}
-			else // data from client
-			{
-				IExtendedSocket* socket = GetExSocketBySocket(i);
+			// read from client
+			else {
+				IExtendedSocket* socket = GetExSocketBySocket(it->fd);
 				if (!socket)
-				{
-					continue;
-				}
+					return;
 
 				CReceivePacket* msg = socket->Read();
 				int readResult = socket->GetReadResult();
 				if (readResult == 0)
 				{
+					it->revents |= POLLHUP;
 					// connection closed
 					DisconnectClient(socket);
 				}
 				else if (readResult == SOCKET_ERROR)
 				{
+					it->revents |= POLLERR;
 					// error, close connection
 					DisconnectClient(socket);
 
@@ -231,14 +219,14 @@ void CTCPServer::Listen()
 				}
 				else if (!msg)
 				{
+					it->revents |= POLLERR;
+
 					// packet is not valid or wrong sequence or decryption failed
-					/// @fixme should we disconnect here?
+					/// @fixme should we disconnect here? (in official, they kick incorrect seq)
 
 					// exclude case when message is not fully read
 					if (!socket->GetMsg())
 						DisconnectClient(socket);
-
-					continue;
 				}
 				else
 				{
@@ -255,22 +243,27 @@ void CTCPServer::Listen()
 			}
 		}
 
-		if (FD_ISSET(i, &m_FdsWrite)) // data to write
-		{
-			IExtendedSocket* socket = GetExSocketBySocket(i);
-			if (socket && socket->GetPacketsToSend().size())
-			{
-				CSendPacket* msg = socket->GetPacketsToSend()[0]; // send only first packet from vector
-				if (socket->Send(msg, true) <= 0)
-				{
-					Console().Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", GetNetworkError(), socket->GetPacketsToSend().size());
+		// since disconnect called, I just log double confirm issues
+		if (it->revents & (POLLERR | POLLHUP)) {
+			if (it->fd != m_Socket) {
+				m_fds.erase(it);
+				it = m_fds.begin();
+				continue;
+			}
+		}
+	}
 
-					DisconnectClient(socket);
-				}
-				else
-				{
-					socket->GetPacketsToSend().erase(socket->GetPacketsToSend().begin());
-				}
+	for (auto& socket : m_Clients) {
+		if (socket->GetPacketsToSend().size()) {
+			CSendPacket* msg = socket->GetPacketsToSend().at(0);
+			if (socket->Send(msg, true) <= 0)
+			{
+				Console().Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", GetNetworkError(), socket->GetPacketsToSend().size());
+				DisconnectClient(socket);
+			}
+			else
+			{
+				socket->GetPacketsToSend().erase(socket->GetPacketsToSend().begin());
 			}
 		}
 	}

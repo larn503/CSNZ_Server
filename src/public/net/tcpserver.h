@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
 
 class IExtendedSocket;
 class CExtendedSocket;
@@ -43,7 +44,7 @@ private:
 	IServerListenerTCP* m_pListener;
 	CCriticalSection* m_pCriticalSection;
 
-	fd_set m_FdsRead;
-	fd_set m_FdsWrite;
-	int m_nMaxFD;
+	// temp
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastExecuteTime;
+	std::vector<WSAPOLLFD> m_fds;
 };
