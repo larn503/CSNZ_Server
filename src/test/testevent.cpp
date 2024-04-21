@@ -5,21 +5,22 @@
 
 using namespace std;
 
+int g_bCounter = 0;
+void Function()
+{
+	g_bCounter++;
+}
+
 TEST_CASE("Events - test events")
 {
 	// Add two events, call WaitForSignal() from another thread, check if events executed
-	int counter = 0;
-	auto func = [&counter]() {
-		counter++;
-	};
-
 	CEvents events;
-	events.AddEventFunction(func);
-	events.AddEventFunction(func);
+	events.AddEventFunction(std::bind(&Function));
+	events.AddEventFunction(std::bind(&Function));
 
 	std::atomic<bool> done{ false };
 
-	auto eventThreadFunc = [&done, &events]() {
+	auto eventThread = [&done, &events]() {
 		events.WaitForSignal();
 
 		IEvent* ev = events.GetNextEvent();
@@ -37,7 +38,7 @@ TEST_CASE("Events - test events")
 		done = true;
 	};
 
-	thread t(eventThreadFunc);
+	thread t(eventThread);
 
 	// wait for a thread to end
 	this_thread::sleep_for(200ms);
@@ -47,5 +48,5 @@ TEST_CASE("Events - test events")
 
 	t.join();
 
-	CHECK(counter == 2);
+	CHECK(g_bCounter == 2);
 }
