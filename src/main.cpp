@@ -10,7 +10,7 @@
 
 CServerInstance* g_pServerInstance;
 
-CEvent g_Event;
+CEvents g_Events;
 CCriticalSection g_ServerCriticalSection;
 
 #ifdef WIN32
@@ -40,7 +40,7 @@ CObjectSync g_GUIInitEvent;
 
 void* GUIThread(void*)
 {
-	if (!GUI()->Init(&Manager(), &g_Event))
+	if (!GUI()->Init(&Manager(), &g_Events))
 	{
 		printf("error!\n");
 	}
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 
 	while (g_pServerInstance->IsServerActive())
 	{
-		g_Event.AddEventSecondTick();
+		g_Events.AddEventFunction(std::bind(&CServerInstance::OnSecondTick, g_pServerInstance));
 
 		SleepMS(1000);
 	}

@@ -188,7 +188,7 @@ void CServerInstance::OnTCPConnectionClosed(IExtendedSocket* socket)
 
 void CServerInstance::OnTCPMessage(IExtendedSocket* socket, CReceivePacket* msg)
 {
-	g_Event.AddEventPacket(socket, msg);
+	g_Events.AddEventFunction(std::bind(&CServerInstance::OnPackets, this, socket, msg));
 }
 
 void CServerInstance::OnTCPError(int errorCode)
@@ -261,8 +261,9 @@ void* EventThread(void*)
 {
 	while (g_pServerInstance->IsServerActive())
 	{
-		g_Event.WaitForSignal();
+		g_Events.WaitForSignal();
 
+		// check for IsServerActive again because the state may change
 		if (g_pServerInstance->IsServerActive())
 			g_pServerInstance->OnEvent();
 	}
@@ -279,7 +280,7 @@ void* ReadConsoleThread(void*)
 
 		// TODO: ignore empty line?
 
-		g_Event.AddEventConsoleCommand(cmd);
+		g_Events.AddEventFunction(std::bind(&CServerInstance::OnCommand, g_pServerInstance, cmd));
 	}
 	
 	return NULL;
@@ -292,7 +293,7 @@ void CServerInstance::SetServerActive(bool active)
 	if (!m_bIsServerActive)
 	{
 		// wake up event thread
-		g_Event.Signal();
+		g_Events.Signal();
 	}
 }
 
@@ -301,39 +302,21 @@ bool CServerInstance::IsServerActive()
 	return m_bIsServerActive;
 }
 
+/**
+ * Processes server events from the queue
+ */
 void CServerInstance::OnEvent()
 {
-	/// @todo
-	bool empty;
-	Event_s ev = g_Event.GetNextEvent(empty);
-	while (!empty)
+	IEvent* ev = g_Events.GetNextEvent();
+	while (ev)
 	{
 		g_ServerCriticalSection.Enter();
 
-		switch (ev.type)
-		{
-		case SERVER_EVENT_CONSOLE_COMMAND:
-			OnCommand(ev.cmd);
-			break;
-		case SERVER_EVENT_TCP_PACKET:
-			OnPackets(ev.socket, ev.msg);
-			break;
-		case SERVER_EVENT_SECOND_TICK:
-			OnSecondTick();
-			break;
-		case SERVER_EVENT_FUNCTION:
-			OnFunction(ev.func);
-			break; 
-		}
-
-		if (ev.type == SERVER_EVENT_TCP_PACKET)
-		{
-			delete ev.msg;
-		}
+		ev->Execute();
 
 		g_ServerCriticalSection.Leave();
 
-		ev = g_Event.GetNextEvent(empty);
+		ev = g_Events.GetNextEvent();
 	}
 }
 
@@ -343,6 +326,7 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 	if (find(m_TCPServer.GetClients().begin(), m_TCPServer.GetClients().end(), s) == m_TCPServer.GetClients().end())
 	{
 		// skip packets with deleted socket object
+		delete msg;
 		return;
 	}
 
@@ -444,6 +428,8 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		Console().Warn("Unimplemented packet: %d\n", msg->GetID());
 		break;
 	}
+
+	delete msg;
 }
 
 void CServerInstance::OnSecondTick()

@@ -36,5 +36,5 @@
 #include "serverinstance.h"
 #include "event.h"
 
-extern CEvent g_Event;
+extern CEvents g_Events;
 extern CCriticalSection g_ServerCriticalSection;

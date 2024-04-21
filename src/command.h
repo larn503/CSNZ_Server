@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 /**
  * Class that represents command. Contains a name and function that will be executed by calling the Exec() method.
