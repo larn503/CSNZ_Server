@@ -18,7 +18,7 @@ void invalid_parameter_function(const wchar_t* expression, const wchar_t* functi
 {
 	printf("invalid_parameter_function called\n");
 
-	Console().Log(OBFUSCATE("%ls, %ls, %ls, %d, %p\n"), expression, function, file, line, pReserved);
+	Logger().Info(OBFUSCATE("%ls, %ls, %ls, %d, %p\n"), expression, function, file, line, pReserved);
 }
 
 BOOL WINAPI CtrlHandler(DWORD ctrlType)
@@ -80,7 +80,10 @@ int main(int argc, char* argv[])
 
 	// wait for gui init before we init the server
 	g_GUIInitEvent.WaitForSignal();
+
+	AddLogger(new CGUILogger());
 #endif
+	AddLogger(new CFileLogger("Server"));
 
 	g_pServerInstance = new CServerInstance();
 	if (!g_pServerInstance->Init())

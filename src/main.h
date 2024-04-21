@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/console.h"
+#include "common/logger.h"
 
 #define NOMINMAX
 

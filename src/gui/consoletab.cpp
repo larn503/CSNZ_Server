@@ -1,5 +1,5 @@
 #include "consoletab.h"
-#include "common/console.h"
+#include "common/logger.h"
 #include "gui.h"
 #include "interface/ievent.h"
 #include "../command.h"
@@ -47,11 +47,11 @@ void CConsoleTab::Log(int level, const std::string& msg)
 	// set color for message
 	switch (level)
 	{
-	case CON_ERROR:
-	case CON_FATAL_ERROR:
+	case LOG_LEVEL_ERROR:
+	case LOG_LEVEL_FATAL_ERROR:
 		m_pUI->History->setTextColor(Qt::red);
 		break;
-	case CON_WARNING:
+	case LOG_LEVEL_WARN:
 		m_pUI->History->setTextColor(Qt::yellow);
 		break;
 	default:

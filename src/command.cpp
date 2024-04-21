@@ -32,7 +32,7 @@ void CCommandList::AddCommand(CCommand* cmd)
 {
 	if (GetCommand(cmd->GetName()))
 	{
-		Console().Warn("CCommandList::AddCommand: command %s duplicate!\n", cmd->GetName());
+		//Logger().Warn("CCommandList::AddCommand: command %s duplicate!\n", cmd->GetName());
 		return;
 	}
 

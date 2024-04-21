@@ -79,10 +79,9 @@ if (WIN32)
 	target_sources(PROJECTNAME PRIVATE "crashdump.cpp")
 endif()
 
-target_sources(PROJECTNAME PRIVATE "common/console.cpp")
 target_sources(PROJECTNAME PRIVATE "common/thread.cpp")
 target_sources(PROJECTNAME PRIVATE "common/utils.cpp")
-#target_sources(PROJECTNAME PRIVATE "common/logger.cpp")
+target_sources(PROJECTNAME PRIVATE "common/logger.cpp")
 
 target_include_directories(PROJECTNAME PUBLIC
 	"."

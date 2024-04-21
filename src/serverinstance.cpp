@@ -61,7 +61,7 @@ bool CServerInstance::Init()
 
 	if (!LoadConfigs())
 	{
-		Console().Error("Server initialization failed.\n");
+		Logger().Error("Server initialization failed.\n");
 		m_bIsServerActive = false;
 		return false;
 	}
@@ -74,31 +74,31 @@ bool CServerInstance::Init()
 		!m_TCPServer.Start(g_pServerConfig->tcpPort, g_pServerConfig->tcpSendBufferSize) ||
 		!m_UDPServer.Start(g_pServerConfig->udpPort))
 	{
-		Console().Error("Server initialization failed.\n");
+		Logger().Error("Server initialization failed.\n");
 		m_bIsServerActive = false;
 		return false;
 	}
 	else if (g_pItemTable->IsLoadFailed())
 	{
-		Console().Error("Server initialization failed. Couldn't load Item.csv.\n");
+		Logger().Error("Server initialization failed. Couldn't load Item.csv.\n");
 		m_bIsServerActive = false;
 		return false;
 	}
 	else if (g_pMapListTable->IsLoadFailed())
 	{
-		Console().Error("Server initialization failed. Couldn't load MapList.csv.\n");
+		Logger().Error("Server initialization failed. Couldn't load MapList.csv.\n");
 		m_bIsServerActive = false;
 		return false;
 	}
 	else if (g_pGameModeListTable->IsLoadFailed())
 	{
-		Console().Error("Server initialization failed. Couldn't load GameModeList.csv.\n");
+		Logger().Error("Server initialization failed. Couldn't load GameModeList.csv.\n");
 		m_bIsServerActive = false;
 		return false;
 	}
 
-	Console().Log("Server starts listening. Server developers: Jusic, Hardee, NekoMeow. Thx to Ochii for CSO2 server.\nFor more information visit discord.gg/EvUAY6D\n");
-	Console().Log("Server build: %s, %s\n", build_number(),
+	Logger().Info("Server starts listening. Server developers: Jusic, Hardee, NekoMeow. Thx to Ochii for CSO2 server.\nFor more information visit discord.gg/EvUAY6D\n");
+	Logger().Info("Server build: %s, %s\n", build_number(),
 #ifdef PUBLIC_RELEASE
 		"Public Release");
 #else
@@ -151,7 +151,7 @@ void CServerInstance::OnTCPConnectionCreated(IExtendedSocket* socket)
 {
 	if (g_UserDatabase.IsIPBanned(socket->GetIP()))
 	{
-		Console().Log("Client (%d, %s) disconnected from the server due to banned ip\n", socket->GetID(), socket->GetIP().c_str());
+		Logger().Info("Client (%d, %s) disconnected from the server due to banned ip\n", socket->GetID(), socket->GetIP().c_str());
 		DisconnectClient(socket);
 
 		// return false;
@@ -176,7 +176,7 @@ void CServerInstance::OnTCPConnectionClosed(IExtendedSocket* socket)
 		userName = user->GetUsername();
 		g_UserManager.RemoveUser(user);
 
-		Console().Log("User logged out (%d, '%s', 0x%X)\n", userID, userName.c_str(), user);
+		Logger().Info("User logged out (%d, '%s', 0x%X)\n", userID, userName.c_str(), user);
 	}
 	else
 	{
@@ -204,7 +204,7 @@ void CServerInstance::OnUDPMessage(Buffer& buf, unsigned short port)
 		char signature = buf.readUInt8();
 		if (signature != UDP_HOLEPUNCH_PACKET_SIGNATURE_1)
 		{
-			Console().Log(OBFUSCATE("CPacketIn_UDP::Parse: signature error\n"));
+			Logger().Info(OBFUSCATE("CPacketIn_UDP::Parse: signature error\n"));
 			return;
 		}
 
@@ -223,7 +223,7 @@ void CServerInstance::OnUDPMessage(Buffer& buf, unsigned short port)
 		int result = user->UpdateHolepunch(portID, localPort, port);
 		if (result == -1)
 		{
-			Console().Warn("Unknown hole punch port\n");
+			Logger().Warn("Unknown hole punch port\n");
 		}
 
 		Buffer replyBuffer;
@@ -242,7 +242,7 @@ void CServerInstance::OnUDPError(int errorCode)
 
 void CServerInstance::OnCommand(const string& command)
 {
-	Console().Log("Command: %s\n", command.c_str());
+	Logger().Info("Command: %s\n", command.c_str());
 
 	istringstream iss(command);
 	vector<string> args((istream_iterator<string>(iss)), istream_iterator<string>());
@@ -425,7 +425,7 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		g_UserManager.OnLeaguePacket(msg, s);
 		break;
 	default:
-		Console().Warn("Unimplemented packet: %d\n", msg->GetID());
+		Logger().Warn("Unimplemented packet: %d\n", msg->GetID());
 		break;
 	}
 
@@ -441,8 +441,6 @@ void CServerInstance::OnSecondTick()
 	m_CurrentTime /= 60; // get current time in minutes(last CSO builds use timestamp in minutes)
 	m_nUptime++;
 
-	UpdateConsoleStatus();
-
 #ifdef USE_GUI
 	GUI()->UpdateInfo(m_bIsServerActive, m_TCPServer.GetClients().size(), m_nUptime, GetMemoryInfo());
 #endif
@@ -457,7 +455,7 @@ void CServerInstance::OnSecondTick()
 
 void CServerInstance::OnMinuteTick()
 {
-	Console().Log("%s\n", GetMainInfo());
+	Logger().Info("%s\n", GetMainInfo());
 
 	Manager().MinuteTick(m_CurrentTime);
 }
@@ -475,11 +473,11 @@ double CServerInstance::GetMemoryInfo()
 
 	SIZE_T mem = pmc.WorkingSetSize;
 	if (mem >= 10e9)
-		Console().Warn("[ALERT] Server is using more than 1G of memory.\n");
+		Logger().Warn("[ALERT] Server is using more than 1G of memory.\n");
 
 	return mem / (1024.0 * 1024.0);
 #else
-	Console().Log("CServerInstance::GetMemoryInfo: not implemented\n");
+	Logger().Info("CServerInstance::GetMemoryInfo: not implemented\n");
 	return 0;
 #endif
 }
@@ -509,12 +507,6 @@ IExtendedSocket* CServerInstance::GetSocketByID(unsigned int id)
 			return s;
 
 	return NULL;
-}
-
-void CServerInstance::UpdateConsoleStatus()
-{
-	Console().SetStatus(GetMainInfo());
-	Console().UpdateStatus();
 }
 
 time_t CServerInstance::GetCurrentTime()

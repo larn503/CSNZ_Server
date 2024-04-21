@@ -16,10 +16,9 @@ add_subdirectory(net)
 target_sources(test PRIVATE "testserver.cpp")
 target_sources(test PRIVATE "testmanager.cpp")
 target_sources(test PRIVATE "../manager/manager.cpp")
-target_sources(test PRIVATE "../common/console.cpp")
 
-#target_sources(test PRIVATE "testlogger.cpp")
-#target_sources(test PRIVATE "../common/logger.cpp")
+target_sources(test PRIVATE "testlogger.cpp")
+target_sources(test PRIVATE "../common/logger.cpp")
 
 target_sources(test PRIVATE "testevent.cpp")
 
