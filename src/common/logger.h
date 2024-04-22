@@ -26,7 +26,7 @@ public:
 
 /**
  * Base logger class.
- * Implements Log() method with varadic arguments, which calls LogVarg() method
+ * Implements Log() method with variadic arguments, which calls LogVarg() method
  */
 class CBaseLogger : public ILogger
 {
