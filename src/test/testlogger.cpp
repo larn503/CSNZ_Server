@@ -69,7 +69,7 @@ public:
 		CHECK(level == LogLevel::LOG_LEVEL_INFO);
 
 		// message must be already formatted
-		CHECK(strstr(msg, TEST_MESSAGE) != 0);
+		CHECK(strcmp(msg, TEST_MESSAGE) == 0);
 		CHECK(argptr == NULL);
 	}
 };
