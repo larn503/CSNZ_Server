@@ -61,10 +61,6 @@ public:
 		va_end(valist);
 	}
 
-	virtual void LogVarg(int level, const char* msg, va_list arg)
-	{
-	}
-
 	// maybe use macro?
 	template<typename... Args>
 	void Info(const char* msg, const Args&... args)
@@ -106,6 +102,7 @@ void AddLogger(ILogger* logger);
 
 /**
  * Composite logger class.
+ * This class controls the lifetime of loggers.
  */
 class CCompositeLogger : public CBaseLogger
 {
@@ -125,6 +122,7 @@ private:
 
 /**
  * Decorator for logger that adds prefix before message (time, log level).
+ * Controls the lifetime of logger.
  */
 class CLoggerPrefix : public CBaseLogger
 {

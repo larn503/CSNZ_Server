@@ -3,7 +3,6 @@
 #include <time.h>
 
 #ifdef _WIN32
-//#include <windows.h> 
 #include <direct.h> // getcwd
 #else
 #include <stdio.h>
@@ -45,12 +44,6 @@ void AddLogger(ILogger* logger)
 
 	compositeLogger->AddLogger(logger);
 }
-
-//CLoggerPrefix logger(new CCompositeLogger({
-//	new CConsoleLogger(),
-//	new CFileLogger("Server"),
-//	new CGUILogger() }
-//));
 
 /**
  * @param loggers Loggers list 
@@ -197,9 +190,6 @@ void CConsoleLogger::LogVarg(int level, const char* msg, va_list argptr)
 
 void CConsoleLogger::SetTextColor(int color)
 {
-//#ifdef WIN32
-//	SetConsoleTextAttribute(m_Output, color);
-//#else
 	switch (color)
 	{
 	case CON_COLOR_YELLOW:
@@ -221,7 +211,6 @@ void CConsoleLogger::SetTextColor(int color)
 		printf("\033[0m");
 		break;
 	}
-//#endif
 }
 
 /**
