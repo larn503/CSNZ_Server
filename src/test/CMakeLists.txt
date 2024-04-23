@@ -22,6 +22,9 @@ target_sources(test PRIVATE "../common/logger.cpp")
 
 target_sources(test PRIVATE "testevent.cpp")
 
+target_sources(test PRIVATE "testcommand.cpp")
+target_sources(test PRIVATE "../command.cpp")
+
 #target_sources(test PRIVATE "testquestmanager.cpp")
 #target_sources(test PRIVATE "../manager/questmanager.cpp")
 
