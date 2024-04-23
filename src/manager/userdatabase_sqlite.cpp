@@ -1,4 +1,5 @@
 #include "userdatabase_sqlite.h"
+#include "userdatabase_shared.h"
 #include "serverconfig.h"
 #include "usermanager.h"
 #include "packetmanager.h"
@@ -23,14 +24,17 @@ using namespace std;
 #undef OBFUSCATE
 #define OBFUSCATE(data) (char*)AY_OBFUSCATE_KEY(data, 'F')
 
+CUserDatabaseSQLite g_UserDatabase;
+
 CUserDatabaseSQLite::CUserDatabaseSQLite()
-try : CBaseManager("UserDatabase", true, true), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
+try : CBaseManager(REAL_DATABASE_NAME, true, true), m_Database(OBFUSCATE("UserDatabase.db3"), SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {
 	m_bInited = false;
+	m_pTransaction = NULL;
 }
 catch (exception& e)
 {
-	Console().FatalError(OBFUSCATE("CUserDatabaseSQLite(): SQLite exception: %s\n"), e.what());
+	Logger().Fatal(OBFUSCATE("CUserDatabaseSQLite(): SQLite exception: %s\n"), e.what());
 }
 
 bool CUserDatabaseSQLite::Init()
@@ -69,7 +73,7 @@ bool CUserDatabaseSQLite::CheckForTables()
 
 			if (dbVer != LAST_DB_VERSION)
 			{
-				Console().FatalError("CUserDatabaseSQLite::CheckForTables: database version mismatch, got: %d, expected: %d\n", dbVer, LAST_DB_VERSION);
+				Logger().Fatal("CUserDatabaseSQLite::CheckForTables: database version mismatch, got: %d, expected: %d\n", dbVer, LAST_DB_VERSION);
 				return false;
 			}
 		}
@@ -77,14 +81,14 @@ bool CUserDatabaseSQLite::CheckForTables()
 		{
 			if (!ExecuteScript(OBFUSCATE("Data/SQL/main.sql")))
 			{
-				Console().FatalError(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: failed to execute main SQL script. Server may not work properly\n"));
+				Logger().Fatal(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: failed to execute main SQL script. Server may not work properly\n"));
 				return false;
 			}
 		}
 	}
 	catch (exception& e)
 	{
-		Console().FatalError(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Fatal(OBFUSCATE("CUserDatabaseSQLite::CheckForTables: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return false;
 	}
 
@@ -99,7 +103,7 @@ bool CUserDatabaseSQLite::UpgradeDatabase(int& currentDatabaseVer)
 	{
 		if (!ExecuteScript(va(OBFUSCATE("Data/SQL/Update_%d.sql"), i + 1)))
 		{
-			Console().FatalError(OBFUSCATE("CUserDatabaseSQLite::UpgradeDatabase: file Update_%d.sql doesn't exist or sql execute returned error, current db ver: %d, last db ver: %d. Script not applied.\n"), i + 1, currentDatabaseVer, LAST_DB_VERSION);
+			Logger().Fatal(OBFUSCATE("CUserDatabaseSQLite::UpgradeDatabase: file Update_%d.sql doesn't exist or sql execute returned error, current db ver: %d, last db ver: %d. Script not applied.\n"), i + 1, currentDatabaseVer, LAST_DB_VERSION);
 			return false;
 		}
 
@@ -164,7 +168,7 @@ bool CUserDatabaseSQLite::ExecuteScript(string scriptPath)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ExecuteScript(%s): database internal error: %s, %d\n"), scriptPath.c_str(), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ExecuteScript(%s): database internal error: %s, %d\n"), scriptPath.c_str(), e.what(), m_Database.getErrorCode());
 
 		fclose(file);
 		return false;
@@ -190,7 +194,7 @@ bool CUserDatabaseSQLite::ExecuteOnce()
 	if (buffer == NULL)
 	{
 		fclose(file);
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ExecuteOnce: failed to allocate buffer\n"));
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ExecuteOnce: failed to allocate buffer\n"));
 		return false;
 	}
 
@@ -200,14 +204,14 @@ bool CUserDatabaseSQLite::ExecuteOnce()
 	if (result != lSize)
 	{
 		fclose(file);
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ExecuteOnce: failed to read file\n"));
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ExecuteOnce: failed to read file\n"));
 		return false;
 	}
 
 	char* token = strtok(buffer, "\n");
 	while (token)
 	{
-		Console().Log("CUserDatabaseSQLite::ExecuteOnce: executing %s\n", token);
+		Logger().Info("CUserDatabaseSQLite::ExecuteOnce: executing %s\n", token);
 		ExecuteScript(token);
 		token = strtok(NULL, "\n");
 	}
@@ -243,8 +247,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		int userID = 0;
 		if (restoreData)
 		{
@@ -254,8 +256,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 
 			if (!queryGetUser.executeStep())
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 				return LOGIN_NO_SUCH_USER;
 			}
 
@@ -269,8 +269,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 
 			if (!queryGetUser.executeStep())
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 				return LOGIN_NO_SUCH_USER;
 			}
 
@@ -280,8 +278,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		GetUserBan(userID, ban);
 		if (ban.banType)
 		{
-			ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 			return LOGIN_USER_BANNED;
 		}
 
@@ -290,10 +286,10 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		queryGetUserSession.bind(1, userID);
 		if (queryGetUserSession.executeStep())
 		{
-			IUser* user = g_pUserManager->GetUserById(userID);
+			IUser* user = g_UserManager.GetUserById(userID);
 			if (user)
 			{
-				g_pUserManager->DisconnectUser(user);
+				g_UserManager.DisconnectUser(user);
 			}
 			else
 			{
@@ -308,8 +304,6 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 
 			if (!query.executeStep())
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 				return LOGIN_NO_SUCH_USER;
 			}
 
@@ -333,13 +327,11 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		queryInsertUserSession.bind(6, 0);
 		queryInsertUserSession.exec();
 
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Login"));
-
 		return userID;
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::Login: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::Login: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 }
@@ -362,7 +354,7 @@ int CUserDatabaseSQLite::AddToRestoreList(int userID, int channelServerID, int c
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::AddToRestoreList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::AddToRestoreList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -375,8 +367,6 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		SQLite::Statement queryuser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ?"));
 		queryuser.bind(1, userName);
 		queryuser.executeStep();
@@ -384,8 +374,6 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 		if (queryuser.hasRow())
 		{
 			queryuser.reset();
-
-			ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Register"));
 
 			return -1;
 		}
@@ -396,8 +384,6 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 			query.bind(1, ip);
 			if (query.executeStep() && (int)query.getColumn(0) >= g_pServerConfig->maxRegistrationsPerIP)
 			{
-				ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Register"));
-
 				return -4;
 			}
 		}
@@ -414,12 +400,10 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserDist SET userIDNext = userIDNext + 1"));
 			query.exec();
 		}
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::Register"));
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::Register: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::Register: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -452,7 +436,7 @@ int CUserDatabaseSQLite::GetUserSessions(std::vector<UserSession>& sessions)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserSessions: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserSessions: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -478,7 +462,7 @@ int CUserDatabaseSQLite::DropSession(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::DropSession: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::DropSession: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -502,7 +486,7 @@ int CUserDatabaseSQLite::DropSessions()
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::DropSessions: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::DropSessions: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -523,7 +507,7 @@ void CUserDatabaseSQLite::PrintUserList()
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::PrintUserList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::PrintUserList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
 }
 
@@ -535,11 +519,11 @@ void CUserDatabaseSQLite::LoadBackup(const string& backupDate)
 
 		CheckForTables();
 
-		Console().Log(OBFUSCATE("User database backup loaded successfully\n"));
+		Logger().Info(OBFUSCATE("User database backup loaded successfully\n"));
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::LoadBackup: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::LoadBackup: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
 }
 
@@ -549,12 +533,12 @@ void CUserDatabaseSQLite::PrintBackupList()
 	HANDLE hFind;
 	WIN32_FIND_DATA FindFileData;
 
-	Console().Log(OBFUSCATE("SQLite user database backup list:\n"));
+	Logger().Info(OBFUSCATE("SQLite user database backup list:\n"));
 	if ((hFind = FindFirstFile(OBFUSCATE("UserDatabase_*.db3"), &FindFileData)) != INVALID_HANDLE_VALUE)
 	{
 		do
 		{
-			Console().Log(OBFUSCATE("%s\n"), FindFileData.cFileName);
+			Logger().Info(OBFUSCATE("%s\n"), FindFileData.cFileName);
 		} while (FindNextFile(hFind, &FindFileData));
 
 		FindClose(hFind);
@@ -581,7 +565,7 @@ void CUserDatabaseSQLite::ResetQuestEvent(int eventID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ResetQuestEvent: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ResetQuestEvent: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
 }
 
@@ -602,7 +586,7 @@ void CUserDatabaseSQLite::WriteUserStatistic(const string& fdate, const string& 
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::WriteUserStatistic: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::WriteUserStatistic: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
 }
 
@@ -612,8 +596,6 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		if (item.m_nIsClanItem)
 		{
 			{
@@ -711,12 +693,10 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 
 			queryUpdateItem.exec();
 		}
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem"));
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -727,8 +707,6 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		SQLite::Transaction transaction(m_Database);
 
 		for (auto& item : items)
@@ -833,12 +811,10 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 		}
 	
 		transaction.commit();
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem"));
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -874,7 +850,7 @@ int CUserDatabaseSQLite::UpdateInventoryItem(int userID, const CUserInventoryIte
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -898,7 +874,7 @@ int CUserDatabaseSQLite::GetInventoryItems(int userID, vector<CUserInventoryItem
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItems: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItems: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -926,7 +902,7 @@ int CUserDatabaseSQLite::GetInventoryItemsByID(int userID, int itemID, vector<CU
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemByID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemByID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return -1;
 	}
 
@@ -952,7 +928,7 @@ int CUserDatabaseSQLite::GetInventoryItemBySlot(int userID, int slot, CUserInven
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemBySlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemBySlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -978,7 +954,7 @@ int CUserDatabaseSQLite::GetFirstActiveItemByItemID(int userID, int itemID, CUse
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetFirstActiveItemByItemID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetFirstActiveItemByItemID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1003,7 +979,7 @@ int CUserDatabaseSQLite::IsInventoryFull(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsInventoryFull: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsInventoryFull: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 1;
 	}
 
@@ -1095,7 +1071,7 @@ int CUserDatabaseSQLite::GetUserData(int userID, CUserData& data)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserData: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserData: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1154,7 +1130,7 @@ int CUserDatabaseSQLite::UpdateUserData(int userID, CUserData data)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserData: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserData: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1167,8 +1143,6 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 {
 	try
 	{
-		auto start = ExecCalcStart();
-
 		DefaultUser defUser = g_pServerConfig->defUser;
 
 		SQLite::Transaction transcation(m_Database);
@@ -1259,16 +1233,14 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 		// init daily rewards
 		/*UserDailyRewards dailyReward = {};
 		dailyReward.canGetReward = true;
-		g_pItemManager->UpdateDailyRewardsRandomItems(dailyReward);
+		g_ItemManager.UpdateDailyRewardsRandomItems(dailyReward);
 		UpdateDailyRewards(userID, dailyReward);*/
 
 		transcation.commit();
-
-		ExecCalcEnd(start, OBFUSCATE("CUserDatabaseSQLite::CreateCharacter"));
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::CreateCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::CreateCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1287,7 +1259,7 @@ int CUserDatabaseSQLite::DeleteCharacter(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::DeleteCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::DeleteCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1472,7 +1444,7 @@ int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1678,7 +1650,7 @@ int CUserDatabaseSQLite::UpdateCharacter(int userID, CUserCharacter& character)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1801,7 +1773,7 @@ int CUserDatabaseSQLite::GetCharacterExtended(int userID, CUserCharacterExtended
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetCharacterExtended: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetCharacterExtended: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1924,7 +1896,7 @@ int CUserDatabaseSQLite::UpdateCharacterExtended(int userID, CUserCharacterExten
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateCharacterExtended: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateCharacterExtended: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1950,7 +1922,7 @@ int CUserDatabaseSQLite::GetUserBan(int userID, UserBan& ban)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserBan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserBan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1986,14 +1958,14 @@ int CUserDatabaseSQLite::UpdateUserBan(int userID, UserBan ban)
 			statement.bind(4, ban.term);
 			if (!statement.exec())
 			{
-				//Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserBan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+				//Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserBan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 				return 0;
 			}
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserBan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserBan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2022,7 +1994,7 @@ int CUserDatabaseSQLite::GetLoadouts(int userID, CUserLoadout& loadout)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2058,7 +2030,7 @@ int CUserDatabaseSQLite::UpdateLoadout(int userID, int loadoutID, int slot, int 
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2081,7 +2053,7 @@ int CUserDatabaseSQLite::GetFastBuy(int userID, vector<CUserFastBuy>& fastBuy)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetFastBuy: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetFastBuy: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2111,7 +2083,7 @@ int CUserDatabaseSQLite::UpdateFastBuy(int userID, int slot, const string& name,
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateFastBuy: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateFastBuy: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2140,7 +2112,7 @@ int CUserDatabaseSQLite::GetBuyMenu(int userID, vector<CUserBuyMenu>& buyMenu)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetBuyMenu: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetBuyMenu: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2165,12 +2137,12 @@ int CUserDatabaseSQLite::UpdateBuyMenu(int userID, int subMenuID, int subMenuSlo
 		if (!statement.exec())
 		{
 			// insert?
-			Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBuyMenu: UserBuyMenu is empty(userID: %d)???\n"), userID);
+			Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBuyMenu: UserBuyMenu is empty(userID: %d)???\n"), userID);
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBuyMenu: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBuyMenu: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2191,7 +2163,7 @@ int CUserDatabaseSQLite::GetBookmark(int userID, vector<int>& bookmark)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetBookmark: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetBookmark: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2217,7 +2189,7 @@ int CUserDatabaseSQLite::UpdateBookmark(int userID, int bookmarkID, int itemID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBookmark: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBookmark: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2257,7 +2229,7 @@ int CUserDatabaseSQLite::GetCostumeLoadout(int userID, CUserCostumeLoadout& load
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetCostumeLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetCostumeLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2327,7 +2299,7 @@ int CUserDatabaseSQLite::UpdateCostumeLoadout(int userID, CUserCostumeLoadout& l
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateCostumeLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateCostumeLoadout: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2351,7 +2323,7 @@ int CUserDatabaseSQLite::GetRewardNotices(int userID, vector<int>& notices)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetRewardNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetRewardNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2381,7 +2353,7 @@ int CUserDatabaseSQLite::UpdateRewardNotices(int userID, int rewardID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateRewardNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateRewardNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2402,7 +2374,7 @@ int CUserDatabaseSQLite::GetExpiryNotices(int userID, vector<int>& notices)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetExpiryNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetExpiryNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2430,7 +2402,7 @@ int CUserDatabaseSQLite::UpdateExpiryNotices(int userID, int itemID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateRewardNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateRewardNotices: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2466,7 +2438,7 @@ int CUserDatabaseSQLite::GetDailyRewards(int userID, UserDailyRewards& dailyRewa
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetDailyRewards: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetDailyRewards: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2516,7 +2488,7 @@ int CUserDatabaseSQLite::UpdateDailyRewards(int userID, UserDailyRewards& dailyR
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateDailyRewards: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateDailyRewards: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2572,7 +2544,7 @@ int CUserDatabaseSQLite::GetQuestsProgress(int userID, vector<UserQuestProgress>
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2600,7 +2572,7 @@ int CUserDatabaseSQLite::GetQuestProgress(int userID, int questID, UserQuestProg
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2630,7 +2602,7 @@ int CUserDatabaseSQLite::UpdateQuestProgress(int userID, UserQuestProgress& ques
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2660,7 +2632,7 @@ int CUserDatabaseSQLite::GetQuestTaskProgress(int userID, int questID, int taskI
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2692,7 +2664,7 @@ int CUserDatabaseSQLite::UpdateQuestTaskProgress(int userID, int questID, UserQu
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2714,7 +2686,7 @@ bool CUserDatabaseSQLite::IsQuestTaskFinished(int userID, int questID, int taskI
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsAllQuestTasksFinished: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsAllQuestTasksFinished: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return false;
 	}
 
@@ -2763,7 +2735,7 @@ int CUserDatabaseSQLite::GetQuestStat(int userID, int flag, UserQuestStat& stat)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestStat: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestStat: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2815,7 +2787,7 @@ int CUserDatabaseSQLite::UpdateQuestStat(int userID, int flag, UserQuestStat& st
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestStat: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestStat: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2836,7 +2808,7 @@ int CUserDatabaseSQLite::GetBingoProgress(int userID, UserBingo& bingo)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetBingoProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetBingoProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2862,7 +2834,7 @@ int CUserDatabaseSQLite::UpdateBingoProgress(int userID, UserBingo& bingo)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBingoProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBingoProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2886,7 +2858,7 @@ int CUserDatabaseSQLite::GetBingoSlot(int userID, vector<UserBingoSlot>& slots)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetBingoSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetBingoSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2927,7 +2899,7 @@ int CUserDatabaseSQLite::UpdateBingoSlot(int userID, vector<UserBingoSlot>& slot
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBingoSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBingoSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -2956,7 +2928,7 @@ int CUserDatabaseSQLite::GetBingoPrizeSlot(int userID, vector<UserBingoPrizeSlot
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetBingoPrizeSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetBingoPrizeSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3001,7 +2973,7 @@ int CUserDatabaseSQLite::UpdateBingoPrizeSlot(int userID, vector<UserBingoPrizeS
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBingoPrizeSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBingoPrizeSlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3025,7 +2997,7 @@ int CUserDatabaseSQLite::GetUserRank(int userID, CUserCharacter& character)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserRank: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserRank: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3049,7 +3021,7 @@ int CUserDatabaseSQLite::UpdateUserRank(int userID, CUserCharacter& character)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserRank: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateUserRank: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3071,7 +3043,7 @@ int CUserDatabaseSQLite::GetBanList(int userID, vector<string>& banList)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3141,7 +3113,7 @@ int CUserDatabaseSQLite::UpdateBanList(int userID, string gameName, bool remove)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3168,7 +3140,7 @@ bool CUserDatabaseSQLite::IsInBanList(int userID, int destUserID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsInBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsInBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return false;
 	}
 
@@ -3189,7 +3161,7 @@ bool CUserDatabaseSQLite::IsSurveyAnswered(int userID, int surveyID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsSurveyAnswered: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsSurveyAnswered: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return true;
 	}
 
@@ -3233,7 +3205,7 @@ int CUserDatabaseSQLite::SurveyAnswer(int userID, UserSurveyAnswer& answer)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::SurveyAnswer: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::SurveyAnswer: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3258,7 +3230,7 @@ int CUserDatabaseSQLite::GetWeaponReleaseRows(int userID, vector<UserWeaponRelea
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3280,7 +3252,7 @@ int CUserDatabaseSQLite::GetWeaponReleaseRow(int userID, UserWeaponReleaseRow& r
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseRow: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseRow: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3308,7 +3280,7 @@ int CUserDatabaseSQLite::UpdateWeaponReleaseRow(int userID, UserWeaponReleaseRow
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateWeaponReleaseRow: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateWeaponReleaseRow: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3334,7 +3306,7 @@ int CUserDatabaseSQLite::GetWeaponReleaseCharacters(int userID, vector<UserWeapo
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseCharacters: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseCharacters: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3359,7 +3331,7 @@ int CUserDatabaseSQLite::GetWeaponReleaseCharacter(int userID, UserWeaponRelease
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetWeaponReleaseCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3385,7 +3357,7 @@ int CUserDatabaseSQLite::UpdateWeaponReleaseCharacter(int userID, UserWeaponRele
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateWeaponReleaseCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateWeaponReleaseCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3429,7 +3401,7 @@ int CUserDatabaseSQLite::SetWeaponReleaseCharacter(int userID, int weaponSlot, i
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateWeaponReleaseCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateWeaponReleaseCharacter: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3450,7 +3422,7 @@ int CUserDatabaseSQLite::GetAddons(int userID, vector<int>& addons)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetAddons: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetAddons: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3487,7 +3459,7 @@ int CUserDatabaseSQLite::SetAddons(int userID, vector<int>& addons)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::SetAddons: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::SetAddons: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3515,7 +3487,7 @@ int CUserDatabaseSQLite::GetUsersAssociatedWithIP(const string& ip, vector<CUser
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUsersAssociatedWithIP: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUsersAssociatedWithIP: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3543,7 +3515,7 @@ int CUserDatabaseSQLite::GetUsersAssociatedWithHWID(const vector<unsigned char>&
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUsersAssociatedWithHWID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUsersAssociatedWithHWID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3597,7 +3569,7 @@ int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 
 		SQLite::Transaction transaction(m_Database);
 		{
-			IUser* user = g_pUserManager->GetUserById(clanCfg.masterUserID);
+			IUser* user = g_UserManager.GetUserById(clanCfg.masterUserID);
 			if (!user->UpdatePoints(-100000))
 			{
 				return 0;
@@ -3701,7 +3673,7 @@ int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::CreateClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::CreateClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3843,7 +3815,7 @@ int CUserDatabaseSQLite::JoinClan(int userID, int clanID, string& clanName)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::JoinClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::JoinClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3864,7 +3836,7 @@ int CUserDatabaseSQLite::CancelJoin(int userID, int clanID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::CancelJoin: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::CancelJoin: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3908,7 +3880,7 @@ int CUserDatabaseSQLite::LeaveClan(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::LeaveClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::LeaveClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -3944,7 +3916,7 @@ int CUserDatabaseSQLite::DissolveClan(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::DissolveClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::DissolveClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4004,7 +3976,7 @@ int CUserDatabaseSQLite::GetClanList(vector<ClanList_s>& clans, string clanName,
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4061,7 +4033,7 @@ int CUserDatabaseSQLite::GetClanInfo(int clanID, Clan_s& clan)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanInfo: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanInfo: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4141,7 +4113,7 @@ int CUserDatabaseSQLite::AddClanStorageItem(int userID, int pageID, CUserInvento
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::AddClanStorageItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::AddClanStorageItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4181,7 +4153,7 @@ int CUserDatabaseSQLite::DeleteClanStorageItem(int userID, int pageID, int slot)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::DeleteClanStorageItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::DeleteClanStorageItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4236,7 +4208,7 @@ int CUserDatabaseSQLite::GetClanStorageItem(int userID, int pageID, int slot, CU
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanStorageItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanStorageItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4245,7 +4217,7 @@ int CUserDatabaseSQLite::GetClanStorageItem(int userID, int pageID, int slot, CU
 
 int CUserDatabaseSQLite::GetClanStorageLastItems(int userID, std::vector<RewardItem>& items)
 {
-	Console().Warn("CUserDatabaseSQLite::GetClanStorageLastItems: not implemented\n");
+	Logger().Warn("CUserDatabaseSQLite::GetClanStorageLastItems: not implemented\n");
 	return 0;
 }
 
@@ -4270,7 +4242,7 @@ int CUserDatabaseSQLite::GetClanStoragePage(int userID, ClanStoragePage& clanSto
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanStoragePage: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanStoragePage: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4295,7 +4267,7 @@ int CUserDatabaseSQLite::GetClanStorageAccessGrade(int userID, vector<int>& acce
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanStorageAccessGrade: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanStorageAccessGrade: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4317,7 +4289,7 @@ int CUserDatabaseSQLite::UpdateClanStorageAccessGrade(int userID, int pageID, in
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateClanStorageAccessGrade: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateClanStorageAccessGrade: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4347,7 +4319,7 @@ int CUserDatabaseSQLite::GetClanUserList(int id, bool byUser, vector<ClanUser>& 
 			clanUser.userID = query.getColumn(0);
 			clanUser.character.gameName = (const char*)query.getColumn(1);
 			clanUser.userName = (const char*)query.getColumn(2);
-			clanUser.user = g_pUserManager->GetUserById(clanUser.userID);
+			clanUser.user = g_UserManager.GetUserById(clanUser.userID);
 			clanUser.memberGrade = query.getColumn(3);
 
 			users.push_back(clanUser);
@@ -4355,7 +4327,7 @@ int CUserDatabaseSQLite::GetClanUserList(int id, bool byUser, vector<ClanUser>& 
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanUserList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanUserList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4378,14 +4350,14 @@ int CUserDatabaseSQLite::GetClanMemberList(int userID, vector<ClanUser>& users)
 			clanUser.character.level = query.getColumn(4);
 			clanUser.character.kills = query.getColumn(5);
 			clanUser.character.deaths = query.getColumn(6);
-			clanUser.user = g_pUserManager->GetUserById(clanUser.userID);
+			clanUser.user = g_UserManager.GetUserById(clanUser.userID);
 
 			users.push_back(clanUser);
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanMemberList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanMemberList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4415,7 +4387,7 @@ int CUserDatabaseSQLite::GetClanMemberJoinUserList(int userID, vector<ClanUserJo
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanMemberJoinUserList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanMemberJoinUserList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4602,7 +4574,7 @@ int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4625,12 +4597,12 @@ int CUserDatabaseSQLite::GetClanMember(int userID, ClanUser& clanUser)
 			clanUser.character.level = query.getColumn(4);
 			clanUser.character.kills = query.getColumn(5);
 			clanUser.character.deaths = query.getColumn(6);
-			clanUser.user = g_pUserManager->GetUserById(clanUser.userID);
+			clanUser.user = g_UserManager.GetUserById(clanUser.userID);
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanMember: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetClanMember: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4782,7 +4754,7 @@ int CUserDatabaseSQLite::UpdateClan(int userID, int flag, Clan_s clan)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateClan: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4814,13 +4786,13 @@ int CUserDatabaseSQLite::UpdateClanMemberGrade(int userID, const string& targetU
 				targetMember.character.level = query.getColumn(4);
 				targetMember.character.kills = query.getColumn(5);
 				targetMember.character.deaths = query.getColumn(6);
-				targetMember.user = g_pUserManager->GetUserByUsername(targetUserName);
+				targetMember.user = g_UserManager.GetUserByUsername(targetUserName);
 			}
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateClanMemberGrade: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateClanMemberGrade: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4841,7 +4813,7 @@ int CUserDatabaseSQLite::ClanReject(int userID, const string& userName)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ClanReject: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ClanReject: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4861,7 +4833,7 @@ int CUserDatabaseSQLite::ClanRejectAll(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ClanRejectAll: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ClanRejectAll: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4911,7 +4883,7 @@ int CUserDatabaseSQLite::ClanApprove(int userID, const string& userName)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ClanApprove: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ClanApprove: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4931,7 +4903,7 @@ int CUserDatabaseSQLite::IsClanWithMarkExists(int markID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsClanWithMarkExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsClanWithMarkExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -4968,7 +4940,7 @@ int CUserDatabaseSQLite::ClanInvite(int userID, const string& gameName, IUser*& 
 			}
 		}
 
-		destUser = g_pUserManager->GetUserById(destUserID);
+		destUser = g_UserManager.GetUserById(destUserID);
 		if (!destUser)
 		{
 			return -2; // user is offline(TODO: are there more conditions?)
@@ -5003,7 +4975,7 @@ int CUserDatabaseSQLite::ClanInvite(int userID, const string& gameName, IUser*& 
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ClanInvite: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ClanInvite: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5062,7 +5034,7 @@ int CUserDatabaseSQLite::ClanKick(int userID, const string& userName)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ClanKick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ClanKick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5104,7 +5076,7 @@ int CUserDatabaseSQLite::ClanMasterDelegate(int userID, const string& userName)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::ClanMasterDelegate: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::ClanMasterDelegate: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5125,7 +5097,7 @@ int CUserDatabaseSQLite::IsClanExists(const string& clanName)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsClanExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsClanExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5154,7 +5126,7 @@ int CUserDatabaseSQLite::GetQuestEventProgress(int userID, int questID, UserQues
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestEventProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestEventProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5184,7 +5156,7 @@ int CUserDatabaseSQLite::UpdateQuestEventProgress(int userID, const UserQuestPro
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestEventProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestEventProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5214,7 +5186,7 @@ int CUserDatabaseSQLite::GetQuestEventTaskProgress(int userID, int questID, int 
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestEventTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetQuestEventTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5246,7 +5218,7 @@ int CUserDatabaseSQLite::UpdateQuestEventTaskProgress(int userID, int questID, c
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestEventTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateQuestEventTaskProgress: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5268,8 +5240,8 @@ bool CUserDatabaseSQLite::IsQuestEventTaskFinished(int userID, int questID, int 
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsQuestEventTaskFinished: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsQuestEventTaskFinished: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return false;
 	}
 
 	return true;
@@ -5279,7 +5251,7 @@ bool CUserDatabaseSQLite::IsQuestEventTaskFinished(int userID, int questID, int 
 // returns 0 == database error, 1 == user exists
 int CUserDatabaseSQLite::IsUserExists(int userID)
 {
-	Console().Log(OBFUSCATE("CUserDatabaseSQLite::IsUserExists: need to test!!!\n"));
+	Logger().Info(OBFUSCATE("CUserDatabaseSQLite::IsUserExists: need to test!!!\n"));
 
 	int retVal = 0;
 	try
@@ -5293,7 +5265,7 @@ int CUserDatabaseSQLite::IsUserExists(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsUserExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsUserExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5318,7 +5290,7 @@ int CUserDatabaseSQLite::IsUserExists(const string& userName, bool searchByUserN
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsUserExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsUserExists: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5340,7 +5312,7 @@ int CUserDatabaseSQLite::SuspectAddAction(const vector<unsigned char>& hwid, int
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::SuspectAddAction: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::SuspectAddAction: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5363,7 +5335,7 @@ int CUserDatabaseSQLite::IsUserSuspect(int userID)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsUserSuspect: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsUserSuspect: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5386,12 +5358,12 @@ void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 				CUserInventoryItem item(query.getColumn(1), query.getColumn(2), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0);
 				int userID = query.getColumn(0);
 
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
-					g_pPacketManager->SendUMsgExpiryNotice(user->GetExtendedSocket(), vector<int>{ item.m_nItemID });
+					g_PacketManager.SendUMsgExpiryNotice(user->GetExtendedSocket(), vector<int>{ item.m_nItemID });
 
-					g_pItemManager->RemoveItem(userID, user, item);
+					g_ItemManager.RemoveItem(userID, user, item);
 				}
 				else
 				{
@@ -5489,7 +5461,7 @@ void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::OnMinuteTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::OnMinuteTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
 }
 
@@ -5540,7 +5512,7 @@ void CUserDatabaseSQLite::OnDayTick()
 			query.exec();
 		}
 
-		Console().Log(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: daily quest: %d, daily event quest: %d\n"), dailyQuests, dailyEventQuests);
+		Logger().Info(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: daily quest: %d, daily event quest: %d\n"), dailyQuests, dailyEventQuests);
 
 		// get affected users and send quest update
 		{
@@ -5549,19 +5521,19 @@ void CUserDatabaseSQLite::OnDayTick()
 			while (query.executeStep())
 			{
 				int userID = query.getColumn(0);
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
-					Console().Log(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: TODO: fix user client-side quest update\n"));
+					Logger().Info(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: TODO: fix user client-side quest update\n"));
 
 					vector<UserQuestProgress> progress;
 					GetQuestsProgress(userID, progress);
-					g_pPacketManager->SendQuests(user->GetExtendedSocket(), userID, g_pQuestManager->GetQuests(), progress, 0xFFFF, 0, 0, 0);
+					g_PacketManager.SendQuests(user->GetExtendedSocket(), userID, g_QuestManager.GetQuests(), progress, 0xFFFF, 0, 0, 0);
 				}
 			}
 		}
 
-		Console().Warn(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: TODO: impl userdailyreward\n"));
+		Logger().Warn(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: TODO: impl userdailyreward\n"));
 		/*
 		// reset daily rewards random items
 		m_Database.exec(OBFUSCATE("DELETE FROM UserDailyRewardItems"));
@@ -5574,19 +5546,19 @@ void CUserDatabaseSQLite::OnDayTick()
 			query.exec();
 		}
 		// update daily reward items
-		for (auto user : g_pUserManager->users)
+		for (auto user : g_UserManager.users)
 		{
 			UserDailyRewards dailyReward = {};
 			GetDailyRewards(user->GetID(), dailyReward);
-			g_pItemManager->UpdateDailyRewardsRandomItems(dailyReward);
+			g_ItemManager.UpdateDailyRewardsRandomItems(dailyReward);
 			UpdateDailyRewards(user->GetID(), dailyReward);
 
-			g_pPacketManager->SendItemDailyRewardsUpdate(user->GetExtendedSocket(), g_pServerConfig->dailyRewardsItems, dailyReward);
+			g_PacketManager.SendItemDailyRewardsUpdate(user->GetExtendedSocket(), g_pServerConfig->dailyRewardsItems, dailyReward);
 		}*/
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::OnDayTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
 }
 
@@ -5635,14 +5607,14 @@ void CUserDatabaseSQLite::OnWeekTick()
 			while (query.executeStep())
 			{
 				int userID = query.getColumn(0);
-				IUser* user = g_pUserManager->GetUserById(userID);
+				IUser* user = g_UserManager.GetUserById(userID);
 				if (user)
 				{
-					Console().Warn(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: TODO: fix user client-side quest update\n"));
+					Logger().Warn(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: TODO: fix user client-side quest update\n"));
 
 					vector<UserQuestProgress> progress;
 					GetQuestsProgress(userID, progress);
-					g_pPacketManager->SendQuests(user->GetExtendedSocket(), userID, g_pQuestManager->GetQuests(), progress, 0xFFFF, 0xFFFF, 0, 0);
+					g_PacketManager.SendQuests(user->GetExtendedSocket(), userID, g_QuestManager.GetQuests(), progress, 0xFFFF, 0xFFFF, 0, 0);
 
 					/*vector<Quest_s> quests;
 					vector<UserQuestProgress> questsProgress;
@@ -5659,14 +5631,14 @@ void CUserDatabaseSQLite::OnWeekTick()
 					quest.id = progress.questID;
 					quests.push_back(quest);
 					}
-					g_pPacketManager->SendQuests(user->GetExtendedSocket(), userID, quests, questsProgress, 0x20, 0, 0, 0);*/
+					g_PacketManager.SendQuests(user->GetExtendedSocket(), userID, quests, questsProgress, 0x20, 0, 0, 0);*/
 				}
 			}
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::OnWeekTick: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 	}
 }
 
@@ -5689,7 +5661,7 @@ map<int, UserBan> CUserDatabaseSQLite::GetUserBanList()
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUserBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return banList;
 	}
 
@@ -5711,7 +5683,7 @@ vector<int> CUserDatabaseSQLite::GetUsers(int lastLoginTime)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetUsers: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetUsers: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return users;
 	}
 
@@ -5737,7 +5709,7 @@ int CUserDatabaseSQLite::UpdateIPBanList(const string& ip, bool remove)
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateIPBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateIPBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5757,7 +5729,7 @@ vector<string> CUserDatabaseSQLite::GetIPBanList()
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetIPBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetIPBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return ip;
 	}
 
@@ -5772,16 +5744,16 @@ bool CUserDatabaseSQLite::IsIPBanned(const string& ip)
 		query.bind(1, ip);
 		if (!query.executeStep())
 		{
-			return 0;
+			return false;
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsIPBanned: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsIPBanned: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 int CUserDatabaseSQLite::UpdateHWIDBanList(const vector<unsigned char>& hwid, bool remove)
@@ -5803,7 +5775,7 @@ int CUserDatabaseSQLite::UpdateHWIDBanList(const vector<unsigned char>& hwid, bo
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateHWIDBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateHWIDBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -5826,7 +5798,7 @@ vector<vector<unsigned char>> CUserDatabaseSQLite::GetHWIDBanList()
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::GetHWIDBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetHWIDBanList: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return hwidList;
 	}
 
@@ -5841,48 +5813,44 @@ bool CUserDatabaseSQLite::IsHWIDBanned(vector<unsigned char>& hwid)
 		statement.bind(1, hwid.data(), hwid.size());
 		if (!statement.executeStep())
 		{
-			return 0;
+			return false;
 		}
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::IsHWIDBanned: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::IsHWIDBanned: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
-chrono::high_resolution_clock::time_point CUserDatabaseSQLite::ExecCalcStart()
+void CUserDatabaseSQLite::CreateTransaction()
 {
-	return chrono::high_resolution_clock::now();
+	if (!m_pTransaction)
+	{
+		m_pTransaction = new SQLite::Transaction(m_Database);
+	}
 }
 
-void CUserDatabaseSQLite::ExecCalcEnd(chrono::high_resolution_clock::time_point startTime, const string& funcName)
-{
-	auto end = chrono::high_resolution_clock::now();
-	auto duration = chrono::duration_cast<chrono::milliseconds>(end - startTime).count();
-
-	if (duration > 20)
-		Console().Warn(OBFUSCATE("%s func execution time: %d ms\n"), funcName.c_str(), duration);
-}
-
-SQLite::Transaction CUserDatabaseSQLite::CreateTransaction()
-{
-	return SQLite::Transaction(m_Database);
-}
-
-bool CUserDatabaseSQLite::CommitTransaction(SQLite::Transaction& trans)
+bool CUserDatabaseSQLite::CommitTransaction()
 {
 	try
 	{
-		trans.commit();
+		m_pTransaction->commit();
 	}
 	catch (exception& e)
 	{
-		Console().Error(OBFUSCATE("CUserDatabaseSQLite::CommitTransaction: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::CommitTransaction: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+
+		delete m_pTransaction;
+		m_pTransaction = NULL;
+
+		return false;
 	}
 
-	return 1;
+	delete m_pTransaction;
+	m_pTransaction = NULL;
+
+	return true;
 }

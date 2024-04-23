@@ -116,6 +116,7 @@ public:
 	void SendMetadataPPSystem(IExtendedSocket* socket);
 	void SendMetadataCodisData(IExtendedSocket* socket);
 	void SendMetadataItem(IExtendedSocket* socket);
+	void SendMetadataModeEvent(IExtendedSocket* socket);
 
 	void SendGameMatchInfo(IExtendedSocket* socket);
 	void SendGameMatchUnk(IExtendedSocket* socket);
@@ -217,6 +218,7 @@ public:
 	void SendUDPHostData(IExtendedSocket* socket, bool host, int userID, const std::string& ipAddress, int port);
 
 	void SendHostServerStop(IExtendedSocket* socket);
+	void SendHostServerTransfer(IExtendedSocket* socket, const std::string& ipAddress, int port);
 
 	void SendClanList(IExtendedSocket* socket, const std::vector<ClanList_s>& clans, int pageID, int pageMax);
 	void SendClanInfo(IExtendedSocket* socket, const Clan_s& clan);
@@ -259,6 +261,10 @@ public:
 
 	void SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv);
 
+	void SendUpdateInfo(IExtendedSocket* socket);
+
+	void SendPacketFromFile(IExtendedSocket* socket, const std::string& filename);
+
 private:
 	CBinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);
 
@@ -290,6 +296,7 @@ private:
 	CBinMetadata* m_pUnk31;
 	CBinMetadata* m_pUnk43;
 	CBinMetadata* m_pUnk49;
+	CBinMetadata* m_pModeEventZip;
 };
 
-extern CPacketManager* g_pPacketManager;
+extern CPacketManager g_PacketManager;

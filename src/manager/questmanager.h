@@ -7,6 +7,8 @@
 #include "quest/quest.h"
 #include "quest/questevent.h"
 
+#include "nlohmann/json.hpp"
+
 class CQuestManager : public CBaseManager<IQuestManager>
 {
 public:
@@ -19,6 +21,11 @@ public:
 	void LoadQuests();
 	void LoadEventQuests();
 	void LoadClanQuests();
+
+	void ParseQuests(nlohmann::ordered_json& jQuests);
+	void ParseTasks(CQuestEvent* quest, nlohmann::ordered_json& jTasks);
+	void ParseCondititons(CQuestEventTask* task, nlohmann::ordered_json& jConditions);
+
 	std::vector<CQuest*>& GetQuests();
 	void OnPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	void OnTitlePacket(CReceivePacket* msg, IExtendedSocket* socket);
@@ -61,4 +68,4 @@ private:
 	std::vector<CQuest*> m_ClanQuests;
 };
 
-extern class CQuestManager* g_pQuestManager;
+extern CQuestManager g_QuestManager;

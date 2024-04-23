@@ -31,7 +31,7 @@ CUser::CUser(IExtendedSocket* sock, int userID, const std::string& userName)
 
 CUser::~CUser()
 {
-	g_pUserDatabase->DropSession(m_nID);
+	g_UserDatabase.DropSession(m_nID);
 
 	if (m_pCurrentRoom)
 		m_pCurrentRoom->RemoveUser(this);
@@ -127,7 +127,7 @@ CUserData CUser::GetUser(int flag)
 {
 	CUserData data = {};
 	data.flag = flag;
-	g_pUserDatabase->GetUserData(m_nID, data);
+	g_UserDatabase.GetUserData(m_nID, data);
 
 	return data;
 }
@@ -137,7 +137,7 @@ CUserCharacter CUser::GetCharacter(int flag)
 	CUserCharacter character = {};
 	character.flag = flag;
 
-	if (g_pUserDatabase->GetCharacter(m_nID, character) <= 0)
+	if (g_UserDatabase.GetCharacter(m_nID, character) <= 0)
 		character.flag = 0;
 
 	return character;
@@ -148,7 +148,7 @@ CUserCharacterExtended CUser::GetCharacterExtended(int flag)
 	CUserCharacterExtended character = {};
 	character.flag = flag;
 
-	if (g_pUserDatabase->GetCharacterExtended(m_nID, character) <= 0)
+	if (g_UserDatabase.GetCharacterExtended(m_nID, character) <= 0)
 		character.flag = 0;
 
 	return character;
@@ -182,7 +182,7 @@ void CUser::UpdateClientUserInfo(int flag, CUserCharacter character)
 
 	// TODO: update user info in room
 
-	g_pPacketManager->SendUserUpdateInfo(m_pSocket, this, character);
+	g_PacketManager.SendUserUpdateInfo(m_pSocket, this, character);
 }
 
 void CUser::UpdateGameName(const string& gameName)
@@ -191,7 +191,7 @@ void CUser::UpdateGameName(const string& gameName)
 	character.gameName = gameName;
 	character.flag = UFLAG_GAMENAME;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_GAMENAME | UFLAG_GAMENAME2, character);
 }
@@ -201,7 +201,7 @@ int CUser::UpdatePoints(int64_t points)
 	CUserCharacter character = GetCharacter(UFLAG_POINTS);
 	character.points += points;
 
-	if (g_pUserDatabase->UpdateCharacter(m_nID, character) <= 0)
+	if (g_UserDatabase.UpdateCharacter(m_nID, character) <= 0)
 	{
 		return 0;
 	}
@@ -216,7 +216,7 @@ void CUser::UpdateCash(int64_t cash)
 	CUserCharacter character = GetCharacter(UFLAG_CASH);
 	character.cash += cash;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_CASH | UFLAG_CASH2, character);
 }
@@ -227,7 +227,7 @@ void CUser::UpdateHonorPoints(int honorPoints)
 	character.honorPoints += honorPoints;
 	character.achievementFlag = 1;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_ACHIEVEMENT, character);
 }
@@ -238,7 +238,7 @@ void CUser::UpdatePrefix(int prefixID)
 	character.prefixId = prefixID;
 	character.achievementFlag = 2;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_ACHIEVEMENT, character);
 }
@@ -252,7 +252,7 @@ void CUser::UpdateStat(int battles, int win, int kills, int deaths)
 	character.deaths += deaths;
 	character.statFlag |= 0x1 | 0x2 | 0x4 | 0x8;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_STAT, character);
 }
@@ -265,7 +265,7 @@ void CUser::UpdateLocation(int nation, int city, int town)
 	character.city = city;
 	character.town = town;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_LOCATION, character);
 }
@@ -275,7 +275,7 @@ void CUser::UpdateRank(int leagueID)
 	CUserCharacter character = GetCharacter(UFLAG_RANK);
 	character.leagueID = leagueID;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_RANK, character);
 }
@@ -299,11 +299,11 @@ void CUser::UpdateExp(int64_t exp)
 
 	if (newLvl > character.level)
 	{
-		g_pQuestManager->OnLevelUpEvent(this, character.level, newLvl);
+		g_QuestManager.OnLevelUpEvent(this, character.level, newLvl);
 		character.level = newLvl;
 	}
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	// update userinfo on client side
 	UpdateClientUserInfo(UFLAG_EXP | UFLAG_LEVEL, character);
@@ -317,7 +317,7 @@ int CUser::UpdatePasswordBoxes(int passwordBoxes)
 
 	character.passwordBoxes += passwordBoxes;
 
-	if (g_pUserDatabase->UpdateCharacter(m_nID, character) <= 0)
+	if (g_UserDatabase.UpdateCharacter(m_nID, character) <= 0)
 		return 0;
 
 	UpdateClientUserInfo(UFLAG_PASSWORDBOXES, character);
@@ -330,7 +330,7 @@ void CUser::UpdateTitles(int slot, int titleID)
 	CUserCharacter character = GetCharacter(UFLAG_TITLES);
 	character.titles[slot] = titleID;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_TITLES, character);
 }
@@ -340,7 +340,7 @@ void CUser::UpdateAchievementList(int titleID)
 	CUserCharacter character = GetCharacter(UFLAG_ACHIEVEMENTLIST);
 	character.achievementList.push_back(titleID);
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_ACHIEVEMENTLIST, character);
 }
@@ -351,8 +351,8 @@ void CUser::UpdateClan(int clanID)
 	character.flag = UFLAG_CLAN;
 	character.clanID = clanID;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
-	g_pUserDatabase->GetCharacter(m_nID, character); // get clan mark, name
+	g_UserDatabase.UpdateCharacter(m_nID, character);
+	g_UserDatabase.GetCharacter(m_nID, character); // get clan mark, name
 
 	UpdateClientUserInfo(UFLAG_CLAN, character);
 }
@@ -363,14 +363,14 @@ void CUser::UpdateTournament(int tournament)
 	character.flag = UFLAG_TOURNAMENT;
 	character.tournament = tournament;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_TOURNAMENT, character);
 }
 
 int CUser::UpdateBanList(const string& gameName, bool remove)
 {
-	int result = g_pUserDatabase->UpdateBanList(m_nID, gameName, remove);
+	int result = g_UserDatabase.UpdateBanList(m_nID, gameName, remove);
 
 	// TODO: update channel user info
 
@@ -383,7 +383,7 @@ void CUser::UpdateBanSettings(int settings)
 	characterExt.flag = EXT_UFLAG_BANSETTINGS;
 	characterExt.banSettings = settings;
 
-	g_pUserDatabase->UpdateCharacterExtended(m_nID, characterExt);
+	g_UserDatabase.UpdateCharacterExtended(m_nID, characterExt);
 }
 
 void CUser::UpdateNameplate(int nameplateID)
@@ -392,7 +392,7 @@ void CUser::UpdateNameplate(int nameplateID)
 	character.flag = UFLAG_NAMEPLATE;
 	character.nameplateID = nameplateID;
 
-	g_pUserDatabase->UpdateCharacter(m_nID, character);
+	g_UserDatabase.UpdateCharacter(m_nID, character);
 
 	UpdateClientUserInfo(UFLAG_NAMEPLATE, character);
 }
@@ -403,7 +403,7 @@ void CUser::UpdateZbRespawnEffect(int zbRespawnEffect)
 	characterExt.flag = EXT_UFLAG_ZBRESPAWNEFFECT;
 	characterExt.zbRespawnEffect = zbRespawnEffect;
 
-	g_pUserDatabase->UpdateCharacterExtended(m_nID, characterExt);
+	g_UserDatabase.UpdateCharacterExtended(m_nID, characterExt);
 }
 
 void CUser::UpdateKillerMarkEffect(int killerMarkEffect)
@@ -412,7 +412,7 @@ void CUser::UpdateKillerMarkEffect(int killerMarkEffect)
 	characterExt.flag = EXT_UFLAG_KILLERMARKEFFECT;
 	characterExt.killerMarkEffect = killerMarkEffect;
 
-	g_pUserDatabase->UpdateCharacterExtended(m_nID, characterExt);
+	g_UserDatabase.UpdateCharacterExtended(m_nID, characterExt);
 }
 
 int CUser::CheckForLvlUp(int64_t exp)
@@ -464,12 +464,12 @@ void CUser::OnTick()
 	if (m_nUptime % 3600 == 0)
 	{
 		int hours = m_nUptime / 3600;
-		g_pPacketManager->SendUMsgSystemReply(m_pSocket, UMsgPacketType::SystemReply_Red, hours > 2 ? (char*)OBFUSCATE("ETC_PLAYTIME_LONG") : (char*)OBFUSCATE("ETC_PLAYTIME"), vector<string> {to_string(hours)});
+		g_PacketManager.SendUMsgSystemReply(m_pSocket, UMsgPacketType::SystemReply_Red, hours > 2 ? (char*)OBFUSCATE("ETC_PLAYTIME_LONG") : (char*)OBFUSCATE("ETC_PLAYTIME"), vector<string> {to_string(hours)});
 	}
 
 	if (m_nUptime % 1800 == 0)
 	{
-		g_pPacketManager->SendUMsgNoticeMessageInChat(m_pSocket, OBFUSCATE("The server team would appreciate your financial support: https://discord.gg/EvUAY6D"));
+		g_PacketManager.SendUMsgNoticeMessageInChat(m_pSocket, OBFUSCATE("The server team would appreciate your financial support: https://discord.gg/EvUAY6D"));
 	}
 }
 
@@ -478,7 +478,7 @@ bool CUser::IsCharacterExists()
 	CUserCharacter character = {};
 	character.flag = UFLAG_GAMENAME;
 
-	int result = g_pUserDatabase->GetCharacter(m_nID, character);
+	int result = g_UserDatabase.GetCharacter(m_nID, character);
 	if (result <= 0)
 		return false;
 
@@ -487,11 +487,11 @@ bool CUser::IsCharacterExists()
 
 bool CUser::CreateCharacter(const string& gameName)
 {
-	int result = g_pUserDatabase->CreateCharacter(m_nID, gameName);
+	int result = g_UserDatabase.CreateCharacter(m_nID, gameName);
 	if (result <= 0)
 		return false;
 
-	g_pQuestManager->OnLevelUpEvent(this, 1, 1);
+	g_QuestManager.OnLevelUpEvent(this, 1, 1);
 
 	return true;
 }

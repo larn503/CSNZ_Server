@@ -12,6 +12,8 @@
 
 using namespace std;
 
+CHostManager g_HostManager;
+
 CHostManager::CHostManager() : CBaseManager("HostManager")
 {
 }
@@ -20,8 +22,8 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	IRoom* room = server != NULL ? server->GetRoom() : (user != NULL ? user->GetCurrentRoom() : NULL);
 
 	if (room == NULL)
@@ -76,7 +78,7 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		int unk1 = msg->ReadUInt32();
 		int unk2 = msg->ReadUInt8();
 
-		Console().Warn("Packet_Host 15: %d, %d\n", unk1, unk2);
+		Logger().Warn("Packet_Host 15: %d, %d\n", unk1, unk2);
 
 		break;
 	}
@@ -84,12 +86,12 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	{
 		int userID = msg->ReadUInt32();
 		int arraySize = msg->ReadUInt8();
-		Console().Warn("Packet_Host 17: %d, %d\n", userID, arraySize);
+		Logger().Warn("Packet_Host 17: %d, %d\n", userID, arraySize);
 		for (int i = 0; i < arraySize; i++)
 		{
 			int unk1 = msg->ReadUInt32();
 			int unk2 = msg->ReadUInt32();
-			Console().Warn("Packet_Host 17 array: %d, %d\n", unk1, unk2);
+			Logger().Warn("Packet_Host 17 array: %d, %d\n", unk1, unk2);
 		}
 
 		break;
@@ -99,12 +101,12 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		/*int unk1 = msg->ReadUInt8();
 		int arraySize = msg->ReadUInt8();
 		// array????
-		Console().Warn("Packet_Host 18: %d, %d\n", unk1, arraySize);
+		Logger().Warn("Packet_Host 18: %d, %d\n", unk1, arraySize);
 		for (int i = 0; i < arraySize; i++)
 		{
 			int unk1 = msg->ReadUInt32();
 			int unk2 = msg->ReadUInt16();
-			Console().Warn("Packet_Host 18 array: %d, %d\n", unk1, unk2);
+			Logger().Warn("Packet_Host 18 array: %d, %d\n", unk1, unk2);
 		}*/
 
 		break;
@@ -125,7 +127,7 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		break;
 	}
 	default:
-		Console().Warn("Packet_Host type %d is not implemented, len: %d\n", type, msg->GetLength());
+		Logger().Warn("Packet_Host type %d is not implemented, len: %d\n", type, msg->GetLength());
 		break;
 	}
 
@@ -148,7 +150,7 @@ bool CHostManager::OnSaveData(CReceivePacket* msg, CGameMatch* gamematch)
 bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadUInt32();
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -158,14 +160,14 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
 
-	vector<CUserInventoryItem> inGameItems = g_pUserManager->GetDefaultInventoryItems();
-	g_pUserDatabase->GetInventoryItems(userID, inGameItems);
+	vector<CUserInventoryItem> inGameItems = g_UserManager.GetDefaultInventoryItems();
+	g_UserDatabase.GetInventoryItems(userID, inGameItems);
 
 	// remove non ingame, inactive items
 	inGameItems.erase(
@@ -188,7 +190,7 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 		}
 	}
 
-	g_pPacketManager->SendHostUserInventory(socket, userID, inGameItems);
+	g_PacketManager.SendHostUserInventory(socket, userID, inGameItems);
 
 	return true;
 }
@@ -196,7 +198,7 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 bool CHostManager::OnUseInGameItem(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadUInt32();
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -206,8 +208,8 @@ bool CHostManager::OnUseInGameItem(CReceivePacket* msg, IExtendedSocket* socket)
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -216,14 +218,14 @@ bool CHostManager::OnUseInGameItem(CReceivePacket* msg, IExtendedSocket* socket)
 	int count = msg->ReadUInt16();
 
 	vector<CUserInventoryItem> items;
-	g_pUserDatabase->GetInventoryItemsByID(destUser->GetID(), itemID, items);
+	g_UserDatabase.GetInventoryItemsByID(destUser->GetID(), itemID, items);
 
 	if (items.size() == 0)
 		return false;
 
-	g_pItemManager->UseItem(destUser, items[0].GetGameSlot());
+	g_ItemManager.UseItem(destUser, items[0].GetGameSlot());
 
-	g_pPacketManager->SendHostOnItemUse(socket, userID, items[0].m_nItemID);
+	g_PacketManager.SendHostOnItemUse(socket, userID, items[0].m_nItemID);
 
 	return true;
 }
@@ -233,7 +235,7 @@ bool CHostManager::OnFlyerFlockRequest(CReceivePacket* msg, IExtendedSocket* soc
 	// TODO: rewrite
 	string type = msg->ReadString();
 
-	g_pPacketManager->SendHostFlyerFlock(socket, g_pServerConfig->flockingFlyerType);
+	g_PacketManager.SendHostFlyerFlock(socket, g_pServerConfig->flockingFlyerType);
 
 	return true;
 }
@@ -241,7 +243,7 @@ bool CHostManager::OnFlyerFlockRequest(CReceivePacket* msg, IExtendedSocket* soc
 bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadUInt32();
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -251,8 +253,8 @@ bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* sock
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -266,18 +268,18 @@ bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* sock
 		if (destRoom->GetSettings()->gameModeId == 15)
 		{
 			vector<int> addons;
-			g_pUserDatabase->GetAddons(userID, addons);
+			g_UserDatabase.GetAddons(userID, addons);
 
 			if (!addons.empty())
 			{
-				g_pPacketManager->SendHostZBAddon(socket, userID, addons);
+				g_PacketManager.SendHostZBAddon(socket, userID, addons);
 
 				bool updated = 0;
 				int i = 0;
 				for (auto itemID : addons)
 				{
 					vector<CUserInventoryItem> items;
-					if (!g_pUserDatabase->GetInventoryItemsByID(userID, itemID, items))
+					if (!g_UserDatabase.GetInventoryItemsByID(userID, itemID, items))
 					{
 						updated = 1;
 						addons.erase(addons.begin() + i);
@@ -285,13 +287,13 @@ bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* sock
 				}
 
 				if (updated)
-					g_pUserDatabase->SetAddons(userID, addons);
+					g_UserDatabase.SetAddons(userID, addons);
 			}
 		}
 	}
 	else
 	{
-		Console().Log("CHostManager::OnUpdateUserStatus: got %d\n", status);
+		Logger().Info("CHostManager::OnUpdateUserStatus: got %d\n", status);
 	}
 
 	return true;
@@ -300,7 +302,7 @@ bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* sock
 bool CHostManager::OnKillEvent(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int killerUserID = msg->ReadInt32();
-	IUser* destUser = g_pUserManager->GetUserById(killerUserID);
+	IUser* destUser = g_UserManager.GetUserById(killerUserID);
 
 	if (destUser == NULL)
 		return false;
@@ -310,8 +312,8 @@ bool CHostManager::OnKillEvent(CReceivePacket* msg, IExtendedSocket* socket)
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -338,7 +340,7 @@ bool CHostManager::OnKillEvent(CReceivePacket* msg, IExtendedSocket* socket)
 bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -348,8 +350,8 @@ bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, IExtendedSocket* soc
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -366,7 +368,7 @@ bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, IExtendedSocket* soc
 bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -376,8 +378,8 @@ bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, IExtendedSocket* so
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -401,8 +403,8 @@ bool CHostManager::OnUpdateWinCounter(CReceivePacket* msg, IExtendedSocket* sock
 	int unk4 = msg->ReadInt8();
 	int unk5 = msg->ReadInt8();
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	CGameMatch* gamematch = server != NULL ? server->GetRoom()->GetGameMatch() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom()->GetGameMatch();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	CGameMatch* gamematch = server != NULL ? server->GetRoom()->GetGameMatch() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom()->GetGameMatch();
 
 	gamematch->OnUpdateWinCounter(ter, ct);
 
@@ -412,7 +414,7 @@ bool CHostManager::OnUpdateWinCounter(CReceivePacket* msg, IExtendedSocket* sock
 bool CHostManager::OnUpdateScore(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -422,8 +424,8 @@ bool CHostManager::OnUpdateScore(CReceivePacket* msg, IExtendedSocket* socket)
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -441,7 +443,7 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket)
 	int type = msg->ReadUInt8();
 	int userID = msg->ReadUInt32();
 
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -451,8 +453,8 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket)
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -475,7 +477,7 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket)
 
 		// 1 - def hms 
 		// 100 - def zbs zombie
-		//Console().Log(LOG_INTERNAL, CON_WARNING, OBFUSCATE("[User '%s'] Game event - monster kill: userID: %d, monsterType: %d\n"), user->GetLogName(), userID, monsterType);
+		//Logger().Info(LOG_INTERNAL, CON_WARNING, OBFUSCATE("[User '%s'] Game event - monster kill: userID: %d, monsterType: %d\n"), user->GetLogName(), userID, monsterType);
 
 		destUser->GetCurrentRoom()->GetGameMatch()->OnMonsterKill(destUser, monsterType);
 	}
@@ -483,7 +485,7 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket)
 	{
 		int rewardID = msg->ReadUInt32();
 
-		//Console().Log(LOG_INTERNAL, CON_WARNING, OBFUSCATE("[User '%s'] Game event - dropbox: userID: %d, rewardID: %d\n"), user->GetLogName(), userID, rewardID);
+		//Logger().Info(LOG_INTERNAL, CON_WARNING, OBFUSCATE("[User '%s'] Game event - dropbox: userID: %d, rewardID: %d\n"), user->GetLogName(), userID, rewardID);
 		destUser->GetCurrentRoom()->GetGameMatch()->OnDropBoxPickup(destUser, rewardID);
 	}
 	else if (type == 35) // round restart
@@ -504,7 +506,7 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket)
 	else
 	{
 		// a lot of spam
-		Console().Log(OBFUSCATE("Packet_Host game event: eventID: %d, userID: %d, len: %d\n"), type, userID, msg->GetLength());
+		Logger().Info(OBFUSCATE("Packet_Host game event: eventID: %d, userID: %d, len: %d\n"), type, userID, msg->GetLength());
 	}
 
 
@@ -514,7 +516,7 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IExtendedSocket* socket)
 bool CHostManager::OnUpdateClass(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	int userID = msg->ReadInt32();
-	IUser* destUser = g_pUserManager->GetUserById(userID);
+	IUser* destUser = g_UserManager.GetUserById(userID);
 
 	if (destUser == NULL)
 		return false;
@@ -524,8 +526,8 @@ bool CHostManager::OnUpdateClass(CReceivePacket* msg, IExtendedSocket* socket)
 	if (destRoom == NULL)
 		return false;
 
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
@@ -540,17 +542,17 @@ bool CHostManager::OnUpdateClass(CReceivePacket* msg, IExtendedSocket* socket)
 
 bool CHostManager::OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket)
 {
-	Console().Warn("CHostManager::OnZbsResult\n");
+	Logger().Warn("CHostManager::OnZbsResult\n");
 
 	return true;
 }
 
 bool CHostManager::OnGameEnd(IExtendedSocket* socket)
 {
-	CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
-	IRoom* room = server != NULL ? server->GetRoom() : g_pUserManager->GetUserBySocket(socket)->GetCurrentRoom();
+	CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
+	IRoom* room = server != NULL ? server->GetRoom() : g_UserManager.GetUserBySocket(socket)->GetCurrentRoom();
 
-	Console().Log("Room (RID: %d) ending game\n", room->GetID());
+	Logger().Info("Room (RID: %d) ending game\n", room->GetID());
 
 	room->EndGame();
 
@@ -559,11 +561,11 @@ bool CHostManager::OnGameEnd(IExtendedSocket* socket)
 
 void CHostManager::OnHostChanged(IUser* gameMatchUser, IUser* newHost, CGameMatch* match)
 {
-	g_pPacketManager->SendHostRestart(gameMatchUser->GetExtendedSocket(), newHost->GetID(), gameMatchUser == newHost ? true : false, match);
+	g_PacketManager.SendHostRestart(gameMatchUser->GetExtendedSocket(), newHost->GetID(), gameMatchUser == newHost ? true : false, match);
 
 	if (gameMatchUser != newHost)
-		//g_pPacketManager->SendHostJoin(gameMatchUser->GetExtendedSocket(), newHost->GetID());
-		g_pPacketManager->SendHostServerJoin(gameMatchUser->GetExtendedSocket(), ip_string_to_int(newHost->GetNetworkConfig().m_szExternalIpAddress), false, newHost->GetNetworkConfig().m_nExternalServerPort, gameMatchUser->GetID());
+		//g_PacketManager.SendHostJoin(gameMatchUser->GetExtendedSocket(), newHost->GetID());
+		g_PacketManager.SendHostServerJoin(gameMatchUser->GetExtendedSocket(), ip_string_to_int(newHost->GetNetworkConfig().m_szExternalIpAddress), false, newHost->GetNetworkConfig().m_nExternalServerPort, gameMatchUser->GetID());
 }
 
 bool CHostManager::OnUserWeapon(CReceivePacket* msg, IExtendedSocket* socket)

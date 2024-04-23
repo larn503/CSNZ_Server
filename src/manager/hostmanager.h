@@ -33,4 +33,4 @@ private:
 	bool OnRoundStart(CReceivePacket* msg, IExtendedSocket* socket);
 };
 
-extern class CHostManager* g_pHostManager;
+extern CHostManager g_HostManager;

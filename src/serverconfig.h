@@ -28,7 +28,7 @@ public:
 	int allowedClientTimestamp;
 	int allowedLauncherVersion;
 	int maxRegistrationsPerIP;
-	int metadataToSend;
+	uint64_t metadataToSend;
 	DefaultUser defUser;
 	std::vector<Notice_s> notices;
 	ServerConfigGameMatch_s gameMatch;

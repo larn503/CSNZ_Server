@@ -6,6 +6,8 @@
 
 using namespace std;
 
+CMiniGameManager g_MiniGameManager;
+
 CMiniGameManager::CMiniGameManager() : CBaseManager("MiniGameManager")
 {
 }
@@ -14,7 +16,7 @@ void CMiniGameManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (!user)
 		return;
 
@@ -29,7 +31,7 @@ void CMiniGameManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		break;
 
 	default:
-		Console().Log(OBFUSCATE("[User '%s'] Packet_Minigame request %d is not implemented\n"), user->GetLogName(), requestID);
+		Logger().Info(OBFUSCATE("[User '%s'] Packet_Minigame request %d is not implemented\n"), user->GetLogName(), requestID);
 	}
 }
 
@@ -39,7 +41,7 @@ void CMiniGameManager::WeaponReleaseAddCharacter(IUser* user, char charID, int c
 	character.character = charID;
 	character.count = count;
 
-	g_pUserDatabase->UpdateWeaponReleaseCharacter(user->GetID(), character);
+	g_UserDatabase.UpdateWeaponReleaseCharacter(user->GetID(), character);
 }
 
 void CMiniGameManager::OnBingoRequest(CReceivePacket* msg, IUser* user)
@@ -60,7 +62,7 @@ void CMiniGameManager::OnBingoRequest(CReceivePacket* msg, IUser* user)
 		OnBingoShuffleRequest(user);
 		break;
 	default:
-		Console().Log(OBFUSCATE("[User '%s'] Packet_Minigame bingo request %d is not implemented\n"), user->GetLogName(), requestID);
+		Logger().Info(OBFUSCATE("[User '%s'] Packet_Minigame bingo request %d is not implemented\n"), user->GetLogName(), requestID);
 	}
 }
 
@@ -87,13 +89,13 @@ bool CMiniGameManager::BingoInitDesk(IUser* user, UserBingo& bingo)
 
 		slots.push_back(slot);
 	}
-	g_pUserDatabase->UpdateBingoSlot(user->GetID(), slots, true);
+	g_UserDatabase.UpdateBingoSlot(user->GetID(), slots, true);
 
 	vector<RewardItem> items = g_pServerConfig->bingo.prizeItems;
 	if (items.size() < 12)
 	{
-		Console().Log(OBFUSCATE("CMiniGameManager::OnBingoUpdateRequest: could not initialize bingo prize desk, items.size() < 12!!!\n"));
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("Internal error occurred while initializing bingo desk, tell administrator"));
+		Logger().Info(OBFUSCATE("CMiniGameManager::OnBingoUpdateRequest: could not initialize bingo prize desk, items.size() < 12!!!\n"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("Internal error occurred while initializing bingo desk, tell administrator"));
 		return false;
 	}
 
@@ -160,13 +162,13 @@ bool CMiniGameManager::BingoInitDesk(IUser* user, UserBingo& bingo)
 	prizes[11].bingoIndexes.push_back(16);
 	prizes[11].bingoIndexes.push_back(20);
 
-	g_pUserDatabase->UpdateBingoPrizeSlot(user->GetID(), prizes, true);
+	g_UserDatabase.UpdateBingoPrizeSlot(user->GetID(), prizes, true);
 
 	bingo.status = UserBingoStatus::BINGO_IN_PROCCESS;
 
-	g_pUserDatabase->UpdateBingoProgress(user->GetID(), bingo);
+	g_UserDatabase.UpdateBingoProgress(user->GetID(), bingo);
 
-	g_pPacketManager->SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);
+	g_PacketManager.SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);
 
 	return true;
 }
@@ -174,17 +176,17 @@ bool CMiniGameManager::BingoInitDesk(IUser* user, UserBingo& bingo)
 void CMiniGameManager::OnBingoUpdateRequest(IUser* user)
 {
 	UserBingo bingo = {};
-	g_pUserDatabase->GetBingoProgress(user->GetID(), bingo);
+	g_UserDatabase.GetBingoProgress(user->GetID(), bingo);
 
 	if (!BingoInitDesk(user, bingo) && !BingoOpenRandomNumber(user, bingo))
 	{
 		vector<UserBingoPrizeSlot> prizes;
-		g_pUserDatabase->GetBingoPrizeSlot(user->GetID(), prizes);
+		g_UserDatabase.GetBingoPrizeSlot(user->GetID(), prizes);
 
 		vector<UserBingoSlot> slots;
-		g_pUserDatabase->GetBingoSlot(user->GetID(), slots);
+		g_UserDatabase.GetBingoSlot(user->GetID(), slots);
 
-		g_pPacketManager->SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);
+		g_PacketManager.SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);
 	}
 }
 
@@ -205,14 +207,14 @@ bool CMiniGameManager::BingoOpenRandomNumber(IUser* user, UserBingo& bingo)
 		return false;
 
 	std::vector<UserBingoPrizeSlot> prizes;
-	if (g_pUserDatabase->GetBingoPrizeSlot(user->GetID(), prizes) <= 0)
+	if (g_UserDatabase.GetBingoPrizeSlot(user->GetID(), prizes) <= 0)
 		return false;
 
 	std::vector<UserBingoSlot> slots;
-	if (g_pUserDatabase->GetBingoSlot(user->GetID(), slots) <= 0)
+	if (g_UserDatabase.GetBingoSlot(user->GetID(), slots) <= 0)
 		return false;
 
-	g_pPacketManager->SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);
+	g_PacketManager.SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);
 
 	UserBingoOpenNumberResult result;
 	result.opened = false;
@@ -240,7 +242,7 @@ bool CMiniGameManager::BingoOpenRandomNumber(IUser* user, UserBingo& bingo)
 		{
 			if (index > (int)slots.size())
 			{
-				Console().Log(OBFUSCATE("CMiniGameManager::OnBingoOpenRandomNumberRequest: bingo internal error, index > uData->bingo.slots.size(), %d > %d\n"), index, bingo.slots.size());
+				Logger().Info(OBFUSCATE("CMiniGameManager::OnBingoOpenRandomNumberRequest: bingo internal error, index > uData->bingo.slots.size(), %d > %d\n"), index, bingo.slots.size());
 				break;
 			}
 
@@ -256,22 +258,22 @@ bool CMiniGameManager::BingoOpenRandomNumber(IUser* user, UserBingo& bingo)
 		}
 	}
 
-	g_pPacketManager->SendMiniGameBingoOpenRandomNumber(user->GetExtendedSocket(), result.number);
+	g_PacketManager.SendMiniGameBingoOpenRandomNumber(user->GetExtendedSocket(), result.number);
 
 	if (result.prizes.size())
 	{
-		g_pPacketManager->SendMiniGameBingoOpenPrize(user->GetExtendedSocket(), result.prizes);
+		g_PacketManager.SendMiniGameBingoOpenPrize(user->GetExtendedSocket(), result.prizes);
 
 		for (auto prize : result.prizes)
 		{
-			int result = g_pItemManager->AddItem(user->GetID(), user, prize.item.itemID, prize.item.count, prize.item.duration);
+			int result = g_ItemManager.AddItem(user->GetID(), user, prize.item.itemID, prize.item.count, prize.item.duration);
 			switch (result)
 			{
 			case ITEM_ADD_INVENTORY_FULL:
-				g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("You inventory is full"));
+				g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("You inventory is full"));
 				break;
 			case ITEM_ADD_UNKNOWN_ITEMID:
-				g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("An internal error occured while adding an item. Contact the administrator"));
+				g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("An internal error occured while adding an item. Contact the administrator"));
 				break;
 			}
 			
@@ -291,9 +293,9 @@ bool CMiniGameManager::BingoOpenRandomNumber(IUser* user, UserBingo& bingo)
 
 	bingo.canPlay = false;
 
-	g_pUserDatabase->UpdateBingoProgress(user->GetID(), bingo);
-	g_pUserDatabase->UpdateBingoSlot(user->GetID(), slots, true);
-	g_pUserDatabase->UpdateBingoPrizeSlot(user->GetID(), prizes, true);*/
+	g_UserDatabase.UpdateBingoProgress(user->GetID(), bingo);
+	g_UserDatabase.UpdateBingoSlot(user->GetID(), slots, true);
+	g_UserDatabase.UpdateBingoPrizeSlot(user->GetID(), prizes, true);*/
 
 	return true;
 }
@@ -301,7 +303,7 @@ bool CMiniGameManager::BingoOpenRandomNumber(IUser* user, UserBingo& bingo)
 void CMiniGameManager::OnBingoResetRequest(IUser* user)
 {
 	/*UserBingo bingo = {};
-	g_pUserDatabase->GetBingoProgress(user->GetID(), bingo);
+	g_UserDatabase.GetBingoProgress(user->GetID(), bingo);
 
 	bingo.status = UserBingoStatus::BINGO_UNINITIALIZED;
 
@@ -311,16 +313,16 @@ void CMiniGameManager::OnBingoResetRequest(IUser* user)
 void CMiniGameManager::OnBingoShuffleRequest(IUser* user)
 {
 	/*UserBingo bingo = {};
-	g_pUserDatabase->GetBingoProgress(user->GetID(), bingo);
+	g_UserDatabase.GetBingoProgress(user->GetID(), bingo);
 
 	if (bingo.status != UserBingoStatus::BINGO_IN_PROCCESS)
 		return;
 
 	std::vector<UserBingoPrizeSlot> prizes;
-	g_pUserDatabase->GetBingoPrizeSlot(user->GetID(), prizes);
+	g_UserDatabase.GetBingoPrizeSlot(user->GetID(), prizes);
 
 	std::vector<UserBingoSlot> slots;
-	g_pUserDatabase->GetBingoSlot(user->GetID(), slots);
+	g_UserDatabase.GetBingoSlot(user->GetID(), slots);
 
 	int openedSlotCount = 0;
 	for (auto slot : slots)
@@ -338,13 +340,13 @@ void CMiniGameManager::OnBingoShuffleRequest(IUser* user)
 
 	if (openedSlotCount > 11 || openedPrizeSlotCount > 1)
 	{
-		g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BINGO_SHUFFLE_NUMBERS_FAILED_SHUFFLE_LIMIT_EXCEED"));
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("BINGO_SHUFFLE_NUMBERS_FAILED_SHUFFLE_LIMIT_EXCEED"));
 		return;
 	}
 
 	random_shuffle(slots.begin(), slots.end());
 
-	g_pPacketManager->SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);*/
+	g_PacketManager.SendMiniGameBingoUpdate(user->GetExtendedSocket(), bingo, slots, prizes);*/
 }
 
 
@@ -363,7 +365,7 @@ void CMiniGameManager::OnWeaponReleaseRequest(CReceivePacket* msg, IUser* user)
 		OnWeaponReleaseGetJokerRequest(user);
 		break;
 	default:
-		Console().Log(OBFUSCATE("[User '%s'] Packet_Minigame weapon release request %d is not implemented\n"), user->GetLogName(), requestID);
+		Logger().Info(OBFUSCATE("[User '%s'] Packet_Minigame weapon release request %d is not implemented\n"), user->GetLogName(), requestID);
 	}
 }
 
@@ -373,10 +375,10 @@ void CMiniGameManager::SendWeaponReleaseUpdate(IUser* user)
 	vector<UserWeaponReleaseRow> rows;
 	int totalCharacterCount = 0;
 
-	g_pUserDatabase->GetWeaponReleaseCharacters(user->GetID(), characters, totalCharacterCount);
-	g_pUserDatabase->GetWeaponReleaseRows(user->GetID(), rows);
+	g_UserDatabase.GetWeaponReleaseCharacters(user->GetID(), characters, totalCharacterCount);
+	g_UserDatabase.GetWeaponReleaseRows(user->GetID(), rows);
 
-	g_pPacketManager->SendMiniGameWeaponReleaseUpdate(user->GetExtendedSocket(), g_pServerConfig->weaponRelease, rows, characters, totalCharacterCount);
+	g_PacketManager.SendMiniGameWeaponReleaseUpdate(user->GetExtendedSocket(), g_pServerConfig->weaponRelease, rows, characters, totalCharacterCount);
 }
 
 void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, IUser* user)
@@ -392,7 +394,7 @@ void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, I
 	UserWeaponReleaseRow row = {};
 	row.id = rowCfg.item.itemID;
 
-	g_pUserDatabase->GetWeaponReleaseRow(user->GetID(), row);
+	g_UserDatabase.GetWeaponReleaseRow(user->GetID(), row);
 	if (row.opened)
 	{
 		return;
@@ -400,11 +402,11 @@ void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, I
 
 	UserWeaponReleaseCharacter character = {};
 	character.character = charID;
-	if (g_pUserDatabase->GetWeaponReleaseCharacter(user->GetID(), character) <= 0 && character.count <= 0)
+	if (g_UserDatabase.GetWeaponReleaseCharacter(user->GetID(), character) <= 0 && character.count <= 0)
 	{
 		// try to use joker char
 		character.character = '~';
-		if (g_pUserDatabase->GetWeaponReleaseCharacter(user->GetID(), character) <= 0 && character.count <= 0)
+		if (g_UserDatabase.GetWeaponReleaseCharacter(user->GetID(), character) <= 0 && character.count <= 0)
 		{
 			return;
 		}
@@ -415,7 +417,7 @@ void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, I
 	int progress = 1 << charPos;
 	if (progress & row.progress)
 	{
-		g_pPacketManager->SendMiniGameWeaponReleaseSetCharacter(user->GetExtendedSocket(), 5, 0, 0, 0, 0);
+		g_PacketManager.SendMiniGameWeaponReleaseSetCharacter(user->GetExtendedSocket(), 5, 0, 0, 0, 0);
 		return;
 	}
 
@@ -448,14 +450,14 @@ void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, I
 		}
 	}
 
-	if (g_pUserDatabase->SetWeaponReleaseCharacter(user->GetID(), row.id, charPos, character.character, lastChar) <= 0)
+	if (g_UserDatabase.SetWeaponReleaseCharacter(user->GetID(), row.id, charPos, character.character, lastChar) <= 0)
 	{
 		return;
 	}
 
 	if (lastChar)
 	{
-		g_pItemManager->AddItem(user->GetID(), user, rowCfg.item.itemID, rowCfg.item.count, rowCfg.item.duration);
+		g_ItemManager.AddItem(user->GetID(), user, rowCfg.item.itemID, rowCfg.item.count, rowCfg.item.duration);
 
 		RewardItem rewardItem = {};
 		rewardItem.itemID = rowCfg.item.itemID;
@@ -465,10 +467,10 @@ void CMiniGameManager::OnWeaponReleaseSetCharacterRequest(CReceivePacket* msg, I
 		RewardNotice rewardNotice = {};
 		rewardNotice.items.push_back(rewardItem);
 
-		g_pPacketManager->SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, OBFUSCATE("Weapon Release Event"), OBFUSCATE("Congratulations! You have received the below weapon by collecting the word."));
+		g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, OBFUSCATE("Weapon Release Event"), OBFUSCATE("Congratulations! You have received the below weapon by collecting the word."));
 	}
 
-	g_pPacketManager->SendMiniGameWeaponReleaseSetCharacter(user->GetExtendedSocket(), lastChar ? 2 : 0, weaponSlot, slot, character.character, character.count - 1);
+	g_PacketManager.SendMiniGameWeaponReleaseSetCharacter(user->GetExtendedSocket(), lastChar ? 2 : 0, weaponSlot, slot, character.character, character.count - 1);
 }
 
 void CMiniGameManager::OnWeaponReleaseGetJokerRequest(IUser* user)

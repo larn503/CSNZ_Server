@@ -2,6 +2,10 @@
 
 #include "imanager.h"
 
+#include <vector>
+
+class IExtendedSocket;
+class CReceivePacket;
 class CGameMatch;
 class CGameMatchUserStat;
 class IUser;

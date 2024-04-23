@@ -10,7 +10,7 @@ CDedicatedServer::CDedicatedServer(IExtendedSocket* socket, int ip, int port)
 	m_pRoom = NULL;
 	m_iLastMemory = 0;
 
-	g_pUserManager->SendMetadata(socket);
+	g_UserManager.SendMetadata(socket);
 }
 
 void CDedicatedServer::SetRoom(IRoom* room)
@@ -55,37 +55,48 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 	int type = msg->ReadUInt8();
 	switch (type)
 	{
-	case 0:
+	case HostServerPacketType::AddServer:
 	{
 		int port = msg->ReadUInt16();
 		int ip = msg->ReadUInt32(false);
 
-		g_pDedicatedServerManager->AddServer(new CDedicatedServer(socket, ip, port));
+		g_DedicatedServerManager.AddServer(new CDedicatedServer(socket, ip, port));
 
 		break;
 	}
-	case 1:
+	case HostServerPacketType::MemoryUsage:
 	{
-		CDedicatedServer* server = g_pDedicatedServerManager->GetServerBySocket(socket);
+		CDedicatedServer* server = g_DedicatedServerManager.GetServerBySocket(socket);
 		if (server)
 			server->SetMemoryUsage(msg->ReadUInt16());
 
 		break;
 	}
-	case 2:
+	case HostServerPacketType::Unk2:
 	{
+		// Something related to a file named "rev.txt", what the fuck?
 		int unk = msg->ReadUInt32();
-		Console().Warn("CDedicatedServerManager::OnPacket(2): %d\n", unk);
+		Logger().Warn("CDedicatedServerManager::OnPacket(2): %d\n", unk);
+
+		break;
+	}
+	case HostServerPacketType::Unk3:
+	{
+		// Supposedly it's a variable size, but it doesn't tell what size it sends and it's always sending one byte, so...
+		int unk = msg->ReadUInt8();
+		Logger().Warn("CDedicatedServerManager::OnPacket(3): %d\n", unk);
 
 		break;
 	}
 	default:
-		Console().Warn("Unknown host server request %d\n", type);
+		Logger().Warn("Unknown host server request %d\n", type);
 		break;
 	}
 
 	return true;
 }
+
+CDedicatedServerManager g_DedicatedServerManager;
 
 CDedicatedServerManager::CDedicatedServerManager() : CBaseManager("DedicatedServerManager")
 {
@@ -93,8 +104,7 @@ CDedicatedServerManager::CDedicatedServerManager() : CBaseManager("DedicatedServ
 
 CDedicatedServerManager::~CDedicatedServerManager()
 {
-	printf("~CItemManager\n");
-	Shutdown();
+	printf("~CDedicatedServerManager\n");
 }
 
 void CDedicatedServerManager::Shutdown()
@@ -102,7 +112,7 @@ void CDedicatedServerManager::Shutdown()
 	std::lock_guard<std::mutex> lg(hMutex);
 
 	for (auto s : vServerPools)
-		g_pPacketManager->SendHostServerStop(s->GetSocket());
+		g_PacketManager.SendHostServerStop(s->GetSocket());
 }
 
 CDedicatedServer* CDedicatedServerManager::GetAvailableServerFromPools(IRoom* room)
@@ -160,4 +170,17 @@ void CDedicatedServerManager::RemoveServer(IExtendedSocket* socket)
 		room->SetServer(NULL);
 
 	vServerPools.erase(remove(vServerPools.begin(), vServerPools.end(), server), vServerPools.end());
+}
+
+void CDedicatedServerManager::TransferServer(IExtendedSocket* socket, const std::string& ipAddress, int port)
+{
+	CDedicatedServer* server = GetServerBySocket(socket);
+	if (!server)
+		return;
+
+	IRoom* room = server->GetRoom();
+	if (room)
+		room->SetServer(NULL);
+
+	g_PacketManager.SendHostServerTransfer(socket, ipAddress, port);
 }

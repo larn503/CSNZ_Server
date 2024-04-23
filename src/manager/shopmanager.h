@@ -30,4 +30,4 @@ private:
 	std::vector<int> m_PopularProducts;
 };
 
-extern class CShopManager* g_pShopManager;
+extern CShopManager g_ShopManager;

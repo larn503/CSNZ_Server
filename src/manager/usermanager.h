@@ -8,8 +8,10 @@
 class CUserManager : public CBaseManager<IUserManager>
 {
 public:
-	CUserManager(int maxPlayers);
+	CUserManager();
 
+	virtual bool Init();
+	virtual void Shutdown();
 	virtual void OnSecondTick(time_t curTime);
 
 	bool OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket);
@@ -75,4 +77,4 @@ private:
 	std::vector<CUserInventoryItem> m_DefaultItems;
 };
 
-extern class CUserManager* g_pUserManager;
+extern CUserManager g_UserManager;

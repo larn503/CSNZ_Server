@@ -36,4 +36,4 @@ public:
 	void OnUserLogin(IUser* user);
 };
 
-extern class CClanManager* g_pClanManager;
+extern CClanManager g_ClanManager;

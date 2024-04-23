@@ -47,10 +47,11 @@ public:
 	bool IsPoolAvailable();
 	CDedicatedServer* GetServerBySocket(IExtendedSocket* socket);
 	void RemoveServer(IExtendedSocket* socket);
+	void TransferServer(IExtendedSocket* socket, const std::string& ipAddress, int port);
 
 private:
 	std::mutex hMutex;
 	std::vector<CDedicatedServer*> vServerPools;
 };
 
-extern class CDedicatedServerManager* g_pDedicatedServerManager;
+extern CDedicatedServerManager g_DedicatedServerManager;

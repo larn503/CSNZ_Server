@@ -88,8 +88,8 @@ void CGameMatchUserStat::IncrementKillCount()
 UserQuestProgress& CGameMatchUserStat::GetTempQuestProgress(int questID)
 {
 	UserQuestProgress tempQuestProgress = {};
-	vector<UserQuestProgress>::iterator tempQuestTaskProgressIt = find_if(m_TempQuestProgress.begin(), m_TempQuestProgress.end(),
-		[questID](UserQuestProgress tempQuestProgress) { return tempQuestProgress.questID == questID; });
+	auto tempQuestTaskProgressIt = find_if(m_TempQuestProgress.begin(), m_TempQuestProgress.end(),
+		[questID](const UserQuestProgress& tempQuestProgress) { return tempQuestProgress.questID == questID; });
 
 	if (tempQuestTaskProgressIt != m_TempQuestProgress.end())
 	{
@@ -97,7 +97,7 @@ UserQuestProgress& CGameMatchUserStat::GetTempQuestProgress(int questID)
 	}
 	else
 	{
-		g_pUserDatabase->GetQuestProgress(m_pUser->GetID(), questID, tempQuestProgress);
+		g_UserDatabase.GetQuestProgress(m_pUser->GetID(), questID, tempQuestProgress);
 		m_TempQuestProgress.push_back(tempQuestProgress);
 	}
 
@@ -109,8 +109,8 @@ UserQuestTaskProgress& CGameMatchUserStat::GetTempQuestTaskProgress(int questID,
 	UserQuestTaskProgress tempQuestTaskProgress = {};
 	UserQuestProgress& tempQuestProgress = GetTempQuestProgress(questID);
 
-	vector<UserQuestTaskProgress>::iterator tempTaskProgressIt = find_if(tempQuestProgress.tasks.begin(), tempQuestProgress.tasks.end(),
-		[taskID](UserQuestTaskProgress taskProgress) { return taskProgress.taskID == taskID; });
+	auto tempTaskProgressIt = find_if(tempQuestProgress.tasks.begin(), tempQuestProgress.tasks.end(),
+		[taskID](const UserQuestTaskProgress& taskProgress) { return taskProgress.taskID == taskID; });
 
 	if (tempTaskProgressIt != tempQuestProgress.tasks.end())
 	{
@@ -118,7 +118,7 @@ UserQuestTaskProgress& CGameMatchUserStat::GetTempQuestTaskProgress(int questID,
 	}
 	else
 	{
-		g_pUserDatabase->GetQuestTaskProgress(m_pUser->GetID(), questID, taskID, tempQuestTaskProgress);
+		g_UserDatabase.GetQuestTaskProgress(m_pUser->GetID(), questID, taskID, tempQuestTaskProgress);
 		tempQuestProgress.tasks.push_back(tempQuestTaskProgress);
 	}
 
@@ -128,8 +128,8 @@ UserQuestTaskProgress& CGameMatchUserStat::GetTempQuestTaskProgress(int questID,
 UserQuestProgress& CGameMatchUserStat::GetTempQuestEventProgress(int questID)
 {
 	UserQuestProgress tempQuestProgress = {};
-	vector<UserQuestProgress>::iterator tempQuestTaskProgressIt = find_if(m_TempQuestEventProgress.begin(), m_TempQuestEventProgress.end(),
-		[questID](UserQuestProgress tempQuestProgress) { return tempQuestProgress.questID == questID; });
+	auto tempQuestTaskProgressIt = find_if(m_TempQuestEventProgress.begin(), m_TempQuestEventProgress.end(),
+		[questID](const UserQuestProgress& tempQuestProgress) { return tempQuestProgress.questID == questID; });
 
 	if (tempQuestTaskProgressIt != m_TempQuestEventProgress.end())
 	{
@@ -137,7 +137,7 @@ UserQuestProgress& CGameMatchUserStat::GetTempQuestEventProgress(int questID)
 	}
 	else
 	{
-		g_pUserDatabase->GetQuestEventProgress(m_pUser->GetID(), questID, tempQuestProgress);
+		g_UserDatabase.GetQuestEventProgress(m_pUser->GetID(), questID, tempQuestProgress);
 		m_TempQuestEventProgress.push_back(tempQuestProgress);
 	}
 
@@ -149,8 +149,8 @@ UserQuestTaskProgress& CGameMatchUserStat::GetTempQuestEventTaskProgress(int que
 	UserQuestTaskProgress tempQuestTaskProgress = {};
 	UserQuestProgress& tempQuestEventProgress = GetTempQuestEventProgress(questID);
 
-	vector<UserQuestTaskProgress>::iterator tempTaskProgressIt = find_if(tempQuestEventProgress.tasks.begin(), tempQuestEventProgress.tasks.end(),
-		[taskID](UserQuestTaskProgress taskProgress) { return taskProgress.taskID == taskID; });
+	auto tempTaskProgressIt = find_if(tempQuestEventProgress.tasks.begin(), tempQuestEventProgress.tasks.end(),
+		[taskID](const UserQuestTaskProgress& taskProgress) { return taskProgress.taskID == taskID; });
 
 	if (tempTaskProgressIt != tempQuestEventProgress.tasks.end())
 	{
@@ -158,7 +158,7 @@ UserQuestTaskProgress& CGameMatchUserStat::GetTempQuestEventTaskProgress(int que
 	}
 	else
 	{
-		g_pUserDatabase->GetQuestEventTaskProgress(m_pUser->GetID(), questID, taskID, tempQuestTaskProgress);
+		g_UserDatabase.GetQuestEventTaskProgress(m_pUser->GetID(), questID, taskID, tempQuestTaskProgress);
 		tempQuestEventProgress.tasks.push_back(tempQuestTaskProgress);
 	}
 
@@ -167,8 +167,8 @@ UserQuestTaskProgress& CGameMatchUserStat::GetTempQuestEventTaskProgress(int que
 
 CUserInventoryItem* CGameMatchUserStat::GetItem(int itemID)
 {
-	vector<CUserInventoryItem>::iterator itemIt = find_if(m_Items.begin(), m_Items.begin(),
-		[itemID](CUserInventoryItem item) { return item.m_nItemID == itemID; });
+	auto itemIt = find_if(m_Items.begin(), m_Items.begin(),
+		[itemID](const CUserInventoryItem& item) { return item.m_nItemID == itemID; });
 
 	if (itemIt != m_Items.end())
 	{
@@ -193,7 +193,7 @@ CGameMatch::~CGameMatch()
 {
 	for (auto u : m_UserStats)
 	{
-		g_pQuestManager->OnGameMatchLeave(u->m_pUser, u->m_TempQuestProgress, u->m_TempQuestEventProgress);
+		g_QuestManager.OnGameMatchLeave(u->m_pUser, u->m_TempQuestProgress, u->m_TempQuestEventProgress);
 		delete u;
 	}
 }
@@ -214,7 +214,7 @@ void CGameMatch::Disconnect(IUser* user)
 	CGameMatchUserStat* stat = GetGameUserStat(user);
 	if (stat)
 	{
-		g_pQuestManager->OnGameMatchLeave(user, stat->m_TempQuestProgress, stat->m_TempQuestEventProgress);
+		g_QuestManager.OnGameMatchLeave(user, stat->m_TempQuestProgress, stat->m_TempQuestEventProgress);
 
 		delete stat;
 		m_UserStats.erase(remove(begin(m_UserStats), end(m_UserStats), stat), end(m_UserStats));
@@ -228,7 +228,7 @@ bool GameMatchUserStatCompare(CGameMatchUserStat* gameStat, IUser* user)
 
 CGameMatchUserStat* CGameMatch::GetGameUserStat(IUser* user)
 {
-	vector<CGameMatchUserStat*>::iterator it = find_if(m_UserStats.begin(), m_UserStats.end(), bind(GameMatchUserStatCompare, placeholders::_1, user));
+	auto it = find_if(m_UserStats.begin(), m_UserStats.end(), bind(GameMatchUserStatCompare, placeholders::_1, user));
 
 	if (it != m_UserStats.end())
 	{
@@ -239,7 +239,7 @@ CGameMatchUserStat* CGameMatch::GetGameUserStat(IUser* user)
 		}
 		else
 		{
-			Console().Warn("CGameMatch::GetGameUserStat: user stat does not exist\n");
+			Logger().Warn("CGameMatch::GetGameUserStat: user stat does not exist\n");
 			return NULL;
 		}
 	}
@@ -289,7 +289,7 @@ void CGameMatch::OnKillEvent(IUser* user, GameMatch_KillEvent& killEvent)
 	if (killEvent.killerUserID != killEvent.victimUserID)
 		stat->IncrementKillCount();
 
-	g_pQuestManager->OnKillEvent(stat, this, killEvent);
+	g_QuestManager.OnKillEvent(stat, this, killEvent);
 
 	// random letters for weapon release event
 	if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
@@ -298,9 +298,9 @@ void CGameMatch::OnKillEvent(IUser* user, GameMatch_KillEvent& killEvent)
 		{
 			Randomer rand(g_pServerConfig->weaponRelease.characters.size() - 1);
 			char character = g_pServerConfig->weaponRelease.characters[rand()];
-			g_pMiniGameManager->WeaponReleaseAddCharacter(user, character, 1);
-			g_pPacketManager->SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), va(OBFUSCATE("[Weapon Release] You have obtained '%s' character."), character == '~' ? OBFUSCATE("Joker") : va("%c", character)));
-			g_pPacketManager->SendMiniGameWeaponReleaseIGNotice(user->GetExtendedSocket(), character);
+			g_MiniGameManager.WeaponReleaseAddCharacter(user, character, 1);
+			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), va(OBFUSCATE("[Weapon Release] You have obtained '%s' character."), character == '~' ? OBFUSCATE("Joker") : va("%c", character)));
+			g_PacketManager.SendMiniGameWeaponReleaseIGNotice(user->GetExtendedSocket(), character);
 		}
 	}
 
@@ -308,7 +308,7 @@ void CGameMatch::OnKillEvent(IUser* user, GameMatch_KillEvent& killEvent)
 	// random gachapon item for each 100 kills
 	CUserCharacterExtended character = {};
 	character.flag = EXT_UFLAG_KILLSTOGETGACHAPONITEM;
-	g_pUserDatabase->GetCharacterExtended(user->GetID(), character);
+	g_UserDatabase.GetCharacterExtended(user->GetID(), character);
 
 	character.killsToGetGachaponItem--;
 	if (character.killsToGetGachaponItem <= 0)
@@ -319,13 +319,12 @@ void CGameMatch::OnKillEvent(IUser* user, GameMatch_KillEvent& killEvent)
 		int randomIndex = rand();
 		int randomItemID = randomIndex ? 166 : 5101;
 
-		g_pPacketManager->SendItemGachapon(user->GetExtendedSocket(), randomIndex);
+		g_PacketManager.SendItemGachapon(user->GetExtendedSocket(), randomIndex);
 
-		g_pItemManager->AddItem(user->GetID(), user, randomItemID, 1, 0);
+		g_ItemManager.AddItem(user->GetID(), user, randomItemID, 1, 0);
 	}
 
-	g_pUserDatabase->UpdateCharacterExtended(user->GetID(), character);
-
+	g_UserDatabase.UpdateCharacterExtended(user->GetID(), character);
 }
 
 void CGameMatch::OnUpdateWinCounter(int ctWinCount, int tWinCount)
@@ -352,7 +351,7 @@ void CGameMatch::OnBombExplode(IUser* user)
 	if (!stat)
 		return;
 
-	g_pQuestManager->OnBombExplode(stat, this);
+	g_QuestManager.OnBombExplode(stat, this);
 }
 
 void CGameMatch::OnBombDefuse(IUser* user)
@@ -361,7 +360,7 @@ void CGameMatch::OnBombDefuse(IUser* user)
 	if (!stat)
 		return;
 
-	g_pQuestManager->OnBombDefuse(stat, this);
+	g_QuestManager.OnBombDefuse(stat, this);
 }
 
 void CGameMatch::OnHostageEscape(IUser* user)
@@ -370,7 +369,7 @@ void CGameMatch::OnHostageEscape(IUser* user)
 	if (!stat)
 		return;
 
-	g_pQuestManager->OnHostageEscape(stat, this);
+	g_QuestManager.OnHostageEscape(stat, this);
 }
 
 void CGameMatch::OnMonsterKill(IUser* user, int monsterType)
@@ -379,7 +378,7 @@ void CGameMatch::OnMonsterKill(IUser* user, int monsterType)
 	if (!stat)
 		return;	
 
-	g_pQuestManager->OnMonsterKill(stat, this, monsterType);
+	g_QuestManager.OnMonsterKill(stat, this, monsterType);
 }
 
 void CGameMatch::OnDropBoxPickup(IUser* user, int rewardID)
@@ -391,19 +390,19 @@ void CGameMatch::OnDropBoxPickup(IUser* user, int rewardID)
 #ifndef PUBLIC_RELEASE
 	if (m_nGameMode != 15 && m_nGameMode != 17 && m_nGameMode != 26 && m_nGameMode != 28)
 	{
-		Console().Log("[SuspectNotice] detected suspect user '%d, %s', reason: %d, %s, %d, %d\n", user->GetID(), user->GetUsername().c_str(), 227, "DROPBOXABUSE", rewardID, m_nGameMode);
+		Logger().Info("[SuspectNotice] detected suspect user '%d, %s', reason: %d, %s, %d, %d\n", user->GetID(), user->GetUsername().c_str(), 227, "DROPBOXABUSE", rewardID, m_nGameMode);
 		return;
 	}
 
 	if (rewardID < 3000 || rewardID > 3023)
 	{
-		Console().Log("[SuspectNotice] detected suspect user '%d, %s', reason: %d, %s, %d\n", user->GetID(), user->GetUsername().c_str(), 228, "DROPBOXABUSE", rewardID);
+		Logger().Info("[SuspectNotice] detected suspect user '%d, %s', reason: %d, %s, %d\n", user->GetID(), user->GetUsername().c_str(), 228, "DROPBOXABUSE", rewardID);
 		return;
 	}
 #endif	
-	RewardNotice notice = g_pItemManager->GiveReward(user->GetID(), user, rewardID, 0, true, 0);
+	RewardNotice notice = g_ItemManager.GiveReward(user->GetID(), user, rewardID, 0, true, 0);
 	if (notice.status)
-		g_pPacketManager->SendUMsgSystemReply(user->GetExtendedSocket(), SystemReply_Red, OBFUSCATE("EVT_SCENARIO_ITEM_POINT_REWARD"), vector<string> {to_string(notice.points)});
+		g_PacketManager.SendUMsgSystemReply(user->GetExtendedSocket(), SystemReply_Red, OBFUSCATE("EVT_SCENARIO_ITEM_POINT_REWARD"), vector<string> {to_string(notice.points)});
 }
 
 void CGameMatch::OnMosquitoKill(IUser* user)
@@ -412,7 +411,7 @@ void CGameMatch::OnMosquitoKill(IUser* user)
 	if (!stat)
 		return;
 
-	g_pQuestManager->OnMosquitoKill(stat, this);
+	g_QuestManager.OnMosquitoKill(stat, this);
 }
 
 void CGameMatch::OnKiteKill(IUser* user)
@@ -421,7 +420,7 @@ void CGameMatch::OnKiteKill(IUser* user)
 	if (!stat)
 		return;
 
-	g_pQuestManager->OnKiteKill(stat, this);
+	g_QuestManager.OnKiteKill(stat, this);
 }
 
 void CGameMatch::OnGameMatchEnd()
@@ -429,23 +428,21 @@ void CGameMatch::OnGameMatchEnd()
 	CalculateGameResult();
 	ApplyGameResult();
 
-	Console().Log("CGameMatch::OnGameMatchEnd: gamemode: %d, CT rounds win count: %d, T rounds win count: %d\n", m_nGameMode, m_nCtWinCount, m_nTerWinCount);
+	Logger().Info("CGameMatch::OnGameMatchEnd: gamemode: %d, CT rounds win count: %d, T rounds win count: %d\n", m_nGameMode, m_nCtWinCount, m_nTerWinCount);
 }
 
 int CGameMatch::GetExpCoefficient()
 {
-	vector<GameMatchCoefficients_s>::iterator it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
-		[this](GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == this->m_nGameMode; });
-	//vector<GameMatchCoefficients_s>::iterator it = find_if(g_pServerConfig->gameModeCoefficients.begin(), g_pServerConfig->gameModeCoefficients.end(), bind(GameModeCoefficientCompare, placeholders::_1, m_nGameMode));
+	auto it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
+		[this](const GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == this->m_nGameMode; });
 	if (it != g_pServerConfig->gameMatch.gameModeCoefficients.end())
 	{
 		return it->exp;
 	}
 	else
 	{
-		vector<GameMatchCoefficients_s>::iterator it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
-			[](GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == 0; });
-		//		it = find_if(g_pServerConfig->gameModeCoefficients.begin(), g_pServerConfig->gameModeCoefficients.end(), bind(GameModeCoefficientCompare, placeholders::_1, 0));
+		auto it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
+			[](const GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == 0; });
 		if (it != g_pServerConfig->gameMatch.gameModeCoefficients.end())
 		{
 			return it->exp;
@@ -459,18 +456,16 @@ int CGameMatch::GetExpCoefficient()
 
 int CGameMatch::GetPointsCoefficient()
 {
-	vector<GameMatchCoefficients_s>::iterator it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
-		[this](GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == this->m_nGameMode; });
-	//vector<GameMatchCoefficients_s>::iterator it = find_if(g_pServerConfig->gameModeCoefficients.begin(), g_pServerConfig->gameModeCoefficients.end(), bind(GameModeCoefficientCompare, placeholders::_1, m_nGameMode));
+	auto it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
+		[this](const GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == this->m_nGameMode; });
 	if (it != g_pServerConfig->gameMatch.gameModeCoefficients.end())
 	{
 		return it->points;
 	}
 	else
 	{
-		vector<GameMatchCoefficients_s>::iterator it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
-			[](GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == 0; });
-		//it = find_if(g_pServerConfig->gameModeCoefficients.begin(), g_pServerConfig->gameModeCoefficients.end(), bind(GameModeCoefficientCompare, placeholders::_1, 0));
+		auto it = find_if(g_pServerConfig->gameMatch.gameModeCoefficients.begin(), g_pServerConfig->gameMatch.gameModeCoefficients.end(),
+			[](const GameMatchCoefficients_s& gameMatchCoef) { return gameMatchCoef.gameMode == 0; });
 		if (it != g_pServerConfig->gameMatch.gameModeCoefficients.end())
 		{
 			return it->points;
@@ -511,7 +506,7 @@ void CGameMatch::OnHostChanged(IUser* newHost)
 {
 	for (auto userStat : m_UserStats)
 	{
-		g_pHostManager->OnHostChanged(userStat->m_pUser, newHost, this);
+		g_HostManager.OnHostChanged(userStat->m_pUser, newHost, this);
 	}
 }
 
@@ -545,17 +540,17 @@ void CGameMatch::CalculateGameResult()
 		stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills : pointsCoef;
 
 		// calc bonus exp/points
-		vector<BonusPercentage_s>::iterator bonusPercentageClass = find_if(g_pServerConfig->gameMatch.bonusPercentageClasses.begin(), g_pServerConfig->gameMatch.bonusPercentageClasses.end(),
-			[stat](BonusPercentage_s bonus) { return bonus.itemID == stat->m_nClassItemID; });
+		auto bonusPercentageClass = find_if(g_pServerConfig->gameMatch.bonusPercentageClasses.begin(), g_pServerConfig->gameMatch.bonusPercentageClasses.end(),
+			[stat](const BonusPercentage_s& bonus) { return bonus.itemID == stat->m_nClassItemID; });
 		if (bonusPercentageClass != g_pServerConfig->gameMatch.bonusPercentageClasses.end())
 		{
 			BonusPercentage_s bonus = *bonusPercentageClass;
 			vector<CUserInventoryItem> items;
-			g_pUserDatabase->GetInventoryItemsByID(user->GetID(), bonus.itemID, items);
+			g_UserDatabase.GetInventoryItemsByID(user->GetID(), bonus.itemID, items);
 			if (items.size())
 			{
-				vector<CUserInventoryItem>::iterator activeClassItem = find_if(items.begin(), items.end(),
-					[](CUserInventoryItem& item) { return item.m_nInUse && item.m_nStatus; });
+				auto activeClassItem = find_if(items.begin(), items.end(),
+					[](const CUserInventoryItem& item) { return item.m_nInUse && item.m_nStatus; });
 				if (activeClassItem != items.end())
 				{
 					stat->m_nBonusExpEarned += stat->m_nExpEarned * bonus.exp / 100;
@@ -590,7 +585,7 @@ void CGameMatch::CalculateGameResult()
 		// bonus for players
 		if (m_UserStats.size() >= 2)
 		{
-			auto bonusPlayerCoop = find_if(gameMatch.bonusPlayerCoop.begin(), gameMatch.bonusPlayerCoop.end(), [this](BonusPercentage_s& bonus) { return bonus.itemID == this->m_nGameMode; });
+			auto bonusPlayerCoop = find_if(gameMatch.bonusPlayerCoop.begin(), gameMatch.bonusPlayerCoop.end(), [this](const BonusPercentage_s& bonus) { return bonus.itemID == this->m_nGameMode; });
 			if (bonusPlayerCoop != gameMatch.bonusPlayerCoop.end())
 			{
 				BonusPercentage_s bonus = *bonusPlayerCoop;
@@ -640,18 +635,18 @@ void CGameMatch::PrintGameResult()
 	char msg[2048];
 
 	ostringstream log;
-	snprintf(msg, 2048, OBFUSCATE("\nRoom (%d) game result, host time: %s, GameModeID: %d, MapID: %d\n%-6s|%-32s|%-10s|%-10s|%-10s|%-10s|%-10s\n"), m_pParentRoom->GetID(), FormatSeconds(m_nSecondCounter), m_nGameMode, m_nMapID,
+	snprintf(msg, sizeof(msg), OBFUSCATE("\nRoom (%d) game result, host time: %s, GameModeID: %d, MapID: %d\n%-6s|%-32s|%-10s|%-10s|%-10s|%-10s|%-10s\n"), m_pParentRoom->GetID(), FormatSeconds(m_nSecondCounter), m_nGameMode, m_nMapID,
 		(const char*)OBFUSCATE("UserID"), (const char*)OBFUSCATE("Username"), (const char*)OBFUSCATE("Kills"), (const char*)OBFUSCATE("Deaths"), (const char*)OBFUSCATE("Score"), (const char*)OBFUSCATE("Exp"), (const char*)OBFUSCATE("Points"));
 	log << msg;
 
 	for (auto stat : m_UserStats)
 	{
-		snprintf(msg, 2048, OBFUSCATE("%-6d|%-32s|%-10d|%-10d|%-10d|+%-10d|+%-10d\n"), stat->m_pUser ? stat->m_pUser->GetID() : 0, stat->m_pUser ? stat->m_pUser->GetUsername().c_str() : "NONE", stat->m_nKills, stat->m_nDeaths,
+		snprintf(msg, sizeof(msg), OBFUSCATE("%-6d|%-32s|%-10d|%-10d|%-10d|+%-10d|+%-10d\n"), stat->m_pUser ? stat->m_pUser->GetID() : 0, stat->m_pUser ? stat->m_pUser->GetUsername().c_str() : "NONE", stat->m_nKills, stat->m_nDeaths,
 			stat->m_nScore, stat->m_nExpEarned, stat->m_nPointsEarned);
 		log << msg;
 	}
 
-	Console().Log(log.str().c_str());
+	Logger().Info(log.str().c_str());
 }
 
 // TODO: find another way
@@ -708,8 +703,8 @@ void CGameMatch::OnZBSWin()
 	{
 		int rewardID = stat->m_nRank <= 3 ? 100 + stat->m_nRank : 100 + stat->m_nRank + GetZbsMapSeason(m_nMapID) - 1;
 
-		Console().Log(OBFUSCATE("CGameMatch::OnZBSWin: rank: %d, rewardID: %d\n"), stat->m_nRank, rewardID);
+		Logger().Info(OBFUSCATE("CGameMatch::OnZBSWin: rank: %d, rewardID: %d\n"), stat->m_nRank, rewardID);
 
-		g_pItemManager->GiveReward(stat->m_pUser->GetID(), stat->m_pUser, rewardID, 0, false, 0);
+		g_ItemManager.GiveReward(stat->m_pUser->GetID(), stat->m_pUser, rewardID, 0, false, 0);
 	}
 }

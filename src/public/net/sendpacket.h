@@ -23,7 +23,7 @@ public:
 	void WriteUInt64(unsigned long long number, bool littleEndian = true);
 	void WriteString(const std::string& str);
 	void WriteWString(const std::wstring& str);
-	void WriteData(void* data, int len);
+	void WriteData(void* data, size_t len);
 	void WriteArray(const std::vector<unsigned char>& arr);
 	void SetWriteOffset(int offset);
 	void SetOverride(bool override);

@@ -5,6 +5,8 @@
 
 using namespace std;
 
+CRankManager g_RankManager;
+
 CRankManager::CRankManager() : CBaseManager("RankManager")
 {
 }
@@ -14,9 +16,9 @@ bool CRankManager::OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	LOG_PACKET;
 
 #ifdef PUBLIC_RELEASE
-	g_pPacketManager->SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Rank system is not implemented"));
+	g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, OBFUSCATE("Rank system is not implemented"));
 #else
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return false;
 
@@ -36,7 +38,7 @@ bool CRankManager::OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	{
 		//OnRankLeagueRequest(msg, user);
 
-		/*auto msg = g_pPacketManager->CreatePacket(socket, PacketId::Rank);
+		/*auto msg = g_PacketManager.CreatePacket(socket, PacketId::Rank);
 		msg->BuildHeader();
 		msg->WriteUInt8(3);
 
@@ -112,9 +114,9 @@ bool CRankManager::OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		//int page = msg->ReadUInt32();
 		//int unk = msg->ReadUInt8();
 
-		//Console().Log(OBFUSCATE("[User '%s'] Packet_Rank type %d leagueid: %d page: %d unk: %d\n"), user->GetLogName(), type, leagueid, page, unk);
+		//Logger().Info(OBFUSCATE("[User '%s'] Packet_Rank type %d leagueid: %d page: %d unk: %d\n"), user->GetLogName(), type, leagueid, page, unk);
 
-		//auto msg = g_pPacketManager->CreatePacket(socket, PacketId::Rank);
+		//auto msg = g_PacketManager.CreatePacket(socket, PacketId::Rank);
 		//msg->BuildHeader();
 		//msg->WriteUInt8(RankPacketType::RequestRankLeagueHallOfFame);
 		//msg->WriteUInt8(1); // a2 | v31[0] = a2[0]
@@ -197,11 +199,11 @@ bool CRankManager::OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		//int unk = msg->ReadUInt8();
 		//int leagueID = msg->ReadUInt8();
 
-		//Console().Log(OBFUSCATE("[User '%s'] Packet_Rank type %d\n"), user->GetLogName(), type);
+		//Logger().Info(OBFUSCATE("[User '%s'] Packet_Rank type %d\n"), user->GetLogName(), type);
 
 		//user->UpdateRank(leagueID);
 
-		//auto msg = g_pPacketManager->CreatePacket(socket, PacketId::Rank);
+		//auto msg = g_PacketManager.CreatePacket(socket, PacketId::Rank);
 		//msg->BuildHeader();
 		//msg->WriteUInt8(RankPacketType::RankChangeLeague);
 		//msg->WriteUInt8(0xFF); // a2 | v8 = a2[0]
@@ -210,7 +212,7 @@ bool CRankManager::OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		break;
 	}
 	default:
-		Console().Log(OBFUSCATE("[User '%s'] Unknown Packet_Rank type %d\n"), user->GetLogName(), type);
+		Logger().Info(OBFUSCATE("[User '%s'] Unknown Packet_Rank type %d\n"), user->GetLogName(), type);
 		break;
 	}
 #endif
@@ -223,13 +225,13 @@ bool CRankManager::OnRankInfoRequest(CReceivePacket* msg, IUser* user)
 
 	CUserCharacter character = {};
 	character.flag = UFLAG_RANK;
-	if (g_pUserDatabase->GetCharacter(user->GetID(), character) <= 0)
+	if (g_UserDatabase.GetCharacter(user->GetID(), character) <= 0)
 	{
 		// TODO: send failed reply
 		return false;
 	}
 
-	//g_pPacketManager->SendRankInfo(user->GetExtendedSocket(), character);
+	//g_PacketManager.SendRankInfo(user->GetExtendedSocket(), character);
 
 	return true;
 }
@@ -240,13 +242,13 @@ bool CRankManager::OnRankInRoomRequest(CReceivePacket* msg, IUser* user)
 
 	CUserCharacter character = {};
 	character.flag = UFLAG_RANK;
-	if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+	if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 	{
 		// TODO: send failed reply
 		return false;
 	}
 
-	//g_pPacketManager->SendRankInfo(user->GetExtendedSocket(), character);
+	//g_PacketManager.SendRankInfo(user->GetExtendedSocket(), character);
 
 	return true;
 }
@@ -255,29 +257,29 @@ bool CRankManager::OnRankSearchNicknameRequest(CReceivePacket* msg, IUser* user)
 {
 	std::string nickname = msg->ReadString();
 
-	int userID = g_pUserDatabase->IsUserExists(nickname, false);
+	int userID = g_UserDatabase.IsUserExists(nickname, false);
 	if (!userID)
 	{
-		g_pPacketManager->SendRankReply(user->GetExtendedSocket(), RankReplyCode::RankNotFound);
+		g_PacketManager.SendRankReply(user->GetExtendedSocket(), RankReplyCode::RankNotFound);
 		return false;
 	}
 
 	CUserCharacter character = {};
 	character.flag = UFLAG_RANK;
-	if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+	if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 	{
 		// TODO: send failed reply
 		return false;
 	}
 
-	//g_pPacketManager->SendRankInfo(user->GetExtendedSocket(), character);
+	//g_PacketManager.SendRankInfo(user->GetExtendedSocket(), character);
 
 	return true;
 }
 
 bool CRankManager::OnRankLeagueRequest(CReceivePacket* msg, IUser* user)
 {
-	//g_pPacketManager->SendRankLeague(user->GetExtendedSocket());
+	//g_PacketManager.SendRankLeague(user->GetExtendedSocket());
 
 	return true;
 }
@@ -288,13 +290,13 @@ bool CRankManager::OnRankUserInfoRequest(CReceivePacket* msg, IUser* user)
 
 	CUserCharacter character = {};
 	character.flag = -1;
-	if (g_pUserDatabase->GetCharacter(userID, character) <= 0)
+	if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 	{
-		g_pPacketManager->SendRankReply(user->GetExtendedSocket(), RankReplyCode::RankErrorData);
+		g_PacketManager.SendRankReply(user->GetExtendedSocket(), RankReplyCode::RankErrorData);
 		return false;
 	}
 
-	g_pPacketManager->SendRankUserInfo(user->GetExtendedSocket(), userID, character);
+	g_PacketManager.SendRankUserInfo(user->GetExtendedSocket(), userID, character);
 
 	return true;
 }

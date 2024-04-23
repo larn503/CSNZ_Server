@@ -8,21 +8,22 @@
 #define CSO_24_HOURS_IN_MINUTES 1440
 #define CSO_24_HOURS_IN_SECONDS 86400
 
-#define LOG_PACKET Console().SetLastPacket(__FUNCTION__);
+//#define LOG_PACKET Console().SetLastPacket(__FUNCTION__);
+#define LOG_PACKET
 
 enum PacketId
 {
 	Version = 0,
 	Reply = 1,
 	Transfer = 2,
-	RegisterCharacter = 2,
+	CreateCharacter = 2,
 	Login = 3,
 	TransferLogin = 5,
 	ServerList = 5,
 	Character = 6,
 	Crypt = 7,
-	RequestRoomList = 7,
-	RequestChannels = 10,
+	RequestTransfer = 7,
+	RequestServerList = 10,
 	RecvCrypt = 12,
 	MileageBingo = 15,
 	Statistic = 16,
@@ -42,7 +43,7 @@ enum PacketId
 	Option = 76,
 	Favorite = 77,
 	Item = 78,
-	Unk79 = 79,
+	GameGuard = 79,
 	SearchRoom = 80,
 	HostServer = 81,
 	HackShield = 82,
@@ -62,13 +63,14 @@ enum PacketId
 	Gift_Item = 96,
 	_2nd_Password = 97,
 	Request2nd_Password = 98,
+	// Packet_GameMatch & Packet_Match
 	GameMatch = 99,
 	ZBEnhance = 100,
 	CleanSystem = 101,
 	RibbonSystem = 102,
 	// Packet_VoxelGameSave & Packet_VoxelOutUI
 	Voxel = 103,
-	WeaponAuctionEvent = 104,
+	AuctionEvent = 104,
 	Analysis = 105,
 	LiveStream = 106,
 	CoDisassemble = 107,
@@ -76,52 +78,57 @@ enum PacketId
 	Help = 109,
 	PopularInfo = 110,
 	Unk111 = 111,
-	Unk112 = 112,
+	Kick = 112,
 	HonorShop = 113,
 	EpicPieceShop = 114,
 	Addon = 115,
 	QuestBadgeShop = 116,
-	AuctionSystem = 117,
+	ReverseAuctionSystem = 117,
 	SeasonSystem = 118,
 	Unk119 = 119,
 	GuideQuest = 120,
-	// Missing 29 packets
+	Unk122 = 122,
+	UserStartStep = 123,
+	// Missing 26 packets
 	UserStart = 150,
 	GameMatchRoomList = 151,
-	Inventory_DefaultItems = 152,
+	DefaultItems = 152,
 	Lobby = 153,
 	Inventory = 154,
-	Inventory_ClanStock = 155,
-	Inventory_CafeItems = 156,
-	UserInfo = 157,
-	Inventory_FabItems = 158,
+	ClanStock = 155,
+	CafeItems = 156,
+	UserUpdateInfo = 157,
+	FabItems = 158,
 	Event = 159,
-	Inventory_CostumeInven = 160,
+	CostumeInven = 160,
 	ZombieScenarioMaps = 161,
-	Inventory_RotationWeaponInven = 162,
+	RotationWeaponInven = 162,
 	SaleCoupon = 163,
 	Alarm = 164,
-	Inventory_MonthlyWeapon = 165,
-	Inventory_LifeWeaponInven = 166,
-	VIP = 167,
-	Inventory_FreePassWeaponInven = 168,
+	MonthlyWeapon = 165,
+	LifeWeaponInven = 166,
+	VipSystem = 167,
+	FreePassWeaponInven = 168,
 	ServerLog = 169,
 	Unk170 = 170,
 	NxLog = 171,
-	Encyclopedia = 172,
+	Dictionary = 172,
 	TestPacket = 173,
 	ZBSGoldenZB = 174,
 	Friend = 175,
-	Inventory_EventItemInven = 176,
+	EventItemInven = 176,
 	Expedition = 177,
 	ScenarioTX = 178,
 	UserRestrict = 179,
 	League = 180,
-	Inventory_Class = 181,
-	Inventory_Parts = 182,
-	Inventory_Item = 183,
+	ClassInven = 181,
+	PartsInven = 182,
+	ItemInven = 183,
 	SwitchConfig = 184,
-	// missing 71 packets
+	RewardHistory = 186,
+	Steam = 192,
+	Captcha = 193,
+	// missing 62 packets
 };
 
 enum HostPacketType
@@ -185,43 +192,45 @@ enum EMetadataPacketType
 	kPacket_Metadata_PPSystem = 45,
 	kPacket_Metadata_ZBCompetitive = 48,
 	kPacket_Metadata_Unk49 = 49,
+	kPacket_Metadata_ModeEvent = 50,
 	kPacket_Metadata_Hash = 255
 };
 
-enum EServerConfig_MetadataFlag
+enum EServerConfig_MetadataFlag : uint64_t
 {
-	kMetadataFlag_MapList = 1 << 0,
-	kMetadataFlag_ClientTable = 1 << 1,
-	kMetadataFlag_ModeList = 1 << 2,
-	kMetadataFlag_Unk3 = 1 << 3,
-	kMetadataFlag_ItemBox = 1 << 4,
-	kMetadataFlag_WeaponPaint = 1 << 5,
-	kMetadataFlag_Unk8 = 1 << 6,
-	kMetadataFlag_MatchOption = 1 << 7,
-	kMetadataFlag_Unk15 = 1 << 8,
-	kMetadataFlag_WeaponParts = 1 << 9,
-	kMetadataFlag_Unk20 = 1 << 10,
-	kMetadataFlag_Encyclopedia = 1 << 11,
-	kMetadataFlag_GameModeList = 1 << 12,
-	kMetadataFlag_ProgressUnlock = 1 << 13,
-	kMetadataFlag_ReinforceMaxLvl = 1 << 14,
-	kMetadataFlag_ReinforceMaxEXP = 1 << 15,
-	kMetadataFlag_ReinforceItemsExp = 1 << 16,
-	kMetadataFlag_Unk31 = 1 << 17,
-	kMetadataFlag_HonorMoneyShop = 1 << 18,
-	kMetadataFlag_ItemExpireTime = 1 << 19,
-	kMetadataFlag_ScenarioTX_Common = 1 << 20,
-	kMetadataFlag_ScenarioTX_Dedi = 1 << 21,
-	kMetadataFlag_ShopItemList_Dedi = 1 << 22,
-	kMetadataFlag_ZBCompetitive = 1 << 23,
-	kMetadataFlag_Hash = 1 << 24,
-	kMetadataFlag_Unk43 = 1 << 25,
-	kMetadataFlag_Unk49 = 1 << 26,
-	kMetadataFlag_WeaponProp = 1 << 27,
-	kMetadataFlag_PPSystem = 1 << 28,
-	kMetadataFlag_Item = 1 << 29,
-	kMetadataFlag_CodisData = 1 << 30,
-	kMetadataFlag_RandomWeaponList = 1 << 31,
+	kMetadataFlag_MapList = 1LL << 0,
+	kMetadataFlag_ClientTable = 1LL << 1,
+	kMetadataFlag_ModeList = 1LL << 2,
+	kMetadataFlag_Unk3 = 1LL << 3,
+	kMetadataFlag_ItemBox = 1LL << 4,
+	kMetadataFlag_WeaponPaint = 1LL << 5,
+	kMetadataFlag_Unk8 = 1LL << 6,
+	kMetadataFlag_MatchOption = 1LL << 7,
+	kMetadataFlag_Unk15 = 1LL << 8,
+	kMetadataFlag_WeaponParts = 1LL << 9,
+	kMetadataFlag_Unk20 = 1LL << 10,
+	kMetadataFlag_Encyclopedia = 1LL << 11,
+	kMetadataFlag_GameModeList = 1LL << 12,
+	kMetadataFlag_ProgressUnlock = 1LL << 13,
+	kMetadataFlag_ReinforceMaxLvl = 1LL << 14,
+	kMetadataFlag_ReinforceMaxEXP = 1LL << 15,
+	kMetadataFlag_ReinforceItemsExp = 1LL << 16,
+	kMetadataFlag_Unk31 = 1LL << 17,
+	kMetadataFlag_HonorMoneyShop = 1LL << 18,
+	kMetadataFlag_ItemExpireTime = 1LL << 19,
+	kMetadataFlag_ScenarioTX_Common = 1LL << 20,
+	kMetadataFlag_ScenarioTX_Dedi = 1LL << 21,
+	kMetadataFlag_ShopItemList_Dedi = 1LL << 22,
+	kMetadataFlag_ZBCompetitive = 1LL << 23,
+	kMetadataFlag_Unk43 = 1LL << 24,
+	kMetadataFlag_Unk49 = 1LL << 25,
+	kMetadataFlag_WeaponProp = 1LL << 26,
+	kMetadataFlag_Hash = 1LL << 27,
+	kMetadataFlag_PPSystem = 1LL << 28,
+	kMetadataFlag_Item = 1LL << 29,
+	kMetadataFlag_CodisData = 1LL << 30,
+	kMetadataFlag_RandomWeaponList = 1LL << 31,
+	kMetadataFlag_ModeEvent = 1LL << 32,
 };
 
 enum ItemPacketType
@@ -1380,7 +1389,8 @@ enum UserSurveyAnswerResult
 #define	ROOM_HIGHMID_MUTATIONLIMIT		(1<<2)
 #define	ROOM_HIGHMID_UNK78				(1<<3)
 #define	ROOM_HIGHMID_UNK79				(1<<4)
-#define	ROOM_HIGHMID_ALL_SAFE			(ROOM_HIGHMID_FIREBOMB | ROOM_HIGHMID_MUTATIONRESTRICT | ROOM_HIGHMID_MUTATIONLIMIT | ROOM_HIGHMID_UNK78 | ROOM_HIGHMID_UNK79)
+#define	ROOM_HIGHMID_UNK80				(1<<5)
+#define	ROOM_HIGHMID_ALL_SAFE			(ROOM_HIGHMID_FIREBOMB | ROOM_HIGHMID_MUTATIONRESTRICT | ROOM_HIGHMID_MUTATIONLIMIT | ROOM_HIGHMID_UNK78 | ROOM_HIGHMID_UNK79 | ROOM_HIGHMID_UNK79)
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
@@ -1536,3 +1546,14 @@ enum ItemBoxGrades
 #define REGISTER_USERNAME_WRONG -2
 #define REGISTER_PASSWORD_WRONG -3
 #define REGISTER_IP_LIMIT -4
+
+// Dedicated Server
+enum HostServerPacketType
+{
+	AddServer = 0,
+	StopServer = 0,
+	MemoryUsage = 1,
+	TransferServer = 1,
+	Unk2 = 2,
+	Unk3 = 3,
+};

@@ -160,4 +160,5 @@ public:
 	int unk77;
 	int unk78;
 	int unk79;
+	int unk80;
 };

@@ -6,6 +6,7 @@
 #include "imanager.h"
 #include "definitions.h"
 
+class IUser;
 class IExtendedSocket;
 class CUserInventoryItem;
 class CUserFastBuy;
@@ -155,4 +156,7 @@ public:
 	virtual bool IsHWIDBanned(std::vector<unsigned char>& hwid) = 0;
 
 	virtual void ResetQuestEvent(int eventID) = 0;
+
+	virtual void CreateTransaction() = 0;
+	virtual bool CommitTransaction() = 0;
 };

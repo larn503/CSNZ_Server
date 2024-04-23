@@ -3,13 +3,13 @@
 #include "usermanager.h"
 #include "userdatabase.h"
 
-#include "nlohmann/json.hpp"
-
 using namespace std;
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 
 #define EVENT_QUESTS_VERSION 1
+
+CQuestManager g_QuestManager;
 
 CQuestManager::CQuestManager() : CBaseManager("QuestManager")
 {
@@ -18,13 +18,10 @@ CQuestManager::CQuestManager() : CBaseManager("QuestManager")
 CQuestManager::~CQuestManager()
 {
 	printf("~CQuestManager\n");
-	Shutdown();
 }
 
 bool CQuestManager::Init()
 {
-	Shutdown();
-
 #ifndef PUBLIC_RELEASE
 	LoadQuests();
 	LoadEventQuests();
@@ -68,168 +65,151 @@ void CQuestManager::LoadEventQuests()
 
 		if (jEventQuests.is_discarded())
 		{
-			Console().Error("CQuestManager::LoadEventQuests: couldn't load EventQuests.json.\n");
+			Logger().Error("CQuestManager::LoadEventQuests: couldn't load EventQuests.json.\n");
 			return;
 		}
 
 		int version = jEventQuests.value("Version", 0);
 		if (version != EVENT_QUESTS_VERSION)
 		{
-			Console().Error("CQuestManager::LoadEventQuests: %d != EVENT_QUESTS_VERSION(%d)\n", version, EVENT_QUESTS_VERSION);
+			Logger().Error("CQuestManager::LoadEventQuests: %d != EVENT_QUESTS_VERSION(%d)\n", version, EVENT_QUESTS_VERSION);
 			return;
 		}
 
-		for (auto& iQuest : jEventQuests.items())
-		{
-			ordered_json jQuest = iQuest.value();
-			if (!jQuest.is_object())
-				continue;
-
-			if (!jQuest.value("Active", 0))
-				continue;
-
-			CQuestEvent* quest = new CQuestEvent();
-			quest->SetID(stoi(iQuest.key()));
-
-			if (!jQuest.contains("Tasks"))
-				continue;
-
-			ordered_json jTasks = jQuest["Tasks"];
-			for (auto& iTask : jTasks.items())
-			{
-				ordered_json jTask = iTask.value();
-
-				CQuestEventTask* task = new CQuestEventTask(quest, stoi(iTask.key()), jTask.value("Goal", 1));
-				task->SetRewardID(jTask.value("RewardID", 0));
-
-				ordered_json jNotice = jTask["Notice"];
-				task->SetNotice(jNotice.value("Goal", 0), jNotice.value("UserMsg", "%d/%d"));
-
-				if (!jTask.contains("Conditions"))
-					continue;
-
-				ordered_json jConditions = jTask["Conditions"];
-				for (auto& iCondition : jConditions.items())
-				{
-					ordered_json jCondition = iCondition.value();
-					if (!jCondition.is_object())
-						continue;
-
-					vector<int> gameModes;
-					gameModes = jCondition.value("GameModes", gameModes);
-
-					vector<int> maps;
-					maps = jCondition.value("Maps", maps);
-
-					int playerCount = jCondition.value("PlayerCount", 0);
-					bool temp = jCondition.value("Temp", false);
-					int goalPoints = jCondition.value("GoalPoints", 1);
-					int eventType = jCondition.value("EventType", 0);
-
-					int condID = stoi(iCondition.key());
-					if (eventType == QuestTaskEventType::EVENT_TIMEMATCH)
-					{
-						CQuestEventConditionTimeMatch* condition = new CQuestEventConditionTimeMatch(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_MATCHWIN)
-					{
-						CQuestEventConditionWin* condition = new CQuestEventConditionWin(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_KILL)
-					{
-						CQuestEventConditionKill* condition = new CQuestEventConditionKill(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-						condition->SetCondition(jCondition.value("KillerTeam", -1), jCondition.value("VictimKillType", -1), jCondition.value("VictimTeam", -1),
-							jCondition.value("Continuous", 0), jCondition.value("Gun", -1), jCondition.value("GunID", -1), jCondition.value("CheckForGun", false),
-							jCondition.value("Bot", -1));
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_LOGIN)
-					{
-						CQuestEventConditionLogin* condition = new CQuestEventConditionLogin(task, condID, goalPoints);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_LEVELUP)
-					{
-						CQuestEventConditionLevelUp* condition = new CQuestEventConditionLevelUp(task, condID, goalPoints);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_BOMBEXPLODE)
-					{
-						CQuestEventConditionBombExplode* condition = new CQuestEventConditionBombExplode(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_BOMBDEFUSE)
-					{
-						CQuestEventConditionBombDefuse* condition = new CQuestEventConditionBombDefuse(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_HOSTAGEESCAPE)
-					{
-						CQuestEventConditionHostageEscape* condition = new CQuestEventConditionHostageEscape(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_VIPKILL)
-					{
-						CQuestEventConditionVipKill* condition = new CQuestEventConditionVipKill(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_KILLMONSTER)
-					{
-						CQuestEventConditionKillMonster* condition = new CQuestEventConditionKillMonster(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-						condition->SetMonsterType(jCondition.value("MonsterType", 0));
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_KILLMOSQUITO)
-					{
-						CQuestEventConditionKillMosquito* condition = new CQuestEventConditionKillMosquito(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-					else if (eventType == QuestTaskEventType::EVENT_KILLKITE)
-					{
-						CQuestEventConditionKillKite* condition = new CQuestEventConditionKillKite(task, condID, goalPoints, temp, gameModes, maps, playerCount);
-						condition->SetEventType(eventType);
-
-						task->AddCondition(condition);
-					}
-				}
-				quest->AddTask(task);
-			}
-
-			m_EventQuests.push_back(quest);
-		}
+		ParseQuests(jEventQuests);
 	}
 	catch (exception& ex)
 	{
-		Console().Error("CQuestManager::LoadEventQuests: an error occured while parsing EventQuests.json: %s\n", ex.what());
+		Logger().Error("CQuestManager::LoadEventQuests: an error occured while parsing EventQuests.json: %s\n", ex.what());
 	}
 }
 
 void CQuestManager::LoadClanQuests()
 {
+}
+
+void CQuestManager::ParseQuests(ordered_json& jQuests)
+{
+	for (auto& iQuest : jQuests.items())
+	{
+		ordered_json jQuest = iQuest.value();
+		if (!jQuest.is_object())
+			continue;
+
+		if (!jQuest.value("Active", 0))
+			continue;
+
+		CQuestEvent* quest = new CQuestEvent();
+		quest->SetID(stoi(iQuest.key()));
+
+		if (!jQuest.contains("Tasks"))
+			continue;
+
+		ordered_json jTasks = jQuest["Tasks"];
+		ParseTasks(quest, jTasks);
+
+		m_EventQuests.push_back(quest);
+	}
+}
+
+void CQuestManager::ParseTasks(CQuestEvent* quest, ordered_json& jTasks)
+{
+	for (auto& iTask : jTasks.items())
+	{
+		ordered_json jTask = iTask.value();
+
+		CQuestEventTask* task = new CQuestEventTask(quest, stoi(iTask.key()), jTask.value("Goal", 1));
+		task->SetRewardID(jTask.value("RewardID", 0));
+
+		ordered_json jNotice = jTask["Notice"];
+		task->SetNotice(jNotice.value("Goal", 0), jNotice.value("UserMsg", "%d/%d"));
+
+		if (!jTask.contains("Conditions"))
+			continue;
+
+		ordered_json jConditions = jTask["Conditions"];
+		ParseCondititons(task, jConditions);
+	}
+}
+
+void CQuestManager::ParseCondititons(CQuestEventTask* task, ordered_json& jConditions)
+{
+	for (auto& iCondition : jConditions.items())
+	{
+		ordered_json jCondition = iCondition.value();
+		if (!jCondition.is_object())
+			continue;
+
+		vector<int> gameModes;
+		gameModes = jCondition.value("GameModes", gameModes);
+
+		vector<int> maps;
+		maps = jCondition.value("Maps", maps);
+
+		int playerCount = jCondition.value("PlayerCount", 0);
+		bool temp = jCondition.value("Temp", false);
+		int goalPoints = jCondition.value("GoalPoints", 1);
+		int eventType = jCondition.value("EventType", 0);
+		int condID = stoi(iCondition.key());
+
+		// .....
+		if (eventType == QuestTaskEventType::EVENT_TIMEMATCH)
+		{
+			CQuestEventConditionTimeMatch* condition = new CQuestEventConditionTimeMatch(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_MATCHWIN)
+		{
+			CQuestEventConditionWin* condition = new CQuestEventConditionWin(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_KILL)
+		{
+			CQuestEventConditionKill* condition = new CQuestEventConditionKill(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			condition->SetCondition(jCondition.value("KillerTeam", -1), jCondition.value("VictimKillType", -1), jCondition.value("VictimTeam", -1),
+				jCondition.value("Continuous", 0), jCondition.value("Gun", -1), jCondition.value("GunID", -1), jCondition.value("CheckForGun", false),
+				jCondition.value("Bot", -1));
+		}
+		else if (eventType == QuestTaskEventType::EVENT_LOGIN)
+		{
+			CQuestEventConditionLogin* condition = new CQuestEventConditionLogin(task, eventType, condID, goalPoints);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_LEVELUP)
+		{
+			CQuestEventConditionLevelUp* condition = new CQuestEventConditionLevelUp(task, eventType, condID, goalPoints);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_BOMBEXPLODE)
+		{
+			CQuestEventConditionBombExplode* condition = new CQuestEventConditionBombExplode(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_BOMBDEFUSE)
+		{
+			CQuestEventConditionBombDefuse* condition = new CQuestEventConditionBombDefuse(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_HOSTAGEESCAPE)
+		{
+			CQuestEventConditionHostageEscape* condition = new CQuestEventConditionHostageEscape(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_VIPKILL)
+		{
+			CQuestEventConditionVipKill* condition = new CQuestEventConditionVipKill(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_KILLMONSTER)
+		{
+			CQuestEventConditionKillMonster* condition = new CQuestEventConditionKillMonster(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			condition->SetMonsterType(jCondition.value("MonsterType", 0));
+		}
+		else if (eventType == QuestTaskEventType::EVENT_KILLMOSQUITO)
+		{
+			CQuestEventConditionKillMosquito* condition = new CQuestEventConditionKillMosquito(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else if (eventType == QuestTaskEventType::EVENT_KILLKITE)
+		{
+			CQuestEventConditionKillKite* condition = new CQuestEventConditionKillKite(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+		}
+		else
+		{
+			Logger().Warn("CQuestManager::LoadEventQuests: got unknown eventType: %d\n", eventType);
+		}
+	}
 }
 
 vector<CQuest*>& CQuestManager::GetQuests()
@@ -241,7 +221,7 @@ void CQuestManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -258,7 +238,7 @@ void CQuestManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		//OnSetFavouriteRequest(user, msg);
 		break;
 	default:
-		Console().Warn(OBFUSCATE("[User '%s'] Packet_Quest type %d is not implemented\n"), user->GetLogName(), requestID);
+		Logger().Warn(OBFUSCATE("[User '%s'] Packet_Quest type %d is not implemented\n"), user->GetLogName(), requestID);
 		break;
 	};
 }
@@ -267,7 +247,7 @@ void CQuestManager::OnTitlePacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
 
-	IUser* user = g_pUserManager->GetUserBySocket(socket);
+	IUser* user = g_UserManager.GetUserBySocket(socket);
 	if (user == NULL)
 		return;
 
@@ -284,7 +264,7 @@ void CQuestManager::OnTitlePacket(CReceivePacket* msg, IExtendedSocket* socket)
 		OnTitleListRemoveRequest(user, msg);
 		break;
 	default:
-		Console().Warn(OBFUSCATE("[User '%s'] Packet_Title type %d is not implemented\n"), user->GetLogName(), requestID);
+		Logger().Warn(OBFUSCATE("[User '%s'] Packet_Title type %d is not implemented\n"), user->GetLogName(), requestID);
 		break;
 	};
 }
@@ -454,7 +434,7 @@ void CQuestManager::OnQuestTaskFinished(IUser* user, UserQuestTaskProgress& task
 		return;
 
 	UserQuestProgress questProgress = {};
-	if (g_pUserDatabase->GetQuestProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
+	if (g_UserDatabase.GetQuestProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
 		return;
 
 	questProgress.status = UserQuestStatus::QUEST_DONE;
@@ -464,13 +444,13 @@ void CQuestManager::OnQuestTaskFinished(IUser* user, UserQuestTaskProgress& task
 
 void CQuestManager::OnQuestEventTaskFinished(IUser* user, UserQuestTaskProgress& taskProgress, CQuestEventTask* task, CQuestEvent* quest)
 {
-	g_pItemManager->GiveReward(user->GetID(), user, task->GetRewardID());
+	g_ItemManager.GiveReward(user->GetID(), user, task->GetRewardID());
 
 	if (!quest->IsAllTaskFinished(user))
 		return;
 
 	UserQuestProgress questProgress = {};
-	if (g_pUserDatabase->GetQuestEventProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
+	if (g_UserDatabase.GetQuestEventProgress(user->GetID(), quest->GetID(), questProgress) <= 0)
 		return;
 
 	questProgress.status = UserQuestStatus::QUEST_DONE;
@@ -486,12 +466,12 @@ void CQuestManager::OnQuestFinished(IUser* user, CQuest* quest, UserQuestProgres
 
 		user->UpdateAchievementList(titleID);
 
-		g_pPacketManager->SendTitle(user->GetExtendedSocket(), titleID);
+		g_PacketManager.SendTitle(user->GetExtendedSocket(), titleID);
 	}
 	else if (quest->GetType() == QuestType::QUEST_DAILY)
 	{
 		UserQuestStat stat = {};
-		g_pUserDatabase->GetQuestStat(user->GetID(), 0x8 | 0x20, stat);
+		g_UserDatabase.GetQuestStat(user->GetID(), 0x8 | 0x20, stat);
 		stat.dailyMissionsCompletedToday++;
 
 		// move it to new func?
@@ -505,14 +485,14 @@ void CQuestManager::OnQuestFinished(IUser* user, CQuest* quest, UserQuestProgres
 		if (stat.dailyMissionsCompletedToday == dailyQuestsCount)
 			stat.dailyMissionsCleared++;
 
-		g_pUserDatabase->UpdateQuestStat(user->GetID(), 0x8 | 0x20, stat);
-		g_pPacketManager->SendQuestUpdateQuestStat(user->GetExtendedSocket(), 0x8 | 0x20, 0, stat);
+		g_UserDatabase.UpdateQuestStat(user->GetID(), 0x8 | 0x20, stat);
+		g_PacketManager.SendQuestUpdateQuestStat(user->GetExtendedSocket(), 0x8 | 0x20, 0, stat);
 	}
 
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
 
-	Console().Log(OBFUSCATE("[User '%s'] completed quest %d, %s, room id: %d\n"), user->GetLogName(), quest->GetID(), quest->GetName().c_str(), user->GetCurrentRoom() ? user->GetCurrentRoom()->GetID() : 0);
+	Logger().Info(OBFUSCATE("[User '%s'] completed quest %d, %s, room id: %d\n"), user->GetLogName(), quest->GetID(), quest->GetName().c_str(), user->GetCurrentRoom() ? user->GetCurrentRoom()->GetID() : 0);
 }
 
 void CQuestManager::OnReceiveReward(IUser* user, int rewardID, int questID)
@@ -531,16 +511,16 @@ void CQuestManager::OnReceiveReward(IUser* user, int rewardID, int questID)
 
 	QuestReward_s reward = GetQuestReward(quest, rewardID);
 	if (reward.rewardID)
-		g_pItemManager->GiveReward(user->GetID(), user, reward.rewardID);
+		g_ItemManager.GiveReward(user->GetID(), user, reward.rewardID);
 
 	questProgress.status = UserQuestStatus::QUEST_DONE_AND_REWARD_RECEIVED;
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
 
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 
 	CUserCharacter character = user->GetCharacter(UFLAG_ACHIEVEMENT);
 	UserQuestStat stat = {};
-	g_pPacketManager->SendQuestUpdateQuestStat(user->GetExtendedSocket(), 1, character.honorPoints, stat); // update honor stat
+	g_PacketManager.SendQuestUpdateQuestStat(user->GetExtendedSocket(), 1, character.honorPoints, stat); // update honor stat
 }
 
 void CQuestManager::OnSpecialMissionRequest(IUser* user, CReceivePacket* msg)
@@ -557,11 +537,11 @@ void CQuestManager::OnSpecialMissionRequest(IUser* user, CReceivePacket* msg)
 		return;
 
 	questProgress.status = UserQuestStatus::QUEST_IN_PROGRESS;
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
 
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 
-	Console().Log(OBFUSCATE("[User '%s'] CQuestManager::OnSpecialMissionRequest: %d\n"), user->GetLogName(), questID);
+	Logger().Info(OBFUSCATE("[User '%s'] CQuestManager::OnSpecialMissionRequest: %d\n"), user->GetLogName(), questID);
 }
 
 void CQuestManager::OnSetFavouriteRequest(IUser* user, CReceivePacket* msg)
@@ -576,8 +556,8 @@ void CQuestManager::OnSetFavouriteRequest(IUser* user, CReceivePacket* msg)
 	UserQuestProgress questProgress = GetUserQuestProgress(quest, user->GetID());
 	questProgress.favourite = favourite;
 
-	g_pUserDatabase->UpdateQuestProgress(user->GetID(), questProgress);
-	g_pPacketManager->SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
+	g_UserDatabase.UpdateQuestProgress(user->GetID(), questProgress);
+	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 }
 
 void CQuestManager::OnTitleSetPrefixRequest(IUser* user, CReceivePacket* msg)
@@ -683,7 +663,7 @@ UserQuestProgress CQuestManager::GetUserQuestProgress(CQuest* quest, int userID)
 	int questID = quest->GetID();
 
 	UserQuestProgress progress = {};
-	if (g_pUserDatabase->GetQuestProgress(userID, questID, progress))
+	if (g_UserDatabase.GetQuestProgress(userID, questID, progress))
 	{
 		return progress;
 	}
@@ -700,7 +680,7 @@ UserQuestTaskProgress CQuestManager::GetUserQuestTaskProgress(CQuest* quest, int
 	int questID = quest->GetID();
 
 	UserQuestTaskProgress questTaskProgress = {};
-	if (g_pUserDatabase->GetQuestTaskProgress(userID, questID, taskID, questTaskProgress))
+	if (g_UserDatabase.GetQuestTaskProgress(userID, questID, taskID, questTaskProgress))
 	{
 		return questTaskProgress;
 	}

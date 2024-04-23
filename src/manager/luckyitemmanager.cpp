@@ -15,6 +15,8 @@ using ordered_json = nlohmann::ordered_json;
 
 #define ITEM_BOX_VERSION 1
 
+CLuckyItemManager g_LuckyItemManager;
+
 CLuckyItemManager::CLuckyItemManager() : CBaseManager("LuckyItemManager")
 {
 }
@@ -22,7 +24,6 @@ CLuckyItemManager::CLuckyItemManager() : CBaseManager("LuckyItemManager")
 CLuckyItemManager::~CLuckyItemManager()
 {
 	printf("~CLuckyItemManager\n");
-	Shutdown();
 }
 
 bool CLuckyItemManager::Init()
@@ -50,14 +51,14 @@ void CLuckyItemManager::LoadLuckyItems()
 
 		if (jItemBox.is_discarded())
 		{
-			Console().Error("CLuckyItemManager::LoadLuckyItems: couldn't load ItemBox.json.\n");
+			Logger().Error("CLuckyItemManager::LoadLuckyItems: couldn't load ItemBox.json.\n");
 			return;
 		}
 
 		int version = jItemBox.value("Version", 0);
 		if (version != ITEM_BOX_VERSION)
 		{
-			Console().Error("CLuckyItemManager::LoadLuckyItems: %d != ITEM_BOX_VERSION(%d)\n", version, ITEM_BOX_VERSION);
+			Logger().Error("CLuckyItemManager::LoadLuckyItems: %d != ITEM_BOX_VERSION(%d)\n", version, ITEM_BOX_VERSION);
 			return;
 		}
 
@@ -98,7 +99,7 @@ void CLuckyItemManager::LoadLuckyItems()
 				itemBox->totalRate += rate.rate;
 				if (itemBox->totalRate > 100.0f)
 				{
-					Console().Warn("CLuckyItemManager::LoadLuckyItems: total rate for %d is more than 100\n", itemBox->itemId);
+					Logger().Warn("CLuckyItemManager::LoadLuckyItems: total rate for %d is more than 100\n", itemBox->itemId);
 					break;
 				}
 
@@ -113,7 +114,7 @@ void CLuckyItemManager::LoadLuckyItems()
 	}
 	catch (exception& ex)
 	{
-		Console().Error("CLuckyItemManager::LoadLuckyItems: an error occured while parsing ItemBox.json: %s\n", ex.what());
+		Logger().Error("CLuckyItemManager::LoadLuckyItems: an error occured while parsing ItemBox.json: %s\n", ex.what());
 	}
 
 	// normilize all values
@@ -288,8 +289,8 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 	ItemBox* itemBox = GetItemBoxByItemId(itemBoxID);
 	if (!itemBox || itemBox->itemId == 0)
 	{
-		Console().Warn("User '%d, %s' tried to open item box with unknown ID: %d\n", user->GetID(), user->GetUsername().c_str(), itemBoxID);
-		g_pPacketManager->SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
+		Logger().Warn("User '%d, %s' tried to open item box with unknown ID: %d\n", user->GetID(), user->GetUsername().c_str(), itemBoxID);
+		g_PacketManager.SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
 		return 0;
 	}
 
@@ -312,9 +313,9 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 
 	for (openedDecoders = 0; openedDecoders < itemBoxOpenCount; openedDecoders++)
 	{
-		if (g_pUserDatabase->IsInventoryFull(user->GetID()))
+		if (g_UserDatabase.IsInventoryFull(user->GetID()))
 		{
-			g_pPacketManager->SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_INVENTORY_FULL);
+			g_PacketManager.SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_INVENTORY_FULL);
 			break;
 		}
 
@@ -341,7 +342,7 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 		// looks like itembox config is wrong
 		if (randRateIdx == -1)
 		{
-			g_pPacketManager->SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
+			g_PacketManager.SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
 			return 0;
 		}
 
@@ -353,10 +354,10 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 		int itemID = rate.items[randomItem()];
 		int duration = rate.duration[randomDuration()];
 
-		int status = g_pItemManager->AddItem(user->GetID(), user, itemID, 1, duration);
+		int status = g_ItemManager.AddItem(user->GetID(), user, itemID, 1, duration);
 		if (status < 0)
 		{
-			g_pPacketManager->SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
+			g_PacketManager.SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
 			break;
 		}
 
@@ -370,15 +371,15 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 		if (item.grade == ItemBoxGrades::PREMIUM || item.grade == ItemBoxGrades::ADVANCED)
 		{
 			// TODO: make method in manager for this
-			for (auto u : g_pUserManager->GetUsers())
+			for (auto u : g_UserManager.GetUsers())
 			{
-				g_pPacketManager->SendUMsgSystemReply(u->GetExtendedSocket(), 2, item.grade == ItemBoxGrades::PREMIUM ? "LOTTERY_WIN_PREMIUM" : "LOTTERY_WIN_PREMIUM_NUM", vector<string>{ character.gameName, to_string(item.itemId) });
+				g_PacketManager.SendUMsgSystemReply(u->GetExtendedSocket(), 2, item.grade == ItemBoxGrades::PREMIUM ? "LOTTERY_WIN_PREMIUM" : "LOTTERY_WIN_PREMIUM_NUM", vector<string>{ character.gameName, to_string(item.itemId) });
 			}
 		}
 	}
 
 	if (result.items.size())
-		g_pPacketManager->SendItemOpenDecoderResult(user->GetExtendedSocket(), result);
+		g_PacketManager.SendItemOpenDecoderResult(user->GetExtendedSocket(), result);
 
 	return openedDecoders;
 }

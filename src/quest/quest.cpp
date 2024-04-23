@@ -15,7 +15,7 @@ CQuestBaseCondition::CQuestBaseCondition(CQuestTask* task, int id)
 bool CQuestBaseCondition::Event_Internal(IUser* user)
 {
 	UserQuestTaskProgress progress = {};
-	if (g_pUserDatabase->GetQuestTaskProgress(user->GetID(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), progress) <= 0)
+	if (g_UserDatabase.GetQuestTaskProgress(user->GetID(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), progress) <= 0)
 		return false;
 
 	// check if task is done
@@ -51,7 +51,7 @@ CQuestTask::CQuestTask(CQuest* quest, int id, string name, int goal)
 void CQuestTask::IncrementCount(IUser* user, int count, bool setForce)
 {
 	UserQuestTaskProgress progress = {};
-	if (g_pUserDatabase->GetQuestTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
+	if (g_UserDatabase.GetQuestTaskProgress(user->GetID(), m_pQuest->GetID(), m_nID, progress) <= 0)
 		return;
 
 	if (count < 0)
@@ -65,12 +65,12 @@ void CQuestTask::IncrementCount(IUser* user, int count, bool setForce)
 		progress.unitsDone = m_nGoal;
 	}
 
-	if (g_pUserDatabase->UpdateQuestTaskProgress(user->GetID(), m_pQuest->GetID(), progress) > 0)
+	if (g_UserDatabase.UpdateQuestTaskProgress(user->GetID(), m_pQuest->GetID(), progress) > 0)
 	{
 #if 0
-		Console().Log(LOG_USER, CON_LOG, "[User '%s'] CQuestTask::IncrementCount: quest name: %s, done: %d, goal: %d\n", user->GetLogName(), m_pQuest->GetName().c_str(), progress.unitsDone, m_nGoal);
+		Logger().Info(LOG_USER, CON_LOG, "[User '%s'] CQuestTask::IncrementCount: quest name: %s, done: %d, goal: %d\n", user->GetLogName(), m_pQuest->GetName().c_str(), progress.unitsDone, m_nGoal);
 #endif
-		g_pPacketManager->SendQuestUpdateTaskInfo(user->GetExtendedSocket(), 0xFF, m_pQuest->GetID(), this, progress);
+		g_PacketManager.SendQuestUpdateTaskInfo(user->GetExtendedSocket(), 0xFF, m_pQuest->GetID(), this, progress);
 		if (progress.unitsDone >= m_nGoal)
 		{
 			Done(user, progress);
@@ -227,10 +227,10 @@ void CQuestTask::OnUserLogin(IUser* user)
 
 void CQuestTask::ApplyProgress(IUser* user, UserQuestTaskProgress progress)
 {
-	if (g_pUserDatabase->UpdateQuestTaskProgress(user->GetID(), m_pQuest->GetID(), progress) <= 0)
+	if (g_UserDatabase.UpdateQuestTaskProgress(user->GetID(), m_pQuest->GetID(), progress) <= 0)
 		return;
 
-	g_pPacketManager->SendQuestUpdateTaskInfo(user->GetExtendedSocket(), 0xFF, m_pQuest->GetID(), this, progress);
+	g_PacketManager.SendQuestUpdateTaskInfo(user->GetExtendedSocket(), 0xFF, m_pQuest->GetID(), this, progress);
 }
 
 string CQuestTask::GetName()
@@ -255,7 +255,7 @@ CQuest* CQuestTask::GetQuest()
 
 bool CQuestTask::IsFinished(IUser* user)
 {
-	if (!g_pUserDatabase->IsQuestTaskFinished(user->GetID(), m_pQuest->GetID(), m_nID))
+	if (!g_UserDatabase.IsQuestTaskFinished(user->GetID(), m_pQuest->GetID(), m_nID))
 		return false;
 
 	return true;
@@ -454,7 +454,7 @@ void CQuest::OnMatchEndEvent(CGameMatchUserStat* userStat, CGameMatch* gameMatch
 
 void CQuest::OnTaskDone(IUser* user, UserQuestTaskProgress& taskProgress, CQuestTask* doneTask)
 {
-	g_pQuestManager->OnQuestTaskFinished(user, taskProgress, doneTask, this);
+	g_QuestManager.OnQuestTaskFinished(user, taskProgress, doneTask, this);
 }
 
 bool CQuest::IsAllTaskFinished(IUser* user)
