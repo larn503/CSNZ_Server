@@ -199,40 +199,56 @@ void CServerInstance::OnTCPError(int errorCode)
 
 void CServerInstance::OnUDPMessage(Buffer& buf, unsigned short port)
 {
-	if (buf.getBuffer().size() == 14)
+	// 7, 14 is well known
+	// 14 = type 0 (Punch)
+	// 7 = type 1 (HeartBeat)
+	if (buf.getBuffer().size() < 7)
 	{
-		char signature = buf.readUInt8();
-		if (signature != UDP_HOLEPUNCH_PACKET_SIGNATURE_1)
-		{
-			Logger().Info(OBFUSCATE("CPacketIn_UDP::Parse: signature error\n"));
-			return;
-		}
+		Logger().Error("[CServerInstance::OnUDPMessage] invalid packet???\n");
+		return;
+	}
 
-		int userID = buf.readUInt32_LE();
-		int portID = buf.readUInt16_LE();
-		long longAddr = buf.readUInt32_BE();
-		string localIpAddress = ip_to_string(longAddr);
-		short localPort = buf.readUInt16_LE();
+	char signature = buf.readUInt8();
+	if (signature != UDP_HOLEPUNCH_PACKET_SIGNATURE_1)
+	{
+		Logger().Info(OBFUSCATE("[CServerInstance::OnUDPMessage] signature error\n"));
+		return;
+	}
 
-		IUser* user = g_UserManager.GetUserById(userID);
-		if (!user)
-		{
-			return;
-		}
+	int userID = buf.readUInt32_LE();
+	int type = buf.readUInt8();
 
-		int result = user->UpdateHolepunch(portID, localPort, port);
-		if (result == -1)
+	IUser* user = g_UserManager.GetUserById(userID);
+	if (!user)
+	{
+		Logger().Info(OBFUSCATE("[CServerInstance::OnUDPMessage] User '%d' Sent UDP Packet but not inside g_UserManager\n"), userID);
+		return;
+	}
+
+	if (type == 0) {
+		int portID = buf.readUInt8();
+		int localAddr = ~buf.readUInt32_BE(); // TODO: Fix this...
+		string localIpAddress = ip_to_string(localAddr);
+		int localPort = buf.readUInt16_LE();
+		int tries = buf.readUInt8();
+
+		Logger().Info("OnUDPMessage(0) - userID: %d, portID: %d, localAddr: %d (%s), localPort: %d, tries: %d\n", userID, portID, localAddr, localIpAddress.c_str(), localPort, tries);
+
+		if (user->UpdateHolepunch(portID, localIpAddress, localPort, port) == -1)
 		{
-			Logger().Warn("Unknown hole punch port\n");
+			Logger().Warn("UpdateHolepunch Failed: %d, %d, %d\n", portID, localPort, port);
 		}
 
 		Buffer replyBuffer;
 		replyBuffer.writeUInt8('W');
 		replyBuffer.writeUInt8(0);
 		replyBuffer.writeUInt8(1);
-
-		// send reply
 		m_UDPServer.SendTo(replyBuffer);
+	}
+	else if (type == 1) {
+		int tries = buf.readUInt8();
+
+		Logger().Info("OnUDPMessage(1) - userID: %d, tries: %d\n", userID, tries);
 	}
 }
 
