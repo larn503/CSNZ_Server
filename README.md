@@ -9,7 +9,13 @@ You can help the project by solving issues, detecting/fixing bugs, and various p
 # Building
 Currently only Windows and Linux are supported, other platforms not tested.
 
-Clone a repository: `git clone https://github.com/JusicP/CSNZ_Server --recursive --depth 1`
+Clone a repository:
+```
+git clone https://github.com/JusicP/CSNZ_Server
+git submodule init
+git submodule update --depth 1
+```
+
 ### Windows
 * [Visual Studio 2019 or newer](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community)
 * [CMake](https://www.cmake.org/download/)
