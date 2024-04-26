@@ -1,12 +1,15 @@
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
+#define poll WSAPoll
 #else
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <poll.h>
 
 #define WSAEWOULDBLOCK		EWOULDBLOCK
 #define WSAECONNREFUSED     ECONNREFUSED

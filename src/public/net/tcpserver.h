@@ -44,7 +44,5 @@ private:
 	IServerListenerTCP* m_pListener;
 	CCriticalSection* m_pCriticalSection;
 
-	// temp
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastExecuteTime;
 	std::vector<WSAPOLLFD> m_fds;
 };

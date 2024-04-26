@@ -4,7 +4,7 @@
 
 #include "common/net/netdefs.h"
 #include "common/utils.h"
-#include "common/console.h"
+#include "common/logger.h"
 
 using namespace std;
 
@@ -25,7 +25,7 @@ CTCPServer::CTCPServer() : m_ListenThread(ListenThread, this)
 	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (result != 0)
 	{
-		Console().FatalError("WSAStartup() failed with error: %d\n%s\n", m_nResult, WSAGetLastErrorString());
+		Logger().Fatal("WSAStartup() failed with error: %d\n%s\n", m_nResult, WSAGetLastErrorString());
 	}
 #endif
 }
@@ -61,7 +61,7 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_nResult = getaddrinfo(NULL, port.c_str(), &hints, &result);
 	if (m_nResult != 0)
 	{
-		Console().FatalError("getaddrinfo() failed with error: %d\n%s\n", m_nResult, WSAGetLastErrorString());
+		Logger().Fatal("getaddrinfo() failed with error: %d\n%s\n", m_nResult, WSAGetLastErrorString());
 		return false;
 	}
 
@@ -69,7 +69,7 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_Socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (m_Socket == INVALID_SOCKET)
 	{
-		Console().FatalError("socket() failed with error: %ld\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Logger().Fatal("socket() failed with error: %ld\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
 		return false;
 	}
@@ -79,7 +79,7 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_nResult = ioctlsocket(m_Socket, FIONBIO, &iMode);
 	if (m_nResult == SOCKET_ERROR)
 	{
-		Console().FatalError("ioctlsocket() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Logger().Fatal("ioctlsocket() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		closesocket(m_Socket);
 		return false;
 	}
@@ -88,7 +88,7 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_nResult = ::bind(m_Socket, result->ai_addr, (int)result->ai_addrlen);
 	if (m_nResult == SOCKET_ERROR)
 	{
-		Console().FatalError("bind failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Logger().Fatal("bind failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		freeaddrinfo(result);
 		closesocket(m_Socket);
 		return false;
@@ -100,7 +100,7 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_nResult = listen(m_Socket, SOMAXCONN);
 	if (m_nResult == SOCKET_ERROR)
 	{
-		Console().FatalError("listen() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Logger().Fatal("listen() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		closesocket(m_Socket);
 		return false;
 	}
@@ -108,14 +108,15 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_nResult = setsockopt(m_Socket, SOL_SOCKET, SO_SNDBUF, (char*)&tcpSendBufferSize, sizeof(tcpSendBufferSize));
 	if (m_nResult == SOCKET_ERROR)
 	{
-		Console().FatalError("setsockopt failed with error %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Logger().Fatal("setsockopt failed with error %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		closesocket(m_Socket);
 		return false;
 	}
 
-	WSAPOLLFD fd{};
+	WSAPOLLFD fd;
 	fd.fd = m_Socket;
 	fd.events = POLLRDNORM;
+	fd.revents = 0;
 	m_fds.push_back(fd);
 
 	m_bIsRunning = true;
@@ -151,20 +152,18 @@ void CTCPServer::Stop()
  * Listen and wait for incoming data
  */
 void CTCPServer::Listen()
-{
-	printf("[CTCPServer::Listen] %.4fms | m_fds.size(): %d\n", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - m_lastExecuteTime), m_fds.size());
-	m_lastExecuteTime = std::chrono::high_resolution_clock::now();
-
-	int result = WSAPoll(m_fds.data(), m_fds.size(), 1000);
+{	
+	int result = poll(m_fds.data(), m_fds.size(), 1000);
 	if (result == SOCKET_ERROR)
 	{
-		Console().Error("WSAPoll() failed with error: %d\n", GetNetworkError());
+		Logger().Error("poll() failed with error: %d\n", GetNetworkError());
 
 		if (m_pListener)
 			m_pListener->OnTCPError(0);
 
 		return;
 	}
+
 	// nothing happens
 	if (!result)
 		return;
@@ -172,30 +171,35 @@ void CTCPServer::Listen()
 	if (m_pCriticalSection)
 		m_pCriticalSection->Enter();
 
-	for (auto it = m_fds.begin(); it != m_fds.end(); it++) {
-		if (it->revents & POLLRDNORM) {
-			if (it->fd == m_Socket) {
+	for (auto it = m_fds.begin(); it != m_fds.end(); it++)
+	{
+		if (it->revents & POLLRDNORM)
+		{
+			if (it->fd == m_Socket)
+			{
 				IExtendedSocket* socket = Accept(m_nNextClientIndex);
 				if (!socket)
 					return;
 
-				Console().Log("Client (%d, %s) has been connected to the server\n", m_nNextClientIndex, socket->GetIP().c_str());
+				Logger().Info("Client (%d, %s) has been connected to the server\n", m_nNextClientIndex, socket->GetIP().c_str());
 
 				if (m_pListener)
 					m_pListener->OnTCPConnectionCreated(socket);
 
 				m_nNextClientIndex++;
 
-				WSAPOLLFD fd{};
+				WSAPOLLFD fd;
 				fd.fd = socket->GetSocket();
 				fd.events = POLLRDNORM;
+				fd.revents = 0;
 				m_fds.push_back(fd);
 
 				// prevent crash
 				it = m_fds.begin();
 			}
 			// read from client
-			else {
+			else
+			{
 				IExtendedSocket* socket = GetExSocketBySocket(it->fd);
 				if (!socket)
 					return;
@@ -205,12 +209,14 @@ void CTCPServer::Listen()
 				if (readResult == 0)
 				{
 					it->revents |= POLLHUP;
+
 					// connection closed
 					DisconnectClient(socket);
 				}
 				else if (readResult == SOCKET_ERROR)
 				{
 					it->revents |= POLLERR;
+
 					// error, close connection
 					DisconnectClient(socket);
 
@@ -244,8 +250,10 @@ void CTCPServer::Listen()
 		}
 
 		// since disconnect called, I just log double confirm issues
-		if (it->revents & (POLLERR | POLLHUP)) {
-			if (it->fd != m_Socket) {
+		if (it->revents & (POLLERR | POLLHUP))
+		{
+			if (it->fd != m_Socket)
+			{
 				m_fds.erase(it);
 				it = m_fds.begin();
 				continue;
@@ -253,12 +261,14 @@ void CTCPServer::Listen()
 		}
 	}
 
-	for (auto& socket : m_Clients) {
-		if (socket->GetPacketsToSend().size()) {
+	for (auto& socket : m_Clients)
+	{
+		if (socket->GetPacketsToSend().size())
+		{
 			CSendPacket* msg = socket->GetPacketsToSend().at(0);
 			if (socket->Send(msg, true) <= 0)
 			{
-				Console().Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", GetNetworkError(), socket->GetPacketsToSend().size());
+				Logger().Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", GetNetworkError(), socket->GetPacketsToSend().size());
 				DisconnectClient(socket);
 			}
 			else
@@ -285,7 +295,7 @@ IExtendedSocket* CTCPServer::Accept(unsigned int id)
 	SOCKET clientSocket = accept(m_Socket, (sockaddr*)&addr, &addrlen);
 	if (clientSocket == INVALID_SOCKET)
 	{
-		Console().FatalError("accept() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
+		Logger().Fatal("accept() failed with error: %d\n%s\n", GetNetworkError(), WSAGetLastErrorString());
 		return NULL;
 	}
 
@@ -336,7 +346,7 @@ void CTCPServer::DisconnectClient(IExtendedSocket* socket)
 	if (m_pListener)
 		m_pListener->OnTCPConnectionClosed(socket);
 
-	Console().Log("Client (%d, %s) has been disconnected from the server\n", socket->GetID(), socket->GetIP().c_str());
+	Logger().Info("Client (%d, %s) has been disconnected from the server\n", socket->GetID(), socket->GetIP().c_str());
 
 	delete socket;
 	m_Clients.erase(remove(m_Clients.begin(), m_Clients.end(), socket), m_Clients.end());
