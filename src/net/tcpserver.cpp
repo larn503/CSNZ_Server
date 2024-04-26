@@ -194,7 +194,7 @@ void CTCPServer::Listen()
 				fd.revents = 0;
 				m_fds.push_back(fd);
 
-				// prevent crash
+				// start cycle from the beggining after pushing to vector, probably not the best solution
 				it = m_fds.begin();
 			}
 			// read from client
@@ -250,18 +250,19 @@ void CTCPServer::Listen()
 		}
 
 		// since disconnect called, I just log double confirm issues
-		if (it->revents & (POLLERR | POLLHUP))
+		if (it->revents & (POLLERR | POLLHUP) && it->fd != m_Socket)
 		{
-			if (it->fd != m_Socket)
-			{
-				m_fds.erase(it);
-				it = m_fds.begin();
-				continue;
-			}
+			IExtendedSocket* socket = GetExSocketBySocket(it->fd);
+			if (socket)
+				DisconnectClient(socket);
+
+			m_fds.erase(it);
+			it = m_fds.begin(); // not the best solution
+			continue;
 		}
 	}
 
-	for (auto& socket : m_Clients)
+	for (auto socket : m_Clients)
 	{
 		if (socket->GetPacketsToSend().size())
 		{
@@ -337,7 +338,7 @@ IExtendedSocket* CTCPServer::GetExSocketBySocket(SOCKET socket)
 }
 
 /**
- * Disconnects client by extended socket object
+ * Disconnects client by extended socket object and deletes it
  * @param socket
  */
 void CTCPServer::DisconnectClient(IExtendedSocket* socket)
