@@ -25,12 +25,8 @@ public:
 
 	virtual void SendUMsgNoticeMsgBoxToUuid(IExtendedSocket* socket, const std::string& text) = 0;
 	virtual void SendUMsgNoticeMessageInChat(IExtendedSocket* socket, const std::string& text) = 0;
-	virtual void SendUMsgChatMessage(IExtendedSocket* socket, int type, const std::string& gameName, const std::string& text, bool from = false) = 0;
-	virtual void SendUMsgWhisperMessage(IExtendedSocket* socket, const std::string& msg, const std::string& destName, IUser* user, int type) = 0; // use SendUMsgChatMessage
-	virtual void SendUMsgRoomMessage(IExtendedSocket* socket, const std::string& senderName, const std::string& text) = 0; // use SendUMsgChatMessage
-	virtual void SendUMsgRoomTeamMessage(IExtendedSocket* socket, const std::string& senderName, const std::string& text) = 0; // use SendUMsgChatMessage
 	virtual void SendUMsgSystemReply(IExtendedSocket* socket, int type, const std::string& msg, const std::vector<std::string>& additionalText = {}) = 0;
-	virtual void SendUMsgLobbyMessage(IExtendedSocket* socket, const std::string& senderName, const std::string& text) = 0; // use SendUMsgChatMessage
+	virtual void SendUMsgUserMessage(IExtendedSocket* socket, int type, const std::string& senderName, const std::string& text, int whisperType = 0) = 0;
 	virtual void SendUMsgNotice(IExtendedSocket* socket, const Notice_s& notice, bool unk = 1) = 0;
 	virtual void SendUMsgExpiryNotice(IExtendedSocket* socket, const std::vector<int>& expiryItems) = 0;
 	virtual void SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, std::string title = "", std::string description = "", bool inGame = false, bool scen = false) = 0;
@@ -89,10 +85,12 @@ public:
 	virtual void SendMetadataPPSystem(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataCodisData(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataItem(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataModeEvent(IExtendedSocket* socket) = 0;
 
 	virtual void SendGameMatchInfo(IExtendedSocket* socket) = 0;
 	virtual void SendGameMatchUnk(IExtendedSocket* socket) = 0;
 	virtual void SendGameMatchUnk9(IExtendedSocket* socket) = 0;
+	virtual void SendGameMatchFailMessage(IExtendedSocket* socket, int type) = 0;
 
 	virtual void SendReply(IExtendedSocket* socket, int type) = 0;
 
@@ -147,7 +145,7 @@ public:
 	virtual void SendHostUserInventory(IExtendedSocket* socket, int userId, const std::vector<CUserInventoryItem>& items) = 0;
 	virtual void SendHostGameStart(IExtendedSocket* socket, int userId) = 0;
 	virtual void SendHostZBAddon(IExtendedSocket* socket, int userID, const std::vector<int>& addons) = 0;
-	virtual void SendHostJoin(IExtendedSocket* socket, int hostID) = 0;
+	virtual void SendHostJoin(IExtendedSocket* socket, IUser* host) = 0;
 	virtual void SendHostFlyerFlock(IExtendedSocket* socket, int type) = 0;
 	virtual void SendHostAdBalloon(IExtendedSocket* socket) = 0;
 	virtual void SendHostRestart(IExtendedSocket* socket, int newHostUserID, bool host, CGameMatch* match) = 0;
@@ -190,6 +188,7 @@ public:
 	virtual void SendUDPHostData(IExtendedSocket* socket, bool host, int userID, const std::string& ipAddress, int port) = 0;
 
 	virtual void SendHostServerStop(IExtendedSocket* socket) = 0;
+	virtual void SendHostServerTransfer(IExtendedSocket* socket, const std::string& ipAddress, int port) = 0;
 
 	virtual void SendClanList(IExtendedSocket* socket, const std::vector<ClanList_s>& clans, int pageID, int pageMax) = 0;
 	virtual void SendClanInfo(IExtendedSocket* socket, const Clan_s& clan) = 0;
@@ -231,4 +230,8 @@ public:
 	virtual void SendLeagueGaugePacket(IExtendedSocket* socket, int gameModeId) = 0;
 
 	virtual void SendCrypt(IExtendedSocket* socket, int type, unsigned char* key, unsigned char* iv) = 0;
+
+	virtual void SendUpdateInfo(IExtendedSocket* socket) = 0;
+
+	virtual void SendPacketFromFile(IExtendedSocket* socket, const std::string& filename) = 0;
 };

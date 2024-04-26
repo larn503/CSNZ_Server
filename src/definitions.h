@@ -87,6 +87,7 @@ enum PacketId
 	SeasonSystem = 118,
 	Unk119 = 119,
 	GuideQuest = 120,
+	Unk121 = 121,
 	Unk122 = 122,
 	UserStartStep = 123,
 	// Missing 26 packets
@@ -153,6 +154,7 @@ enum HostPacketType
 	OnUserWeapon = 13, // Or OnUpdateWeapon? not very sure what to name :D
 	OnUpdateClass = 14,
 	OnUserSpawn = 16, // Spawn Location
+	OnChangeMap = 20,
 	OnRoundStart = 24,
 	UseScenItem = 100,
 	SetInventory = 101,
@@ -263,11 +265,17 @@ enum UMsgPacketType
 	RoomUserMessage = 2,
 	ClanUserMessage = 3,
 	RoomTeamUserMessage = 4,
+	PartyUserMessage = 5,
+	ServerYellUserMessage = 6,
 	ServerNoticeMessageMsgBox = 10,
 	ServerNoticeMessageInChat = 11,
 	SystemReply_Red = 20,
 	SystemReply_Green = 21,
 	SystemReply_MsgBox = 30,
+	GMNoticeUserMessage = 40,
+	GMNoticeUserMessage2 = 41,
+	ServerDisconnectMessage = 50,
+	ServerDisconnectMessage2 = 51,
 	RewardNoticeMsgLocalized = 60,
 	RewardNoticeMsg = 61,
 	ExpiredItem = 62,
@@ -1196,8 +1204,6 @@ struct ClanUserJoinRequest
 #define	CFLAG_MAXMEMBERCOUNT				(1<<16)
 #define CFLAG_CHRONICLE				(1<<17)
 
-#define BANLIST_MAX_SIZE 200
-
 enum BanPacketType
 {
 	BanList = 0,
@@ -1207,7 +1213,8 @@ enum BanPacketType
 	BanRemoveNicknameReply = 2,
 	RequestBanSettings = 2,
 	BanSettingsReply = 3,
-	BanListMaxSize = 4,
+	RequestBanListMaxSize = 4,
+	BanListMaxSizeReply = 4,
 };
 
 struct UserBan
@@ -1264,12 +1271,20 @@ enum InRoomType
 
 enum UMsgReceiveType
 {
-	LobbyWhisperChat = 0,
+	WhisperChat = 0,
 	LobbyChat = 1,
 	RoomChat = 2,
 	ClanChat = 3,
 	RoomTeamChat = 4,
+	PartyChat = 5,
+	ServerYellChat = 6,
 	RewardSelect = 67,
+};
+
+enum UMsgWhisperType
+{
+	To = 0,
+	From = 1,
 };
 
 /* SURVEY */
@@ -1329,7 +1344,7 @@ enum UserSurveyAnswerResult
 #define ROOM_LOW_KILLLIMIT				(1<<10)
 #define	ROOM_LOW_GAMETIME				(1<<11)
 #define ROOM_LOW_ROUNDTIME				(1<<12)
-#define ROOM_LOW_ARMSRESTRICTION		(1<<13)
+#define ROOM_LOW_WEAPONLIMIT			(1<<13)
 #define ROOM_LOW_HOSTAGEKILLLIMIT		(1<<14)
 #define ROOM_LOW_FREEZETIME				(1<<15)
 #define	ROOM_LOW_BUYTIME				(1<<16)
@@ -1387,10 +1402,10 @@ enum UserSurveyAnswerResult
 #define	ROOM_HIGHMID_FIREBOMB			(1<<0)
 #define	ROOM_HIGHMID_MUTATIONRESTRICT	(1<<1)
 #define	ROOM_HIGHMID_MUTATIONLIMIT		(1<<2)
-#define	ROOM_HIGHMID_UNK78				(1<<3)
-#define	ROOM_HIGHMID_UNK79				(1<<4)
-#define	ROOM_HIGHMID_UNK80				(1<<5)
-#define	ROOM_HIGHMID_ALL_SAFE			(ROOM_HIGHMID_FIREBOMB | ROOM_HIGHMID_MUTATIONRESTRICT | ROOM_HIGHMID_MUTATIONLIMIT | ROOM_HIGHMID_UNK78 | ROOM_HIGHMID_UNK79 | ROOM_HIGHMID_UNK79)
+#define	ROOM_HIGHMID_FLOATINGDAMAGESKIN	(1<<3)
+#define	ROOM_HIGHMID_PLAYERONETEAM		(1<<4)
+#define	ROOM_HIGHMID_WEAPONRESTRICT		(1<<5)
+#define	ROOM_HIGHMID_ALL_SAFE			(ROOM_HIGHMID_FIREBOMB | ROOM_HIGHMID_MUTATIONRESTRICT | ROOM_HIGHMID_MUTATIONLIMIT | ROOM_HIGHMID_FLOATINGDAMAGESKIN | ROOM_HIGHMID_PLAYERONETEAM | ROOM_HIGHMID_WEAPONRESTRICT)
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
@@ -1407,7 +1422,7 @@ enum UserSurveyAnswerResult
 #define	RLFLAG_MAPID			(1<<5)
 #define	RLFLAG_PLAYERS			(1<<6)
 #define	RLFLAG_MAXPLAYERS		(1<<7)
-#define	RLFLAG_ARMSRESTRICTION	(1<<8)
+#define	RLFLAG_WEAPONLIMIT		(1<<8)
 #define	RLFLAG_SUPERROOM		(1<<9)
 #define RLFLAG_UNK2				(1<<10)
 #define RLFLAG_HOSTNETINFO		(1<<11)
@@ -1432,18 +1447,19 @@ enum UserSurveyAnswerResult
 #define RLFLAG_ALL				(-1)
 
 // room list high flags
-#define	RLHFLAG_UNK				(1<<0)
-#define	RLHFLAG_ISZBCOMPETITIVE	(1<<1)
-#define	RLHFLAG_ZBAUTOHUNTING	(1<<2)
-#define	RLHFLAG_UNK4			(1<<3)
-#define	RLHFLAG_UNK5			(1<<5)
-#define	RLHFLAG_FIREBOMB		(1<<7)
-#define	RLHFLAG_UNK7			(1<<8)
-#define	RLHFLAG_UNK8			(1<<9)
-#define	RLHFLAG_UNK9			(1<<10)
-#define	RLHFLAG_UNK10			(1<<11)
-#define RLHFLAG_ALL_SAFE		RLHFLAG_UNK | RLHFLAG_ISZBCOMPETITIVE | RLHFLAG_ZBAUTOHUNTING | RLHFLAG_UNK4 | RLHFLAG_UNK5 | RLHFLAG_FIREBOMB | RLHFLAG_UNK7 | RLHFLAG_UNK8 | RLHFLAG_UNK9 | RLHFLAG_UNK10 // all flags that are supported by the server
-#define RLHFLAG_ALL				(-1)
+#define	RLHFLAG_UNK					(1<<0)
+#define	RLHFLAG_ISZBCOMPETITIVE		(1<<1)
+#define	RLHFLAG_ZBAUTOHUNTING		(1<<2)
+#define	RLHFLAG_UNK4				(1<<3)
+#define	RLHFLAG_UNK5				(1<<5)
+#define	RLHFLAG_FIREBOMB			(1<<7)
+#define	RLHFLAG_MUTATIONRESTRICT	(1<<8)
+#define	RLHFLAG_MUTATIONLIMIT		(1<<9)
+#define	RLHFLAG_UNK9				(1<<10)
+#define	RLHFLAG_UNK10				(1<<11)
+#define RLHFLAG_WEAPONRESTRICT		(1<<12)
+#define RLHFLAG_ALL_SAFE			RLHFLAG_UNK | RLHFLAG_ISZBCOMPETITIVE | RLHFLAG_ZBAUTOHUNTING | RLHFLAG_UNK4 | RLHFLAG_UNK5 | RLHFLAG_FIREBOMB | RLHFLAG_MUTATIONRESTRICT | RLHFLAG_MUTATIONLIMIT | RLHFLAG_UNK9 | RLHFLAG_UNK10 | RLHFLAG_WEAPONRESTRICT // all flags that are supported by the server
+#define RLHFLAG_ALL					(-1)
 
 // inventory related
 #define LOADOUT_COUNT 12

@@ -144,11 +144,6 @@ int CRoom::GetNumOfReadyPlayers()
 	return 0;
 }
 
-RoomReadyStatus CRoom::GetUserReadyStatus(IUser* user)
-{
-	return RoomReadyStatus::READY_STATUS_NO;
-}
-
 RoomReadyStatus CRoom::IsUserReady(IUser* user)
 {
 	if (!HasUser(user))
@@ -285,8 +280,8 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	if (newSettings.lowFlag & ROOM_LOW_ROUNDTIME) {
 		m_pSettings->roundTime = newSettings.roundTime;
 	}
-	if (newSettings.lowFlag & ROOM_LOW_ARMSRESTRICTION) {
-		m_pSettings->armsRestriction = newSettings.armsRestriction;
+	if (newSettings.lowFlag & ROOM_LOW_WEAPONLIMIT) {
+		m_pSettings->weaponLimit = newSettings.weaponLimit;
 	}
 	if (newSettings.lowFlag & ROOM_LOW_HOSTAGEKILLLIMIT) {
 		m_pSettings->hostageKillLimit = newSettings.hostageKillLimit;
@@ -452,20 +447,20 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 		m_pSettings->fireBomb = newSettings.fireBomb;
 	}
 	if (newSettings.highMidFlag & ROOM_HIGHMID_MUTATIONRESTRICT) {
-		m_pSettings->mutationRestrictSize = newSettings.mutationRestrictSize;
 		m_pSettings->mutationRestrict = newSettings.mutationRestrict;
+		m_pSettings->mutationRestrictList = newSettings.mutationRestrictList;
 	}
 	if (newSettings.highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT) {
 		m_pSettings->mutationLimit = newSettings.mutationLimit;
 	}
-	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK78) {
-		m_pSettings->unk78 = newSettings.unk78;
+	if (newSettings.highMidFlag & ROOM_HIGHMID_FLOATINGDAMAGESKIN) {
+		m_pSettings->floatingDamageSkin = newSettings.floatingDamageSkin;
 	}
-	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK79) {
-		m_pSettings->unk79 = newSettings.unk79;
+	if (newSettings.highMidFlag & ROOM_HIGHMID_PLAYERONETEAM) {
+		m_pSettings->playerOneTeam = newSettings.playerOneTeam;
 	}
-	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK80) {
-		m_pSettings->unk80 = newSettings.unk80;
+	if (newSettings.highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT) {
+		m_pSettings->weaponRestrict = newSettings.weaponRestrict;
 	}
 	if (newSettings.highFlag & ROOM_HIGH_UNK77) {
 		m_pSettings->unk77 = newSettings.unk77;
@@ -568,9 +563,13 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 		return;
 	}
 
-	for (auto user : m_Users)
+	for (auto userDest : m_Users)
 	{
-		g_PacketManager.SendUMsgRoomMessage(user->GetExtendedSocket(), senderName, message);
+		CUserCharacterExtended characterExtendedDest = userDest->GetCharacterExtended(EXT_UFLAG_BANSETTINGS);
+
+		// you can't send room message if dest is blocking your chat
+		if (~characterExtendedDest.banSettings & 2 || characterExtendedDest.banSettings & 2 && !g_UserDatabase.IsInBanList(userDest->GetID(), user->GetID()))
+			g_PacketManager.SendUMsgUserMessage(userDest->GetExtendedSocket(), UMsgPacketType::RoomUserMessage, senderName, message);
 	}
 }
 
@@ -581,11 +580,15 @@ void CRoom::OnUserTeamMessage(CReceivePacket* msg, IUser* user)
 
 	CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
 
-	for (auto u : m_Users)
+	for (auto userDest : m_Users)
 	{
-		if (userTeam == GetUserTeam(u))
+		if (userTeam == GetUserTeam(userDest))
 		{
-			g_PacketManager.SendUMsgRoomTeamMessage(u->GetExtendedSocket(), character.gameName, message);
+			CUserCharacterExtended characterExtendedDest = userDest->GetCharacterExtended(EXT_UFLAG_BANSETTINGS);
+
+			// you can't send team message if dest is blocking your chat
+			if (~characterExtendedDest.banSettings & 2 || characterExtendedDest.banSettings & 2 && !g_UserDatabase.IsInBanList(userDest->GetID(), user->GetID()))
+				g_PacketManager.SendUMsgUserMessage(userDest->GetExtendedSocket(), UMsgPacketType::RoomTeamUserMessage, character.gameName, message);
 		}
 	}
 }
@@ -599,9 +602,12 @@ void CRoom::OnGameStart()
 	{
 		SendRoomStatus(u);
 
-		if (GetUserReadyStatus(u) == RoomReadyStatus::READY_STATUS_YES)
+		if (IsUserReady(u))
 		{
-			UserGameJoin(u);
+			if (m_pServer != NULL)
+				UserGameJoin(u);
+			else if (u != m_pHostUser)
+				UserGameJoin(u);
 		}
 	}
 }
@@ -675,15 +681,16 @@ void CRoom::SendConnectHost(IUser* user, IUser* host)
 	//g_PacketManager.SendUDPHostData(user->GetExtendedSocket(), true, host->GetData()->userId, host->GetNetworkConfig().m_szExternalIpAddress, host->GetNetworkConfig().m_nExternalServerPort);
 	if (g_pServerConfig->room.connectingMethod)
 	{
-		//g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host->GetData()->userId);
-		g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
+		g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host);
+		//g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
 	}
 	else
 	{
 		if (m_pServer)
 			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetIP(), true, m_pServer->GetPort(), user->GetID());
 		else
-			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
+			g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host);
+			//g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
 	}
 }
 
@@ -707,9 +714,6 @@ void CRoom::SendStartMatch(IUser* host)
 		{
 			g_PacketManager.SendRoomCreateAndJoin(m_pServer->GetSocket(), this);
 			g_PacketManager.SendHostGameStart(m_pServer->GetSocket(), m_pServer->GetPort());
-
-			g_PacketManager.SendHostGameStart(host->GetExtendedSocket(), m_pServer->GetPort());
-			g_PacketManager.SendHostServerJoin(host->GetExtendedSocket(), m_pServer->GetIP(), true, m_pServer->GetPort(), host->GetID());
 		}
 		else
 		{
@@ -739,11 +743,6 @@ void CRoom::SendGameEnd(IUser* user)
 	{
 		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), va("m_nKills: %d\nm_nDeaths: %d\nm_nScore: %d", stat->m_nKills, stat->m_nDeaths, stat->m_nScore));
 	}
-}
-
-void CRoom::SendUserMessage(const string& senderName, const string& msg, IUser* user)
-{
-	g_PacketManager.SendUMsgRoomMessage(user->GetExtendedSocket(), senderName, msg);
 }
 
 void CRoom::SendRoomStatus(IUser* user)
@@ -831,9 +830,16 @@ void CRoom::UpdateHost(IUser* newHost)
 		g_PacketManager.SendRoomSetHost(u->GetExtendedSocket(), newHost);
 	}
 
-	if (m_pGameMatch && m_pServer == NULL)
+	if (m_pServer == NULL && m_pGameMatch != NULL)
 	{
-		m_pGameMatch->OnHostChanged(newHost);
+		if (m_pGameMatch->m_UserStats.empty())
+		{
+			EndGame(true);
+		}
+		else
+		{
+			m_pGameMatch->OnHostChanged(newHost);
+		}
 	}
 
 	CheckForHostItems();
@@ -846,7 +852,19 @@ bool CRoom::FindAndUpdateNewHost()
 		return false;
 	}
 
-	UpdateHost(m_Users[0]);
+	if (m_pServer == NULL && m_pGameMatch != NULL)
+	{
+		vector<CGameMatchUserStat*> userStats = m_pGameMatch->m_UserStats;
+
+		if (userStats.empty())
+			UpdateHost(m_Users[0]);
+		else
+			UpdateHost(userStats[0]->m_pUser);
+	}
+	else
+	{
+		UpdateHost(m_Users[0]);
+	}
 
 	return true;
 }
@@ -899,7 +917,9 @@ void CRoom::HostStartGame()
 		Logger().Info("Host '%s' started room match (RID: %d, IP: %s, port: %d)\n", m_pHostUser->GetUsername().c_str(), m_nID, ip.c_str(), m_pServer->GetPort());
 	}
 	else
-		Logger().Info("Host '%s' started room match (RID: %d, IP: %s, port: %d)\n", m_pHostUser->GetUsername().c_str(), m_nID, m_pHostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), m_pHostUser->GetNetworkConfig().m_nExternalServerPort);
+	{
+		Logger().Info("Host '%s' started room match (RID: %d, IP: %s, port: %d)\n", m_pHostUser->GetUsername().c_str(), m_nID, m_pHostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), m_pHostUser->GetNetworkConfig().m_nExternalClientPort);
+	}
 }
 
 void CRoom::UserGameJoin(IUser* user)
@@ -914,7 +934,7 @@ void CRoom::UserGameJoin(IUser* user)
 	Logger().Info("User '%d, %s' joining room match (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), m_nID);
 }
 
-void CRoom::EndGame()
+void CRoom::EndGame(bool forcedEnd)
 {
 	m_pGameMatch->OnGameMatchEnd();
 
@@ -936,7 +956,7 @@ void CRoom::EndGame()
 
 	SendReadyStatusToAll();
 
-	if (m_pSettings->mapPlaylistSize)
+	if (!forcedEnd && m_pSettings->mapPlaylistSize)
 	{
 		for (int i = 0; i <= m_pSettings->mapPlaylistSize - 1; i++)
 		{
@@ -1006,4 +1026,20 @@ CDedicatedServer* CRoom::GetServer()
 void CRoom::SetServer(CDedicatedServer* server)
 {
 	m_pServer = server;
+}
+
+void CRoom::ChangeMap(int mapId)
+{
+	m_pSettings->mapId = mapId;
+	m_pSettings->mapId2 = m_pSettings->mapId;
+
+	if (m_pServer != NULL)
+	{
+		g_PacketManager.SendRoomUpdateSettings(m_pServer->GetSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
+	}
+
+	for (auto u : m_Users)
+	{
+		g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
+	}
 }

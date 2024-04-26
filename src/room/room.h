@@ -43,7 +43,6 @@ public:
 	int GetNumOfRealCts();
 	int GetNumOfRealTerrorists();
 	int GetNumOfReadyPlayers();
-	enum RoomReadyStatus GetUserReadyStatus(IUser* user);
 	RoomReadyStatus IsUserReady(IUser* user);
 	bool IsRoomReady();
 	bool IsUserIngame(IUser* user);
@@ -61,7 +60,7 @@ public:
 	void UpdateHost(IUser* newHost);
 	void HostStartGame();
 	void UserGameJoin(IUser* user);
-	void EndGame();
+	void EndGame(bool forcedEnd);
 	bool FindAndUpdateNewHost();
 	void UpdateSettings(CRoomSettings& newSettings);
 	void OnUserMessage(CReceivePacket* msg, IUser* user);
@@ -83,7 +82,6 @@ public:
 	void SendCloseResultWindow(IUser* user);
 	void SendTeamChange(IUser* user, IUser* player, RoomTeamNum newTeamNum);
 	void SendGameEnd(IUser* user);
-	void SendUserMessage(const std::string& senderName, const std::string& msg, IUser* user);
 	void SendRoomStatus(IUser* user);
 	void SendPlayerLeaveIngame(IUser* user);
 
@@ -99,6 +97,7 @@ public:
 
 	CDedicatedServer* GetServer();
 	void SetServer(CDedicatedServer* server);
+	void ChangeMap(int mapId);
 
 private:
 	IUser* m_pHostUser;

@@ -54,6 +54,7 @@ CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 	m_pItemZip = NULL;
 	m_pCodisDataZip = NULL;
 	m_pWeaponPropZip = NULL;
+	m_pModeEventZip = NULL;
 	m_pPaintItemList = NULL;
 	m_pReinforceItemsExp = NULL;
 	m_pRandomWeaponList = NULL;
@@ -253,23 +254,6 @@ void CPacketManager::SendUMsgNoticeMessageInChat(IExtendedSocket* socket, const 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgChatMessage(IExtendedSocket* socket, int type, const string& gameName, const string& text, bool from)
-{
-	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
-	msg->BuildHeader();
-
-	msg->WriteUInt8(type);
-	if (type == UMsgPacketType::WhisperUserMessage)
-	{
-		msg->WriteUInt8(from); // from or to
-	}
-
-	msg->WriteString(gameName);
-	msg->WriteString(text);
-
-	socket->Send(msg);
-}
-
 /*void CPacketManager::SendUMsgNoticeMsgBoxToUuid(IExtendedSocket* socket, const string& text)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
@@ -278,43 +262,6 @@ void CPacketManager::SendUMsgChatMessage(IExtendedSocket* socket, int type, cons
 	msg->WriteString(text);
 	socket->Send(msg);
 }*/
-
-void CPacketManager::SendUMsgWhisperMessage(IExtendedSocket* socket, const string& text, const string& destName, IUser* user, int type)
-{
-	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
-	msg->BuildHeader();
-
-	msg->WriteUInt8(UMsgPacketType::WhisperUserMessage);
-	msg->WriteUInt8(type); // from or to
-	msg->WriteString(destName); // user name
-	msg->WriteString(text); // message
-
-	socket->Send(msg);
-}
-
-void CPacketManager::SendUMsgRoomMessage(IExtendedSocket* socket, const string& senderName, const string& text)
-{
-	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
-	msg->BuildHeader();
-
-	msg->WriteUInt8(UMsgPacketType::RoomUserMessage);
-	msg->WriteString(senderName); // user name
-	msg->WriteString(text); // message
-
-	socket->Send(msg);
-}
-
-void CPacketManager::SendUMsgRoomTeamMessage(IExtendedSocket* socket, const string& senderName, const string& text)
-{
-	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
-	msg->BuildHeader();
-
-	msg->WriteUInt8(UMsgPacketType::RoomTeamUserMessage);
-	msg->WriteString(senderName); // user name
-	msg->WriteString(text); // message
-
-	socket->Send(msg);
-}
 
 void CPacketManager::SendUMsgSystemReply(IExtendedSocket* socket, int type, const string& replyMsg, const vector<string>& additionalText)
 {
@@ -332,12 +279,16 @@ void CPacketManager::SendUMsgSystemReply(IExtendedSocket* socket, int type, cons
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgLobbyMessage(IExtendedSocket* socket, const string& senderName, const string& text)
+void CPacketManager::SendUMsgUserMessage(IExtendedSocket* socket, int type, const string& senderName, const string& text, int whisperType)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(UMsgPacketType::LobbyUserMessage);
+	msg->WriteUInt8(type);
+
+	if (type == UMsgPacketType::WhisperUserMessage)
+		msg->WriteUInt8(whisperType);
+
 	msg->WriteString(senderName);
 	msg->WriteString(text);
 
@@ -905,7 +856,8 @@ void CPacketManager::SendUserStart(IExtendedSocket* socket, int userID, const st
 	msg->WriteUInt8(firstConnect); // first connect
 	msg->WriteUInt8(0); // country code
 	msg->WriteUInt8(0); // region code
-	msg->WriteUInt32(0); // 210429
+	msg->WriteUInt32(0); // UserSN
+	msg->WriteUInt8(0); // unk
 	socket->Send(msg);
 }
 
@@ -1559,6 +1511,19 @@ void CPacketManager::SendGameMatchUnk9(IExtendedSocket* socket)
 	socket->Send(msg);
 }
 
+void CPacketManager::SendGameMatchFailMessage(IExtendedSocket* socket, int type)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::GameMatch);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(100);
+
+	msg->WriteUInt8(0);
+	msg->WriteUInt8(type); // Display message box with string #CSO_MATCH_FAIL_MSG_%d, %d is type
+
+	socket->Send(msg);
+}
+
 void CPacketManager::SendReply(IExtendedSocket* socket, int type)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Reply);
@@ -1758,7 +1723,9 @@ void CPacketManager::SendItemEnhanceResult(IExtendedSocket* socket, const EnhRes
 	msg->WriteUInt8(14);
 
 	msg->WriteUInt8(result.status);
-	if (result.status < ENHANCE_FAILURE)
+	if (result.status == ENHANCE_SUCCESS ||
+		result.status == ENHANCE_LEVELDOWN ||
+		result.status == ENHANCE_FULLLEVELDOWN)
 	{
 		msg->WriteUInt16(result.itemSlot);
 		msg->WriteUInt16(result.enhLevel);
@@ -1766,7 +1733,8 @@ void CPacketManager::SendItemEnhanceResult(IExtendedSocket* socket, const EnhRes
 		msg->WriteUInt8(result.enhAttribute);
 	}
 
-	msg->WriteUInt8(0);
+	if (result.status == ENHANCE_SUCCESS || result.status == ENHANCE_FAILURE)
+		msg->WriteUInt8(0);
 
 	socket->Send(msg);
 }
@@ -1811,23 +1779,13 @@ void CPacketManager::SendLobbyJoin(IExtendedSocket* socket, CChannel* channel)
 	msg->BuildHeader();
 
 	msg->WriteUInt8(LobbyPacketType::Join);
-	msg->WriteUInt16(channel->GetUsers().size());
-	for (auto user : channel->GetUsers())
+	msg->WriteUInt16(channel->GetOutsideUsers().size());
+	for (auto user : channel->GetOutsideUsers())
 	{
-		//	if (user->currentRoom)
-		//	{
-		//		WriteUInt32(0);
-		//	}
-		//	else
-		//	{
 		msg->WriteUInt32(user->GetID());
-		//	}
 		msg->WriteString("test_lobby");
-
-		CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
-
 		CPacketHelper_FullUserInfo fullUserInfo;
-		fullUserInfo.Build(msg->m_OutStream, user->GetID(), character);
+		fullUserInfo.Build(msg->m_OutStream, user->GetID(), user->GetCharacter(0xFFFFFFFF));
 	}
 	socket->Send(msg);
 }
@@ -1898,8 +1856,8 @@ void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 	if (lFlag & RLFLAG_MAXPLAYERS) {
 		msg->WriteUInt8(roomSettings->maxPlayers);
 	}
-	if (lFlag & RLFLAG_ARMSRESTRICTION) {
-		msg->WriteUInt8(roomSettings->armsRestriction);
+	if (lFlag & RLFLAG_WEAPONLIMIT) {
+		msg->WriteUInt8(roomSettings->weaponLimit);
 	}
 	if (lFlag & RLFLAG_SUPERROOM) {
 		msg->WriteUInt8(roomSettings->superRoom);
@@ -2004,17 +1962,20 @@ void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 	if (hFlag & RLHFLAG_FIREBOMB) {
 		msg->WriteUInt8(roomSettings->fireBomb);
 	}
-	if (hFlag & RLHFLAG_UNK7) {
-		msg->WriteUInt8(roomSettings->mutationRestrictSize);
+	if (hFlag & RLHFLAG_MUTATIONRESTRICT) {
+		msg->WriteUInt8(roomSettings->mutationRestrict);
 	}
-	if (hFlag & RLHFLAG_UNK8) {
-		msg->WriteUInt8(0);
+	if (hFlag & RLHFLAG_MUTATIONLIMIT) {
+		msg->WriteUInt8(roomSettings->mutationLimit);
 	}
 	if (hFlag & RLHFLAG_UNK9) {
 		msg->WriteUInt8(0);
 	}
 	if (hFlag & RLHFLAG_UNK10) {
 		msg->WriteUInt8(0);
+	}
+	if (hFlag & RLHFLAG_WEAPONRESTRICT) {
+		msg->WriteUInt8(roomSettings->weaponRestrict);
 	}
 
 	// studio related
@@ -2403,8 +2364,8 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (lowFlag & ROOM_LOW_ROUNDTIME) {
 		msg->WriteUInt8(newSettings->roundTime);
 	}
-	if (lowFlag & ROOM_LOW_ARMSRESTRICTION) {
-		msg->WriteUInt8(newSettings->armsRestriction);
+	if (lowFlag & ROOM_LOW_WEAPONLIMIT) {
+		msg->WriteUInt8(newSettings->weaponLimit);
 	}
 	if (lowFlag & ROOM_LOW_HOSTAGEKILLLIMIT) {
 		msg->WriteUInt8(newSettings->hostageKillLimit);
@@ -2621,12 +2582,12 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteUInt8(newSettings->fireBomb);
 	}
 	if (highMidFlag & ROOM_HIGHMID_MUTATIONRESTRICT) {
-		msg->WriteUInt8(newSettings->mutationRestrictSize);
-		if (newSettings->mutationRestrict.size() == 4)
+		msg->WriteUInt8(newSettings->mutationRestrict);
+		if (newSettings->mutationRestrictList.size() == 4)
 		{
 			for (int i = 0; i < 4; i++)
 			{
-				msg->WriteUInt8(newSettings->mutationRestrict[i]);
+				msg->WriteUInt8(newSettings->mutationRestrictList[i]);
 			}
 		}
 		else
@@ -2640,14 +2601,14 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT) {
 		msg->WriteUInt8(newSettings->mutationLimit);
 	}
-	if (highMidFlag & ROOM_HIGHMID_UNK78) {
-		msg->WriteUInt8(newSettings->unk78);
+	if (highMidFlag & ROOM_HIGHMID_FLOATINGDAMAGESKIN) {
+		msg->WriteUInt8(newSettings->floatingDamageSkin);
 	}
-	if (highMidFlag & ROOM_HIGHMID_UNK79) {
-		msg->WriteUInt8(newSettings->unk79);
+	if (highMidFlag & ROOM_HIGHMID_PLAYERONETEAM) {
+		msg->WriteUInt8(newSettings->playerOneTeam);
 	}
-	if (highMidFlag & ROOM_HIGHMID_UNK80) {
-		msg->WriteUInt8(newSettings->unk80);
+	if (highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT) {
+		msg->WriteUInt8(newSettings->weaponRestrict);
 	}
 	if (highFlag & ROOM_HIGH_UNK77) {
 		msg->WriteUInt8(newSettings->unk77);
@@ -2684,11 +2645,11 @@ void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomI
 		msg->WriteUInt8(0);
 		msg->WriteUInt8(0);
 		msg->WriteUInt32(ip_string_to_int(network.m_szExternalIpAddress), false);
+		msg->WriteUInt16(network.m_nExternalClientPort);
 		msg->WriteUInt16(network.m_nExternalServerPort);
-		msg->WriteUInt16(network.m_nExternalClientPort); //user->externalClientPort
 		msg->WriteUInt32(ip_string_to_int(network.m_szLocalIpAddress), false);
+		msg->WriteUInt16(network.m_nLocalClientPort);
 		msg->WriteUInt16(network.m_nLocalServerPort);
-		msg->WriteUInt16(network.m_nExternalClientPort); //user->localClientPort
 
 		CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
 
@@ -2717,11 +2678,11 @@ void CPacketManager::SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, Ro
 	msg->WriteUInt8(0);
 	msg->WriteUInt8(0);
 	msg->WriteUInt32(ip_string_to_int(network.m_szExternalIpAddress), false);
+	msg->WriteUInt16(network.m_nExternalClientPort);
 	msg->WriteUInt16(network.m_nExternalServerPort);
-	msg->WriteUInt16(network.m_nExternalClientPort); //user->externalClientPort
 	msg->WriteUInt32(ip_string_to_int(network.m_szLocalIpAddress), false);
+	msg->WriteUInt16(network.m_nLocalClientPort);
 	msg->WriteUInt16(network.m_nLocalServerPort);
-	msg->WriteUInt16(network.m_nExternalClientPort); //user->localClientPort
 
 	CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
 
@@ -3312,23 +3273,23 @@ void CPacketManager::SendHostZBAddon(IExtendedSocket* socket, int userID, const 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostJoin(IExtendedSocket* socket, int hostID)
+void CPacketManager::SendHostJoin(IExtendedSocket* socket, IUser* host)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(HostPacketType::HostJoin);
-	msg->WriteUInt32(hostID);
+	msg->WriteUInt32(host->GetID());
 	msg->WriteUInt64(0); // что это?
 
-	/*UserNetworkConfig_s network = user->GetNetworkConfig();
+	UserNetworkConfig_s network = host->GetNetworkConfig();
 
 	msg->WriteUInt32(ip_string_to_int(network.m_szExternalIpAddress), false);
+	msg->WriteUInt16(network.m_nExternalClientPort);
 	msg->WriteUInt16(network.m_nExternalServerPort);
-	msg->WriteUInt16(network.m_nExternalClientPort); //user->externalClientPort
 	msg->WriteUInt32(ip_string_to_int(network.m_szLocalIpAddress), false);
+	msg->WriteUInt16(network.m_nLocalClientPort);
 	msg->WriteUInt16(network.m_nLocalServerPort);
-	msg->WriteUInt16(network.m_nExternalClientPort); //user->localClientPort*/
 
 	socket->Send(msg);
 }
@@ -6784,7 +6745,7 @@ void CPacketManager::SendBanMaxSize(IExtendedSocket* socket, int maxSize)
 {
 	CSendPacket* msg = g_PacketManager.CreatePacket(socket, PacketId::Ban);
 	msg->BuildHeader();
-	msg->WriteUInt8(BanPacketType::BanListMaxSize);
+	msg->WriteUInt8(BanPacketType::BanListMaxSizeReply);
 	msg->WriteUInt16(maxSize);
 	socket->Send(msg);
 }

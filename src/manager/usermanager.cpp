@@ -95,37 +95,79 @@ bool CUserManager::OnUdpPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	if (user == NULL)
 		return false;
 
-	int unk = msg->ReadUInt8();
-	if (unk == 0)
+	int type = msg->ReadUInt8();
+	switch (type)
 	{
-		// nothing to read
+	case 0:
 		Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 0\n"));
-	}
-	else if (unk == 1)
+		break;
+	case 1:
 	{
 		int unk = msg->ReadUInt32();
+
 		Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 1: %d\n"), unk);
+		break;
 	}
-	else if (unk == 2)
+	case 2:
 	{
-		int unk2 = msg->ReadUInt8();
-		if (unk2 == 1)
+		int subType = msg->ReadUInt32();
+		switch (subType)
 		{
-			int ip = msg->ReadUInt32();
-			int unk3 = msg->ReadUInt16();
-			int unk4 = msg->ReadUInt16();
-
-			//user->GetNetworkConfig().m_szLocalIpAddress = ip_to_string(ip);
-
-			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-1: ip: %d, unk: %d, unk: %d\n"), ip, unk3, unk4);
-		}
-		else if (unk2 == 2)
+		case 0:
 		{
-			int userID = msg->ReadUInt32();
+			int unk = msg->ReadInt32();
+			int unk2 = msg->ReadUInt16();
 			int unk3 = msg->ReadUInt16();
 
-			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-2: userID: %d, unk: %d\n"), userID, unk3);
+			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-0: unk: %d, unk2: %d, unk3: %d\n"), unk, unk2, unk3);
+			break;
 		}
+		case 1:
+		{
+			int unk = msg->ReadInt32();
+			int unk2 = msg->ReadUInt16();
+			int unk3 = msg->ReadUInt16();
+
+			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-1: unk: %d, unk2: %d, unk3: %d\n"), unk, unk2, unk3);
+			break;
+		}
+		case 2:
+		{
+			int unk = msg->ReadInt32();
+			int unk2 = msg->ReadUInt16();
+
+			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-2: unk: %d, unk2: %d\n"), unk, unk2);
+			break;
+		}
+		case 3:
+		{
+			int unk = msg->ReadInt32();
+			int unk2 = msg->ReadUInt16();
+
+			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-3: unk: %d, unk2: %d\n"), unk, unk2);
+			break;
+		}
+		case 4:
+		{
+			int unk = msg->ReadInt32();
+
+			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-4: unk: %d\n"), unk);
+			break;
+		}
+		case 5:
+		{
+			int unk = msg->ReadInt32();
+			int unk2 = msg->ReadUInt16();
+
+			Logger().Info(OBFUSCATE("CUserManager::OnUdpPacket: received type 2-5: unk: %d, unk2: %d\n"), unk, unk2);
+			break;
+		}
+		}
+		break;
+	}
+	default:
+		Logger().Info(OBFUSCATE("[User '%s'] CUserManager::OnUdpPacket: unknown request %d\n"), user->GetLogName(), type);
+		break;
 	}
 
 	return true;
@@ -323,9 +365,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		}
 
 		vector<CUserInventoryItem> items;
-		g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items);
-
-		if (items.empty())
+		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
 
 		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
@@ -339,9 +379,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 	else if (loadoutType == 0)
 	{
 		vector<CUserInventoryItem> items;
-		g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items);
-
-		if (items.empty())
+		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
 
 		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
@@ -449,7 +487,6 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 		g_PacketManager.SendBanList(socket, banList);
 
 	g_PacketManager.SendBanSettings(socket, characterExtended.banSettings);
-	g_PacketManager.SendBanMaxSize(socket, BANLIST_MAX_SIZE);
 
 	SendMetadata(socket);
 
@@ -652,20 +689,27 @@ bool CUserManager::OnUserMessage(CReceivePacket* msg, IExtendedSocket* socket)
 	int type = msg->ReadUInt8();
 	switch (type)
 	{
-	case UMsgReceiveType::LobbyWhisperChat:
+	case UMsgReceiveType::WhisperChat:
 		g_ChannelManager.OnWhisperMessage(msg, user);
 		break;
 	case UMsgReceiveType::LobbyChat:
 		g_ChannelManager.OnLobbyMessage(msg, socket, user);
 		break;
-	case UMsgReceiveType::ClanChat:
-		Logger().Warn("CUserManager::OnUserMessage: ClanChat!\n");
-		break;
 	case UMsgReceiveType::RoomChat:
 		g_ChannelManager.OnRoomUserMessage(msg, user);
 		break;
+	case UMsgReceiveType::ClanChat:
+		Logger().Warn("CUserManager::OnUserMessage: ClanChat!\n");
+		break;
 	case UMsgReceiveType::RoomTeamChat:
 		g_ChannelManager.OnRoomTeamUserMessage(msg, user);
+		break;
+	case UMsgReceiveType::PartyChat:
+		// Party system is not implemented, so let's just say the party doesn't exist
+		g_PacketManager.SendGameMatchFailMessage(socket, 6);
+		break;
+	case UMsgReceiveType::ServerYellChat:
+		g_ChannelManager.OnServerYellMessage(msg, user);
 		break;
 	case UMsgReceiveType::RewardSelect:
 		g_ItemManager.OnRewardSelect(msg, user);
@@ -1066,6 +1110,9 @@ bool CUserManager::OnBanPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		break;
 	case BanPacketType::RequestBanSettings:
 		OnBanSettingsRequest(msg, user);
+		break;
+	case BanPacketType::RequestBanListMaxSize:
+		g_PacketManager.SendBanMaxSize(socket, g_pServerConfig->banListMaxSize);
 		break;
 	default:
 		Logger().Warn(OBFUSCATE("[User '%s'] Unknown Packet_Ban type %d (len: %d)\n"), user->GetLogName(), type, msg->GetLength());
