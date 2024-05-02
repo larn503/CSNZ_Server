@@ -1,6 +1,10 @@
 #include "manager.h"
 #include "common/logger.h"
 
+#include <chrono>
+#include <thread>
+#include <future>
+
 using namespace std;
 
 /**
@@ -28,11 +32,51 @@ CManager& CManager::GetInstance()
  */
 bool CManager::InitAll()
 {
+	return InitAll_Multithread();
+
+	//auto t1 = chrono::high_resolution_clock::now();
+
+	//for (auto p : m_Managers)
+	//{
+	//	if (!p->Init())
+	//		return false;
+	//}
+
+	//auto t2 = chrono::high_resolution_clock::now();
+	//Logger().Info("CManager::InitAll: %d ms\n", chrono::duration_cast<chrono::milliseconds>(t2 - t1).count());
+
+	//return true;
+}
+
+/**
+ * Inits all managers in separate threads
+ * @return true when managers initialized successfully, false otherwise
+ */
+bool CManager::InitAll_Multithread()
+{
+	//auto t1 = chrono::high_resolution_clock::now();
+
+	// run init threads
+	vector<future<bool>> results;
 	for (auto p : m_Managers)
 	{
-		if (!p->Init())
+		results.emplace_back(async(
+			[p]()
+			{
+				return p->Init();
+			}
+		));
+	}
+
+	// check if init failed
+	for (auto& f : results)
+	{
+		if (!f.get())
 			return false;
 	}
+
+	//auto t2 = chrono::high_resolution_clock::now();
+	//Logger().Info("CManager::InitAll_Multithread: %d ms\n", chrono::duration_cast<chrono::milliseconds>(t2 - t1).count());
 
 	return true;
 }

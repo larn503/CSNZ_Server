@@ -38,6 +38,9 @@ BOOL WINAPI CtrlHandler(DWORD ctrlType)
 #ifdef USE_GUI
 CObjectSync g_GUIInitEvent;
 
+/**
+ * Thread to run GUI. When GUI shuts down, it shuts down the server.
+ */
 void* GUIThread(void*)
 {
 	if (!GUI()->Init(&Manager(), &g_Events))

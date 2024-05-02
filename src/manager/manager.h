@@ -30,6 +30,8 @@ public:
 	void MinuteTick(time_t curTime);
 
 private:
+	bool InitAll_Multithread();
+
 	std::vector<IBaseManager*> m_Managers;
 };
 
@@ -71,6 +73,7 @@ public:
 	void SetSecondTick(bool tick) { m_bSecondTick = tick; }
 
 private:
+	bool m_bInitialized;
 	std::string m_Name;
 	bool m_bSecondTick;
 	bool m_bMinuteTick;
