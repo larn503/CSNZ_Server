@@ -183,12 +183,13 @@ void CServerInstance::OnTCPConnectionClosed(IExtendedSocket* socket)
 		g_DedicatedServerManager.RemoveServer(socket);
 	}
 
-	/// @todo remove all events referred to deleted socket object
+	// events with socket should be removed as they refer to deleted object 
+	g_Events.RemoveEventsBySocket(socket);
 }
 
 void CServerInstance::OnTCPMessage(IExtendedSocket* socket, CReceivePacket* msg)
 {
-	g_Events.AddEventFunction(std::bind(&CServerInstance::OnPackets, this, socket, msg));
+	g_Events.AddEventTCPPacket(socket, std::bind(&CServerInstance::OnPackets, this, socket, msg));
 }
 
 void CServerInstance::OnTCPError(int errorCode)
@@ -225,7 +226,8 @@ void CServerInstance::OnUDPMessage(Buffer& buf, unsigned short port)
 		return;
 	}
 
-	if (type == 0) {
+	if (type == 0)
+	{
 		int portID = buf.readUInt8();
 		int localAddr = ~buf.readUInt32_BE(); // TODO: Fix this...
 		string localIpAddress = ip_to_string(localAddr);
@@ -245,7 +247,8 @@ void CServerInstance::OnUDPMessage(Buffer& buf, unsigned short port)
 		replyBuffer.writeUInt8(1);
 		m_UDPServer.SendTo(replyBuffer);
 	}
-	else if (type == 1) {
+	else if (type == 1)
+	{
 		int tries = buf.readUInt8();
 
 		Logger().Info("OnUDPMessage(1) - userID: %d, tries: %d\n", userID, tries);
@@ -273,6 +276,9 @@ void CServerInstance::OnCommand(const string& command)
 	}
 }
 
+/**
+ * Processes server events such as console commands, incoming messages, GUI requests
+ */
 void* EventThread(void*)
 {
 	while (g_pServerInstance->IsServerActive())
@@ -287,6 +293,9 @@ void* EventThread(void*)
 	return NULL;
 }
 
+/**
+ * Thread that reads console input
+ */
 void* ReadConsoleThread(void*)
 {
 	while (g_pServerInstance->IsServerActive())
@@ -327,7 +336,7 @@ void CServerInstance::OnEvent()
 	while (ev)
 	{
 		g_ServerCriticalSection.Enter();
-
+			
 		ev->Execute();
 
 		g_ServerCriticalSection.Leave();
@@ -338,14 +347,6 @@ void CServerInstance::OnEvent()
 
 void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 {
-	/// @todo don't use pointer to deleted object
-	if (find(m_TCPServer.GetClients().begin(), m_TCPServer.GetClients().end(), s) == m_TCPServer.GetClients().end())
-	{
-		// skip packets with deleted socket object
-		delete msg;
-		return;
-	}
-
 	switch (msg->GetID())
 	{
 	case PacketId::Version:
