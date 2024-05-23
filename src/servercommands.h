@@ -394,7 +394,7 @@ void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
 
 	if (!userID)
 	{
-		Logger().Info(OBFUSCATE("[GiveItem] User not found.\n"));
+		Logger().Info(OBFUSCATE("[GiveItem] User not found\n"));
 		return;
 	}
 
@@ -418,10 +418,10 @@ void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
 	switch (status)
 	{
 	case ITEM_ADD_INVENTORY_FULL:
-		Logger().Info(OBFUSCATE("[GiveItem] User's inventory is full"));
+		Logger().Info(OBFUSCATE("[GiveItem] User's inventory is full\n"));
 		break;
 	case ITEM_ADD_UNKNOWN_ITEMID:
-		Logger().Info(OBFUSCATE("[GiveItem] Item ID does not exist in the item database"));
+		Logger().Info(OBFUSCATE("[GiveItem] Item ID does not exist in the item database\n"));
 		break;
 	case ITEM_ADD_SUCCESS:
 	{
@@ -471,7 +471,7 @@ void CommandSendEvent(CCommand* cmd, const std::vector<std::string>& args)
 	IUser* user = g_UserManager.GetUserById(userID);
 	if (!user)
 	{
-		Logger().Info("User is offline");
+		Logger().Info("User is offline\n");
 		return;
 	}
 
@@ -490,7 +490,7 @@ void CommandSendEvent2(CCommand* cmd, const std::vector<std::string>& args)
 	IUser* user = g_UserManager.GetUserById(userID);
 	if (!user)
 	{
-		Logger().Info("User is offline");
+		Logger().Info("User is offline\n");
 		return;
 	}
 
@@ -516,7 +516,7 @@ void CommandSendInventory(CCommand* cmd, const std::vector<std::string>& args)
 	IUser* user = g_UserManager.GetUserById(userID);
 	if (!user)
 	{
-		Logger().Info("User is offline");
+		Logger().Info("User is offline\n");
 		return;
 	}
 
@@ -539,7 +539,7 @@ void CommandSendPacket(CCommand* cmd, const std::vector<std::string>& args)
 	IUser* user = g_UserManager.GetUserById(userID);
 	if (!user)
 	{
-		Logger().Info("User is offline");
+		Logger().Info("User is offline\n");
 		return;
 	}
 
