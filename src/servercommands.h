@@ -4,13 +4,17 @@
 
 void CommandHelp(CCommand* cmd, const std::vector<std::string>& args)
 {
-	printf("Command list:\n");
+	std::ostringstream msg;
+
+	msg << "Command list:\n";
 
 	std::vector<std::string> cmdList = CCommandList::GetInstance().GetCommandList();
 	for (auto& name : cmdList)
 	{
-		printf("%s\n", name.c_str());
+		msg << name << "\n";
 	}
+
+	Logger().Info(msg.str().c_str());
 }
 
 void CommandUsers(CCommand* cmd, const std::vector<std::string>& args)
@@ -414,10 +418,10 @@ void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
 	switch (status)
 	{
 	case ITEM_ADD_INVENTORY_FULL:
-		printf(OBFUSCATE("[GiveItem] User's inventory is full"));
+		Logger().Info(OBFUSCATE("[GiveItem] User's inventory is full"));
 		break;
 	case ITEM_ADD_UNKNOWN_ITEMID:
-		printf(OBFUSCATE("[GiveItem] Item ID does not exist in the item database"));
+		Logger().Info(OBFUSCATE("[GiveItem] Item ID does not exist in the item database"));
 		break;
 	case ITEM_ADD_SUCCESS:
 	{
