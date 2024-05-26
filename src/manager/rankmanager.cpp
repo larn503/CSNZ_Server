@@ -11,6 +11,10 @@ CRankManager::CRankManager() : CBaseManager("RankManager")
 {
 }
 
+CRankManager::~CRankManager()
+{
+}
+
 bool CRankManager::OnRankPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;

@@ -25,6 +25,20 @@ CChannelManager::CChannelManager() : CBaseManager("ChannelManager")
 	channelServers.push_back(new CChannelServer("Channel server", 1, 1, 1));
 }
 
+CChannelManager::~CChannelManager()
+{
+}
+
+void CChannelManager::Shutdown()
+{
+	EndAllGames();
+
+	for (auto channelServer : channelServers)
+	{
+		delete channelServer;
+	}
+}
+
 bool CChannelManager::OnChannelListPacket(IExtendedSocket* socket)
 {
 	LOG_PACKET;
@@ -99,6 +113,8 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 		break;
 	case InRoomType::SetZBAddonsRequest:
 		return OnRoomSetZBAddonRequest(msg, user);
+	case InRoomType::KickRequest:
+		return OnRoomKickRequest(msg, user);
 	default:
 		Logger().Warn("Unknown room request %d\n", type);
 		break;
@@ -170,24 +186,24 @@ void CChannelManager::JoinChannel(IUser* user, int channelServerID, int channelI
 
 void CChannelManager::EndAllGames()
 {
-	for (auto channel : channelServers)
+	for (auto channelServer : channelServers)
 	{
-		if (!channel)
+		if (!channelServer)
 			continue;
 
-		for (auto sub : channel->GetChannels())
+		for (auto channel : channelServer->GetChannels())
 		{
-			if (!sub)
+			if (!channel)
 				continue;
 
-			for (auto room : sub->GetRooms())
+			for (auto room : channel->GetRooms())
 			{
 				if (!room)
 					continue;
 
-				if (room->GetStatus() == STATUS_INGAME)
+				if (room->GetGameMatch())
 				{
-					Logger().Info(OBFUSCATE("Force ending RoomID: %d game match\n"), room->GetID());
+					Logger().Info(OBFUSCATE("Force ending RoomID %d\n"), room->GetID());
 					room->EndGame(true);
 				}
 			}
@@ -1157,18 +1173,18 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 
 bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 {
+	CChannel* channel = user->GetCurrentChannel();
+	if (channel == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to create a new room without channel\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
 	// don't allow the user to create a new room while in another one
 	IRoom* room = user->GetCurrentRoom();
 	if (room)
 	{
 		Logger().Warn("User '%d, %s' tried to create a new room, but he is already playing in other room, curRoomId: %d\n", user->GetID(), user->GetUsername().c_str(), room->GetID());
-		return false;
-	}
-
-	CChannel* channel = user->GetCurrentChannel();
-	if (channel == NULL)
-	{
-		Logger().Warn("User '%d, %s' tried to create a new room without channel\n", user->GetID(), user->GetUsername().c_str());
 		return false;
 	}
 
@@ -1267,6 +1283,13 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 		room->SendTeamChange(u, user, user->GetRoomData()->m_Team);
 	}
 
+	CDedicatedServer* server = room->GetServer();
+	if (server)
+	{
+		g_PacketManager.SendRoomPlayerJoin(server->GetSocket(), user, RoomTeamNum::CounterTerrorist);
+		g_PacketManager.SendRoomSetUserTeam(server->GetSocket(), user, user->GetRoomData()->m_Team);
+	}
+
 	// hide user from channel users list
 	channel->UserLeft(user, true);
 
@@ -1279,10 +1302,17 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 
 bool CChannelManager::OnSetTeamRequest(CReceivePacket* msg, IUser* user)
 {
+	CChannel* currentChannel = user->GetCurrentChannel();
+	if (currentChannel == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to change room settings, but he isn't in any channel\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
 	IRoom* currentRoom = user->GetCurrentRoom();
 	if (currentRoom == NULL)
 	{
-		Logger().Warn("User '%d, %s' tried to change room settings, but he isn't in room\n", user->GetID(), user->GetUsername().c_str());
+		Logger().Warn("User '%d, %s' tried to change room settings, but he isn't in any room\n", user->GetID(), user->GetUsername().c_str());
 		return false;
 	}
 
@@ -1302,6 +1332,12 @@ bool CChannelManager::OnSetTeamRequest(CReceivePacket* msg, IUser* user)
 		currentRoom->SendTeamChange(u, user, (RoomTeamNum)newTeam);
 	}
 
+	CDedicatedServer* server = currentRoom->GetServer();
+	if (server)
+	{
+		g_PacketManager.SendRoomSetUserTeam(server->GetSocket(), user, (RoomTeamNum)newTeam);
+	}
+
 	Logger().Info("User '%d, %s' changed room team to %d (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), newTeam, currentRoom->GetID());
 
 	return true;
@@ -1319,7 +1355,7 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 		return false;
 	}
 
-	if (currentRoom->IsUserIngame(user) == true)
+	if (currentRoom->IsUserIngame(user))
 	{
 		currentRoom->SendPlayerLeaveIngame(user);
 	}
@@ -1327,22 +1363,6 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 	Logger().Info("User '%d, %s' left a room (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
 
 	currentRoom->RemoveUser(user);
-
-	if (!currentRoom->GetUsers().size())
-	{
-		currentChannel->SendRemoveFromRoomList(currentRoom->GetID());
-
-		CDedicatedServer* server = currentRoom->GetServer();
-		if (currentRoom->GetServer())
-		{
-			server->SetRoom(NULL);
-			g_PacketManager.SendHostStop(server->GetSocket());
-		}
-	}
-	else
-	{
-		currentChannel->SendUpdateRoomList(currentRoom);
-	}
 
 	currentChannel->SendFullUpdateRoomList(user);
 
@@ -1355,10 +1375,17 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 
 bool CChannelManager::OnToggleReadyRequest(IUser* user)
 {
+	CChannel* channel = user->GetCurrentChannel();
+	if (channel == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to toggle ready status without being in a channel\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
 	IRoom* room = user->GetCurrentRoom();
 	if (room == NULL)
 	{
-		Logger().Warn("User '%d, %s' tried to toggle ready status\n", user->GetID(), user->GetUsername().c_str());
+		Logger().Warn("User '%d, %s' tried to toggle ready status without being in a room\n", user->GetID(), user->GetUsername().c_str());
 		return false;
 	}
 
@@ -1377,6 +1404,12 @@ bool CChannelManager::OnToggleReadyRequest(IUser* user)
 
 bool CChannelManager::OnConnectionFailure(IUser* user)
 {
+	CChannel* channel = user->GetCurrentChannel();
+	if (channel == NULL)
+	{
+		return false;
+	}
+
 	IRoom* room = user->GetCurrentRoom();
 	if (room == NULL)
 	{
@@ -1462,6 +1495,10 @@ bool CChannelManager::OnGameStartRequest(IUser* user)
 
 bool CChannelManager::OnCloseResultRequest(IUser* user)
 {
+	CChannel* channel = user->GetCurrentChannel();
+	if (channel == NULL)
+		return false;
+
 	IRoom* room = user->GetCurrentRoom();
 	if (room == NULL)
 		return false;
@@ -1473,17 +1510,17 @@ bool CChannelManager::OnCloseResultRequest(IUser* user)
 
 bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, IUser* user)
 {
-	IRoom* currentRoom = user->GetCurrentRoom();
 	CChannel* currentChannel = user->GetCurrentChannel();
-	if (currentRoom == NULL)
-	{
-		Logger().Warn("User '%d, %s' tried to update a room\'s settings, although it isn\'t in any\n", user->GetID(), user->GetUsername().c_str());
-		return false;
-	}
-
 	if (currentChannel == NULL)
 	{
 		Logger().Warn("User '%d, %s' tried to update a room\'s settings without current channel\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
+	IRoom* currentRoom = user->GetCurrentRoom();
+	if (currentRoom == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to update a room\'s settings, although it isn\'t in any\n", user->GetID(), user->GetUsername().c_str());
 		return false;
 	}
 
@@ -1528,6 +1565,20 @@ bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, IUser* user)
 
 bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, IUser* user)
 {
+	CChannel* currentChannel = user->GetCurrentChannel();
+	if (currentChannel == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to invite a user without current channel\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
+	IRoom* currentRoom = user->GetCurrentRoom();
+	if (currentRoom == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to invite a user, although it isn\'t in any room\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
 	string inviteMsg = msg->ReadString();
 	int userCount = msg->ReadUInt16();
 	for (int i = 0; i < userCount; i++)
@@ -1560,9 +1611,17 @@ bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, IUser* user)
 
 bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 {
+	CChannel* currentChannel = user->GetCurrentChannel();
+	if (currentChannel == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to set ZB addons without current channel\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
 	IRoom* currentRoom = user->GetCurrentRoom();
 	if (currentRoom == NULL)
 	{
+		Logger().Warn("User '%d, %s' tried to set ZB addons, although it isn\'t in any room\n", user->GetID(), user->GetUsername().c_str());
 		return false;
 	}
 
@@ -1591,6 +1650,64 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 	}
 
 	g_UserDatabase.SetAddons(user->GetID(), addons);
+
+	return true;
+}
+
+bool CChannelManager::OnRoomKickRequest(CReceivePacket* msg, IUser* user)
+{
+	CChannel* currentChannel = user->GetCurrentChannel();
+	if (currentChannel == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to kick a user from a room without current channel\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
+	IRoom* currentRoom = user->GetCurrentRoom();
+	if (currentRoom == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to kick a user from a room, although it isn\'t in any\n", user->GetID(), user->GetUsername().c_str());
+		return false;
+	}
+
+	if (user != currentRoom->GetHostUser())
+	{
+		Logger().Warn("User '%d, %s' tried to kick a user from a room, although it isn\'t the host (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		return false;
+	}
+
+	if (currentRoom->IsUserIngame(user))
+	{
+		Logger().Warn("User '%d, %s' tried to kick a user from a room, although it is currently playing (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		return false;
+	}
+
+	IUser* destUser = g_UserManager.GetUserById(msg->ReadUInt32());
+	if (destUser == NULL)
+	{
+		Logger().Warn("User '%d, %s' tried to kick a user from a room, although destUser == NULL (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		return false;
+	}
+
+	if (destUser == user)
+	{
+		Logger().Warn("User '%d, %s' tried to kick itself from a room (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		return false;
+	}
+
+	if (destUser->GetCurrentRoom() != currentRoom)
+	{
+		Logger().Warn("User '%d, %s' tried to kick a user from a room, although the destUser's current room != currentRoom (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		return false;
+	}
+
+	currentRoom->KickUser(destUser);
+
+	currentChannel->SendFullUpdateRoomList(destUser);
+
+	// add user to channel user list back
+	currentChannel->UserJoin(destUser, true);
+	g_PacketManager.SendLobbyJoin(destUser->GetExtendedSocket(), currentChannel);
 
 	return true;
 }

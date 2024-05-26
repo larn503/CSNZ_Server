@@ -37,6 +37,10 @@ catch (exception& e)
 	Logger().Fatal(OBFUSCATE("CUserDatabaseSQLite(): SQLite exception: %s\n"), e.what());
 }
 
+CUserDatabaseSQLite::~CUserDatabaseSQLite()
+{
+}
+
 bool CUserDatabaseSQLite::Init()
 {
 	if (!m_bInited)

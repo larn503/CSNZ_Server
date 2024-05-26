@@ -29,7 +29,9 @@ CRoom::CRoom(int roomId, IUser* hostUser, CChannel* channel, CRoomSettings* sett
 CRoom::~CRoom()
 {
 	delete m_pSettings;
-	delete m_pGameMatch;
+
+	if (m_pGameMatch)
+		delete m_pGameMatch;
 
 	if (m_pServer)
 	{
@@ -70,10 +72,8 @@ bool CRoom::HasUser(IUser* user)
 	{
 		return true;
 	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 void CRoom::AddUser(IUser* user)
@@ -612,14 +612,23 @@ void CRoom::OnGameStart()
 	}
 }
 
-void CRoom::KickUser(IUser* user)
+void CRoom::AddKickedUser(IUser* user)
 {
 	m_KickedUsers.push_back(user->GetID());
+}
 
-	for (auto u : m_Users)
-	{
-		g_PacketManager.SendRoomKick(u->GetExtendedSocket(), user->GetID());
-	}
+void CRoom::ClearKickedUsers()
+{
+	m_KickedUsers.clear();
+}
+
+void CRoom::KickUser(IUser* user)
+{
+	SendPlayerLeaveIngame(user);
+	AddKickedUser(user);
+	RemoveUser(user);
+
+	g_PacketManager.SendRoomKick(user->GetExtendedSocket(), user->GetID());
 }
 
 void CRoom::VoteKick(IUser* user, bool kick)
@@ -687,7 +696,7 @@ void CRoom::SendConnectHost(IUser* user, IUser* host)
 	else
 	{
 		if (m_pServer)
-			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetIP(), true, m_pServer->GetPort(), user->GetID());
+			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetIP(), m_pServer->GetPort(), user->GetID());
 		else
 			g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host);
 			//g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
@@ -805,8 +814,7 @@ void CRoom::OnUserRemoved(IUser* user)
 	}
 	else
 	{
-		m_pParentChannel->RemoveRoomById(m_nID);
-		//m_pParentChannel->OnEmptyRoomCallback(this);
+		m_pParentChannel->RemoveRoom(this);
 	}
 
 	user->SetStatus(UserStatus::STATUS_MENU);
@@ -817,6 +825,11 @@ void CRoom::SendRemovedUser(IUser* deletedUser)
 	for (auto u : m_Users)
 	{
 		g_PacketManager.SendRoomPlayerLeave(u->GetExtendedSocket(), deletedUser->GetID());
+	}
+
+	if (m_pServer)
+	{
+		g_PacketManager.SendRoomPlayerLeave(m_pServer->GetSocket(), deletedUser->GetID());
 	}
 }
 
@@ -830,6 +843,9 @@ void CRoom::UpdateHost(IUser* newHost)
 		g_PacketManager.SendRoomSetHost(u->GetExtendedSocket(), newHost);
 	}
 
+	CheckForHostItems();
+	ClearKickedUsers();
+
 	if (m_pServer == NULL && m_pGameMatch != NULL)
 	{
 		if (m_pGameMatch->m_UserStats.empty())
@@ -841,8 +857,6 @@ void CRoom::UpdateHost(IUser* newHost)
 			m_pGameMatch->OnHostChanged(newHost);
 		}
 	}
-
-	CheckForHostItems();
 }
 
 bool CRoom::FindAndUpdateNewHost()
@@ -942,7 +956,11 @@ void CRoom::EndGame(bool forcedEnd)
 	ResetStatusIngameUsers();
 
 	if (m_pServer)
+	{
+		m_pServer->SetRoom(NULL);
 		g_PacketManager.SendHostStop(m_pServer->GetSocket());
+		m_pServer = NULL;
+	}
 
 	for (auto u : m_Users)
 	{
@@ -955,26 +973,39 @@ void CRoom::EndGame(bool forcedEnd)
 	}
 
 	SendReadyStatusToAll();
-
-	if (!forcedEnd && m_pSettings->mapPlaylistSize)
+	if (m_pSettings->mapPlaylistSize)
 	{
-		for (int i = 0; i <= m_pSettings->mapPlaylistSize - 1; i++)
+		if (forcedEnd)
 		{
-			if (m_pSettings->mapId == m_pSettings->mapPlaylist[i].mapId)
+			m_pSettings->mapId = m_pSettings->mapPlaylist[0].mapId;
+			m_pSettings->mapId2 = m_pSettings->mapId;
+			m_pSettings->mapPlaylistIndex = 1;
+
+			for (auto u : m_Users)
 			{
-				int nextMap = i + 1;
-				if (nextMap == m_pSettings->mapPlaylistSize)
-					nextMap = 0;
-
-				m_pSettings->mapId = m_pSettings->mapPlaylist[nextMap].mapId;
-				m_pSettings->mapId2 = m_pSettings->mapId;
-				m_pSettings->mapPlaylistIndex = nextMap + 1;
-
-				for (auto u : m_Users)
+				g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2 | ROOM_LOWMID_MAPPLAYLISTINDEX);
+			}
+		}
+		else
+		{
+			for (int i = 0; i <= m_pSettings->mapPlaylistSize - 1; i++)
+			{
+				if (m_pSettings->mapId == m_pSettings->mapPlaylist[i].mapId)
 				{
-					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2 | ROOM_LOWMID_MAPPLAYLISTINDEX);
+					int nextMap = i + 1;
+					if (nextMap == m_pSettings->mapPlaylistSize)
+						nextMap = 0;
+
+					m_pSettings->mapId = m_pSettings->mapPlaylist[nextMap].mapId;
+					m_pSettings->mapId2 = m_pSettings->mapId;
+					m_pSettings->mapPlaylistIndex = nextMap + 1;
+
+					for (auto u : m_Users)
+					{
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2 | ROOM_LOWMID_MAPPLAYLISTINDEX);
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}

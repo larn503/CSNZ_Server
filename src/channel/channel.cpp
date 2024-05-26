@@ -17,6 +17,14 @@ CChannel::CChannel(CChannelServer* server, int id, const std::string& channelNam
 	m_Users.reserve(maxPlayers);
 }
 
+CChannel::~CChannel()
+{
+	for (auto room : m_Rooms)
+	{
+		delete room;
+	}
+}
+
 bool CChannel::UserJoin(IUser* user, bool unhide)
 {
 	if (unhide)
@@ -68,7 +76,7 @@ void CChannel::UserLeft(IUser* user, bool hide)
 		return;
 	}
 
-	if (!hide && !RemoveUserById(user->GetID()))
+	if (!hide && !RemoveUser(user))
 	{
 		Logger().Info(OBFUSCATE("CChannel::UserLeft: couldn't find user with %d ID. User will remain in channel user list\n"), user->GetID());
 	}
@@ -151,14 +159,6 @@ void CChannel::UpdateUserInfo(IUser* user, const CUserCharacter& character)
 	}
 }
 
-void CChannel::OnEmptyRoomCallback(IRoom* room)
-{
-	if (!RemoveRoomById(room->GetID()))
-		Logger().Info(OBFUSCATE("CChannel::OnEmptyRoomCallback: couldn't find room with %d ID. Room will remain in channel room list\n"), room->GetID());
-
-	delete room;
-}
-
 IRoom* CChannel::GetRoomById(int id)
 {
 	for (auto room : m_Rooms)
@@ -182,35 +182,22 @@ IUser* CChannel::GetUserById(int userId)
 IRoom* CChannel::CreateRoom(IUser* host, CRoomSettings* settings)
 {
 	m_Rooms.push_back(new CRoom(m_nNextRoomID++, host, this, settings));
-	return m_Rooms[m_Rooms.size() - 1];
+	return m_Rooms.back();
 }
 
-bool CChannel::RemoveRoomById(int roomID)
+void CChannel::RemoveRoom(IRoom* room)
 {
-	for (auto room : m_Rooms)
-	{
-		if (room->GetID() == roomID)
-		{
-			m_Rooms.erase(remove(begin(m_Rooms), end(m_Rooms), room), end(m_Rooms));
-			return true;
-		}
-	}
-
-	return false;
+	m_Rooms.erase(remove(begin(m_Rooms), end(m_Rooms), room), end(m_Rooms));
+	delete room;
 }
 
-bool CChannel::RemoveUserById(int userID)
+bool CChannel::RemoveUser(IUser* user)
 {
-	for (auto user : m_Users)
-	{
-		if (user->GetID() == userID)
-		{
-			m_Users.erase(remove(begin(m_Users), end(m_Users), user), end(m_Users));
-			return true;
-		}
-	}
+	const auto oldSize = m_Users.size();
 
-	return false;
+	m_Users.erase(remove(begin(m_Users), end(m_Users), user), end(m_Users));
+
+	return oldSize != m_Users.size();
 }
 
 int CChannel::GetID()
@@ -235,11 +222,12 @@ std::vector<IUser*> CChannel::GetUsers()
 
 std::vector<IUser*> CChannel::GetOutsideUsers()
 {
-	std::vector<IUser*> temp;
-	for (auto& u : m_Users)
+	std::vector<IUser*> outsideUsers;
+	for (auto u : m_Users)
 		if (u->GetCurrentRoom() == nullptr)
-			temp.push_back(u);
-	return temp;
+			outsideUsers.push_back(u);
+
+	return outsideUsers;
 }
 
 CChannelServer* CChannel::GetParentChannelServer()

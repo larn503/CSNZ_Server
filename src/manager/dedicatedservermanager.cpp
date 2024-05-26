@@ -111,9 +111,9 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 	}
 	case HostServerPacketType::Unk3:
 	{
-		// Supposedly it's a variable size, but it doesn't tell what size it sends and it's always sending one byte, so...
-		int unk = msg->ReadUInt8();
-		Logger().Warn("CDedicatedServerManager::OnPacket(3): %d\n", unk);
+		// I think it's a string
+		std::string unk = msg->ReadString();
+		Logger().Warn("CDedicatedServerManager::OnPacket(3): %s\n", unk.c_str());
 
 		break;
 	}
@@ -190,8 +190,14 @@ void CDedicatedServerManager::RemoveServer(IExtendedSocket* socket)
 
 	IRoom* room = server->GetRoom();
 	if (room)
+	{
 		room->SetServer(NULL);
 
+		if (room->GetGameMatch())
+			room->EndGame(true);
+	}
+
+	delete server;
 	m_vServerPools.erase(remove(m_vServerPools.begin(), m_vServerPools.end(), server), m_vServerPools.end());
 }
 
@@ -203,10 +209,6 @@ void CDedicatedServerManager::TransferServer(IExtendedSocket* socket, const std:
 	CDedicatedServer* server = GetServerBySocket(socket);
 	if (!server)
 		return;
-
-	IRoom* room = server->GetRoom();
-	if (room)
-		room->SetServer(NULL);
 
 	g_PacketManager.SendHostServerTransfer(socket, ipAddress, port);
 }

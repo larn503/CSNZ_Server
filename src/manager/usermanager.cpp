@@ -25,6 +25,10 @@ CUserManager::CUserManager() : CBaseManager("UserManager", true)
 {
 }
 
+CUserManager::~CUserManager()
+{
+}
+
 bool CUserManager::Init()
 {
 	for (size_t i = 0; i < g_pServerConfig->defUser.defaultItems.size(); i++)
@@ -35,6 +39,8 @@ bool CUserManager::Init()
 
 void CUserManager::Shutdown()
 {
+	g_UserManager.SendNoticeMsgBoxToAll("Server down for maintenance");
+
 	m_DefaultItems.clear();
 }
 
@@ -901,10 +907,8 @@ IUser* CUserManager::AddUser(IExtendedSocket* socket, int userID, const string& 
 	if ((int)m_Users.size() >= g_pServerConfig->maxPlayers)
 		return NULL;
 
-	CUser* newUser = new CUser(socket, userID, userName);
-	m_Users.push_back(newUser);
-
-	return newUser;
+	m_Users.push_back(new CUser(socket, userID, userName));
+	return m_Users.back();
 }
 
 IUser* CUserManager::GetUserById(int userId)
@@ -1196,6 +1200,73 @@ bool CUserManager::OnCryptPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	if (g_pServerConfig->crypt)
 		socket->SetCryptInput(true);
+
+	return true;
+}
+
+bool CUserManager::OnKickPacket(CReceivePacket* msg, IExtendedSocket* socket)
+{
+	LOG_PACKET;
+
+	IUser* user = GetUserBySocket(socket);
+	if (user == NULL)
+		return false;
+
+	CChannel* currentChannel = user->GetCurrentChannel();
+	if (currentChannel == NULL)
+		return false;
+
+	IRoom* currentRoom = user->GetCurrentRoom();
+	if (currentRoom == NULL)
+		return false;
+
+	int type = msg->ReadUInt8();
+	switch (type)
+	{
+	case 0:
+		Logger().Warn(OBFUSCATE("[User '%s'] Packet_Kick type 0\n"), user->GetLogName());
+		break;
+	case 1:
+	{
+		if (user != currentRoom->GetHostUser())
+			return false;
+
+		CRoomSettings* roomSettings = currentRoom->GetSettings();
+		if (!roomSettings->superRoom)
+			return false;
+
+		int userID = msg->ReadUInt32();
+		int unk2 = msg->ReadUInt8();
+		string unk3 = msg->ReadString();
+
+		IUser* destUser = GetUserById(userID);
+		if (destUser == NULL)
+			return false;
+
+		if (destUser == user)
+			return false;
+
+		if (destUser->GetCurrentRoom() != currentRoom)
+			return false;
+
+		for (auto u : currentRoom->GetUsers())
+			g_PacketManager.SendKickPacket(u->GetExtendedSocket(), userID);
+
+		currentRoom->KickUser(destUser);
+
+		currentChannel->SendFullUpdateRoomList(destUser);
+
+		// add user to channel user list back
+		currentChannel->UserJoin(destUser, true);
+		g_PacketManager.SendLobbyJoin(destUser->GetExtendedSocket(), currentChannel);
+
+		Logger().Warn(OBFUSCATE("[User '%s'] Packet_Kick type 1: unk: %d, unk2: %d, unk3: %s\n"), user->GetLogName(), userID, unk2, unk3.c_str());
+		break;
+	}
+	default:
+		Logger().Warn(OBFUSCATE("[User '%s'] Unknown Packet_Kick type %d (len: %d)\n"), user->GetLogName(), type, msg->GetLength());
+		break;
+	}
 
 	return true;
 }

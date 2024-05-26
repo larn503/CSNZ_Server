@@ -18,6 +18,10 @@ CHostManager::CHostManager() : CBaseManager("HostManager")
 {
 }
 
+CHostManager::~CHostManager()
+{
+}
+
 bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;

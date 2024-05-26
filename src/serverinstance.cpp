@@ -51,6 +51,8 @@ CServerInstance::~CServerInstance()
 	Manager().ShutdownAll();
 
 	delete g_pItemTable;
+	delete g_pMapListTable;
+	delete g_pGameModeListTable;
 	delete g_pServerConfig;
 }
 
@@ -436,6 +438,9 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		break;
 	case PacketId::League:
 		g_UserManager.OnLeaguePacket(msg, s);
+		break;
+	case PacketId::Kick:
+		g_UserManager.OnKickPacket(msg, s);
 		break;
 	default:
 		Logger().Warn("Unimplemented packet: %d\n", msg->GetID());

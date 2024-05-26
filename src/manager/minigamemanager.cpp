@@ -12,6 +12,10 @@ CMiniGameManager::CMiniGameManager() : CBaseManager("MiniGameManager")
 {
 }
 
+CMiniGameManager::~CMiniGameManager()
+{
+}
+
 void CMiniGameManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
 	LOG_PACKET;
