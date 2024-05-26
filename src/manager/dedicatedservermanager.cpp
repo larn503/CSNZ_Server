@@ -80,7 +80,7 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 	{
 		/// @todo make whitelist...
 		int port = msg->ReadUInt16(); // -port, default is 27015
-		int ip = msg->ReadUInt32(false); // ip from -hostip dedi argument
+		int ip = msg->ReadUInt32(true); // ip from -hostip dedi argument
 
 		// if IP is not specified by dedi server, use IP from socket
 		if (ip == 0)
