@@ -39,8 +39,6 @@ bool CUserManager::Init()
 
 void CUserManager::Shutdown()
 {
-	g_UserManager.SendNoticeMsgBoxToAll("Server down for maintenance");
-
 	m_DefaultItems.clear();
 }
 

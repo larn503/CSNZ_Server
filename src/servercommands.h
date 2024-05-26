@@ -58,6 +58,7 @@ void CommandCrash(CCommand* cmd, const std::vector<std::string>& args)
 
 void CommandShutdown(CCommand* cmd, const std::vector<std::string>& args)
 {
+	g_UserManager.SendNoticeMsgBoxToAll("Server down for maintenance");
 	g_pServerInstance->SetServerActive(false);
 }
 
