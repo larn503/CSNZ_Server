@@ -85,7 +85,7 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 		// if IP is not specified by dedi server, use IP from socket
 		if (ip == 0)
 		{
-			ip = ntohl(ip_string_to_int(socket->GetIP())); // big endian to little endian
+			ip = ip_string_to_int(socket->GetIP());
 			Logger().Warn("CDedicatedServerManager::OnPacket(AddServer): no IP specified, using IP: %s\n", socket->GetIP().c_str());
 		}
 

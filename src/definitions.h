@@ -90,7 +90,8 @@ enum PacketId
 	Unk121 = 121,
 	Unk122 = 122,
 	UserStartStep = 123,
-	// Missing 26 packets
+	CPShop = 124,
+	// Missing 25 packets
 	UserStart = 150,
 	GameMatchRoomList = 151,
 	DefaultItems = 152,
@@ -174,6 +175,7 @@ enum EMetadataPacketType
 	kPacket_Metadata_Unk15 = 15,
 	kPacket_Metadata_RandomWeaponList = 16,
 	kPacket_Metadata_WeaponParts = 17,
+	kPacket_Metadata_MileageShop = 18,
 	kPacket_Metadata_Unk20 = 20,
 	kPacket_Metadata_Encyclopedia = 23,
 	kPacket_Metadata_GameModeList = 24,
@@ -195,6 +197,7 @@ enum EMetadataPacketType
 	kPacket_Metadata_ZBCompetitive = 48,
 	kPacket_Metadata_Unk49 = 49,
 	kPacket_Metadata_ModeEvent = 50,
+	kPacket_Metadata_EventShop = 51,
 	kPacket_Metadata_Hash = 255
 };
 
@@ -233,6 +236,8 @@ enum EServerConfig_MetadataFlag : uint64_t
 	kMetadataFlag_CodisData = 1LL << 30,
 	kMetadataFlag_RandomWeaponList = 1LL << 31,
 	kMetadataFlag_ModeEvent = 1LL << 32,
+	kMetadataFlag_MileageShop = 1LL << 33,
+	kMetadataFlag_EventShop = 1LL << 34,
 };
 
 enum ItemPacketType

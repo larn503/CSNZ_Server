@@ -39,6 +39,7 @@ CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 	m_pMapListZip = NULL;
 	m_pClientTableZip = NULL;
 	m_pWeaponPartsZip = NULL;
+	m_pMileageShopZip = NULL;
 	m_pMatchingZip = NULL;
 	m_pProgressUnlockZip = NULL;
 	m_pGameModeListZip = NULL;
@@ -55,6 +56,7 @@ CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 	m_pCodisDataZip = NULL;
 	m_pWeaponPropZip = NULL;
 	m_pModeEventZip = NULL;
+	m_pEventShopZip = NULL;
 	m_pPaintItemList = NULL;
 	m_pReinforceItemsExp = NULL;
 	m_pRandomWeaponList = NULL;
@@ -76,6 +78,7 @@ bool CPacketManager::Init()
 	m_pMapListZip = LoadBinaryMetadata("MapList.csv", true);
 	m_pClientTableZip = LoadBinaryMetadata("ClientTable.csv", true);
 	m_pWeaponPartsZip = LoadBinaryMetadata("weaponparts.csv", true);
+	m_pMileageShopZip = LoadBinaryMetadata("MileageShop.csv", true);
 	m_pMatchingZip = LoadBinaryMetadata("MatchOption.csv", true);
 	m_pProgressUnlockZip = LoadBinaryMetadata("progress_unlock.csv", true);
 	m_pGameModeListZip = LoadBinaryMetadata("GameModeList.csv", true);
@@ -92,6 +95,7 @@ bool CPacketManager::Init()
 	m_pCodisDataZip = LoadBinaryMetadata("CodisData.csv", true);
 	m_pWeaponPropZip = LoadBinaryMetadata("WeaponProp.json", true);
 	m_pModeEventZip = LoadBinaryMetadata("ModeEvent.csv", true);
+	m_pEventShopZip = LoadBinaryMetadata("EventShop.csv", true);
 	m_pPaintItemList = LoadBinaryMetadata("Metadata_PaintItemList.bin");
 	m_pReinforceItemsExp = LoadBinaryMetadata("Metadata_ReinforceItemsExp.bin");
 	m_pRandomWeaponList = LoadBinaryMetadata("Metadata_RandomWeaponList.bin");
@@ -103,10 +107,10 @@ bool CPacketManager::Init()
 	m_pUnk43 = LoadBinaryMetadata("Metadata_Unk43.bin");
 	m_pUnk49 = LoadBinaryMetadata("Metadata_Unk49.bin");
 
-	if (!m_pMapListZip || !m_pClientTableZip || !m_pWeaponPartsZip || !m_pMatchingZip || !m_pProgressUnlockZip || !m_pGameModeListZip ||
+	if (!m_pMapListZip || !m_pClientTableZip || !m_pWeaponPartsZip || !m_pMileageShopZip || !m_pMatchingZip || !m_pProgressUnlockZip || !m_pGameModeListZip ||
 		!m_pReinforceMaxLvlZip || !m_pReinforceMaxExpZip || !m_pItemExpireTimeZip || !m_pHonorMoneyShopZip || !m_pScenarioTX_CommonZip || !m_pScenarioTX_DediZip ||
 		!m_pShopItemList_DediZip || !m_pZBCompetitiveZip || !m_pPPSystemZip || !m_pItemZip || !m_pCodisDataZip || !m_pWeaponPropZip ||
-		!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49 || !m_pModeEventZip)
+		!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49 || !m_pModeEventZip || !m_pEventShopZip)
 	{
 		Logger().Fatal("Failed to load metadata\n");
 		return false;
@@ -123,6 +127,8 @@ void CPacketManager::Shutdown()
 		delete m_pClientTableZip;
 	if (m_pWeaponPartsZip)
 		delete m_pWeaponPartsZip;
+	if (m_pMileageShopZip)
+		delete m_pMileageShopZip;
 	if (m_pMatchingZip)
 		delete m_pMatchingZip;
 	if (m_pProgressUnlockZip)
@@ -155,6 +161,8 @@ void CPacketManager::Shutdown()
 		delete m_pWeaponPropZip;
 	if (m_pModeEventZip)
 		delete m_pModeEventZip;
+	if (m_pEventShopZip)
+		delete m_pEventShopZip;
 
 	if (m_pPaintItemList)
 		delete m_pPaintItemList;
@@ -1444,6 +1452,38 @@ void CPacketManager::SendMetadataModeEvent(IExtendedSocket* socket)
 	socket->Send(msg);
 }
 
+void CPacketManager::SendMetadataMileageShop(IExtendedSocket* socket)
+{
+	if (!m_pMileageShopZip)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(kPacket_Metadata_MileageShop);
+
+	msg->WriteUInt16(m_pMileageShopZip->GetBufSize());
+	msg->WriteData(m_pMileageShopZip->GetBuf(), m_pMileageShopZip->GetBufSize());
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMetadataEventShop(IExtendedSocket* socket)
+{
+	if (!m_pEventShopZip)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(kPacket_Metadata_EventShop);
+
+	msg->WriteUInt16(m_pEventShopZip->GetBufSize());
+	msg->WriteData(m_pEventShopZip->GetBuf(), m_pEventShopZip->GetBufSize());
+
+	socket->Send(msg);
+}
+
 void CPacketManager::SendGameMatchInfo(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::GameMatch);
@@ -1529,8 +1569,7 @@ void CPacketManager::SendReply(IExtendedSocket* socket, int type)
 	msg->BuildHeader();
 
 	msg->WriteUInt8(type);
-	msg->WriteString("S_REPLY_YES"); // S_REPLY_CREATEOK
-	msg->WriteUInt8(0);
+	msg->WriteString("S_REPLY_OK");
 	msg->WriteUInt8(0);
 
 	socket->Send(msg);
@@ -2636,7 +2675,8 @@ void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomI
 		UserNetworkConfig_s network = user->GetNetworkConfig();
 
 		msg->WriteUInt32(user->GetID());
-		msg->WriteString("");
+		msg->WriteUInt32(0);
+		msg->WriteString(user->GetUsername());
 
 		// user network info
 		msg->WriteUInt8(user->GetRoomData()->m_Team);
@@ -2667,7 +2707,8 @@ void CPacketManager::SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, Ro
 	msg->WriteUInt8(OutRoomPacketType::PlayerJoin);
 
 	msg->WriteUInt32(user->GetID());
-	msg->WriteString("");
+	msg->WriteUInt32(0);
+	msg->WriteString(user->GetUsername());
 
 	UserNetworkConfig_s network = user->GetNetworkConfig();
 

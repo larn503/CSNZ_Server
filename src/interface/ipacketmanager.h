@@ -86,6 +86,8 @@ public:
 	virtual void SendMetadataCodisData(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataItem(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataModeEvent(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataMileageShop(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataEventShop(IExtendedSocket* socket) = 0;
 
 	virtual void SendGameMatchInfo(IExtendedSocket* socket) = 0;
 	virtual void SendGameMatchUnk(IExtendedSocket* socket) = 0;

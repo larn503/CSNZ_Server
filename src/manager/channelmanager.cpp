@@ -1473,7 +1473,7 @@ bool CChannelManager::OnGameStartRequest(IUser* user)
 	g_PacketManager.SendLeagueGaugePacket(user->GetExtendedSocket(), roomSettings->gameModeId);
 
 	// send to the host game start request
-	if (currentRoom->GetHostUser() == user)
+	if (currentRoom->GetStatus() == RoomStatus::STATUS_WAITING && currentRoom->GetHostUser() == user)
 	{
 		currentRoom->HostStartGame();
 

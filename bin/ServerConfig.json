@@ -46,7 +46,9 @@
 		"WeaponProp": true,
 		"Hash": false,
 		"RandomWeaponList": true,
-		"ModeEvent": true
+		"ModeEvent": true,
+		"MileageShop": false,
+		"EventShop": false
 	},
 	"DefaultUser": {
 		"GameMaster": true,

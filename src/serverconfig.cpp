@@ -94,7 +94,9 @@ const char* defaultServerConfig = R"(
 		"WeaponProp": true,
 		"Hash": false,
 		"RandomWeaponList": true,
-		"ModeEvent": true
+		"ModeEvent": true,
+		"MileageShop": false,
+		"EventShop": false
 	},
 	"DefaultUser": {
 		"GameMaster": true,
@@ -1045,6 +1047,10 @@ bool CServerConfig::Load()
 				metadataToSend |= kMetadataFlag_RandomWeaponList;
 			if (jMetadata.value("ModeEvent", false))
 				metadataToSend |= kMetadataFlag_ModeEvent;
+			if (jMetadata.value("MileageShop", false))
+				metadataToSend |= kMetadataFlag_MileageShop;
+			if (jMetadata.value("EventShop", false))
+				metadataToSend |= kMetadataFlag_EventShop;
 		}
 		if (cfg.contains("DefaultUser"))
 		{

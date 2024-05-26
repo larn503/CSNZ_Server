@@ -113,6 +113,8 @@ public:
 	void SendMetadataCodisData(IExtendedSocket* socket);
 	void SendMetadataItem(IExtendedSocket* socket);
 	void SendMetadataModeEvent(IExtendedSocket* socket);
+	void SendMetadataMileageShop(IExtendedSocket* socket);
+	void SendMetadataEventShop(IExtendedSocket* socket);
 
 	void SendGameMatchInfo(IExtendedSocket* socket);
 	void SendGameMatchUnk(IExtendedSocket* socket);
@@ -296,6 +298,8 @@ private:
 	CBinMetadata* m_pUnk43;
 	CBinMetadata* m_pUnk49;
 	CBinMetadata* m_pModeEventZip;
+	CBinMetadata* m_pMileageShopZip;
+	CBinMetadata* m_pEventShopZip;
 };
 
 extern CPacketManager g_PacketManager;

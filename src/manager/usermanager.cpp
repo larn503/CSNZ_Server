@@ -561,6 +561,8 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 		g_PacketManager.SendMetadataUnk15(socket);
 	if (flag & kMetadataFlag_WeaponParts)
 		g_PacketManager.SendMetadataWeaponParts(socket);
+	if (flag & kMetadataFlag_MileageShop)
+		g_PacketManager.SendMetadataMileageShop(socket);
 	if (flag & kMetadataFlag_Unk20)
 		g_PacketManager.SendMetadataUnk20(socket);
 	if (flag & kMetadataFlag_Encyclopedia)
@@ -607,6 +609,8 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 		g_PacketManager.SendMetadataRandomWeaponList(socket);
 	if (flag & kMetadataFlag_ModeEvent)
 		g_PacketManager.SendMetadataModeEvent(socket);
+	if (flag & kMetadataFlag_EventShop)
+		g_PacketManager.SendMetadataEventShop(socket);
 }
 
 void CUserManager::SendUserLoadout(IUser* user)
