@@ -640,6 +640,7 @@ enum
 	kEventFlag_ResonanceEnergyShop = 1 << 18,
 	kEventFlag_MissionChain = 1 << 19,
 	kEventFlag_WebEvent = 1 << 21, // WTF?
+	kEventFlag_CPShop = 1 << 22,
 };
 enum MiniGamePacketType
 {

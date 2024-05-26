@@ -503,8 +503,7 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 
 	g_PacketManager.SendEventUnk(socket);
 
-	if (g_pServerConfig->activeMiniGamesFlag)
-		g_PacketManager.SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
+	g_PacketManager.SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
 
 	if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
 		g_MiniGameManager.SendWeaponReleaseUpdate(user);
