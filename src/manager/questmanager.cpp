@@ -21,11 +21,9 @@ CQuestManager::~CQuestManager()
 
 bool CQuestManager::Init()
 {
-#ifndef PUBLIC_RELEASE
 	LoadQuests();
 	LoadEventQuests();
 	LoadClanQuests();
-#endif
 
 	return true;
 }

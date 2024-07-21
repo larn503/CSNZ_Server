@@ -147,3 +147,6 @@ else()
 	# don't treat some warnings as errors
 	target_compile_options(PROJECTNAME PRIVATE -Wno-error=sign-compare -Wno-error=unused-variable -Wno-error=delete-non-virtual-dtor -Wno-error=unused-parameter -Wno-error=conversion-null -Wno-error=register -Wno-error=unused-value -Wno-error=reorder -Wno-error=attributes)
 endif()
+
+# Fix mutex not locking in Release builds
+target_compile_definitions(PROJECTNAME PRIVATE _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)

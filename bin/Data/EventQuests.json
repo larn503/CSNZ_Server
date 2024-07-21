@@ -1,0 +1,74 @@
+{
+	"Version": 1,
+	"1": {
+		"Active": true,
+		"Tasks": {
+			"1": {
+				"Goal": 2000,
+				"Notice": {
+					"Goal": 10,
+					"UserMsg": "Number of kill points %d/%d achieved with the Dual Infinity"
+				},
+				"RewardID": 1111,
+				"Conditions": {
+					"1": {
+						"EventType": 2,
+						"Gun": 242,
+						"CheckForGun": true,
+						"GoalPoints": 1,
+						"Bot": 1
+					},
+					"2": {
+						"EventType": 2,
+						"Gun": 242,
+						"CheckForGun": true,
+						"GoalPoints": 5,
+						"Bot": 0
+					},
+					"3": {
+						"GameModes": [8, 9, 14, 29],
+						"EventType": 2,
+						"VictimTeam": 1,
+						"Gun": 242,
+						"CheckForGun": true,
+						"GoalPoints": 15,
+						"Bot": 0
+					}
+				}
+			},
+			"2": {
+				"Goal": 2000,
+				"Notice": {
+					"Goal": 10,
+					"UserMsg": "Number of kill points %d/%d achieved with the Dual Infinity Custom"
+				},
+				"RewardID": 1112,
+				"Conditions": {
+					"1": {
+						"EventType": 2,
+						"Gun": 245,
+						"CheckForGun": true,
+						"GoalPoints": 1,
+						"Bot": 1
+					},
+					"2": {
+						"EventType": 2,
+						"Gun": 245,
+						"CheckForGun": true,
+						"GoalPoints": 5,
+						"Bot": 0
+					},
+					"3": {
+						"GameModes": [8, 9, 14, 29],
+						"EventType": 2,
+						"VictimTeam": 1,
+						"Gun": 245,
+						"CheckForGun": true,
+						"GoalPoints": 15,
+						"Bot": 0
+					}
+				}
+			}
+		}
+	}
+}

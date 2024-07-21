@@ -1,6 +1,5 @@
 #pragma once
 
-#include <mutex>
 #include "manager.h"
 #include "interface/idedicatedservermanager.h"
 
