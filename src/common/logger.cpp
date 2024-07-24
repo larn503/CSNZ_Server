@@ -98,7 +98,7 @@ void CLoggerPrefix::LogVarg(int level, const char* msg, va_list argptr)
 }
 
 /**
- * Adds prefix to message in format "[time][level] Message"
+ * Adds prefix to message in format "[time] [level] Message"
  */
 const char* CLoggerPrefix::FormatPrefix(int level, const char* msg)
 {
@@ -109,7 +109,7 @@ const char* CLoggerPrefix::FormatPrefix(int level, const char* msg)
 	const char* levelStr = GetLevelPrefix(level, levelLen);
 	int indent = GetLevelPrefixMaxLen() - levelLen; // this is how much extra blank characters need to be added for indent
 
-	snprintf(m_szBuf, sizeof(m_szBuf), "[%s][%s]%*s %s", timePrefix, levelStr, indent, "", msg);
+	snprintf(m_szBuf, sizeof(m_szBuf), "[%s] [%s]%*s %s", timePrefix, levelStr, indent, "", msg);
 
 	return m_szBuf;
 }
