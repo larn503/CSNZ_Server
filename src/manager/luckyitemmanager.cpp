@@ -290,7 +290,7 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 	ItemBox* itemBox = GetItemBoxByItemId(itemBoxID);
 	if (!itemBox || itemBox->itemId == 0)
 	{
-		Logger().Warn("User '%d, %s' tried to open item box with unknown ID: %d\n", user->GetID(), user->GetUsername().c_str(), itemBoxID);
+		Logger().Warn("User '%s' tried to open item box with unknown ID: %d\n", user->GetLogName(), itemBoxID);
 		g_PacketManager.SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
 		return 0;
 	}

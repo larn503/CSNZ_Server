@@ -390,13 +390,13 @@ void CGameMatch::OnDropBoxPickup(IUser* user, int rewardID)
 #ifndef PUBLIC_RELEASE
 	if (m_nGameMode != 15 && m_nGameMode != 17 && m_nGameMode != 26 && m_nGameMode != 28)
 	{
-		Logger().Info("[SuspectNotice] detected suspect user '%d, %s', reason: %d, %s, %d, %d\n", user->GetID(), user->GetUsername().c_str(), 227, "DROPBOXABUSE", rewardID, m_nGameMode);
+		Logger().Info("[SuspectNotice] detected suspect User '%s', reason: %d, %s, %d, %d\n", user->GetLogName(), 227, "DROPBOXABUSE", rewardID, m_nGameMode);
 		return;
 	}
 
 	if (rewardID < 3000 || rewardID > 3023)
 	{
-		Logger().Info("[SuspectNotice] detected suspect user '%d, %s', reason: %d, %s, %d\n", user->GetID(), user->GetUsername().c_str(), 228, "DROPBOXABUSE", rewardID);
+		Logger().Info("[SuspectNotice] detected suspect User '%s', reason: %d, %s, %d\n", user->GetLogName(), 228, "DROPBOXABUSE", rewardID);
 		return;
 	}
 #endif	

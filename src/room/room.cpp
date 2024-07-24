@@ -165,7 +165,7 @@ RoomReadyStatus CRoom::IsUserReady(IUser* user)
 {
 	if (!HasUser(user))
 	{
-		Logger().Warn("CRoom::IsUserReady: user '%d, %s' not found\n", user->GetID(), user->GetUsername().c_str());
+		Logger().Warn("CRoom::IsUserReady: User '%s' not found\n", user->GetLogName());
 		return RoomReadyStatus::READY_STATUS_NO;
 	}
 
@@ -188,7 +188,7 @@ void CRoom::SetUserToTeam(IUser* user, RoomTeamNum newTeam)
 {
 	if (!HasUser(user))
 	{
-		Logger().Warn("CRoom::SetUserToTeam: user '%d, %s' not found\n", user->GetID(), user->GetUsername().c_str());
+		Logger().Warn("CRoom::SetUserToTeam: User '%s' not found\n", user->GetLogName());
 		return;
 	}
 
@@ -199,13 +199,13 @@ RoomReadyStatus CRoom::ToggleUserReadyStatus(IUser* user)
 {
 	if (!HasUser(user))
 	{
-		Logger().Warn("CRoom::ToggleUserReadyStatus: user '%d, %s' not found\n", user->GetID(), user->GetUsername().c_str());
+		Logger().Warn("CRoom::ToggleUserReadyStatus: User '%s' not found\n", user->GetLogName());
 		return RoomReadyStatus::READY_STATUS_NO;
 	}
 
 	if (user == m_pHostUser)
 	{
-		Logger().Warn("CRoom::ToggleUserReadyStatus: host user '%d, %s' tried to toggle ready status\n", user->GetID(), user->GetUsername().c_str());
+		Logger().Warn("CRoom::ToggleUserReadyStatus: host User '%s' tried to toggle ready status\n", user->GetLogName());
 		return RoomReadyStatus::READY_STATUS_NO;
 	}
 
@@ -957,7 +957,7 @@ void CRoom::UserGameJoin(IUser* user)
 
 	//m_pGameMatch->Connect(user);
 
-	Logger().Info("User '%d, %s' joining room match (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), m_nID);
+	Logger().Info("User '%s' joining room match (RID: %d)\n", user->GetLogName(), m_nID);
 }
 
 void CRoom::EndGame(bool forcedEnd)

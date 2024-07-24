@@ -1327,7 +1327,7 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 		}
 		else
 		{
-			Logger().Warn("User '%d, %s' tried to use unknown item (itemId: %d, category: %d, status: %d)\n", user->GetID(), user->GetUsername().c_str(), item.m_nItemID, category, item.m_nStatus);
+			Logger().Warn("User '%s' tried to use unknown item (itemId: %d, category: %d, status: %d)\n", user->GetLogName(), item.m_nItemID, category, item.m_nStatus);
 		}
 	}
 	}
