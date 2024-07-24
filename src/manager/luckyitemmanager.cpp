@@ -40,6 +40,7 @@ void CLuckyItemManager::Shutdown()
 	for (auto itemBox : m_ItemBoxes)
 		delete itemBox;
 
+	m_Items.clear();
 	m_ItemBoxes.clear();
 }
 

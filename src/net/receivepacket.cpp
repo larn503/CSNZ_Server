@@ -252,7 +252,9 @@ void CReceivePacket::ParseHeader()
 	{
 		m_nPacketID = m_Buffer.readUInt8();
 
+#ifdef _DEBUG
 		Logger().Debug("ReceivePacket::Parse() sequence: %d, length: %d, id: %d\n", m_nSequence, m_nLength, m_nPacketID);
+#endif
 	}
 }
 

@@ -37,6 +37,8 @@ void CShopManager::Shutdown()
 	CBaseManager::Shutdown();
 
 	m_Products.clear();
+	m_RecommendedProducts.clear();
+	m_PopularProducts.clear();
 }
 
 bool CShopManager::LoadProducts()
