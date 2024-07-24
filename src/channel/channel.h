@@ -10,6 +10,8 @@ public:
 	CChannel(CChannelServer* server, int id, const std::string& channelName, int maxPlayers, const std::string& loginMsg);
 	~CChannel();
 
+	void Shutdown();
+
 	bool UserJoin(IUser* user, bool unhide = false);
 	void UserLeft(IUser* user, bool hide = false);
 	void SendFullUpdateRoomList();

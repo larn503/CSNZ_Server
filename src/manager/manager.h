@@ -64,7 +64,7 @@ public:
 
 	// stub methods
 	virtual bool Init() { return true; }
-	virtual void Shutdown() { printf("Shutdown called, %p\n", this); }
+	virtual void Shutdown() { printf("%s Shutdown called, %p\n", GetName().c_str(), this); }
 	virtual bool CanReload() { return m_bCanReload; }
 	virtual std::string GetName() { return m_Name; }
 	virtual void OnSecondTick(time_t curTime) {}

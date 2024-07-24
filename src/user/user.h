@@ -25,6 +25,7 @@ public:
 	IRoom* GetCurrentRoom();
 	CRoomUser* GetRoomData();
 	UserStatus GetStatus();
+	bool IsPlaying();
 	int GetUptime();
 	int GetID();
 	std::string GetUsername();

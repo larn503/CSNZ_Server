@@ -34,6 +34,8 @@ bool CShopManager::Init()
 
 void CShopManager::Shutdown()
 {
+	CBaseManager::Shutdown();
+
 	m_Products.clear();
 }
 

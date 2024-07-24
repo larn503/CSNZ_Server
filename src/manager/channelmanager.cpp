@@ -20,6 +20,7 @@ using namespace std;
 
 CChannelManager g_ChannelManager;
 
+// TODO: Should we implement multi channels?
 CChannelManager::CChannelManager() : CBaseManager("ChannelManager")
 {
 	channelServers.push_back(new CChannelServer("Channel server", 1, 1, 1));
@@ -31,11 +32,14 @@ CChannelManager::~CChannelManager()
 
 void CChannelManager::Shutdown()
 {
+	CBaseManager::Shutdown();
+
 	EndAllGames();
 
-	for (auto channelServer : channelServers)
-	{
-		delete channelServer;
+	for (auto& cs : channelServers) {
+		for (auto& c : cs->GetChannels()) {
+			c->Shutdown();
+		}
 	}
 }
 
@@ -1348,21 +1352,17 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 	IRoom* currentRoom = user->GetCurrentRoom();
 	CChannel* currentChannel = user->GetCurrentChannel();
 
-	if (currentRoom == NULL || currentChannel == NULL)
+	if (currentChannel == NULL)
 	{
-		Logger().Info(OBFUSCATE("User '%d' tried to leave room without curRoom or curChannel\n"), user->GetID());
-
+		Logger().Info(OBFUSCATE("User '%s' tried to leave room without curChannel\n"), user->GetLogName());
 		return false;
 	}
 
-	if (currentRoom->IsUserIngame(user))
+	if (currentRoom)
 	{
-		currentRoom->SendPlayerLeaveIngame(user);
+		Logger().Info("User '%d, %s' left a room (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
+		currentRoom->RemoveUser(user);
 	}
-
-	Logger().Info("User '%d, %s' left a room (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
-
-	currentRoom->RemoveUser(user);
 
 	currentChannel->SendFullUpdateRoomList(user);
 
@@ -1676,7 +1676,7 @@ bool CChannelManager::OnRoomKickRequest(CReceivePacket* msg, IUser* user)
 		return false;
 	}
 
-	if (currentRoom->IsUserIngame(user))
+	if (user->IsPlaying())
 	{
 		Logger().Warn("User '%d, %s' tried to kick a user from a room, although it is currently playing (RID: %d)\n", user->GetID(), user->GetUsername().c_str(), currentRoom->GetID());
 		return false;

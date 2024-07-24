@@ -35,6 +35,8 @@ bool CLuckyItemManager::Init()
 
 void CLuckyItemManager::Shutdown()
 {
+	CBaseManager::Shutdown();
+
 	for (auto itemBox : m_ItemBoxes)
 		delete itemBox;
 

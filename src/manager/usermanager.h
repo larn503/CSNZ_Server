@@ -45,10 +45,12 @@ public:
 	IUser* GetUserBySocket(IExtendedSocket* socket);
 	IUser* GetUserByUsername(const std::string& username);
 	IUser* GetUserByNickname(const std::string& nickname);
+
 	void RemoveUser(IUser* user);
 	void RemoveUserById(int userId);
 	void RemoveUserBySocket(IExtendedSocket* socket);
 	void CleanUpUser(IUser* user);
+	bool RemoveUserInternal(IUser* user);
 
 	std::vector<IUser*> GetUsers();
 

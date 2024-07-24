@@ -26,18 +26,30 @@ CRoom::CRoom(int roomId, IUser* hostUser, CChannel* channel, CRoomSettings* sett
 	m_pServer = NULL;
 }
 
+// TODO: PROPERLY FIX IF THERE IS 2nd CALL ON IT, WILL CRASHING
 CRoom::~CRoom()
 {
 	delete m_pSettings;
-
-	if (m_pGameMatch)
-		delete m_pGameMatch;
+	m_pSettings = NULL;
 
 	if (m_pServer)
 	{
 		m_pServer->SetRoom(NULL);
 		g_PacketManager.SendHostStop(m_pServer->GetSocket());
+		m_pServer = NULL;
 	}
+
+	if (m_pGameMatch)
+	{
+		delete m_pGameMatch;
+		m_pGameMatch = NULL;
+	}
+}
+
+void CRoom::Shutdown()
+{
+	while (!m_Users.empty())
+		KickUser(m_Users.back());
 }
 
 int CRoom::GetNumOfPlayers()
@@ -91,6 +103,11 @@ void CRoom::AddUser(IUser* user)
 void CRoom::RemoveUser(IUser* targetUser)
 {
 	m_Users.erase(remove(begin(m_Users), end(m_Users), targetUser), end(m_Users));
+
+	if (targetUser->IsPlaying())
+	{
+		SendPlayerLeaveIngame(targetUser);
+	}
 
 	delete targetUser->GetRoomData();
 	targetUser->SetRoomData(NULL);
@@ -158,11 +175,6 @@ RoomReadyStatus CRoom::IsUserReady(IUser* user)
 bool CRoom::IsRoomReady()
 {
 	return false;
-}
-
-bool CRoom::IsUserIngame(IUser* user)
-{
-	return user->GetStatus() == STATUS_PLAYING;
 }
 
 void CRoom::SetUserIngame(IUser* user, bool inGame)

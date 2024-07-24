@@ -25,6 +25,13 @@ CChannel::~CChannel()
 	}
 }
 
+void CChannel::Shutdown()
+{
+	for (auto room : m_Rooms) {
+		room->Shutdown();
+	}
+}
+
 bool CChannel::UserJoin(IUser* user, bool unhide)
 {
 	if (unhide)

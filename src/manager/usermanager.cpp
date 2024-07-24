@@ -956,13 +956,8 @@ void CUserManager::RemoveUser(IUser* user)
 {
 	for (auto u : m_Users)
 	{
-		if (u == user)
-		{
-			m_Users.erase(remove(begin(m_Users), end(m_Users), user), end(m_Users));
-
-			CleanUpUser(u);
-			delete u;
-		}
+		if (u == user && RemoveUserInternal(u))
+			break;
 	}
 }
 
@@ -970,13 +965,8 @@ void CUserManager::RemoveUserById(int userId)
 {
 	for (auto u : m_Users)
 	{
-		if (u->GetID() == userId)
-		{
-			m_Users.erase(remove(begin(m_Users), end(m_Users), u), end(m_Users));
-
-			CleanUpUser(u);
-			delete u;
-		}
+		if (u->GetID() == userId && RemoveUserInternal(u))
+			break;
 	}
 }
 
@@ -984,14 +974,19 @@ void CUserManager::RemoveUserBySocket(IExtendedSocket* socket)
 {
 	for (auto u : m_Users)
 	{
-		if (u->GetExtendedSocket() == socket)
-		{
-			m_Users.erase(remove(begin(m_Users), end(m_Users), u), end(m_Users));
-
-			CleanUpUser(u);
-			delete u;
-		}
+		if (u->GetExtendedSocket() == socket && RemoveUserInternal(u))
+			break;
 	}
+}
+
+bool CUserManager::RemoveUserInternal(IUser* user)
+{
+	m_Users.erase(remove(begin(m_Users), end(m_Users), user), end(m_Users));
+
+	CleanUpUser(user);
+	delete user;
+
+	return true;
 }
 
 void CUserManager::CleanUpUser(IUser* user)

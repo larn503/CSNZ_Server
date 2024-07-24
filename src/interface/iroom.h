@@ -19,6 +19,8 @@ class IRoom
 public:
 	virtual ~IRoom() {}
 
+	virtual void Shutdown() = 0;
+
 	virtual int GetNumOfPlayers() = 0;
 	virtual int GetFreeSlots() = 0;
 	virtual bool HasFreeSlots() = 0;
@@ -33,7 +35,6 @@ public:
 	virtual int GetNumOfReadyPlayers() = 0;
 	virtual RoomReadyStatus IsUserReady(IUser* user) = 0;
 	virtual bool IsRoomReady() = 0;
-	virtual bool IsUserIngame(IUser* user) = 0;
 	virtual void SetUserIngame(IUser* user, bool inGame) = 0;
 	virtual void RemoveUser(IUser* targetUser) = 0;
 	//virtual void RemoveUserById(int userId) = 0;

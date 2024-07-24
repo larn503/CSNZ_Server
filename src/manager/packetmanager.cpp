@@ -121,6 +121,8 @@ bool CPacketManager::Init()
 
 void CPacketManager::Shutdown()
 {
+	CBaseManager::Shutdown();
+
 	if (m_pMapListZip)
 		delete m_pMapListZip;
 	if (m_pClientTableZip)

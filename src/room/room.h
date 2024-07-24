@@ -31,6 +31,8 @@ public:
 	CRoom(int roomId, IUser* hostUser, class CChannel* channel, CRoomSettings* settings);
 	~CRoom();
 
+	virtual void Shutdown();
+
 	int GetNumOfPlayers();
 	int GetFreeSlots();
 	bool HasFreeSlots();
@@ -45,7 +47,6 @@ public:
 	int GetNumOfReadyPlayers();
 	RoomReadyStatus IsUserReady(IUser* user);
 	bool IsRoomReady();
-	bool IsUserIngame(IUser* user);
 	void SetUserIngame(IUser* user, bool inGame);
 	void RemoveUser(IUser* targetUser);
 	//void RemoveUserById(int userId);

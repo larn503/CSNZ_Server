@@ -30,6 +30,8 @@ bool CQuestManager::Init()
 
 void CQuestManager::Shutdown()
 {
+	CBaseManager::Shutdown();
+
 	for (auto quest : m_Quests)
 	{
 		delete quest;

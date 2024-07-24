@@ -103,6 +103,11 @@ UserStatus CUser::GetStatus()
 	return m_Status;
 }
 
+bool CUser::IsPlaying()
+{
+	return GetStatus() == STATUS_PLAYING;
+}
+
 int CUser::GetUptime()
 {
 	return m_nUptime;

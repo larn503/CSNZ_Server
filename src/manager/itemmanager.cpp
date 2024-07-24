@@ -51,6 +51,8 @@ bool CItemManager::Init()
 
 void CItemManager::Shutdown()
 {
+	CBaseManager::Shutdown();
+
 	m_Rewards.clear();
 
 	delete m_pReinforceMaxLvTable;

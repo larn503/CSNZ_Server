@@ -42,6 +42,7 @@ public:
 	virtual IRoom* GetCurrentRoom() = 0;
 	virtual CRoomUser* GetRoomData() = 0;
 	virtual UserStatus GetStatus() = 0;
+	virtual bool IsPlaying() = 0;
 	virtual int GetUptime() = 0;
 	virtual int GetID() = 0;
 	virtual std::string GetUsername() = 0;
