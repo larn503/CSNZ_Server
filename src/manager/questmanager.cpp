@@ -116,6 +116,8 @@ void CQuestManager::ParseTasks(CQuestEvent* quest, ordered_json& jTasks)
 	for (auto& iTask : jTasks.items())
 	{
 		ordered_json jTask = iTask.value();
+		if (!jTask.is_object())
+			continue;
 
 		CQuestEventTask* task = new CQuestEventTask(quest, stoi(iTask.key()), jTask.value("Goal", 1));
 		task->SetRewardID(jTask.value("RewardID", 0));
@@ -146,7 +148,6 @@ void CQuestManager::ParseCondititons(CQuestEventTask* task, ordered_json& jCondi
 		maps = jCondition.value("Maps", maps);
 
 		int playerCount = jCondition.value("PlayerCount", 0);
-		bool temp = jCondition.value("Temp", false);
 		int goalPoints = jCondition.value("GoalPoints", 1);
 		int eventType = jCondition.value("EventType", 0);
 		int condID = stoi(iCondition.key());
@@ -154,17 +155,17 @@ void CQuestManager::ParseCondititons(CQuestEventTask* task, ordered_json& jCondi
 		// .....
 		if (eventType == QuestTaskEventType::EVENT_TIMEMATCH)
 		{
-			CQuestEventConditionTimeMatch* condition = new CQuestEventConditionTimeMatch(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionTimeMatch* condition = new CQuestEventConditionTimeMatch(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else if (eventType == QuestTaskEventType::EVENT_MATCHWIN)
 		{
-			CQuestEventConditionWin* condition = new CQuestEventConditionWin(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionWin* condition = new CQuestEventConditionWin(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else if (eventType == QuestTaskEventType::EVENT_KILL)
 		{
-			CQuestEventConditionKill* condition = new CQuestEventConditionKill(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionKill* condition = new CQuestEventConditionKill(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 			condition->SetCondition(jCondition.value("KillerTeam", -1), jCondition.value("VictimKillType", -1), jCondition.value("VictimTeam", -1),
-				jCondition.value("Continuous", 0), jCondition.value("Gun", -1), jCondition.value("GunID", -1), jCondition.value("CheckForGun", false),
+				jCondition.value("Continuous", 0), jCondition.value("GunID", -1), jCondition.value("CheckForGun", false),
 				jCondition.value("Bot", -1));
 		}
 		else if (eventType == QuestTaskEventType::EVENT_LOGIN)
@@ -177,32 +178,32 @@ void CQuestManager::ParseCondititons(CQuestEventTask* task, ordered_json& jCondi
 		}
 		else if (eventType == QuestTaskEventType::EVENT_BOMBEXPLODE)
 		{
-			CQuestEventConditionBombExplode* condition = new CQuestEventConditionBombExplode(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionBombExplode* condition = new CQuestEventConditionBombExplode(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else if (eventType == QuestTaskEventType::EVENT_BOMBDEFUSE)
 		{
-			CQuestEventConditionBombDefuse* condition = new CQuestEventConditionBombDefuse(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionBombDefuse* condition = new CQuestEventConditionBombDefuse(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else if (eventType == QuestTaskEventType::EVENT_HOSTAGEESCAPE)
 		{
-			CQuestEventConditionHostageEscape* condition = new CQuestEventConditionHostageEscape(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionHostageEscape* condition = new CQuestEventConditionHostageEscape(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else if (eventType == QuestTaskEventType::EVENT_VIPKILL)
 		{
-			CQuestEventConditionVipKill* condition = new CQuestEventConditionVipKill(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionVipKill* condition = new CQuestEventConditionVipKill(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else if (eventType == QuestTaskEventType::EVENT_KILLMONSTER)
 		{
-			CQuestEventConditionKillMonster* condition = new CQuestEventConditionKillMonster(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionKillMonster* condition = new CQuestEventConditionKillMonster(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 			condition->SetMonsterType(jCondition.value("MonsterType", 0));
 		}
 		else if (eventType == QuestTaskEventType::EVENT_KILLMOSQUITO)
 		{
-			CQuestEventConditionKillMosquito* condition = new CQuestEventConditionKillMosquito(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionKillMosquito* condition = new CQuestEventConditionKillMosquito(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else if (eventType == QuestTaskEventType::EVENT_KILLKITE)
 		{
-			CQuestEventConditionKillKite* condition = new CQuestEventConditionKillKite(task, eventType, condID, goalPoints, temp, gameModes, maps, playerCount);
+			CQuestEventConditionKillKite* condition = new CQuestEventConditionKillKite(task, eventType, condID, goalPoints, gameModes, maps, playerCount);
 		}
 		else
 		{

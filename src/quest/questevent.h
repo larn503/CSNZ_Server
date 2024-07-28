@@ -110,12 +110,11 @@ private:
 class CQuestEventBaseConditionGameMatch : public CQuestEventBaseCondition
 {
 public:
-	CQuestEventBaseConditionGameMatch(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, const std::vector<int>& maps, int playerCount) : CQuestEventBaseCondition(task, eventType, id, goal)
+	CQuestEventBaseConditionGameMatch(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, const std::vector<int>& maps, int playerCount) : CQuestEventBaseCondition(task, eventType, id, goal)
 	{
 		m_GameModes = gameModes;
 		m_Maps = maps;
 		m_nPlayerCount = playerCount;
-		m_bTemp = temp;
 	}
 
 	bool Event_Internal(CGameMatchUserStat* userStat, CGameMatch* gameMatch)
@@ -156,16 +155,10 @@ public:
 #endif
 	}
 
-	bool IsTemp()
-	{
-		return m_bTemp;
-	}
-
 private:
 	std::vector<int> m_GameModes;
 	std::vector<int> m_Maps;
 	int m_nPlayerCount;
-	bool m_bTemp;
 };
 
 class CQuestEventConditionLevelUp : public CQuestEventBaseCondition
@@ -187,13 +180,12 @@ public:
 class CQuestEventConditionKill : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionKill(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionKill(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 		m_nKillerTeam = 0;
 		m_nVictimKillType = 0;
 		m_nVictimTeam = 0;
 		m_nContinuous = 0;
-		m_nGun = 0;
 		m_nGunID = 0;
 		m_nBot = 0;
 		m_bHuman = 0;
@@ -229,12 +221,12 @@ public:
 			return;
 		}
 
-		if (m_nGun >= 0 && m_nGun != killEvent.gunID)
+		if (m_nGunID >= 0 && m_nGunID != killEvent.gunID)
 		{
 			ResetContinuousCounter(userStat, gameMatch);
 			return;
 		}
-		else if (m_bCheckForGun && m_nGun == killEvent.gunID && !userStat->GetItem(killEvent.gunID))
+		else if (m_bCheckForGun && m_nGunID == killEvent.gunID && !userStat->GetItem(killEvent.gunID))
 		{
 			ResetContinuousCounter(userStat, gameMatch);
 			return;
@@ -259,13 +251,12 @@ public:
 		}
 	}
 
-	void SetCondition(int killerTeam, int victimKillType, int victimTeam, int continuous, int gun, int gunID, bool checkForGun, int bot)
+	void SetCondition(int killerTeam, int victimKillType, int victimTeam, int continuous, int gunID, bool checkForGun, int bot)
 	{
 		m_nKillerTeam = killerTeam;
 		m_nVictimKillType = victimKillType;
 		m_nVictimTeam = victimTeam;
 		m_nContinuous = continuous;
-		m_nGun = gun;
 		m_nGunID = gunID;
 		m_bCheckForGun = checkForGun;
 		m_nBot = bot;
@@ -285,7 +276,6 @@ private:
 	int m_nVictimKillType;
 	int m_nVictimTeam;
 	int m_nContinuous;
-	int m_nGun; // 0 - melee, 1 - primary, 2 - secondary, 3 - he
 	int m_nGunID;
 	bool m_bCheckForGun;
 	int m_nBot;
@@ -295,7 +285,7 @@ private:
 class CQuestEventConditionBombExplode : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionBombExplode(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionBombExplode(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 
@@ -311,7 +301,7 @@ public:
 class CQuestEventConditionBombDefuse : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionBombDefuse(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionBombDefuse(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 
@@ -327,7 +317,7 @@ public:
 class CQuestEventConditionVipKill : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionVipKill(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionVipKill(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 
@@ -343,7 +333,7 @@ public:
 class CQuestEventConditionWin : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionWin(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionWin(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 
@@ -364,7 +354,7 @@ public:
 class CQuestEventConditionHostageEscape : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionHostageEscape(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionHostageEscape(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 
@@ -380,7 +370,7 @@ public:
 class CQuestEventConditionTimeMatch : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionTimeMatch(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionTimeMatch(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 
@@ -412,7 +402,7 @@ public:
 class CQuestEventConditionKillMonster : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionKillMonster(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionKillMonster(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 		m_nMonsterType = 0;
 	}
@@ -438,7 +428,7 @@ private:
 class CQuestEventConditionKillMosquito : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionKillMosquito(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionKillMosquito(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 
@@ -454,7 +444,7 @@ public:
 class CQuestEventConditionKillKite : public CQuestEventBaseConditionGameMatch
 {
 public:
-	CQuestEventConditionKillKite(CQuestEventTask* task, int eventType, int id, int goal, bool temp, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, temp, gameModes, maps, playerCount)
+	CQuestEventConditionKillKite(CQuestEventTask* task, int eventType, int id, int goal, std::vector<int> gameModes, std::vector<int> maps, int playerCount) : CQuestEventBaseConditionGameMatch(task, eventType, id, goal, gameModes, maps, playerCount)
 	{
 	}
 

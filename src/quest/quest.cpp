@@ -10,6 +10,8 @@ CQuestBaseCondition::CQuestBaseCondition(CQuestTask* task, int id)
 	m_nEventType = 0;
 	m_pTask = task;
 	m_nID = id;
+
+	m_pTask->AddCondition(this);
 }
 
 bool CQuestBaseCondition::Event_Internal(IUser* user)

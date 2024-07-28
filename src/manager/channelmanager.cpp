@@ -1361,6 +1361,12 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 	if (currentRoom)
 	{
 		Logger().Info("User '%s' left a room (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+
+		if (user->IsPlaying())
+		{
+			currentRoom->SendPlayerLeaveIngame(user);
+		}
+
 		currentRoom->RemoveUser(user);
 	}
 

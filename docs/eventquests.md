@@ -26,9 +26,8 @@
 					"VictimKillType": <int>, // -1 - ignore, 1 - headshot, 2 - knife, 16 - grenade, 32 - sentry gun (human scenario), 144 - zombie bomb, 512 - air strike (def. -1) 
 					"VictimTeam": <int>, // -1 - ignore, 1 - tr, 2 - ct (def. -1)
 					"Continuous": <int>, // 1 - reset condition progress if user didn't follow them (def. 0)
-					"Gun": <int>, // -1 - ignore 0 - melee, 1 - primary, 2 - secondary, 3 - he (def. -1)
 					"GunID": <int>, // item id of the gun (def. -1)
-					"CheckForGun": <bool>, // check for gun id (def. false)
+					"CheckForGun": <bool>, // check if user has gun in his inventory (def. false)
 					"Bot": <int>, // victim is bot, -1 - ignore, 0 - not bot, 1 - bot (def. -1)
 					// EVENT_KILLMONSTER (10):
 					"MonsterType": <int>, // monster(zombie) ID

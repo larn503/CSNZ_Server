@@ -507,7 +507,6 @@ struct QuestTaskEvent_Kill_s
 	int victimKillType;
 	int victimTeam;
 	int continuous;
-	int gun; // 0 - melee, 1 - primary, 2 - secondary, 3 - he
 	int gunID;
 	bool bot;
 	bool human;

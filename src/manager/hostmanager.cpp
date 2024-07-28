@@ -50,7 +50,7 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	case HostPacketType::SaveData:
 		return OnSaveData(msg, gameMatch);
 	case HostPacketType::SetInventory:
-		return OnSetUserInventory(msg, socket, room);
+		return OnSetUserInventory(msg, socket, room, gameMatch);
 	case HostPacketType::UseScenItem:
 		return OnUseInGameItem(msg, socket, room);
 	case HostPacketType::FlyerFlock:
@@ -58,25 +58,25 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	case HostPacketType::UpdateUserStatus:
 		return OnUpdateUserStatus(msg, socket, room, gameMatch);
 	case HostPacketType::OnKillEvent:
-		return OnKillEvent(msg, room);
+		return OnKillEvent(msg, room, gameMatch);
 	case HostPacketType::OnGameEnd:
 		return OnGameEnd(socket);
 	case HostPacketType::OnUpdateKillCounter:
-		return OnUpdateKillCounter(msg, room);
+		return OnUpdateKillCounter(msg, room, gameMatch);
 	case HostPacketType::OnUpdateDeathCounter:
-		return OnUpdateDeathCounter(msg, room);
+		return OnUpdateDeathCounter(msg, room, gameMatch);
 	case HostPacketType::OnUpdateWinCounter:
 		return OnUpdateWinCounter(msg, gameMatch);
 	case HostPacketType::OnUpdateScore:
-		return OnUpdateScore(msg, room);
+		return OnUpdateScore(msg, room, gameMatch);
 	case HostPacketType::OnGameEvent:
-		return OnGameEvent(msg, room);
+		return OnGameEvent(msg, room, gameMatch);
 	case HostPacketType::OnUserWeapon:
 		return OnUserWeapon(msg, socket);
 	case HostPacketType::OnUserSpawn:
 		return OnUserSpawn(msg, socket);
 	case HostPacketType::OnUpdateClass:
-		return OnUpdateClass(msg, room);
+		return OnUpdateClass(msg, room, gameMatch);
 	case HostPacketType::OnChangeMap:
 		return OnChangeMap(msg, room);
 	case 15:
@@ -153,7 +153,7 @@ bool CHostManager::OnSaveData(CReceivePacket* msg, CGameMatch* gameMatch)
 	return true;
 }
 
-bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* socket, IRoom* room)
+bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* socket, IRoom* room, CGameMatch* gameMatch)
 {
 	int userID = msg->ReadUInt32();
 	IUser* destUser = g_UserManager.GetUserById(userID);
@@ -165,6 +165,8 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 
 	if (destRoom != room)
 		return false;
+
+	gameMatch->Connect(destUser);
 
 	vector<CUserInventoryItem> inGameItems = g_UserManager.GetDefaultInventoryItems();
 	g_UserDatabase.GetInventoryItems(userID, inGameItems);
@@ -181,13 +183,10 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 		inGameItems.end()
 	);
 
-	if (room->GetGameMatch())
+	CGameMatchUserStat* stat = gameMatch->GetGameUserStat(destUser);
+	if (stat)
 	{
-		CGameMatchUserStat* stat = room->GetGameMatch()->GetGameUserStat(destUser);
-		if (stat)
-		{
-			stat->m_Items = inGameItems;
-		}
+		stat->UpdateItems(inGameItems);
 	}
 
 	g_PacketManager.SendHostUserInventory(socket, userID, inGameItems);
@@ -248,8 +247,6 @@ bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* sock
 	int status = msg->ReadUInt8();
 	if (status == 1)
 	{
-		gameMatch->Connect(destUser);
-
 		// send zbs addon info
 		if (destRoom->GetSettings()->gameModeId == 15)
 		{
@@ -285,7 +282,7 @@ bool CHostManager::OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* sock
 	return true;
 }
 
-bool CHostManager::OnKillEvent(CReceivePacket* msg, IRoom* room)
+bool CHostManager::OnKillEvent(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch)
 {
 	int killerUserID = msg->ReadInt32();
 	IUser* destUser = g_UserManager.GetUserById(killerUserID);
@@ -312,12 +309,12 @@ bool CHostManager::OnKillEvent(CReceivePacket* msg, IRoom* room)
 	killEvent.victimPos[1] = msg->ReadFloat();
 	killEvent.victimPos[2] = msg->ReadFloat();
 
-	destRoom->GetGameMatch()->OnKillEvent(destUser, killEvent);
+	gameMatch->OnKillEvent(destUser, killEvent);
 
 	return true;
 }
 
-bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, IRoom* room)
+bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch)
 {
 	int userID = msg->ReadInt32();
 	IUser* destUser = g_UserManager.GetUserById(userID);
@@ -334,12 +331,12 @@ bool CHostManager::OnUpdateKillCounter(CReceivePacket* msg, IRoom* room)
 	int counter = msg->ReadInt32();
 	int unk4 = msg->ReadInt8();
 
-	destRoom->GetGameMatch()->OnUpdateKillCounter(destUser, counter);
+	gameMatch->OnUpdateKillCounter(destUser, counter);
 
 	return true;
 }
 
-bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, IRoom* room)
+bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch)
 {
 	int userID = msg->ReadInt32();
 	IUser* destUser = g_UserManager.GetUserById(userID);
@@ -356,7 +353,7 @@ bool CHostManager::OnUpdateDeathCounter(CReceivePacket* msg, IRoom* room)
 	int counter = msg->ReadInt32();
 	int unk4 = msg->ReadInt8();
 
-	destRoom->GetGameMatch()->OnUpdateDeathCounter(destUser, counter);
+	gameMatch->OnUpdateDeathCounter(destUser, counter);
 
 	return true;
 }
@@ -376,7 +373,7 @@ bool CHostManager::OnUpdateWinCounter(CReceivePacket* msg, CGameMatch* gameMatch
 	return true;
 }
 
-bool CHostManager::OnUpdateScore(CReceivePacket* msg, IRoom* room)
+bool CHostManager::OnUpdateScore(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch)
 {
 	int userID = msg->ReadInt32();
 	IUser* destUser = g_UserManager.GetUserById(userID);
@@ -392,12 +389,12 @@ bool CHostManager::OnUpdateScore(CReceivePacket* msg, IRoom* room)
 	int score = msg->ReadInt8();
 	int unk3 = msg->ReadInt8();
 
-	destRoom->GetGameMatch()->OnUpdateScore(destUser, score);
+	gameMatch->OnUpdateScore(destUser, score);
 
 	return true;
 }
 
-bool CHostManager::OnGameEvent(CReceivePacket* msg, IRoom* room)
+bool CHostManager::OnGameEvent(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch)
 {
 	int type = msg->ReadUInt8();
 	int userID = msg->ReadUInt32();
@@ -414,15 +411,15 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IRoom* room)
 
 	if (type == 0) // bomb explode
 	{
-		destUser->GetCurrentRoom()->GetGameMatch()->OnBombExplode(destUser);
+		gameMatch->OnBombExplode(destUser);
 	}
 	else if (type == 1) // bomb defuse
 	{
-		destUser->GetCurrentRoom()->GetGameMatch()->OnBombDefuse(destUser);
+		gameMatch->OnBombDefuse(destUser);
 	}
 	else if (type == 2) // hostage escape
 	{
-		destUser->GetCurrentRoom()->GetGameMatch()->OnHostageEscape(destUser);
+		gameMatch->OnHostageEscape(destUser);
 	}
 	else if (type == 32) // monster kill
 	{
@@ -432,25 +429,25 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IRoom* room)
 		// 100 - def zbs zombie
 		//Logger().Info(LOG_INTERNAL, CON_WARNING, OBFUSCATE("[User '%s'] Game event - monster kill: userID: %d, monsterType: %d\n"), user->GetLogName(), userID, monsterType);
 
-		destUser->GetCurrentRoom()->GetGameMatch()->OnMonsterKill(destUser, monsterType);
+		gameMatch->OnMonsterKill(destUser, monsterType);
 	}
 	else if (type == 34) // dropbox pickup
 	{
 		int rewardID = msg->ReadUInt32();
 
 		//Logger().Info(LOG_INTERNAL, CON_WARNING, OBFUSCATE("[User '%s'] Game event - dropbox: userID: %d, rewardID: %d\n"), user->GetLogName(), userID, rewardID);
-		destUser->GetCurrentRoom()->GetGameMatch()->OnDropBoxPickup(destUser, rewardID);
+		gameMatch->OnDropBoxPickup(destUser, rewardID);
 	}
 	else if (type == 35) // round restart
 	{
 	}
 	else if (type == 47) // mosquito kill event
 	{
-		destUser->GetCurrentRoom()->GetGameMatch()->OnMosquitoKill(destUser);
+		gameMatch->OnMosquitoKill(destUser);
 	}
 	else if (type == 56) // kite kill event
 	{
-		destUser->GetCurrentRoom()->GetGameMatch()->OnKiteKill(destUser);
+		gameMatch->OnKiteKill(destUser);
 	}
 	else if (type == 77)
 	{
@@ -466,7 +463,7 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IRoom* room)
 	return true;
 }
 
-bool CHostManager::OnUpdateClass(CReceivePacket* msg, IRoom* room)
+bool CHostManager::OnUpdateClass(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch)
 {
 	int userID = msg->ReadInt32();
 	IUser* destUser = g_UserManager.GetUserById(userID);
@@ -482,7 +479,7 @@ bool CHostManager::OnUpdateClass(CReceivePacket* msg, IRoom* room)
 	int classItemID = msg->ReadInt16();
 	int unk3 = msg->ReadInt8();
 
-	destRoom->GetGameMatch()->OnUpdateClass(destUser, classItemID);
+	gameMatch->OnUpdateClass(destUser, classItemID);
 
 	return true;
 }

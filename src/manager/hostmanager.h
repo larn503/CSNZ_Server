@@ -16,17 +16,17 @@ public:
 	void OnHostChanged(IUser* gameMatchUser, IUser* newHost, CGameMatch* match);
 private:
 	bool OnSaveData(CReceivePacket* msg, CGameMatch* gameMatch);
-	bool OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* socket, IRoom* room);
+	bool OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* socket, IRoom* room, CGameMatch* gameMatch);
 	bool OnUseInGameItem(CReceivePacket* msg, IExtendedSocket* socket, IRoom* room);
 	bool OnFlyerFlockRequest(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnUpdateUserStatus(CReceivePacket* msg, IExtendedSocket* socket, IRoom* room, CGameMatch* gameMatch);
-	bool OnKillEvent(CReceivePacket* msg, IRoom* room);
-	bool OnUpdateKillCounter(CReceivePacket* msg, IRoom* room);
-	bool OnUpdateDeathCounter(CReceivePacket* msg, IRoom* room);
+	bool OnKillEvent(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
+	bool OnUpdateKillCounter(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
+	bool OnUpdateDeathCounter(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
 	bool OnUpdateWinCounter(CReceivePacket* msg, CGameMatch* gameMatch);
-	bool OnUpdateScore(CReceivePacket* msg, IRoom* room);
-	bool OnGameEvent(CReceivePacket* msg, IRoom* room);
-	bool OnUpdateClass(CReceivePacket* msg, IRoom* room);
+	bool OnUpdateScore(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
+	bool OnGameEvent(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
+	bool OnUpdateClass(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
 	bool OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnGameEnd(IExtendedSocket* socket);
 	bool OnUserWeapon(CReceivePacket* msg, IExtendedSocket* socket);

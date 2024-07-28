@@ -233,6 +233,8 @@ void CTCPServer::Listen()
 					// exclude case when message is not fully read
 					if (!socket->GetMsg())
 						DisconnectClient(socket);
+					else
+						continue;
 				}
 				else
 				{

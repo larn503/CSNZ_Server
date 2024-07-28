@@ -294,7 +294,7 @@ CReceivePacket* CExtendedSocket::Read()
 		buf.setBuffer(vecBuf);
 
 		// if not full message read
-		if (recvResult < m_pMsg->GetLength())
+		if (m_nPacketReceivedSize < m_pMsg->GetLength())
 		{
 			// wait for rest of message
 			return NULL;

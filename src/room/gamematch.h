@@ -16,6 +16,7 @@ public:
 	void UpdateKillsCount(int kills);
 	void UpdateDeathsCount(int deaths);
 	void UpdateClass(int classItemID);
+	void UpdateItems(std::vector<CUserInventoryItem> items);
 
 	// zbs stuff
 	void UpdateZbsRank(int rankPoints);

@@ -13,14 +13,14 @@
 				"Conditions": {
 					"1": {
 						"EventType": 2,
-						"Gun": 242,
+						"GunID": 242,
 						"CheckForGun": true,
 						"GoalPoints": 1,
 						"Bot": 1
 					},
 					"2": {
 						"EventType": 2,
-						"Gun": 242,
+						"GunID": 242,
 						"CheckForGun": true,
 						"GoalPoints": 5,
 						"Bot": 0
@@ -29,7 +29,7 @@
 						"GameModes": [8, 9, 14, 29],
 						"EventType": 2,
 						"VictimTeam": 1,
-						"Gun": 242,
+						"GunID": 242,
 						"CheckForGun": true,
 						"GoalPoints": 15,
 						"Bot": 0
@@ -46,14 +46,14 @@
 				"Conditions": {
 					"1": {
 						"EventType": 2,
-						"Gun": 245,
+						"GunID": 245,
 						"CheckForGun": true,
 						"GoalPoints": 1,
 						"Bot": 1
 					},
 					"2": {
 						"EventType": 2,
-						"Gun": 245,
+						"GunID": 245,
 						"CheckForGun": true,
 						"GoalPoints": 5,
 						"Bot": 0
@@ -62,7 +62,7 @@
 						"GameModes": [8, 9, 14, 29],
 						"EventType": 2,
 						"VictimTeam": 1,
-						"Gun": 245,
+						"GunID": 245,
 						"CheckForGun": true,
 						"GoalPoints": 15,
 						"Bot": 0

@@ -49,7 +49,10 @@ CRoom::~CRoom()
 void CRoom::Shutdown()
 {
 	while (!m_Users.empty())
-		KickUser(m_Users.back());
+	{
+		SendPlayerLeaveIngame(m_Users.back());
+		RemoveUser(m_Users.back());
+	}
 }
 
 int CRoom::GetNumOfPlayers()
@@ -103,11 +106,6 @@ void CRoom::AddUser(IUser* user)
 void CRoom::RemoveUser(IUser* targetUser)
 {
 	m_Users.erase(remove(begin(m_Users), end(m_Users), targetUser), end(m_Users));
-
-	if (targetUser->IsPlaying())
-	{
-		SendPlayerLeaveIngame(targetUser);
-	}
 
 	delete targetUser->GetRoomData();
 	targetUser->SetRoomData(NULL);

@@ -56,6 +56,11 @@ void CGameMatchUserStat::UpdateClass(int classItemID)
 	m_nClassItemID = classItemID;
 }
 
+void CGameMatchUserStat::UpdateItems(vector<CUserInventoryItem> items)
+{
+	m_Items = items;
+}
+
 void CGameMatchUserStat::UpdateZbsRank(int rankPoints)
 {
 	if (rankPoints < 10)
