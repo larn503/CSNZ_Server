@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define SUPPORTED_CLIENT_BUILD "21.07.24"
+#define SUPPORTED_CLIENT_BUILD "28.07.24"
 
 CUserManager g_UserManager;
 
