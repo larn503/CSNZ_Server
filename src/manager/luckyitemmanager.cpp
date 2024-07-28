@@ -375,7 +375,7 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 			// TODO: make method in manager for this
 			for (auto u : g_UserManager.GetUsers())
 			{
-				g_PacketManager.SendUMsgSystemReply(u->GetExtendedSocket(), 2, item.grade == ItemBoxGrades::PREMIUM ? "LOTTERY_WIN_PREMIUM" : "LOTTERY_WIN_PREMIUM_NUM", vector<string>{ character.gameName, to_string(item.itemId) });
+				g_PacketManager.SendUMsgSystemReply(u->GetExtendedSocket(), UMsgPacketType::SystemReply_Green, item.grade == ItemBoxGrades::PREMIUM ? "LOTTERY_WIN_PREMIUM" : "LOTTERY_WIN_PREMIUM_NUM", vector<string>{ character.gameName, to_string(item.itemId) });
 			}
 		}
 	}
