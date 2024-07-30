@@ -150,8 +150,8 @@ public:
 		{
 			m_pTask->IncrementCount(userStat->m_pUser, m_pTask->GetGoal(), true);
 		}
-#if 0
-		printf("[User '%s'] CQuestEventBaseConditionGameMatch::IncrementTempCount: quest name: %s, done: %d, goal: %d\n", user->GetLogName(), m_pQuest->GetName().c_str(), tempProgress.unitsDone, m_nGoal);
+#ifdef _DEBUG
+		Logger().Debug("[User '%s'] CQuestEventBaseConditionGameMatch::IncrementTempCount: quest id: %d, task id: %d, done: %d, goal: %d\n", userStat->m_pUser->GetLogName(), m_pTask->GetQuest()->GetID(), m_pTask->GetID(), tempProgress.unitsDone, m_pTask->GetGoal());
 #endif
 	}
 

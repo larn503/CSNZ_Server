@@ -13,6 +13,7 @@ public:
 	CChannelManager();
 	~CChannelManager();
 
+	virtual bool Init();
 	virtual void Shutdown();
 
 	bool OnChannelListPacket(IExtendedSocket* socket);

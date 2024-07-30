@@ -1,5 +1,6 @@
 #include "channelserver.h"
 #include "common/utils.h"
+#include "serverconfig.h"
 
 using namespace std;
 
@@ -13,7 +14,7 @@ CChannelServer::CChannelServer(string serverName, int serverIndex, int totalServ
 	{
 		int newChannelIndex = m_nNextChannelID;
 		string newChannelName = FormatChannelName(serverName, serverIndex, newChannelIndex);
-		m_Channels.push_back(new CChannel(this, newChannelIndex, newChannelName, 100, ""));
+		m_Channels.push_back(new CChannel(this, newChannelIndex, newChannelName, g_pServerConfig->maxPlayers, ""));
 		m_nNextChannelID++;
 	}
 }

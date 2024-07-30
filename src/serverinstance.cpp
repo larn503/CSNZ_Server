@@ -249,7 +249,9 @@ void CServerInstance::OnUDPMessage(Buffer& buf, unsigned short port)
 	{
 		int tries = buf.readUInt8();
 
-		//Logger().Info("OnUDPMessage(1) - userID: %d, tries: %d\n", userID, tries);
+#ifdef _DEBUG
+		Logger().Debug("OnUDPMessage(1) - userID: %d, tries: %d\n", userID, tries);
+#endif
 	}
 }
 

@@ -20,7 +20,7 @@ CExtendedSocket::CExtendedSocket(SOCKET socket, unsigned int id)
 	memset(&m_GuestData, 0, sizeof(GuestData_s));
 	m_nID = id;
 	m_Socket = socket;
-	m_nSequence = 0;
+	m_nSequence = -1;
 	m_nBytesReceived = 0;
 	m_nBytesSent = 0;
 	m_nPacketReceivedSize = 0;
@@ -127,7 +127,7 @@ bool CExtendedSocket::SetupCrypt()
  */
 int CExtendedSocket::GetSeq()
 {
-	if (m_nSequence > MAX_SEQUENCE)
+	if (m_nSequence == MAX_SEQUENCE)
 	{
 		ResetSeq();
 	}
@@ -149,7 +149,7 @@ int CExtendedSocket::LoggerGetSeq()
  */
 void CExtendedSocket::ResetSeq()
 {
-	m_nSequence = 0;
+	m_nSequence = -1;
 }
 
 /**
@@ -178,13 +178,14 @@ CReceivePacket* CExtendedSocket::Read()
 {
 	m_nReadResult = 0;
 	vector<unsigned char> packetDataBuf;
-	packetDataBuf.resize(PACKET_HEADER_SIZE);
 	int recvResult = 0;
 
 	if (!m_pMsg)
 	{
+		packetDataBuf.resize(PACKET_HEADER_SIZE);
+
 		// first of all read the packet header to know is received packet is valid
-		recvResult = Read((char*)packetDataBuf.data(), PACKET_HEADER_SIZE);
+		recvResult = Read((char*)packetDataBuf.data(), packetDataBuf.size());
 		if (recvResult < PACKET_HEADER_SIZE)
 		{
 			if (recvResult > 0)
@@ -192,12 +193,6 @@ CReceivePacket* CExtendedSocket::Read()
 
 			return NULL;
 		}
-
-		// update bytes counters
-		m_nReadResult += recvResult; 
-		m_nBytesReceived += recvResult;
-		if (m_nBytesReceived < 0)
-			m_nBytesReceived = 0;
 
 		// decrypt header if encrypted
 		if (m_bCryptInput)
@@ -235,11 +230,10 @@ CReceivePacket* CExtendedSocket::Read()
 			return NULL;
 		}
 
-		// well i think set to -1 afterwards, so fixed shits
-		if (m_nNextExpectedSeq == 255)
+		// Reset m_nNextExpectedSeq
+		if (m_nNextExpectedSeq == MAX_SEQUENCE)
 			m_nNextExpectedSeq = -1;
 
-		// here causes seq never 0 lol
 		m_nNextExpectedSeq++;
 
 		m_nPacketReceivedSize = 0;
@@ -248,10 +242,9 @@ CReceivePacket* CExtendedSocket::Read()
 	// if there is data to read
 	if (m_pMsg->GetLength() > 0)
 	{
-		if (packetDataBuf.size() != m_pMsg->GetLength())
-			packetDataBuf.resize(m_pMsg->GetLength());
+		packetDataBuf.resize(m_pMsg->GetLength() - m_nPacketReceivedSize);
 
-		recvResult = Read((char*)packetDataBuf.data(), m_pMsg->GetLength() - m_nPacketReceivedSize);
+		recvResult = Read((char*)packetDataBuf.data(), packetDataBuf.size());
 		if (recvResult <= 0) // error or peer disconnected
 		{
 			if (recvResult < 0)
@@ -261,6 +254,9 @@ CReceivePacket* CExtendedSocket::Read()
 			m_pMsg = NULL;
 			return NULL;
 		}
+
+		if (recvResult < packetDataBuf.size())
+			packetDataBuf.resize(recvResult);
 
 		m_nPacketReceivedSize += recvResult;
 
@@ -362,7 +358,7 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 
 #ifdef _DEBUG
 	if (!serverHelloMsg)
-		Logger().Info("CExtendedSocket::Send() seq: %d, buffer.size(): %d, bytesSent: %d, id: %d\n", buffer[1], buffer.size(), bytesSent, buffer[4]);
+		Logger().Debug("CExtendedSocket::Send() seq: %d, buffer.size(): %d, bytesSent: %d, id: %d\n", buffer[1], buffer.size(), bytesSent, buffer[4]);
 #endif
 
 	return bytesSent;

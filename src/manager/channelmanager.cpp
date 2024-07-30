@@ -23,11 +23,18 @@ CChannelManager g_ChannelManager;
 // TODO: Should we implement multi channels?
 CChannelManager::CChannelManager() : CBaseManager("ChannelManager")
 {
-	channelServers.push_back(new CChannelServer("Channel server", 1, 1, 1));
 }
 
 CChannelManager::~CChannelManager()
 {
+}
+
+bool CChannelManager::Init()
+{
+	if (channelServers.empty())
+		channelServers.push_back(new CChannelServer("Channel server", 1, 1, 1));
+
+	return true;
 }
 
 void CChannelManager::Shutdown()

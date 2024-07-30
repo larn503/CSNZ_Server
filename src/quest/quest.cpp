@@ -69,8 +69,8 @@ void CQuestTask::IncrementCount(IUser* user, int count, bool setForce)
 
 	if (g_UserDatabase.UpdateQuestTaskProgress(user->GetID(), m_pQuest->GetID(), progress) > 0)
 	{
-#if 0
-		Logger().Info(LOG_USER, CON_LOG, "[User '%s'] CQuestTask::IncrementCount: quest name: %s, done: %d, goal: %d\n", user->GetLogName(), m_pQuest->GetName().c_str(), progress.unitsDone, m_nGoal);
+#ifdef _DEBUG
+		Logger().Debug("[User '%s'] CQuestTask::IncrementCount: quest name: %s, done: %d, goal: %d\n", user->GetLogName(), m_pQuest->GetName().c_str(), progress.unitsDone, m_nGoal);
 #endif
 		g_PacketManager.SendQuestUpdateTaskInfo(user->GetExtendedSocket(), 0xFF, m_pQuest->GetID(), this, progress);
 		if (progress.unitsDone >= m_nGoal)

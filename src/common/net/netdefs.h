@@ -1,7 +1,6 @@
 #pragma once
 
 #define MAX_SEQUENCE 255
-#define MAX_RECEIVE_LEN 15000
 
 #define PACKET_MAX_SIZE 0x10000
 #define PACKET_HEADER_SIZE 4 // without packet ID
