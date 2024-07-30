@@ -384,7 +384,7 @@ int CExtendedSocket::Send(CSendPacket* msg, bool ignoreQueue)
 			if (error == WSAEWOULDBLOCK)
 			{
 				/// If we reach here, we send again until it's non-blocking
-				return Send(msg, ignoreQueue);
+				return Send(msg, true);
 			}
 			else
 			{
