@@ -317,7 +317,6 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 	if (!serverHelloMsg && buffer.size() > PACKET_MAX_SIZE)
 	{
 		Logger().Error("CExtendedSocket::Send() buffer.size(): %d > PACKET_MAX_SIZE!!!, ID: %d, seq: %d. Packet not sent.\n", buffer.size(), buffer[4], buffer[1]);
-		m_nSequence--; /// @fixme I don't think we need to do this
 		return 0;
 	}
 
@@ -344,11 +343,7 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 		}
 	}
 
-	//outBuf = buffer;
-
-	const char* bufData = reinterpret_cast<const char*>(&buffer[0]);
-
-	int bytesSent = send(m_Socket, bufData, buffer.size(), 0);
+	int bytesSent = send(m_Socket, (const char*)buffer.data(), buffer.size(), 0);
 	if (bytesSent != buffer.size())
 		return bytesSent;
 
@@ -388,8 +383,8 @@ int CExtendedSocket::Send(CSendPacket* msg, bool ignoreQueue)
 		{
 			if (error == WSAEWOULDBLOCK)
 			{
-				/// @fixme can we come here?
-				m_SendPackets.push_back(msg);
+				/// If we reach here, we send again until it's non-blocking
+				return Send(msg, ignoreQueue);
 			}
 			else
 			{

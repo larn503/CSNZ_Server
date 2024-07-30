@@ -308,7 +308,7 @@ void CommandDbReload(CCommand* cmd, const std::vector<std::string>& args)
 
 	Logger().Info("Sent shop update to: %d\n", g_UserManager.GetUsers().size());
 
-	Logger().Info("Managers reload successfull.\n");
+	Logger().Info("Managers reload successful.\n");
 }
 
 void CommandBans(CCommand* cmd, const std::vector<std::string>& args)
