@@ -24,6 +24,7 @@ CExtendedSocket::CExtendedSocket(SOCKET socket, unsigned int id)
 	m_nBytesReceived = 0;
 	m_nBytesSent = 0;
 	m_nPacketReceivedSize = 0;
+	m_nPacketSentSize = 0;
 	m_nReadResult = 0;
 	m_nNextExpectedSeq = 1;
 	m_pMsg = NULL;
@@ -343,20 +344,37 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 		}
 	}
 
-	int bytesSent = send(m_Socket, (const char*)buffer.data(), buffer.size(), 0);
-	if (bytesSent != buffer.size())
-		return bytesSent;
+	m_nPacketSentSize = 0;
 
-	m_nBytesSent += bytesSent;
-	if (m_nBytesSent < 0)
-		m_nBytesSent = 0;
+	int bytesSent = 0;
+	int error = 0;
+
+	while (m_nPacketSentSize != buffer.size())
+	{
+		bytesSent = send(m_Socket, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize, 0);
+		error = GetNetworkError();
+
+		if (error)
+		{
+			if (error == WSAEWOULDBLOCK)
+				continue;
+
+			return bytesSent;
+		}
+
+		m_nPacketSentSize += bytesSent;
+
+		m_nBytesSent += bytesSent;
+		if (m_nBytesSent < 0)
+			m_nBytesSent = 0;
+	}
 
 #ifdef _DEBUG
 	if (!serverHelloMsg)
 		Logger().Debug("CExtendedSocket::Send() seq: %d, buffer.size(): %d, bytesSent: %d, id: %d\n", buffer[1], buffer.size(), bytesSent, buffer[4]);
 #endif
 
-	return bytesSent;
+	return m_nPacketSentSize;
 }
 
 /**
@@ -379,23 +397,10 @@ int CExtendedSocket::Send(CSendPacket* msg, bool ignoreQueue)
 		auto data = msg->SetPacketLength();
 		result = Send(data);
 		int error = GetNetworkError();
-		if (result != msg->GetData().getBuffer().size() && error)
-		{
-			if (error == WSAEWOULDBLOCK)
-			{
-				/// If we reach here, we send again until it's non-blocking
-				return Send(msg, true);
-			}
-			else
-			{
-				Logger().Error("CExtendedSocket::Send() WSAGetLastError: %d\n", error);
-				delete msg;
-			}
-		}
-		else
-		{
-			delete msg;
-		}
+		if (error)
+			Logger().Error("CExtendedSocket::Send() WSAGetLastError: %d\n", error);
+		
+		delete msg;
 	}
 
 	return result;

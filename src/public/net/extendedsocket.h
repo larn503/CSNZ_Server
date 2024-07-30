@@ -69,6 +69,7 @@ private:
 	CReceivePacket* m_pMsg;
 	
 	int m_nPacketReceivedSize;
+	int m_nPacketSentSize;
 	
 	int m_nReadResult;
 	int m_nNextExpectedSeq; // TODO: we need it?
