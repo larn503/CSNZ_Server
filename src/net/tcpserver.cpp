@@ -11,7 +11,7 @@ using namespace std;
 /** 
  * Constructor.
  */
-CTCPServer::CTCPServer() : m_ListenThread(ListenThread, this)
+CTCPServer::CTCPServer() : m_ListenThread(ListenThread, this), m_SendThread(SendThread, this)
 {
 	m_Socket = INVALID_SOCKET;
 	m_bIsRunning = false;
@@ -122,6 +122,7 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_bIsRunning = true;
 	
 	m_ListenThread.Start();
+	m_SendThread.Start();
 
 	return true;
 }
@@ -136,6 +137,7 @@ void CTCPServer::Stop()
 		m_bIsRunning = false;
 
 		m_ListenThread.Join();
+		m_SendThread.Join();
 
 		for (auto client : m_Clients)
 		{
@@ -263,6 +265,35 @@ void CTCPServer::Listen()
 			continue;
 		}
 	}
+
+	if (m_pCriticalSection)
+		m_pCriticalSection->Leave();
+}
+
+/**
+ * Send thread for server
+ * @param data Pointer to the server object
+ * @return NULL
+ */
+void* SendThread(void* data)
+{
+	CTCPServer* server = static_cast<CTCPServer*>(data);
+
+	while (server->IsRunning())
+	{
+		server->Send();
+	}
+
+	return 0;
+}
+
+/**
+ * Send packets in queue
+ */
+void CTCPServer::Send()
+{
+	if (m_pCriticalSection)
+		m_pCriticalSection->Enter();
 
 	for (auto socket : m_Clients)
 	{

@@ -1456,11 +1456,12 @@ bool CChannelManager::OnConnectionFailure(IUser* user)
 
 		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), va("Cannot establish connection to %s:%d. Possible reasons:\n"
 			"1. Host connected to the master server with localhost(127.0.0.1) ip\n"
-			"2. Host has port %d or %d closed (UDP)\n"
-			"3. You are trying to connect to the host with private IP.\n"
+			"2. Host has port %s closed (UDP)\n"
+			"3. You are trying to connect to a host with private IP\n"
+			"4. You are trying to connect to a host with strict NAT\n"
 			"Host address: %s\n"
 			"Your address: %s",
-			hostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), hostUser->GetNetworkConfig().m_nExternalClientPort, hostUser->GetNetworkConfig().m_nLocalClientPort, hostUser->GetNetworkConfig().m_nExternalClientPort, hostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), user->GetNetworkConfig().m_szExternalIpAddress.c_str()));
+			hostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), hostUser->GetNetworkConfig().m_nExternalClientPort, hostUser->GetNetworkConfig().m_nLocalClientPort == hostUser->GetNetworkConfig().m_nExternalClientPort ? va("%d", hostUser->GetNetworkConfig().m_nExternalClientPort) : va ("%d or %d", hostUser->GetNetworkConfig().m_nLocalClientPort, hostUser->GetNetworkConfig().m_nExternalClientPort), hostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), user->GetNetworkConfig().m_szExternalIpAddress.c_str()));
 	}
 
 	RoomReadyStatus readyStatus = room->ToggleUserReadyStatus(user);

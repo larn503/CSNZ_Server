@@ -20,7 +20,7 @@ CExtendedSocket::CExtendedSocket(SOCKET socket, unsigned int id)
 	memset(&m_GuestData, 0, sizeof(GuestData_s));
 	m_nID = id;
 	m_Socket = socket;
-	m_nSequence = -1;
+	m_nSequence = 0;
 	m_nBytesReceived = 0;
 	m_nBytesSent = 0;
 	m_nPacketReceivedSize = 0;
@@ -347,20 +347,12 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 	m_nPacketSentSize = 0;
 
 	int bytesSent = 0;
-	int error = 0;
 
-	while (m_nPacketSentSize != buffer.size())
+	do
 	{
 		bytesSent = send(m_Socket, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize, 0);
-		error = GetNetworkError();
-
-		if (error)
-		{
-			if (error == WSAEWOULDBLOCK)
-				continue;
-
+		if (bytesSent <= 0)
 			return bytesSent;
-		}
 
 		m_nPacketSentSize += bytesSent;
 
@@ -368,6 +360,7 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 		if (m_nBytesSent < 0)
 			m_nBytesSent = 0;
 	}
+	while (m_nPacketSentSize != buffer.size());
 
 #ifdef _DEBUG
 	if (!serverHelloMsg)
@@ -396,10 +389,13 @@ int CExtendedSocket::Send(CSendPacket* msg, bool ignoreQueue)
 	{
 		auto data = msg->SetPacketLength();
 		result = Send(data);
-		int error = GetNetworkError();
-		if (error)
-			Logger().Error("CExtendedSocket::Send() WSAGetLastError: %d\n", error);
-		
+		if (GetNetworkError() == WSAEWOULDBLOCK)
+		{
+			// If we get here, insert at beginning of vector to retry sending
+			m_SendPackets.insert(m_SendPackets.begin(), msg);
+			return 1;
+		}
+
 		delete msg;
 	}
 
