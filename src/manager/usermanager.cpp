@@ -83,8 +83,6 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 		g_PacketManager.SendCrypt(socket, 0, key, iv);
 
-		socket->SetCryptOutput(true);
-
 		g_PacketManager.SendCrypt(socket, 1, key, iv);
 	}
 

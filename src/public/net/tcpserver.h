@@ -11,8 +11,6 @@ class IExtendedSocket;
 class CExtendedSocket;
 class IServerListenerTCP;
 
-void* SendThread(void* data);
-
 /**
  * Class that accepts TCP connection
  */
@@ -25,7 +23,6 @@ public:
 	bool Start(const std::string& port, int tcpSendBufferSize);
 	void Stop();
 	void Listen();
-	void Send();
 
 	IExtendedSocket* Accept(unsigned int id);
 	IExtendedSocket* GetExSocketBySocket(SOCKET socket);
@@ -42,7 +39,6 @@ private:
 	bool m_bIsRunning;
 	int m_nResult;
 	CThread m_ListenThread;
-	CThread m_SendThread;
 	unsigned int m_nNextClientIndex;
 	std::vector<IExtendedSocket*> m_Clients;
 	IServerListenerTCP* m_pListener;

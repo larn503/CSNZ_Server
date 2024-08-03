@@ -11,7 +11,7 @@ using namespace std;
 /** 
  * Constructor.
  */
-CTCPServer::CTCPServer() : m_ListenThread(ListenThread, this), m_SendThread(SendThread, this)
+CTCPServer::CTCPServer() : m_ListenThread(ListenThread, this)
 {
 	m_Socket = INVALID_SOCKET;
 	m_bIsRunning = false;
@@ -122,7 +122,6 @@ bool CTCPServer::Start(const string& port, int tcpSendBufferSize)
 	m_bIsRunning = true;
 	
 	m_ListenThread.Start();
-	m_SendThread.Start();
 
 	return true;
 }
@@ -137,7 +136,6 @@ void CTCPServer::Stop()
 		m_bIsRunning = false;
 
 		m_ListenThread.Join();
-		m_SendThread.Join();
 
 		for (auto client : m_Clients)
 		{
@@ -192,7 +190,7 @@ void CTCPServer::Listen()
 
 				WSAPOLLFD fd;
 				fd.fd = socket->GetSocket();
-				fd.events = POLLRDNORM;
+				fd.events = POLLRDNORM | POLLWRNORM;
 				fd.revents = 0;
 				m_fds.push_back(fd);
 
@@ -234,7 +232,12 @@ void CTCPServer::Listen()
 
 					// exclude case when message is not fully read
 					if (!socket->GetMsg())
+					{
 						DisconnectClient(socket);
+
+						if (m_pListener)
+							m_pListener->OnTCPError(0);
+					}
 					else
 						continue;
 				}
@@ -253,6 +256,40 @@ void CTCPServer::Listen()
 			}
 		}
 
+		// write to client
+		if (it->revents & POLLWRNORM && !(it->revents & (POLLERR | POLLHUP)))
+		{
+			IExtendedSocket* socket = GetExSocketBySocket(it->fd);
+			if (!socket)
+				return;
+
+			if (socket->GetPacketsToSend().size())
+			{
+				CSendPacket* msg = socket->GetPacketsToSend().at(0);
+				int sendResult = socket->Send(msg, true);
+				if (sendResult <= 0)
+				{
+					int error = GetNetworkError();
+					if (error != WSAEWOULDBLOCK)
+					{
+						it->revents |= POLLERR;
+
+						Logger().Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", error, socket->GetPacketsToSend().size());
+
+						// error, close connection
+						DisconnectClient(socket);
+
+						if (m_pListener)
+							m_pListener->OnTCPError(0);
+					}
+				}
+				else
+				{
+					socket->GetPacketsToSend().erase(socket->GetPacketsToSend().begin());
+				}
+			}
+		}
+
 		// since disconnect called, I just log double confirm issues
 		if (it->revents & (POLLERR | POLLHUP) && it->fd != m_Socket)
 		{
@@ -263,52 +300,6 @@ void CTCPServer::Listen()
 			m_fds.erase(it);
 			it = m_fds.begin(); // not the best solution
 			continue;
-		}
-	}
-
-	if (m_pCriticalSection)
-		m_pCriticalSection->Leave();
-}
-
-/**
- * Send thread for server
- * @param data Pointer to the server object
- * @return NULL
- */
-void* SendThread(void* data)
-{
-	CTCPServer* server = static_cast<CTCPServer*>(data);
-
-	while (server->IsRunning())
-	{
-		server->Send();
-	}
-
-	return 0;
-}
-
-/**
- * Send packets in queue
- */
-void CTCPServer::Send()
-{
-	if (m_pCriticalSection)
-		m_pCriticalSection->Enter();
-
-	for (auto socket : m_Clients)
-	{
-		if (socket->GetPacketsToSend().size())
-		{
-			CSendPacket* msg = socket->GetPacketsToSend().at(0);
-			if (socket->Send(msg, true) <= 0)
-			{
-				Logger().Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", GetNetworkError(), socket->GetPacketsToSend().size());
-				DisconnectClient(socket);
-			}
-			else
-			{
-				socket->GetPacketsToSend().erase(socket->GetPacketsToSend().begin());
-			}
 		}
 	}
 

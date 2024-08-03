@@ -380,7 +380,7 @@ int CExtendedSocket::Send(CSendPacket* msg, bool ignoreQueue)
 {
 	int result = 1;
 
-	if (!ignoreQueue && m_SendPackets.size())
+	if (!ignoreQueue)
 	{
 		// add to the send queue
 		m_SendPackets.push_back(msg);
@@ -389,14 +389,12 @@ int CExtendedSocket::Send(CSendPacket* msg, bool ignoreQueue)
 	{
 		auto data = msg->SetPacketLength();
 		result = Send(data);
-		if (GetNetworkError() == WSAEWOULDBLOCK)
-		{
-			// If we get here, insert at beginning of vector to retry sending
-			m_SendPackets.insert(m_SendPackets.begin(), msg);
-			return 1;
-		}
 
-		delete msg;
+		if (result > 0 && msg->m_nPacketID == 7 && !m_bCryptOutput)
+			SetCryptOutput(true);
+
+		if (GetNetworkError() != WSAEWOULDBLOCK)
+			delete msg;
 	}
 
 	return result;
