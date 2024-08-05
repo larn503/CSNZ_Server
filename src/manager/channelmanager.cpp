@@ -1097,7 +1097,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				vector<CUserInventoryItem> items;
 				items.push_back(item);
 
-				if (g_UserDatabase.UpdateInventoryItem(user->GetID(), item) <= 0)
+				if (g_UserDatabase.UpdateInventoryItem(user->GetID(), item, UITEM_FLAG_STATUS) <= 0)
 				{
 					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
 					return true;
@@ -1129,7 +1129,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				vector<CUserInventoryItem> items;
 				items.push_back(item);
 
-				if (g_UserDatabase.UpdateInventoryItem(user->GetID(), item) <= 0)
+				if (g_UserDatabase.UpdateInventoryItem(user->GetID(), item, UITEM_FLAG_INUSE) <= 0)
 				{
 					g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Database error"));
 					return true;

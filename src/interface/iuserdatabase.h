@@ -24,7 +24,7 @@ public:
 	// user related
 	virtual int AddInventoryItem(int userID, CUserInventoryItem& item) = 0;
 	virtual int AddInventoryItems(int userID, std::vector<CUserInventoryItem>& items) = 0; // TODO
-	virtual int UpdateInventoryItem(int userID, const CUserInventoryItem& item) = 0;
+	virtual int UpdateInventoryItem(int userID, const CUserInventoryItem& item, int flag) = 0;
 	virtual int GetInventoryItems(int userID, std::vector<CUserInventoryItem>& items) = 0;
 	virtual int GetInventoryItemsByID(int userID, int itemID, std::vector<CUserInventoryItem>& items) = 0;
 	virtual int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item) = 0;

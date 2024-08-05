@@ -82,10 +82,10 @@ int CUserDatabaseProxy::AddInventoryItems(int userID, vector<CUserInventoryItem>
 	return result;
 }
 
-int CUserDatabaseProxy::UpdateInventoryItem(int userID, const CUserInventoryItem& item)
+int CUserDatabaseProxy::UpdateInventoryItem(int userID, const CUserInventoryItem& item, int flag)
 {
 	ExecCalcStart();
-	int result = m_pDatabase->UpdateInventoryItem(userID, item);
+	int result = m_pDatabase->UpdateInventoryItem(userID, item, flag);
 	ExecCalcEnd(__FUNCTION__);
 	return result;
 }

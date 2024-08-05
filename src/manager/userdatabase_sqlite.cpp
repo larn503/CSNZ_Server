@@ -676,7 +676,7 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 		}
 		else
 		{
-			SQLite::Statement queryUpdateItem(m_Database, OBFUSCATE("UPDATE UserInventory SET itemID = ? , count = ? , status = ? , inUse = ? , obtainDate = ? , expiryDate = ? , isClanItem = ?, enhancementLevel = ?, enhancementExp = ?, enhanceValue = ?, paintID = ?, paintIDList = ?, partSlot1 = ?, partSlot2 = ?, lockStatus = ? WHERE userID = ? AND slot = ?"));
+			SQLite::Statement queryUpdateItem(m_Database, OBFUSCATE("UPDATE UserInventory SET itemID = ?, count = ?, status = ?, inUse = ?, obtainDate = ?, expiryDate = ?, isClanItem = ?, enhancementLevel = ?, enhancementExp = ?, enhanceValue = ?, paintID = ?, paintIDList = ?, partSlot1 = ?, partSlot2 = ?, lockStatus = ? WHERE userID = ? AND slot = ?"));
 			queryUpdateItem.bind(1, item.m_nItemID);
 			queryUpdateItem.bind(2, item.m_nCount);
 			queryUpdateItem.bind(3, item.m_nStatus);
@@ -707,11 +707,17 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 	return 1;
 }
 
+// adds new user inventory items
+// returns 0 == database error, 1 on success
 int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventoryItem>& items)
 {
 	try
 	{
-		SQLite::Transaction transaction(m_Database);
+		std::vector<CUserInventoryItem> itemsInsert = {};
+		string queryInsertNewInvItemStr;
+
+		std::vector<CUserInventoryItem> itemsUpdate = {};
+		string queryUpdateItemStr;
 
 		for (auto& item : items)
 		{
@@ -768,89 +774,339 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 
 			if (!queryGetInvItem.executeStep())
 			{
-				SQLite::Statement queryInsertNewInvItem(m_Database, OBFUSCATE("INSERT INTO UserInventory VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-				queryInsertNewInvItem.bind(1, userID);
-				queryInsertNewInvItem.bind(2, slot);
-				queryInsertNewInvItem.bind(3, item.m_nItemID);
-				queryInsertNewInvItem.bind(4, item.m_nCount);
-				queryInsertNewInvItem.bind(5, item.m_nStatus);
-				queryInsertNewInvItem.bind(6, item.m_nInUse);
-				queryInsertNewInvItem.bind(7, item.m_nObtainDate);
-				queryInsertNewInvItem.bind(8, item.m_nExpiryDate);
-				queryInsertNewInvItem.bind(9, item.m_nIsClanItem);
-				queryInsertNewInvItem.bind(10, item.m_nEnhancementLevel);
-				queryInsertNewInvItem.bind(11, item.m_nEnhancementExp);
-				queryInsertNewInvItem.bind(12, item.m_nEnhanceValue);
-				queryInsertNewInvItem.bind(13, item.m_nPaintID);
-				queryInsertNewInvItem.bind(14, serialize_array_int(item.m_nPaintIDList));
-				queryInsertNewInvItem.bind(15, item.m_nPartSlot1);
-				queryInsertNewInvItem.bind(16, item.m_nPartSlot2);
-				queryInsertNewInvItem.bind(17, item.m_nLockStatus);
+				if (queryInsertNewInvItemStr.empty())
+					queryInsertNewInvItemStr += OBFUSCATE("INSERT INTO UserInventory VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				else
+					queryInsertNewInvItemStr += OBFUSCATE(", (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-				queryInsertNewInvItem.exec();
+				itemsInsert.push_back(item);
 			}
 			else
 			{
-				SQLite::Statement queryUpdateItem(m_Database, OBFUSCATE("UPDATE UserInventory SET itemID = ? , count = ? , status = ? , inUse = ? , obtainDate = ? , expiryDate = ? , isClanItem = ?, enhancementLevel = ?, enhancementExp = ?, enhanceValue = ?, paintID = ?, paintIDList = ?, partSlot1 = ?, partSlot2 = ?, lockStatus = ? WHERE userID = ? AND slot = ?"));
-				queryUpdateItem.bind(1, item.m_nItemID);
-				queryUpdateItem.bind(2, item.m_nCount);
-				queryUpdateItem.bind(3, item.m_nStatus);
-				queryUpdateItem.bind(4, item.m_nInUse);
-				queryUpdateItem.bind(5, item.m_nObtainDate);
-				queryUpdateItem.bind(6, item.m_nExpiryDate);
-				queryUpdateItem.bind(7, item.m_nIsClanItem);
-				queryUpdateItem.bind(8, item.m_nEnhancementLevel);
-				queryUpdateItem.bind(9, item.m_nEnhancementExp);
-				queryUpdateItem.bind(10, item.m_nEnhanceValue);
-				queryUpdateItem.bind(11, item.m_nPaintID);
-				queryUpdateItem.bind(12, serialize_array_int(item.m_nPaintIDList));
-				queryUpdateItem.bind(13, item.m_nPartSlot1);
-				queryUpdateItem.bind(14, item.m_nPartSlot2);
-				queryUpdateItem.bind(15, item.m_nLockStatus);
-				queryUpdateItem.bind(16, userID);
-				queryUpdateItem.bind(17, slot);
-
-				queryUpdateItem.exec();
+				itemsUpdate.push_back(item);
 			}
 		}
-	
-		transaction.commit();
+
+		int index = 1;
+
+		if (itemsInsert.size())
+		{
+			SQLite::Statement queryInsertNewInvItem(m_Database, queryInsertNewInvItemStr);
+			for (auto& item : itemsInsert)
+			{
+				queryInsertNewInvItem.bind(index++, userID);
+				queryInsertNewInvItem.bind(index++, item.m_nSlot);
+				queryInsertNewInvItem.bind(index++, item.m_nItemID);
+				queryInsertNewInvItem.bind(index++, item.m_nCount);
+				queryInsertNewInvItem.bind(index++, item.m_nStatus);
+				queryInsertNewInvItem.bind(index++, item.m_nInUse);
+				queryInsertNewInvItem.bind(index++, item.m_nObtainDate);
+				queryInsertNewInvItem.bind(index++, item.m_nExpiryDate);
+				queryInsertNewInvItem.bind(index++, item.m_nIsClanItem);
+				queryInsertNewInvItem.bind(index++, item.m_nEnhancementLevel);
+				queryInsertNewInvItem.bind(index++, item.m_nEnhancementExp);
+				queryInsertNewInvItem.bind(index++, item.m_nEnhanceValue);
+				queryInsertNewInvItem.bind(index++, item.m_nPaintID);
+				queryInsertNewInvItem.bind(index++, serialize_array_int(item.m_nPaintIDList));
+				queryInsertNewInvItem.bind(index++, item.m_nPartSlot1);
+				queryInsertNewInvItem.bind(index++, item.m_nPartSlot2);
+				queryInsertNewInvItem.bind(index++, item.m_nLockStatus);
+			}
+
+			queryInsertNewInvItem.exec();
+		}
+
+		if (itemsUpdate.size())
+		{
+			index = 1;
+
+			queryUpdateItemStr += OBFUSCATE("UPDATE UserInventory SET itemID = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, count = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, status = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, inUse = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, obtainDate = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, expiryDate = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, isClanItem = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, enhancementLevel = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, EnhancementExp = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, enhanceValue = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, paintID = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, paintIDList = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, partSlot1 = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, partSlot2 = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+			queryUpdateItemStr += OBFUSCATE(" END, lockStatus = CASE");
+			for (int i = 0; i < itemsUpdate.size(); i++)
+			{
+				queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+			}
+
+			queryUpdateItemStr += OBFUSCATE(" END WHERE userID = ?");
+
+			SQLite::Statement queryUpdateItem(m_Database, queryUpdateItemStr);
+
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nItemID);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nCount);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nStatus);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nInUse);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nObtainDate);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nExpiryDate);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nIsClanItem);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nEnhancementLevel);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nEnhancementExp);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nEnhanceValue);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nPaintID);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, serialize_array_int(item.m_nPaintIDList));
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nPartSlot1);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nPartSlot2);
+			}
+			for (auto& item : itemsUpdate)
+			{
+				queryUpdateItem.bind(index++, item.m_nSlot);
+				queryUpdateItem.bind(index++, item.m_nLockStatus);
+			}
+
+			queryUpdateItem.bind(index++, userID);
+
+			queryUpdateItem.exec();
+		}
 	}
 	catch (exception& e)
 	{
-		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::AddInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::AddInventoryItems: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
 	return 1;
 }
 
+string UpdateInventoryItemString(int flag)
+{
+	ostringstream query;
+	query << OBFUSCATE("UPDATE UserInventory SET");
+	if (flag & UITEM_FLAG_ITEMID)
+		query << OBFUSCATE(" itemID = ?,");
+	if (flag & UITEM_FLAG_COUNT)
+		query << OBFUSCATE(" count = ?,");
+	if (flag & UITEM_FLAG_STATUS)
+		query << OBFUSCATE(" status = ?,");
+	if (flag & UITEM_FLAG_INUSE)
+		query << OBFUSCATE(" inUse = ?,");
+	if (flag & UITEM_FLAG_OBTAINDATE)
+		query << OBFUSCATE(" obtainDate = ?,");
+	if (flag & UITEM_FLAG_EXPIRYDATE)
+		query << OBFUSCATE(" expiryDate = ?,");
+	if (flag & UITEM_FLAG_ISCLANITEM)
+		query << OBFUSCATE(" isClanItem = ?,");
+	if (flag & UITEM_FLAG_ENHANCEMENTLEVEL)
+		query << OBFUSCATE(" enhancementLevel = ?,");
+	if (flag & UITEM_FLAG_ENHANCEMENTEXP)
+		query << OBFUSCATE(" enhancementExp = ?,");
+	if (flag & UITEM_FLAG_ENHANCEVALUE)
+		query << OBFUSCATE(" enhanceValue = ?,");
+	if (flag & UITEM_FLAG_PAINTID)
+		query << OBFUSCATE(" paintID = ?,");
+	if (flag & UITEM_FLAG_PAINTIDLIST)
+		query << OBFUSCATE(" paintIDList = ?,");
+	if (flag & UITEM_FLAG_PARTSLOT1)
+		query << OBFUSCATE(" partSlot1 = ?,");
+	if (flag & UITEM_FLAG_PARTSLOT2)
+		query << OBFUSCATE(" partSlot2 = ?,");
+	if (flag & UITEM_FLAG_LOCKSTATUS)
+		query << OBFUSCATE(" lockStatus = ?,");
+
+	return query.str();
+}
+
 // updates user inventory item data
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::UpdateInventoryItem(int userID, const CUserInventoryItem& item)
+int CUserDatabaseSQLite::UpdateInventoryItem(int userID, const CUserInventoryItem& item, int flag)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserInventory SET itemID = ? , count = ? , status = ? , inUse = ? , obtainDate = ? , expiryDate = ? , isClanItem = ?, enhancementLevel = ?, enhancementExp = ?, enhanceValue = ?, paintID = ?, paintIDList = ?, partSlot1 = ?, partSlot2 = ?, lockStatus = ? WHERE userID = ? AND slot = ?"));
-		query.bind(1, item.m_nItemID);
-		query.bind(2, item.m_nCount);
-		query.bind(3, item.m_nStatus);
-		query.bind(4, item.m_nInUse);
-		query.bind(5, item.m_nObtainDate);
-		query.bind(6, item.m_nExpiryDate);
-		query.bind(7, item.m_nIsClanItem);
-		query.bind(8, item.m_nEnhancementLevel);
-		query.bind(9, item.m_nEnhancementExp);
-		query.bind(10, item.m_nEnhanceValue);
-		query.bind(11, item.m_nPaintID);
-		query.bind(12, serialize_array_int(item.m_nPaintIDList));
-		query.bind(13, item.m_nPartSlot1);
-		query.bind(14, item.m_nPartSlot2);
-		query.bind(15, item.m_nLockStatus);
-		query.bind(16, userID);
-		query.bind(17, item.m_nSlot);
+		// format query
+		string query = UpdateInventoryItemString(flag);
+		query[query.size() - 1] = ' ';
+		query += OBFUSCATE("WHERE userID = ? AND slot = ?"); // TODO: use stringstream
 
-		query.exec();
+		SQLite::Statement statement(m_Database, query);
+		int index = 1;
+
+		if (flag & UITEM_FLAG_ITEMID)
+		{
+			statement.bind(index++, item.m_nItemID);
+		}
+		if (flag & UITEM_FLAG_COUNT)
+		{
+			statement.bind(index++, item.m_nCount);
+		}
+		if (flag & UITEM_FLAG_STATUS)
+		{
+			statement.bind(index++, item.m_nStatus);
+		}
+		if (flag & UITEM_FLAG_INUSE)
+		{
+			statement.bind(index++, item.m_nInUse);
+		}
+		if (flag & UITEM_FLAG_OBTAINDATE)
+		{
+			statement.bind(index++, item.m_nObtainDate);
+		}
+		if (flag & UITEM_FLAG_EXPIRYDATE)
+		{
+			statement.bind(index++, item.m_nExpiryDate);
+		}
+		if (flag & UITEM_FLAG_ISCLANITEM)
+		{
+			statement.bind(index++, item.m_nIsClanItem);
+		}
+		if (flag & UITEM_FLAG_ENHANCEMENTLEVEL)
+		{
+			statement.bind(index++, item.m_nEnhancementLevel);
+		}
+		if (flag & UITEM_FLAG_ENHANCEMENTEXP)
+		{
+			statement.bind(index++, item.m_nEnhancementExp);
+		}
+		if (flag & UITEM_FLAG_ENHANCEVALUE)
+		{
+			statement.bind(index++, item.m_nEnhanceValue);
+		}
+		if (flag & UITEM_FLAG_PAINTID)
+		{
+			statement.bind(index++, item.m_nPaintID);
+		}
+		if (flag & UITEM_FLAG_PAINTIDLIST)
+		{
+			statement.bind(index++, serialize_array_int(item.m_nPaintIDList));
+		}
+		if (flag & UITEM_FLAG_PARTSLOT1)
+		{
+			statement.bind(index++, item.m_nPartSlot1);
+		}
+		if (flag & UITEM_FLAG_PARTSLOT2)
+		{
+			statement.bind(index++, item.m_nPartSlot2);
+		}
+		if (flag & UITEM_FLAG_LOCKSTATUS)
+		{
+			statement.bind(index++, item.m_nLockStatus);
+		}
+
+		statement.bind(index++, userID);
+		statement.bind(index++, item.m_nSlot);
+
+		statement.exec();
 	}
 	catch (exception& e)
 	{
@@ -971,7 +1227,7 @@ int CUserDatabaseSQLite::IsInventoryFull(int userID)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT COUNT(*) FROM UserInventory WHERE userID = ? AND itemID != 0"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT COUNT(itemID) FROM UserInventory WHERE userID = ? AND itemID != 0"));
 		query.bind(1, userID);
 		query.executeStep();
 
@@ -993,23 +1249,23 @@ int CUserDatabaseSQLite::IsInventoryFull(int userID)
 string GetUserDataString(int flag, bool update)
 {
 	ostringstream query;
-	query << (update ? OBFUSCATE("UPDATE User SET ") : OBFUSCATE("SELECT "));
+	query << (update ? OBFUSCATE("UPDATE User SET") : OBFUSCATE("SELECT"));
 	if (flag & UDATA_FLAG_USERNAME)
-		query << (update ? OBFUSCATE("userName = ?, ") : OBFUSCATE("userName, "));
+		query << (update ? OBFUSCATE(" userName = ?,") : OBFUSCATE(" userName,"));
 	if (flag & UDATA_FLAG_PASSWORD)
-		query << (update ? OBFUSCATE("password = ?, ") : OBFUSCATE("password, "));
+		query << (update ? OBFUSCATE(" password = ?,") : OBFUSCATE(" password,"));
 	if (flag & UDATA_FLAG_REGISTERTIME)
-		query << (update ? OBFUSCATE("registerTime = ?, ") : OBFUSCATE("registerTime, "));
+		query << (update ? OBFUSCATE(" registerTime = ?,") : OBFUSCATE(" registerTime,"));
 	if (flag & UDATA_FLAG_REGISTERIP)
-		query << (update ? OBFUSCATE("registerIP = ?, ") : OBFUSCATE("registerIP, "));
+		query << (update ? OBFUSCATE(" registerIP = ?,") : OBFUSCATE(" registerIP,"));
 	if (flag & UDATA_FLAG_FIRSTLOGONTIME)
-		query << (update ? OBFUSCATE("firstLogonTime = ?, ") : OBFUSCATE("firstLogonTime, "));
+		query << (update ? OBFUSCATE(" firstLogonTime = ?,") : OBFUSCATE(" firstLogonTime,"));
 	if (flag & UDATA_FLAG_LASTLOGONTIME)
-		query << (update ? OBFUSCATE("lastLogonTime = ?, ") : OBFUSCATE("lastLogonTime, "));
+		query << (update ? OBFUSCATE(" lastLogonTime = ?,") : OBFUSCATE(" lastLogonTime,"));
 	if (flag & UDATA_FLAG_LASTIP)
-		query << (update ? OBFUSCATE("lastIP = ?, ") : OBFUSCATE("lastIP, "));
+		query << (update ? OBFUSCATE(" lastIP = ?,") : OBFUSCATE(" lastIP,"));
 	if (flag & UDATA_FLAG_LASTHWID)
-		query << (update ? OBFUSCATE("lastHWID = ?, ") : OBFUSCATE("lastHWID, "));
+		query << (update ? OBFUSCATE(" lastHWID = ?,") : OBFUSCATE(" lastHWID,"));
 
 	return query.str();
 }
@@ -1022,7 +1278,7 @@ int CUserDatabaseSQLite::GetUserData(int userID, CUserData& data)
 	{
 		// format query
 		string query = GetUserDataString(data.flag, false);
-		query[query.size() - 2] = ' ';
+		query[query.size() - 1] = ' ';
 		query += OBFUSCATE("FROM User WHERE userID = ?"); // TODO: use stringstream
 
 		SQLite::Statement statement(m_Database, query);
@@ -1090,7 +1346,7 @@ int CUserDatabaseSQLite::UpdateUserData(int userID, CUserData data)
 	{
 		// format query
 		string query = GetUserDataString(data.flag, true);
-		query[query.size() - 2] = ' ';
+		query[query.size() - 1] = ' ';
 		query += OBFUSCATE("WHERE userID = ?");
 
 		SQLite::Statement statement(m_Database, query);
@@ -1270,6 +1526,74 @@ int CUserDatabaseSQLite::DeleteCharacter(int userID)
 	return 1;
 }
 
+string GetCharacterString(CUserCharacter& character, bool update)
+{
+	ostringstream query;
+	query << (update ? OBFUSCATE("UPDATE UserCharacter SET") : OBFUSCATE("SELECT"));
+	if (character.flag & UFLAG_GAMENAME)
+		query << (update ? OBFUSCATE(" gameName = ?,") : OBFUSCATE(" gameName,"));
+	if (character.flag & UFLAG_LEVEL)
+		query << (update ? OBFUSCATE(" level = ?,") : OBFUSCATE(" level,"));
+	if (character.flag & UFLAG_EXP)
+		query << (update ? OBFUSCATE(" exp = ?,") : OBFUSCATE(" exp,"));
+	if (character.flag & UFLAG_CASH)
+		query << (update ? OBFUSCATE(" cash = ?,") : OBFUSCATE(" cash,"));
+	if (character.flag & UFLAG_POINTS)
+		query << (update ? OBFUSCATE(" points = ?,") : OBFUSCATE(" points,"));
+	if (character.flag & UFLAG_STAT)
+	{
+		if (update)
+		{
+			if (character.statFlag & 0x1)
+				query << OBFUSCATE(" battles = ?,");
+			if (character.statFlag & 0x2)
+				query << OBFUSCATE(" win = ?,");
+			if (character.statFlag & 0x4)
+				query << OBFUSCATE(" kills = ?,");
+			if (character.statFlag & 0x8)
+				query << OBFUSCATE(" deaths = ?,");
+		}
+		else
+		{
+			query << OBFUSCATE(" battles, win, kills, deaths,");
+		}
+	}
+	if (character.flag & UFLAG_LOCATION)
+		query << (update ? OBFUSCATE(" nation = ?, city = ?, town = ?,") : OBFUSCATE(" nation, city, town,"));
+	if (character.flag & UFLAG_RANK)
+		query << (update ? OBFUSCATE(" leagueID = ?,") : OBFUSCATE(" leagueID,"));
+	if (character.flag & UFLAG_PASSWORDBOXES)
+		query << (update ? OBFUSCATE(" passwordBoxes = ?,") : OBFUSCATE(" passwordBoxes,"));
+	if (character.flag & UFLAG_ACHIEVEMENT)
+	{
+		if (update)
+		{
+			if (character.achievementFlag & 0x1)
+				query << OBFUSCATE(" honorPoints = ?,");
+			if (character.achievementFlag & 0x2)
+				query << OBFUSCATE(" prefixID = ?,");
+		}
+		else
+		{
+			query << OBFUSCATE(" honorPoints, prefixID,");
+		}
+	}
+	if (character.flag & UFLAG_ACHIEVEMENTLIST)
+		query << (update ? OBFUSCATE(" achievementList = ?,") : OBFUSCATE(" achievementList,"));
+	if (character.flag & UFLAG_TITLES)
+		query << (update ? OBFUSCATE(" titles = ?,") : OBFUSCATE(" titles,"));
+	if (character.flag & UFLAG_CLAN)
+		query << (update ? OBFUSCATE(" clanID = ?,") : OBFUSCATE(" clanID, (SELECT markID FROM Clan WHERE clanID = UserCharacter.clanID), (SELECT name FROM Clan WHERE clanID = UserCharacter.clanID),"));
+	if (character.flag & UFLAG_TOURNAMENT)
+		query << (update ? OBFUSCATE(" tournament = ?,") : OBFUSCATE(" tournament,"));
+	if (character.flag & UFLAG_UNK19)
+		query << (update ? OBFUSCATE(" mileagePoints = ?,") : OBFUSCATE(" mileagePoints,"));
+	if (character.flag & UFLAG_NAMEPLATE)
+		query << (update ? OBFUSCATE(" nameplateID = ?,") : OBFUSCATE(" nameplateID,"));
+
+	return query.str();
+}
+
 // gets user character
 // returns -1 == character doesn't exist, 0 == database error, 1 on success
 int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
@@ -1277,90 +1601,11 @@ int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
 	try
 	{
 		// format query
-		ostringstream query;
-		query << OBFUSCATE("SELECT ");
-		if (character.flag & UFLAG_GAMENAME)
-		{
-			query << OBFUSCATE("gameName, ");
-		}
-		if (character.flag & UFLAG_LEVEL)
-		{
-			query << OBFUSCATE("level, ");
-		}
-		if (character.flag & UFLAG_EXP)
-		{
-			query << OBFUSCATE("exp, ");
-		}
-		if (character.flag & UFLAG_CASH)
-		{
-			query << OBFUSCATE("cash, ");
-		}
-		if (character.flag & UFLAG_POINTS)
-		{
-			query << OBFUSCATE("points, ");
-		}
-		if (character.flag & UFLAG_STAT)
-		{
-			query << OBFUSCATE("battles, win, kills, deaths, ");
-		}
-		if (character.flag & UFLAG_LOCATION)
-		{
-			query << OBFUSCATE("nation, city, town, ");
-		}
-		if (character.flag & UFLAG_RANK)
-		{
-			query << OBFUSCATE("leagueID, ");
-			// TODO: rewrite
-			{
-				SQLite::Statement query(m_Database, OBFUSCATE("SELECT tierOri, tierZM, tierZPVE, tierDM FROM UserRank WHERE userID = ?"));
-				query.bind(1, userID);
-				if (query.executeStep())
-				{
-					for (int i = 0; i < 4; i++)
-					{
-						character.tier[i] = query.getColumn(i);
-					}
-				}
-			}
-		}
-		if (character.flag & UFLAG_PASSWORDBOXES)
-		{
-			query << OBFUSCATE("passwordBoxes, ");
-		}
-		if (character.flag & UFLAG_ACHIEVEMENT)
-		{
-			query << OBFUSCATE("honorPoints, prefixID, ");
-		}
-		if (character.flag & UFLAG_ACHIEVEMENTLIST)
-		{
-			query << OBFUSCATE("achievementList, ");
-		}
-		if (character.flag & UFLAG_TITLES)
-		{
-			query << OBFUSCATE("titles, ");
-		}
-		if (character.flag & UFLAG_CLAN)
-		{
-			query << OBFUSCATE("clanID, (SELECT markID FROM Clan WHERE clanID = UserCharacter.clanID), (SELECT name FROM Clan WHERE clanID = UserCharacter.clanID), ");
-		}
-		if (character.flag & UFLAG_TOURNAMENT)
-		{
-			query << OBFUSCATE("tournament, ");
-		}
-		if (character.flag & UFLAG_UNK19)
-		{
-			query << OBFUSCATE("mileagePoints, ");
-		}
-		if (character.flag & UFLAG_NAMEPLATE)
-		{
-			query << OBFUSCATE("nameplateID, ");
-		}
-		query << OBFUSCATE("FROM UserCharacter WHERE userID = ?");
+		string query = GetCharacterString(character, false);
+		query[query.size() - 1] = ' ';
+		query += OBFUSCATE("FROM UserCharacter WHERE userID = ?"); // TODO: use stringstream
 
-		string queryStr = query.str();
-		queryStr[queryStr.size() - strlen(OBFUSCATE("FROM UserCharacter WHERE userID = ?")) - 2] = ' ';
-
-		SQLite::Statement statement(m_Database, queryStr);
+		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
 
 		if (statement.executeStep())
@@ -1403,6 +1648,19 @@ int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
 			if (character.flag & UFLAG_RANK)
 			{
 				character.leagueID = statement.getColumn(index++);
+
+				// TODO: rewrite
+				{
+					SQLite::Statement query(m_Database, OBFUSCATE("SELECT tierOri, tierZM, tierZPVE, tierDM FROM UserRank WHERE userID = ?"));
+					query.bind(1, userID);
+					if (query.executeStep())
+					{
+						for (int i = 0; i < 4; i++)
+						{
+							character.tier[i] = query.getColumn(i);
+						}
+					}
+				}
 			}
 			if (character.flag & UFLAG_PASSWORDBOXES)
 			{
@@ -1462,101 +1720,13 @@ int CUserDatabaseSQLite::UpdateCharacter(int userID, CUserCharacter& character)
 	try
 	{
 		// format query
-		ostringstream query;
-		query << OBFUSCATE("UPDATE UserCharacter SET ");
-		if (character.flag & UFLAG_GAMENAME)
-		{
-			query << OBFUSCATE("gameName = ?, ");
-		}
-		if (character.flag & UFLAG_LEVEL)
-		{
-			query << OBFUSCATE("level = ?, ");
-		}
-		if (character.flag & UFLAG_EXP)
-		{
-			query << OBFUSCATE("exp = ?, ");
-		}
-		if (character.flag & UFLAG_CASH)
-		{
-			query << OBFUSCATE("cash = ?, ");
-		}
-		if (character.flag & UFLAG_POINTS)
-		{
-			query << OBFUSCATE("points = ?, ");
-		}
-		if (character.flag & UFLAG_STAT)
-		{
-			if (character.statFlag & 0x1)
-			{
-				query << OBFUSCATE("battles = ?, ");
-			}
-			if (character.statFlag & 0x2)
-			{
-				query << OBFUSCATE("win = ?, ");
-			}
-			if (character.statFlag & 0x4)
-			{
-				query << OBFUSCATE("kills = ?, ");
-			}
-			if (character.statFlag & 0x8)
-			{
-				query << OBFUSCATE("deaths = ?, ");
-			}
-		}
-		if (character.flag & UFLAG_LOCATION)
-		{
-			query << OBFUSCATE("nation = ?, city = ?, town = ?, ");
-		}
-		if (character.flag & UFLAG_RANK)
-		{
-			query << OBFUSCATE("leagueID = ?, ");
-		}
-		if (character.flag & UFLAG_PASSWORDBOXES)
-		{
-			query << OBFUSCATE("passwordBoxes = ?, ");
-		}
-		if (character.flag & UFLAG_ACHIEVEMENT)
-		{
-			if (character.achievementFlag & 0x1)
-			{
-				query << OBFUSCATE("honorPoints = ?, ");
-			}
-			if (character.achievementFlag & 0x2)
-			{
-				query << OBFUSCATE("prefixID = ?, ");
-			}
-		}
-		if (character.flag & UFLAG_ACHIEVEMENTLIST)
-		{
-			query << OBFUSCATE("achievementList = ?, ");
-		}
-		if (character.flag & UFLAG_TITLES)
-		{
-			query << OBFUSCATE("titles = ?, ");
-		}
-		if (character.flag & UFLAG_CLAN)
-		{
-			query << OBFUSCATE("clanID = ?, ");
-		}
-		if (character.flag & UFLAG_TOURNAMENT)
-		{
-			query << OBFUSCATE("tournament = ?, ");
-		}
-		if (character.flag & UFLAG_UNK19)
-		{
-			query << OBFUSCATE("mileagePoints = ?, ");
-		}
-		if (character.flag & UFLAG_NAMEPLATE)
-		{
-			query << OBFUSCATE("nameplateID = ?, ");
-		}
-		query << OBFUSCATE("WHERE userID = ?");
+		string query = GetCharacterString(character, true);
+		query[query.size() - 1] = ' ';
+		query += OBFUSCATE("WHERE userID = ?"); // TODO: use stringstream
 
-		string queryStr = query.str();
-		queryStr[queryStr.size() - strlen(OBFUSCATE("WHERE userID = ?")) - 2] = ' ';
-
-		SQLite::Statement statement(m_Database, queryStr);
+		SQLite::Statement statement(m_Database, query);
 		int index = 1;
+
 		if (character.flag & UFLAG_GAMENAME)
 		{
 			statement.bind(index++, character.gameName);
@@ -1661,6 +1831,36 @@ int CUserDatabaseSQLite::UpdateCharacter(int userID, CUserCharacter& character)
 	return 1;
 }
 
+string GetCharacterExtendedString(int flag, bool update)
+{
+	ostringstream query;
+	query << (update ? OBFUSCATE("UPDATE UserCharacterExtended SET") : OBFUSCATE("SELECT"));
+	if (flag & EXT_UFLAG_GAMEMASTER)
+		query << (update ? OBFUSCATE(" gameMaster = ?,") : OBFUSCATE(" gameMaster,"));
+	if (flag & EXT_UFLAG_KILLSTOGETGACHAPONITEM)
+		query << (update ? OBFUSCATE(" killsToGetGachaponItem = ?,") : OBFUSCATE(" killsToGetGachaponItem,"));
+	if (flag & EXT_UFLAG_NEXTINVENTORYSLOT)
+		query << (update ? OBFUSCATE(" nextInventorySlot = ?,") : OBFUSCATE(" nextInventorySlot,"));
+	if (flag & EXT_UFLAG_CONFIG)
+		query << (update ? OBFUSCATE(" config = ?,") : OBFUSCATE(" config,"));
+	if (flag & EXT_UFLAG_CURLOADOUT)
+		query << (update ? OBFUSCATE(" curLoadout = ?,") : OBFUSCATE(" curLoadout,"));
+	if (flag & EXT_UFLAG_CHARACTERID)
+		query << (update ? OBFUSCATE(" characterID = ?,") : OBFUSCATE(" characterID,"));
+	if (flag & EXT_UFLAG_BANSETTINGS)
+		query << (update ? OBFUSCATE(" banSettings = ?,") : OBFUSCATE(" banSettings,"));
+	if (flag & EXT_UFLAG_2NDPASSWORD)
+		query << (update ? OBFUSCATE(" _2ndPassword = ?,") : OBFUSCATE(" _2ndPassword,"));
+	if (flag & EXT_UFLAG_SECURITYQNA)
+		query << (update ? OBFUSCATE(" securityQuestion = ?, securityAnswer = ?,") : OBFUSCATE(" securityQuestion, securityAnswer,"));
+	if (flag & EXT_UFLAG_ZBRESPAWNEFFECT)
+		query << (update ? OBFUSCATE(" zbRespawnEffect = ?,") : OBFUSCATE(" zbRespawnEffect,"));
+	if (flag & EXT_UFLAG_KILLERMARKEFFECT)
+		query << (update ? OBFUSCATE(" killerMarkEffect = ?,") : OBFUSCATE(" killerMarkEffect,"));
+
+	return query.str();
+}
+
 // gets user character extended
 // returns 0 == database error, 1 on success
 int CUserDatabaseSQLite::GetCharacterExtended(int userID, CUserCharacterExtended& character)
@@ -1668,58 +1868,11 @@ int CUserDatabaseSQLite::GetCharacterExtended(int userID, CUserCharacterExtended
 	try
 	{
 		// format query
-		ostringstream query;
-		query << OBFUSCATE("SELECT ");
-		if (character.flag & EXT_UFLAG_GAMEMASTER)
-		{
-			query << OBFUSCATE("gameMaster, ");
-		}
-		if (character.flag & EXT_UFLAG_KILLSTOGETGACHAPONITEM)
-		{
-			query << OBFUSCATE("killsToGetGachaponItem, ");
-		}
-		if (character.flag & EXT_UFLAG_NEXTINVENTORYSLOT)
-		{
-			query << OBFUSCATE("nextInventorySlot, ");
-		}
-		if (character.flag & EXT_UFLAG_CONFIG)
-		{
-			query << OBFUSCATE("config, ");
-		}
-		if (character.flag & EXT_UFLAG_CURLOADOUT)
-		{
-			query << OBFUSCATE("curLoadout, ");
-		}
-		if (character.flag & EXT_UFLAG_CHARACTERID)
-		{
-			query << OBFUSCATE("characterID, ");
-		}
-		if (character.flag & EXT_UFLAG_BANSETTINGS)
-		{
-			query << OBFUSCATE("banSettings, ");
-		}
-		if (character.flag & EXT_UFLAG_2NDPASSWORD)
-		{
-			query << OBFUSCATE("_2ndPassword, ");
-		}
-		if (character.flag & EXT_UFLAG_SECURITYQNA)
-		{
-			query << OBFUSCATE("securityQuestion, securityAnswer, ");
-		}
-		if (character.flag & EXT_UFLAG_ZBRESPAWNEFFECT)
-		{
-			query << OBFUSCATE("zbRespawnEffect, ");
-		}
-		if (character.flag & EXT_UFLAG_KILLERMARKEFFECT)
-		{
-			query << OBFUSCATE("killerMarkEffect, ");
-		}
-		query << OBFUSCATE("FROM UserCharacterExtended WHERE userID = ?");
+		string query = GetCharacterExtendedString(character.flag, false);
+		query[query.size() - 1] = ' ';
+		query += OBFUSCATE("FROM UserCharacterExtended WHERE userID = ?"); // TODO: use stringstream
 
-		string queryStr = query.str();
-		queryStr[queryStr.size() - strlen(OBFUSCATE("FROM UserCharacterExtended WHERE userID = ?")) - 2] = ' ';
-
-		SQLite::Statement statement(m_Database, queryStr);
+		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
 
 		if (statement.executeStep())
@@ -1791,58 +1944,11 @@ int CUserDatabaseSQLite::UpdateCharacterExtended(int userID, CUserCharacterExten
 	try
 	{
 		// format query
-		ostringstream query;
-		query << OBFUSCATE("UPDATE UserCharacterExtended SET ");
-		if (character.flag & EXT_UFLAG_GAMEMASTER)
-		{
-			query << OBFUSCATE("gameMaster = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_KILLSTOGETGACHAPONITEM)
-		{
-			query << OBFUSCATE("killsToGetGachaponItem = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_NEXTINVENTORYSLOT)
-		{
-			query << OBFUSCATE("nextInventorySlot = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_CONFIG)
-		{
-			query << OBFUSCATE("config = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_CURLOADOUT)
-		{
-			query << OBFUSCATE("curLoadout = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_CHARACTERID)
-		{
-			query << OBFUSCATE("characterID = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_BANSETTINGS)
-		{
-			query << OBFUSCATE("banSettings = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_2NDPASSWORD)
-		{
-			query << OBFUSCATE("_2ndPassword = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_SECURITYQNA)
-		{
-			query << OBFUSCATE("securityQuestion = ?, securityAnswer = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_ZBRESPAWNEFFECT)
-		{
-			query << OBFUSCATE("zbRespawnEffect = ?, ");
-		}
-		if (character.flag & EXT_UFLAG_KILLERMARKEFFECT)
-		{
-			query << OBFUSCATE("killerMarkEffect = ?, ");
-		}
-		query << OBFUSCATE("WHERE userID = ?");
+		string query = GetCharacterExtendedString(character.flag, true);
+		query[query.size() - 1] = ' ';
+		query += OBFUSCATE("WHERE userID = ?"); // TODO: use stringstream
 
-		string queryStr = query.str();
-		queryStr[queryStr.size() - strlen(OBFUSCATE("WHERE userID = ?")) - 2] = ' ';
-
-		SQLite::Statement statement(m_Database, queryStr);
+		SQLite::Statement statement(m_Database, query);
 		int index = 1;
 
 		if (character.flag & EXT_UFLAG_GAMEMASTER)
@@ -4108,7 +4214,7 @@ int CUserDatabaseSQLite::AddClanStorageItem(int userID, int pageID, CUserInvento
 		}
 
 		item.Reset();
-		if (UpdateInventoryItem(userID, item) <= 0)
+		if (UpdateInventoryItem(userID, item, UITEM_FLAG_ALL) <= 0)
 		{
 			return -2;
 		}
@@ -4398,107 +4504,60 @@ int CUserDatabaseSQLite::GetClanMemberJoinUserList(int userID, vector<ClanUserJo
 	return 1;
 }
 
+string GetClanString(int flag, bool update)
+{
+	ostringstream query;
+	query << (update ? OBFUSCATE("UPDATE Clan SET") : OBFUSCATE("SELECT"));
+	if (flag & CFLAG_NAME)
+		query << (update ? OBFUSCATE(" name = ?,") : OBFUSCATE(" name,"));
+	if (flag & CFLAG_MASTERUID)
+		query << (update ? OBFUSCATE(" masterUserID = ?,") : OBFUSCATE(" masterUserID,"));
+	if (flag & CFLAG_TIME)
+		query << (update ? OBFUSCATE(" time = ?,") : OBFUSCATE(" time,"));
+	if (flag & CFLAG_GAMEMODEID)
+		query << (update ? OBFUSCATE(" gameModeID = ?,") : OBFUSCATE(" gameModeID,"));
+	if (flag & CFLAG_MAPID)
+		query << (update ? OBFUSCATE(" mapID = ?,") : OBFUSCATE(" mapID,"));
+	if (flag & CFLAG_REGION)
+		query << (update ? OBFUSCATE(" region = ?,") : OBFUSCATE(" region,"));
+	if (flag & CFLAG_JOINMETHOD)
+		query << (update ? OBFUSCATE(" joinMethod = ?,") : OBFUSCATE(" joinMethod,"));
+	if (flag & CFLAG_EXPBOOST)
+		query << (update ? OBFUSCATE(" expBonus = ?,") : OBFUSCATE(" expBonus,"));
+	if (flag & CFLAG_POINTBOOST)
+		query << (update ? OBFUSCATE(" pointBonus = ?,") : OBFUSCATE(" pointBonus,"));
+	if (flag & CFLAG_NOTICEMSG)
+		query << (update ? OBFUSCATE(" notice = ?,") : OBFUSCATE(" notice,"));
+	if (flag & CFLAG_SCORE)
+		query << (update ? OBFUSCATE(" score = ?,") : OBFUSCATE(" score,"));
+	if (flag & CFLAG_MARKID)
+		query << (update ? OBFUSCATE(" markID = ?,") : OBFUSCATE(" markID,"));
+	if (flag & CFLAG_MARKCOLOR)
+		query << (update ? OBFUSCATE(" markColor = ?,") : OBFUSCATE(" markColor,"));
+	if (!update && flag & CFLAG_ID)
+		query << OBFUSCATE(" clanID,");
+	if (!update && flag & CFLAG_CLANMASTER)
+		query << OBFUSCATE(" (SELECT gameName FROM UserCharacter WHERE userID = Clan.masterUserID),");
+	if (flag & CFLAG_MARKCHANGECOUNT)
+		query << (update ? OBFUSCATE(" markChangeCount = ?,") : OBFUSCATE(" markChangeCount,"));
+	if (flag & CFLAG_MAXMEMBERCOUNT)
+		query << (update ? OBFUSCATE(" maxMemberCount = ?,") : OBFUSCATE(" maxMemberCount,"));
+
+	return query.str();
+}
+
 int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 {
 	try
 	{
 		// format query
-		ostringstream query;
-		query << OBFUSCATE("SELECT ");
-		if (flag & CFLAG_ID)
-		{
-			query << OBFUSCATE("clanID, ");
-		}
-		if (flag & CFLAG_NAME)
-		{
-			query << OBFUSCATE("name, ");
-		}
-		if (flag & CFLAG_MASTERUID)
-		{
-			query << OBFUSCATE("masterUserID, ");
-		}
-		if (flag & CFLAG_CLANMASTER)
-		{
-			query << OBFUSCATE("(SELECT gameName FROM UserCharacter WHERE userID = Clan.masterUserID), ");
-		}
-		if (flag & CFLAG_TIME)
-		{
-			query << OBFUSCATE("time, ");
-		}
-		if (flag & CFLAG_GAMEMODEID)
-		{
-			query << OBFUSCATE("gameModeID, ");
-		}
-		if (flag & CFLAG_MAPID)
-		{
-			query << OBFUSCATE("mapID, ");
-		}
-		if (flag & CFLAG_REGION)
-		{
-			query << OBFUSCATE("region, ");
-		}
-		if (flag & CFLAG_JOINMETHOD)
-		{
-			query << OBFUSCATE("joinMethod, ");
-		}
-		if (flag & CFLAG_EXPBOOST)
-		{
-			query << OBFUSCATE("expBonus, ");
-		}
-		if (flag & CFLAG_POINTBOOST)
-		{
-			query << OBFUSCATE("pointBonus, ");
-		}
-		if (flag & CFLAG_NOTICEMSG)
-		{
-			query << OBFUSCATE("notice, ");
-		}
-		if (flag & CFLAG_SCORE)
-		{
-			query << OBFUSCATE("score, ");
-		}
-		if (flag & CFLAG_MARKID)
-		{
-			query << OBFUSCATE("markID, ");
-		}
-		if (flag & CFLAG_MARKCOLOR)
-		{
-			query << OBFUSCATE("markColor, ");
-		}
-		if (flag & CFLAG_MARKCHANGECOUNT)
-		{
-			query << OBFUSCATE("markChangeCount, ");
-		}
-		if (flag & CFLAG_MAXMEMBERCOUNT)
-		{
-			query << OBFUSCATE("maxMemberCount, ");
-		}
-		if (flag & CFLAG_CHRONICLE)
-		{
-			// TODO: rewrite
-			{
-				SQLite::Statement query(m_Database, OBFUSCATE("SELECT date, type, string FROM ClanChronicle WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)"));
-				query.bind(1, userID);
-				while (query.executeStep())
-				{
-					ClanChronicle chr;
-					chr.date = query.getColumn(0);
-					chr.type = query.getColumn(1);
-					chr.str = (const char*)query.getColumn(2);
+		string query = GetClanString(flag, false);
+		query[query.size() - 1] = ' ';
+		query += OBFUSCATE("FROM Clan WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)"); // TODO: use stringstream
 
-					clan.chronicle.push_back(chr);
-				}
-			}
-
-			query << OBFUSCATE("0, ");
-		}
-		query << OBFUSCATE("FROM Clan WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)");
-
-		string queryStr = query.str();
-		queryStr[queryStr.size() - strlen(OBFUSCATE("FROM Clan WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)")) - 2] = ' ';
-
-		SQLite::Statement statement(m_Database, queryStr.c_str());
+		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
+
 		if (statement.executeStep())
 		{
 			int index = 0;
@@ -4570,6 +4629,23 @@ int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 			{
 				clan.maxMemberCount = statement.getColumn(index++);
 			}
+			if (flag & CFLAG_CHRONICLE)
+			{
+				// TODO: rewrite
+				{
+					SQLite::Statement query(m_Database, OBFUSCATE("SELECT date, type, string FROM ClanChronicle WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)"));
+					query.bind(1, userID);
+					while (query.executeStep())
+					{
+						ClanChronicle chr;
+						chr.date = query.getColumn(0);
+						chr.type = query.getColumn(1);
+						chr.str = (const char*)query.getColumn(2);
+
+						clan.chronicle.push_back(chr);
+					}
+				}
+			}
 		}
 		else
 		{
@@ -4618,74 +4694,11 @@ int CUserDatabaseSQLite::UpdateClan(int userID, int flag, Clan_s clan)
 	try
 	{
 		// format query
-		ostringstream query;
-		query << OBFUSCATE("UPDATE Clan SET ");
-		if (flag & CFLAG_NAME)
-		{
-			query << OBFUSCATE("name = ?, ");
-		}
-		if (flag & CFLAG_MASTERUID)
-		{
-			query << OBFUSCATE("masterUserID = ?, ");
-		}
-		if (flag & CFLAG_TIME)
-		{
-			query << OBFUSCATE("time = ?, ");
-		}
-		if (flag & CFLAG_GAMEMODEID)
-		{
-			query << OBFUSCATE("gameModeID = ?, ");
-		}
-		if (flag & CFLAG_MAPID)
-		{
-			query << OBFUSCATE("mapID = ?, ");
-		}
-		if (flag & CFLAG_REGION)
-		{
-			query << OBFUSCATE("region = ?, ");
-		}
-		if (flag & CFLAG_JOINMETHOD)
-		{
-			query << OBFUSCATE("joinMethod = ?, ");
-		}
-		if (flag & CFLAG_EXPBOOST)
-		{
-			query << OBFUSCATE("expBonus = ?, ");
-		}
-		if (flag & CFLAG_POINTBOOST)
-		{
-			query << OBFUSCATE("pointBonus = ?, ");
-		}
-		if (flag & CFLAG_NOTICEMSG)
-		{
-			query << OBFUSCATE("notice = ?, ");
-		}
-		if (flag & CFLAG_SCORE)
-		{
-			query << OBFUSCATE("score = ?, ");
-		}
-		if (flag & CFLAG_MARKID)
-		{
-			query << OBFUSCATE("markID = ?, ");
-		}
-		if (flag & CFLAG_MARKCOLOR)
-		{
-			query << OBFUSCATE("markColor = ?, ");
-		}
-		if (flag & CFLAG_MARKCHANGECOUNT)
-		{
-			query << OBFUSCATE("markChangeCount = ?, ");
-		}
-		if (flag & CFLAG_MAXMEMBERCOUNT)
-		{
-			query << OBFUSCATE("maxMemberCount = ?, ");
-		}
-		query << OBFUSCATE("WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1)");
+		string query = GetClanString(flag, true);
+		query[query.size() - 1] = ' ';
+		query += OBFUSCATE("WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1)"); // TODO: use stringstream
 
-		string queryStr = query.str();
-		queryStr[queryStr.size() - strlen(OBFUSCATE("WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1)")) - 2] = ' ';
-
-		SQLite::Statement statement(m_Database, queryStr);
+		SQLite::Statement statement(m_Database, query);
 		int index = 1;
 
 		if (flag & CFLAG_NAME)
@@ -5377,7 +5390,7 @@ void CUserDatabaseSQLite::OnMinuteTick(time_t curTime)
 					// RemoveItem() should be used
 					item.Reset();
 
-					UpdateInventoryItem(userID, item);
+					UpdateInventoryItem(userID, item, UITEM_FLAG_ALL);
 				}
 			}
 

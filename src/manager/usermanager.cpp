@@ -446,8 +446,17 @@ int CUserManager::ChangeUserNickname(IUser* user, const string& newNickname, boo
 			return 0;
 
 		// give	a user pseudo default items
+		vector<RewardItem> rewardItems;
 		for (auto itemID : g_pServerConfig->defUser.pseudoDefaultItems)
-			g_ItemManager.AddItem(user->GetID(), user, itemID, 1, 0);
+		{
+			RewardItem rewardItem;
+			rewardItem.itemID = itemID;
+			rewardItem.count = 1;
+			rewardItem.duration = 0;
+			rewardItems.push_back(rewardItem);
+		}
+
+		g_ItemManager.AddItems(user->GetID(), user, rewardItems);
 
 		g_ItemManager.GiveReward(user->GetID(), user, 1001); // lvl box 1
 	}

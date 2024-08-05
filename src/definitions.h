@@ -845,6 +845,23 @@ enum RoomStatus
 #define	UDATA_FLAG_LASTIP			(1<<6)
 #define	UDATA_FLAG_LASTHWID			(1<<7)
 
+#define UITEM_FLAG_ITEMID			(1<<0)
+#define UITEM_FLAG_COUNT			(1<<1)
+#define UITEM_FLAG_STATUS			(1<<2)
+#define UITEM_FLAG_INUSE			(1<<3)
+#define UITEM_FLAG_OBTAINDATE		(1<<4)
+#define UITEM_FLAG_EXPIRYDATE		(1<<5)
+#define UITEM_FLAG_ISCLANITEM		(1<<6)
+#define UITEM_FLAG_ENHANCEMENTLEVEL	(1<<7)
+#define UITEM_FLAG_ENHANCEMENTEXP	(1<<8)
+#define UITEM_FLAG_ENHANCEVALUE		(1<<9)
+#define UITEM_FLAG_PAINTID			(1<<10)
+#define UITEM_FLAG_PAINTIDLIST		(1<<11)
+#define UITEM_FLAG_PARTSLOT1		(1<<12)
+#define UITEM_FLAG_PARTSLOT2		(1<<13)
+#define UITEM_FLAG_LOCKSTATUS		(1<<14)
+#define UITEM_FLAG_ALL				(-1)
+
 struct UserNetworkConfig_s
 {
 	std::string m_szExternalIpAddress;

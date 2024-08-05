@@ -36,7 +36,7 @@ public:
 	// user related
 	int AddInventoryItem(int userID, CUserInventoryItem& item);
 	int AddInventoryItems(int userID, std::vector<CUserInventoryItem>& items); // TODO
-	int UpdateInventoryItem(int userID, const CUserInventoryItem& item);
+	int UpdateInventoryItem(int userID, const CUserInventoryItem& item, int flag);
 	int GetInventoryItems(int userID, std::vector<CUserInventoryItem>& items);
 	int GetInventoryItemsByID(int userID, int itemID, std::vector<CUserInventoryItem>& items);
 	int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item);
