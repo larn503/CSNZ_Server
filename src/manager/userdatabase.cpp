@@ -122,6 +122,14 @@ int CUserDatabaseProxy::GetFirstActiveItemByItemID(int userID, int itemID, CUser
 	return result;
 }
 
+int CUserDatabaseProxy::GetInventoryItemsCount(int userID)
+{
+	ExecCalcStart();
+	int result = m_pDatabase->GetInventoryItemsCount(userID);
+	ExecCalcEnd(__FUNCTION__);
+	return result;
+}
+
 int CUserDatabaseProxy::IsInventoryFull(int userID)
 {
 	ExecCalcStart();

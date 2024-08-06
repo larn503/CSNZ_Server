@@ -50,6 +50,7 @@ public:
 	virtual int GetInventoryItemsByID(int userID, int itemID, std::vector<CUserInventoryItem>& items);
 	virtual int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item);
 	virtual int GetFirstActiveItemByItemID(int userID, int itemID, CUserInventoryItem& item);
+	virtual int GetInventoryItemsCount(int userID);
 	virtual int IsInventoryFull(int userID);
 	virtual int GetUserData(int userID, CUserData& data);
 	virtual int UpdateUserData(int userID, CUserData data);

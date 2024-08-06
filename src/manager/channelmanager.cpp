@@ -459,9 +459,16 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			}
 			else if (args[0] == (char*)OBFUSCATE("/getfreeslots"))
 			{
-				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Not implemented\n"));
+				int inventoryItemsCount = g_UserDatabase.GetInventoryItemsCount(user->GetID());
+
+				if (inventoryItemsCount < 0)
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, va("Couldn't get free slots due to database error."));
+				else if (g_pServerConfig->inventorySlotMax - inventoryItemsCount > 0)
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, va("You have %d free slots.", g_pServerConfig->inventorySlotMax - inventoryItemsCount));
+				else
+					g_PacketManager.SendUMsgNoticeMessageInChat(socket, va("You have no free slots."));
+
 				return true;
-				//g_PacketManager.SendUMsgNoticeMessageInChat(socket, va("You still have %d spaces.", uData->inventory->AvailableInventorySpace()));
 			}
 			else if (args[0] == (char*)OBFUSCATE("/additem"))
 			{

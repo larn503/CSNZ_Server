@@ -898,11 +898,20 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 
 int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 {
+	int inventoryItemsCount = g_UserDatabase.GetInventoryItemsCount(userID);
+
+	if (inventoryItemsCount < 0)
+		return ITEM_ADD_DB_ERROR;
+
+	if (inventoryItemsCount >= g_pServerConfig->inventorySlotMax)
+		return ITEM_ADD_INVENTORY_FULL;
+
 	vector<CUserInventoryItem> updatedItems;
+
+	int result = ITEM_ADD_SUCCESS;
 
 	g_UserDatabase.CreateTransaction();
 
-	int result = ITEM_ADD_SUCCESS;
 	for (auto& item : items)
 	{
 		int lastResult = 0;
@@ -911,12 +920,6 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		int itemID = item.itemID;
 		int duration = item.duration;
 		int count = item.count;
-
-		if (g_UserDatabase.IsInventoryFull(userID))
-		{
-			result = ITEM_ADD_INVENTORY_FULL;
-			break;
-		}
 
 		if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
 			continue;
@@ -995,7 +998,10 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 				if (lastResult == ITEM_ADD_SUCCESS)
 					continue;
 				else if (lastResult != 0)
+				{
+					result = ITEM_ADD_DB_ERROR;
 					break;
+				}
 			}
 		}
 		else if (duration)
@@ -1210,15 +1216,33 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		newItems.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
 	}
 
-	if (g_UserDatabase.AddInventoryItems(userID, updatedItems) <= 0)
+	if (result == ITEM_ADD_DB_ERROR)
 	{
-		result = ITEM_ADD_DB_ERROR;
+		g_UserDatabase.CommitTransaction();
+		return ITEM_ADD_DB_ERROR;
 	}
 
-	if (result == ITEM_ADD_SUCCESS && g_UserDatabase.CommitTransaction() == true)
+	if (!updatedItems.empty())
 	{
-		if (user && !updatedItems.empty())
-			g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), updatedItems);
+		if (inventoryItemsCount + updatedItems.size() > g_pServerConfig->inventorySlotMax)
+		{
+			updatedItems.resize(g_pServerConfig->inventorySlotMax - inventoryItemsCount);
+			result = ITEM_ADD_INVENTORY_FULL;
+		}
+
+		if (g_UserDatabase.AddInventoryItems(userID, updatedItems) <= 0)
+		{
+			g_UserDatabase.CommitTransaction();
+			return ITEM_ADD_DB_ERROR;
+		}
+
+		if (g_UserDatabase.CommitTransaction() == true)
+		{
+			if (user)
+				g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), updatedItems);
+		}
+		else
+			return ITEM_ADD_DB_ERROR;
 	}
 
 	return result;
@@ -1372,6 +1396,12 @@ bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 
 bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 {
+	if (item.m_nSlot <= 0)
+	{
+		Logger().Warn("CItemManager::RemoveItem: cannot remove item, slot <= 0\n");
+		return false;
+	}
+
 	if (item.IsItemDefaultOrPseudo())
 	{
 		// can't remove default item
@@ -1403,74 +1433,77 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 		}
 	}
 
-	if (item.m_nItemID == 8357) // superRoom
+	if (user)
 	{
-		IRoom* currentRoom = user->GetCurrentRoom();
-		if (currentRoom != NULL)
+		if (item.m_nItemID == 8357) // superRoom
 		{
-			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the superRoom flag
+			IRoom* currentRoom = user->GetCurrentRoom();
+			if (currentRoom != NULL)
 			{
-				vector<CUserInventoryItem> itemsWithSameID;
-				g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
-				if (itemsWithSameID.size() == 1)
+				if (user == currentRoom->GetHostUser()) // it's the room host, so remove the superRoom flag
 				{
-					CRoomSettings* roomSettings = currentRoom->GetSettings();
-					roomSettings->superRoom = 0;
-
-					for (auto u : currentRoom->GetUsers())
+					vector<CUserInventoryItem> itemsWithSameID;
+					g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
+					if (itemsWithSameID.size() == 1)
 					{
-						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
-					}
-				}
-			}
-		}
-	}
-	else if (item.m_nItemID == 439) // BigHeadEvent
-	{
-		IRoom* currentRoom = user->GetCurrentRoom();
-		if (currentRoom != NULL)
-		{
-			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the sd flag
-			{
-				vector<CUserInventoryItem> itemsWithSameID;
-				g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
-				if (itemsWithSameID.size() == 1)
-				{
-					CRoomSettings* roomSettings = currentRoom->GetSettings();
-
-					if (roomSettings->sd)
-					{
-						roomSettings->sd = 0;
+						CRoomSettings* roomSettings = currentRoom->GetSettings();
+						roomSettings->superRoom = 0;
 
 						for (auto u : currentRoom->GetUsers())
 						{
-							g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
+							g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SUPERROOM);
 						}
 					}
 				}
 			}
 		}
-	}
-	else if (item.m_nItemID == 112) // C4Sound
-	{
-		IRoom* currentRoom = user->GetCurrentRoom();
-		if (currentRoom != NULL)
+		else if (item.m_nItemID == 439) // BigHeadEvent
 		{
-			if (user == currentRoom->GetHostUser()) // it's the room host, so remove the c4Timer flag
+			IRoom* currentRoom = user->GetCurrentRoom();
+			if (currentRoom != NULL)
 			{
-				vector<CUserInventoryItem> itemsWithSameID;
-				g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
-				if (itemsWithSameID.size() == 1)
+				if (user == currentRoom->GetHostUser()) // it's the room host, so remove the sd flag
 				{
-					CRoomSettings* roomSettings = currentRoom->GetSettings();
-
-					if (roomSettings->c4Timer)
+					vector<CUserInventoryItem> itemsWithSameID;
+					g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
+					if (itemsWithSameID.size() == 1)
 					{
-						roomSettings->c4Timer = 0;
+						CRoomSettings* roomSettings = currentRoom->GetSettings();
 
-						for (auto u : currentRoom->GetUsers())
+						if (roomSettings->sd)
 						{
-							g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_C4TIMER);
+							roomSettings->sd = 0;
+
+							for (auto u : currentRoom->GetUsers())
+							{
+								g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_SD);
+							}
+						}
+					}
+				}
+			}
+		}
+		else if (item.m_nItemID == 112) // C4Sound
+		{
+			IRoom* currentRoom = user->GetCurrentRoom();
+			if (currentRoom != NULL)
+			{
+				if (user == currentRoom->GetHostUser()) // it's the room host, so remove the c4Timer flag
+				{
+					vector<CUserInventoryItem> itemsWithSameID;
+					g_UserDatabase.GetInventoryItemsByID(userID, item.m_nItemID, itemsWithSameID);
+					if (itemsWithSameID.size() == 1)
+					{
+						CRoomSettings* roomSettings = currentRoom->GetSettings();
+
+						if (roomSettings->c4Timer)
+						{
+							roomSettings->c4Timer = 0;
+
+							for (auto u : currentRoom->GetUsers())
+							{
+								g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), roomSettings, 0, ROOM_LOWMID_C4TIMER);
+							}
 						}
 					}
 				}
@@ -1489,48 +1522,73 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 		}
 
 		if (character.nameplateID == item.m_nItemID)
-			user->UpdateNameplate(0);
+		{
+			if (user)
+			{
+				user->UpdateNameplate(0);
+			}
+			else
+			{
+				character.nameplateID = 0;
+				g_UserDatabase.UpdateCharacter(userID, character);
+			}
+		}
 	}
 	else if (className == "zbRespawnEffect")
 	{
-		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_ZBRESPAWNEFFECT);
-		if (character.flag == 0)
+		CUserCharacterExtended characterExt = user->GetCharacterExtended(EXT_UFLAG_ZBRESPAWNEFFECT);
+		if (characterExt.flag == 0)
 		{
 			Logger().Warn("CItemManager::RemoveItem: cannot remove item, database error\n");
 			return false;
 		}
 
-		if (character.zbRespawnEffect == item.m_nItemID)
-			user->UpdateZbRespawnEffect(0);
+		if (characterExt.zbRespawnEffect == item.m_nItemID)
+		{
+			if (user)
+			{
+				user->UpdateZbRespawnEffect(0);
+			}
+			else
+			{
+				characterExt.zbRespawnEffect = 0;
+				g_UserDatabase.UpdateCharacterExtended(userID, characterExt);
+			}
+		}
 	}
 	else if (className == "CombatInfoItem")
 	{
-		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_KILLERMARKEFFECT);
-		if (character.flag == 0)
+		CUserCharacterExtended characterExt = user->GetCharacterExtended(EXT_UFLAG_KILLERMARKEFFECT);
+		if (characterExt.flag == 0)
 		{
 			Logger().Warn("CItemManager::RemoveItem: cannot remove item, database error\n");
 			return false;
 		}
 
-		if (character.killerMarkEffect == item.m_nItemID)
-			user->UpdateKillerMarkEffect(0);
+		if (characterExt.killerMarkEffect == item.m_nItemID)
+		{
+			if (user)
+			{
+				user->UpdateKillerMarkEffect(0);
+			}
+			else
+			{
+				characterExt.killerMarkEffect = 0;
+				g_UserDatabase.UpdateCharacterExtended(userID, characterExt);
+			}
+		}
 	}
-
-	vector<CUserInventoryItem> items;
 
 	item.Reset();
-	item.PushItem(items, item); // push null item to temp vector
-
-	if (item.m_nSlot <= 0)
-	{
-		Logger().Warn("CItemManager::RemoveItem: cannot remove item, slot <= 0\n");
-		return false;
-	}
 
 	g_UserDatabase.UpdateInventoryItem(userID, item, UITEM_FLAG_ALL);
 
 	if (user)
+	{
+		vector<CUserInventoryItem> items;
+		item.PushItem(items, item); // push null item to temp vector
 		g_PacketManager.SendInventoryRemove(user->GetExtendedSocket(), items);
+	}
 
 	return true;
 }
