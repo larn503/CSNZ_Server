@@ -10,7 +10,12 @@ public:
 	{
 	}
 
-	std::vector<std::vector<int>> m_Loadouts;
+	CUserLoadout(std::vector<int>& slots)
+	{
+		items = slots;
+	}
+
+	std::vector<int> items;
 };
 
 class CUserBuyMenu

@@ -198,7 +198,7 @@ public:
 	void SendQuestUpdateRewardInfo(IExtendedSocket* socket, int flag, int questID, const QuestReward_s& reward);
 	void SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag, int honorPoints, const UserQuestStat& stat);
 
-	void SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const CUserLoadout& loadouts);
+	void SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const std::vector<CUserLoadout>& loadouts);
 	void SendFavoriteFastBuy(IExtendedSocket* socket, const std::vector<CUserFastBuy>& fastbuy);
 	void SendFavoriteBuyMenu(IExtendedSocket* socket, const std::vector<CUserBuyMenu>& buyMenu);
 	void SendFavoriteBookmark(IExtendedSocket* socket, const std::vector<int>& bookmark);

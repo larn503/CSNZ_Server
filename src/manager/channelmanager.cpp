@@ -1647,7 +1647,7 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 	}
 
 	int size = msg->ReadUInt16();
-	if (size > 6)
+	if (size > ADDON_COUNT)
 	{
 		return false;
 	}

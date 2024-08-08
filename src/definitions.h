@@ -408,7 +408,7 @@ struct DefaultUser
 	int mileagePoints;
 	std::vector<int> defaultItems;
 	std::vector<int> pseudoDefaultItems;
-	CUserLoadout loadouts;
+	std::vector<CUserLoadout> loadouts;
 	std::vector<CUserBuyMenu> buyMenu;
 };
 
@@ -1489,6 +1489,9 @@ enum UserSurveyAnswerResult
 #define BUYMENU_COUNT 17
 #define BUYMENU_SLOT_COUNT 9
 #define ZB_COSTUME_SLOT_COUNT_MAX 18
+#define BOOKMARK_COUNT 8
+#define FASTBUY_COUNT 5
+#define FASTBUY_SLOT_COUNT 11
 
 // RANK
 enum RankPacketType
@@ -1595,3 +1598,5 @@ enum HostServerPacketType
 	Unk2 = 2,
 	Unk3 = 3,
 };
+
+#define ADDON_COUNT 6

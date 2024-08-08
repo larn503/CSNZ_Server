@@ -40,7 +40,9 @@ public:
 	int GetInventoryItems(int userID, std::vector<CUserInventoryItem>& items);
 	int GetInventoryItemsByID(int userID, int itemID, std::vector<CUserInventoryItem>& items);
 	int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item);
+	int GetFirstItemByItemID(int userID, int itemID, CUserInventoryItem& item);
 	int GetFirstActiveItemByItemID(int userID, int itemID, CUserInventoryItem& item);
+	int GetFirstExtendableItemByItemID(int userID, int itemID, CUserInventoryItem& item);
 	int GetInventoryItemsCount(int userID);
 	int IsInventoryFull(int userID);
 	int GetUserData(int userID, CUserData& data);
@@ -53,7 +55,7 @@ public:
 	int UpdateCharacterExtended(int userID, CUserCharacterExtended& character);
 	int GetUserBan(int userID, UserBan& ban);
 	int UpdateUserBan(int userID, UserBan ban);
-	int GetLoadouts(int userID, CUserLoadout& loadout);
+	int GetLoadouts(int userID, std::vector<CUserLoadout>& loadouts);
 	int UpdateLoadout(int userID, int loadoutID, int slot, int itemID);
 	int GetFastBuy(int userID, std::vector<CUserFastBuy>& fastBuy);
 	int UpdateFastBuy(int userID, int slot, const std::string& name, const std::vector<int>& items);
@@ -172,7 +174,7 @@ public:
 
 	void LoadBackup(const std::string& backupDate);
 	void PrintBackupList();
-	void ResetQuestEvent(int eventID);
+	void ResetQuestEvent(int questID);
 
 	void WriteUserStatistic(const std::string& fdate, const std::string& sdate);
 

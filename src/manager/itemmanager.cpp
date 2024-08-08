@@ -634,33 +634,28 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		return ITEM_ADD_SUCCESS;
 	}
 
-	vector<CUserInventoryItem> itemsWithSameID;
-	if (g_UserDatabase.GetInventoryItemsByID(userID, itemID, itemsWithSameID) <= -1)
-		return ITEM_ADD_DB_ERROR;
+	CUserInventoryItem itemWithSameID;
+	g_UserDatabase.GetFirstItemByItemID(userID, itemID, itemWithSameID);
 
 	int currentTimestamp = g_pServerInstance->GetCurrentTime();
 
-	if (itemsWithSameID.size())
+	if (itemWithSameID.m_nItemID)
 	{
 		itemStatus = 0;
 		itemInUse = 0;
 
 		if (duration)
 		{
-			// extend item expriry date
-			for (auto& itemToExtend : itemsWithSameID)
-			{
-				// itemToExtend should not be extended if it has enhancements or parts
-				if (itemToExtend.m_nEnhanceValue || itemToExtend.m_nPartSlot1 || itemToExtend.m_nPartSlot2)
-					continue;
+			CUserInventoryItem itemToExtend;
+			g_UserDatabase.GetFirstExtendableItemByItemID(userID, itemID, itemToExtend);
 
-				// TODO: check for return value
+			if (itemToExtend.m_nItemID)
+			{
 				int ret = ExtendItem(userID, user, itemToExtend, duration, true);
 				if (ret == 1)
 					return ITEM_ADD_SUCCESS;
 				else if (ret == -1)
 					return ITEM_ADD_DB_ERROR;
-				// else make item not in use
 			}
 		}
 	}
@@ -674,16 +669,15 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	if ((category == 9 && (useType == 0 || useType == 1 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 	{
 		vector<CUserInventoryItem> items;
-		if (itemsWithSameID.size())
+		if (itemWithSameID.m_nItemID)
 		{
 			// update first item
-			CUserInventoryItem& item = itemsWithSameID[0];
-			item.m_nCount += count;
+			itemWithSameID.m_nCount += count;
 
-			if (g_UserDatabase.UpdateInventoryItem(userID, item, UITEM_FLAG_COUNT) <= 0)
+			if (g_UserDatabase.UpdateInventoryItem(userID, itemWithSameID, UITEM_FLAG_COUNT) <= 0)
 				return ITEM_ADD_DB_ERROR;
 
-			item.PushItem(items, item);
+			itemWithSameID.PushItem(items, itemWithSameID);
 		}
 		else
 		{
@@ -766,9 +760,9 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		else if (className == "ZombieSkinCostume")
 		{
 			zombieSkinType = g_pItemTable->GetCell<int>("ZombieSkin", to_string(itemID));
-			if (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)
+			if (zombieSkinType >= ZB_COSTUME_SLOT_COUNT_MAX)
 			{
-				Logger().Warn("CItemManager::AddItem: can't setup zb costume loadout (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)!!!\n");
+				Logger().Warn("CItemManager::AddItem: can't setup zb costume loadout (zombieSkinType >= ZB_COSTUME_SLOT_COUNT_MAX)!!!\n");
 			}
 			else if (!loadout.m_ZombieSkinCostumeID.count(zombieSkinType) && !loadout.m_ZombieSkinCostumeID[zombieSkinType])
 			{
@@ -914,7 +908,6 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 	for (auto& item : items)
 	{
-		int lastResult = 0;
 		int itemStatus = 1;
 		int itemInUse = 1;
 		int itemID = item.itemID;
@@ -963,44 +956,31 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			continue;
 		}
 
-		vector<CUserInventoryItem> itemsWithSameID;
-		g_UserDatabase.GetInventoryItemsByID(userID, itemID, itemsWithSameID);
+		CUserInventoryItem itemWithSameID;
+		g_UserDatabase.GetFirstItemByItemID(userID, itemID, itemWithSameID);
 
 		int currentTimestamp = g_pServerInstance->GetCurrentTime();
 
-		if (!itemsWithSameID.empty())
+		if (itemWithSameID.m_nItemID)
 		{
 			itemStatus = 0;
 			itemInUse = 0;
 
 			if (duration)
 			{
-				// extend item expriry date
-				for (auto& itemToExtend : itemsWithSameID)
-				{
-					// itemToExtend should not be extended if it has enhancements or parts
-					if (itemToExtend.m_nEnhanceValue || itemToExtend.m_nPartSlot1 || itemToExtend.m_nPartSlot2)
-						continue;
+				CUserInventoryItem itemToExtend;
+				g_UserDatabase.GetFirstExtendableItemByItemID(userID, itemID, itemToExtend);
 
+				if (itemToExtend.m_nItemID)
+				{
 					int ret = ExtendItem(userID, user, itemToExtend, duration, true);
-					if (ret == 1)
+					if (ret == -1)
 					{
-						lastResult = ITEM_ADD_SUCCESS;
+						result = ITEM_ADD_DB_ERROR;
 						break;
 					}
-					else if (ret == -1)
-					{
-						lastResult = ITEM_ADD_DB_ERROR;
-						break;
-					}
-				}
-
-				if (lastResult == ITEM_ADD_SUCCESS)
-					continue;
-				else if (lastResult != 0)
-				{
-					result = ITEM_ADD_DB_ERROR;
-					break;
+					else if (ret == 1)
+						continue;
 				}
 			}
 		}
@@ -1013,13 +993,12 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		// countable items with use button
 		if ((category == 9 && (useType == 0 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 		{
-			if (itemsWithSameID.size())
+			if (itemWithSameID.m_nItemID)
 			{
 				// update first item
-				CUserInventoryItem& item = itemsWithSameID[0];
-				item.m_nCount += count;
+				itemWithSameID.m_nCount += count;
 
-				item.PushItem(updatedItems, item);
+				itemWithSameID.PushItem(updatedItems, itemWithSameID);
 			}
 			else
 			{
@@ -1091,9 +1070,9 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			else if (className == "ZombieSkinCostume")
 			{
 				zombieSkinType = g_pItemTable->GetCell<int>("ZombieSkin", to_string(itemID));
-				if (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)
+				if (zombieSkinType >= ZB_COSTUME_SLOT_COUNT_MAX)
 				{
-					Logger().Warn("CItemManager::AddItem: can't setup zb costume loadout (zombieSkinType > ZB_COSTUME_SLOT_COUNT_MAX)!!!\n");
+					Logger().Warn("CItemManager::AddItem: can't setup zb costume loadout (zombieSkinType >= ZB_COSTUME_SLOT_COUNT_MAX)!!!\n");
 					continue;
 				}
 				else if (!loadout.m_ZombieSkinCostumeID.count(zombieSkinType) && !loadout.m_ZombieSkinCostumeID[zombieSkinType])

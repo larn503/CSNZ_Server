@@ -228,6 +228,7 @@ bool CUserManager::OnVersionPacket(CReceivePacket* msg, IExtendedSocket* socket)
 			//g_UserDatabase.SuspectAddAction(socket->GetIP(), 1);
 #endif
 			g_pServerInstance->DisconnectClient(socket);
+			return true;
 		}
 
 		GuestData_s& data = socket->GetGuestData();
@@ -284,10 +285,13 @@ bool CUserManager::OnFavoriteSetFastBuy(CReceivePacket* msg, IUser* user)
 	int fastBuySlot = msg->ReadInt8();
 	string fastBuyName = msg->ReadString();
 
-	if (fastBuySlot > 4)
+	if (fastBuySlot >= FASTBUY_COUNT)
+	{
+		Logger().Warn("OnFavoriteSetBookmark: invalid fastBuySlot %d\n", fastBuySlot);
 		return false;
+	}
 
-	for (int i = 0; i < 11; i++)
+	for (int i = 0; i < FASTBUY_SLOT_COUNT; i++)
 		fastBuyItems.push_back(msg->ReadUInt16());
 
 	g_UserDatabase.UpdateFastBuy(user->GetID(), fastBuySlot, fastBuyName, fastBuyItems);
@@ -300,9 +304,9 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 	int bookmarkSlot = msg->ReadUInt8();
 	int itemID = msg->ReadUInt16();
 
-	if (bookmarkSlot > 8)
+	if (bookmarkSlot >= BOOKMARK_COUNT)
 	{
-		Logger().Warn("OnFavoriteSetBookmark: bookmarkSlot(%d) > 8\n", bookmarkSlot);
+		Logger().Warn("OnFavoriteSetBookmark: invalid bookmarkSlot %d\n", bookmarkSlot);
 		return false;
 	}
 
@@ -335,7 +339,7 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 
 	if (loadoutType == 1)
 	{
-		if (loadoutID > LOADOUT_COUNT)
+		if (loadoutID >= LOADOUT_COUNT)
 		{
 			Logger().Info(OBFUSCATE("CUserManager::OnFavoriteSetLoadout: invalid loadout %d\n"), loadoutID);
 			return false;
@@ -354,13 +358,13 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 	{
 		int slot = loadoutType - (character.curLoadout + 1) * 10;
 		
-		if (character.curLoadout > LOADOUT_COUNT)
+		if (character.curLoadout >= LOADOUT_COUNT)
 		{
 			Logger().Info(OBFUSCATE("CUserManager::OnFavoriteSetLoadout: invalid loadout %d\n"), character.curLoadout);
 			return false;
 		}
 
-		if (slot > LOADOUT_SLOT_COUNT)
+		if (slot >= LOADOUT_SLOT_COUNT)
 		{
 			Logger().Info(OBFUSCATE("CUserManager::OnFavoriteSetLoadout: invalid slot %d\n"), slot);
 			return false;
@@ -408,13 +412,13 @@ bool CUserManager::OnFavoriteSetBuyMenu(CReceivePacket* msg, IUser* user)
 	int subMenuSlot = msg->ReadUInt8();
 	int itemID = msg->ReadUInt16();
 
-	if (subMenuID > 17)
+	if (subMenuID >= BUYMENU_COUNT)
 	{
 		Logger().Info(OBFUSCATE("CUserManager::OnFavoriteSetBuyMenu: invalid subMenuId %d\n"), subMenuID);
 		return false;
 	}
 
-	if (subMenuSlot > 9)
+	if (subMenuSlot >= BUYMENU_SLOT_COUNT)
 	{
 		Logger().Info(OBFUSCATE("CUserManager::OnFavoriteSetBuyMenu: invalid subMenuSlot %d\n"), subMenuSlot);
 		return false;
@@ -621,8 +625,8 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 
 void CUserManager::SendUserLoadout(IUser* user)
 {
-	CUserLoadout loadout = {};
-	g_UserDatabase.GetLoadouts(user->GetID(), loadout);
+	vector<CUserLoadout> loadouts;
+	g_UserDatabase.GetLoadouts(user->GetID(), loadouts);
 
 	// unknown size error
 	//vector<CUserFastBuy> fastBuy;
@@ -637,7 +641,7 @@ void CUserManager::SendUserLoadout(IUser* user)
 	vector<int> bookmark;
 	g_UserDatabase.GetBookmark(user->GetID(), bookmark);
 
-	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadout);
+	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
 	//g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);

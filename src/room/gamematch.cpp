@@ -550,19 +550,14 @@ void CGameMatch::CalculateGameResult()
 		if (bonusPercentageClass != g_pServerConfig->gameMatch.bonusPercentageClasses.end())
 		{
 			BonusPercentage_s bonus = *bonusPercentageClass;
-			vector<CUserInventoryItem> items;
-			g_UserDatabase.GetInventoryItemsByID(user->GetID(), bonus.itemID, items);
-			if (items.size())
+			CUserInventoryItem item;
+			g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), bonus.itemID, item);
+			if (item.m_nItemID)
 			{
-				auto activeClassItem = find_if(items.begin(), items.end(),
-					[](const CUserInventoryItem& item) { return item.m_nInUse && item.m_nStatus; });
-				if (activeClassItem != items.end())
-				{
-					stat->m_nBonusExpEarned += stat->m_nExpEarned * bonus.exp / 100;
-					stat->m_nBonusPointsEarned += stat->m_nPointsEarned * bonus.points / 100;
-					stat->m_nClassBonusExp += bonus.exp;
-					stat->m_nClassBonusPoints += bonus.points;
-				}
+				stat->m_nBonusExpEarned += stat->m_nExpEarned * bonus.exp / 100;
+				stat->m_nBonusPointsEarned += stat->m_nPointsEarned * bonus.points / 100;
+				stat->m_nClassBonusExp += bonus.exp;
+				stat->m_nClassBonusPoints += bonus.points;
 			}
 		}
 

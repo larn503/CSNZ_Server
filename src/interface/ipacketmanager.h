@@ -171,7 +171,7 @@ public:
 	virtual void SendQuestUpdateRewardInfo(IExtendedSocket* socket, int flag, int questID, const QuestReward_s& reward) = 0;
 	virtual void SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag, int honorPoints, const UserQuestStat& stat) = 0;
 
-	virtual void SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const CUserLoadout& loadouts) = 0;
+	virtual void SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const std::vector<CUserLoadout>& loadouts) = 0;
 	virtual void SendFavoriteFastBuy(IExtendedSocket* socket, const std::vector<CUserFastBuy>& fastbuy) = 0;
 	virtual void SendFavoriteBuyMenu(IExtendedSocket* socket, const std::vector<CUserBuyMenu>& buyMenu) = 0;
 	virtual void SendFavoriteBookmark(IExtendedSocket* socket, const std::vector<int>& bookmark) = 0;

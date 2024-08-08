@@ -114,10 +114,26 @@ int CUserDatabaseProxy::GetInventoryItemBySlot(int userID, int slot, CUserInvent
 	return result;
 }
 
+int CUserDatabaseProxy::GetFirstItemByItemID(int userID, int itemID, CUserInventoryItem& item)
+{
+	ExecCalcStart();
+	int result = m_pDatabase->GetFirstItemByItemID(userID, itemID, item);
+	ExecCalcEnd(__FUNCTION__);
+	return result;
+}
+
 int CUserDatabaseProxy::GetFirstActiveItemByItemID(int userID, int itemID, CUserInventoryItem& item)
 {
 	ExecCalcStart();
 	int result = m_pDatabase->GetFirstActiveItemByItemID(userID, itemID, item);
+	ExecCalcEnd(__FUNCTION__);
+	return result;
+}
+
+int CUserDatabaseProxy::GetFirstExtendableItemByItemID(int userID, int itemID, CUserInventoryItem& item)
+{
+	ExecCalcStart();
+	int result = m_pDatabase->GetFirstExtendableItemByItemID(userID, itemID, item);
 	ExecCalcEnd(__FUNCTION__);
 	return result;
 }
@@ -218,7 +234,7 @@ int CUserDatabaseProxy::UpdateUserBan(int userID, UserBan ban)
 	return result;
 }
 
-int CUserDatabaseProxy::GetLoadouts(int userID, CUserLoadout& loadout)
+int CUserDatabaseProxy::GetLoadouts(int userID, vector<CUserLoadout>& loadouts)
 {
 	ExecCalcStart();
 	int result = m_pDatabase->GetLoadouts(userID, loadout);
@@ -992,10 +1008,10 @@ bool CUserDatabaseProxy::IsHWIDBanned(vector<unsigned char>& hwid)
 	return result;
 }
 
-void CUserDatabaseProxy::ResetQuestEvent(int eventID)
+void CUserDatabaseProxy::ResetQuestEvent(int questID)
 {
 	ExecCalcStart();
-	m_pDatabase->ResetQuestEvent(eventID);
+	m_pDatabase->ResetQuestEvent(questID);
 	ExecCalcEnd(__FUNCTION__);
 }
 

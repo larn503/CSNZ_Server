@@ -1076,15 +1076,14 @@ bool CServerConfig::Load()
 				for (auto& jItem : jLoadouts)
 				{
 					vector<int> items;
-					items.push_back(jItem.value("1", 0));
-					items.push_back(jItem.value("2", 0));
-					items.push_back(jItem.value("3", 0));
-					items.push_back(jItem.value("4", 0));
-
-					defUser.loadouts.m_Loadouts.push_back(items);
+					for (int i = 1; i <= LOADOUT_SLOT_COUNT; i++)
+					{
+						items.push_back(jItem.value(to_string(i), 0));
+					}
+					defUser.loadouts.push_back(CUserLoadout(items));
 				}
 
-				int loadoutCount = defUser.loadouts.m_Loadouts.size();
+				int loadoutCount = defUser.loadouts.size();
 				if (loadoutCount < LOADOUT_COUNT)
 				{
 					for (int i = 0; i < (LOADOUT_COUNT - loadoutCount); i++)
@@ -1095,7 +1094,7 @@ bool CServerConfig::Load()
 						items.push_back(161);
 						items.push_back(31);
 
-						defUser.loadouts.m_Loadouts.push_back(items);
+						defUser.loadouts.push_back(CUserLoadout(items));
 					}
 				}
 			}

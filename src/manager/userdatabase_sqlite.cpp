@@ -255,7 +255,7 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		if (restoreData)
 		{
 			// get userID if transferring server
-			SQLite::Statement queryGetUser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ?"));
+			SQLite::Statement queryGetUser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ? LIMIT 1"));
 			queryGetUser.bind(1, userName);
 
 			if (!queryGetUser.executeStep())
@@ -267,7 +267,7 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		}
 		else
 		{
-			SQLite::Statement queryGetUser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ? AND password = ?"));
+			SQLite::Statement queryGetUser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ? AND password = ? LIMIT 1"));
 			queryGetUser.bind(1, userName);
 			queryGetUser.bind(2, password);
 
@@ -286,7 +286,7 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 		}
 
 		// check if user present in UserSession table
-		SQLite::Statement queryGetUserSession(m_Database, OBFUSCATE("SELECT userID FROM UserSession WHERE userID = ?"));
+		SQLite::Statement queryGetUserSession(m_Database, OBFUSCATE("SELECT userID FROM UserSession WHERE userID = ? LIMIT 1"));
 		queryGetUserSession.bind(1, userID);
 		if (queryGetUserSession.executeStep())
 		{
@@ -303,7 +303,7 @@ int CUserDatabaseSQLite::Login(const string& userName, const string& password, I
 
 		if (restoreData)
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT channelServerID, channelID FROM UserRestore WHERE userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT channelServerID, channelID FROM UserRestore WHERE userID = ? LIMIT 1"));
 			query.bind(1, userID);
 
 			if (!query.executeStep())
@@ -371,7 +371,7 @@ int CUserDatabaseSQLite::Register(const string& userName, const string& password
 {
 	try
 	{
-		SQLite::Statement queryuser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ?"));
+		SQLite::Statement queryuser(m_Database, OBFUSCATE("SELECT userID FROM User WHERE userName = ? LIMIT 1"));
 		queryuser.bind(1, userName);
 		queryuser.executeStep();
 
@@ -454,7 +454,7 @@ int CUserDatabaseSQLite::DropSession(int userID)
 	try
 	{
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO UserSessionHistory SELECT UserSession.userID, UserSession.ip, UserSession.hwid, (SELECT lastLogonTime FROM User WHERE userID = UserSession.userID), UserSession.sessionTime FROM UserSession WHERE UserSession.userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO UserSessionHistory SELECT UserSession.userID, UserSession.ip, UserSession.hwid, (SELECT lastLogonTime FROM User WHERE userID = UserSession.userID LIMIT 1), UserSession.sessionTime FROM UserSession WHERE UserSession.userID = ?"));
 			query.bind(1, userID);
 			query.exec();
 		}
@@ -552,18 +552,18 @@ void CUserDatabaseSQLite::PrintBackupList()
 #endif
 }
 
-void CUserDatabaseSQLite::ResetQuestEvent(int eventID)
+void CUserDatabaseSQLite::ResetQuestEvent(int questID)
 {
 	try
 	{
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM UserQuestEventProgress WHERE eventID = ?"));
-			query.bind(1, eventID);
+			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM UserQuestEventProgress WHERE questID = ?"));
+			query.bind(1, questID);
 			query.exec();
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM UserQuestEventTaskProgress WHERE eventID = ?"));
-			query.bind(1, eventID);
+			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM UserQuestEventTaskProgress WHERE questID = ?"));
+			query.bind(1, questID);
 			query.exec();
 		}
 	}
@@ -603,22 +603,26 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 		if (item.m_nIsClanItem)
 		{
 			{
-				SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM UserInventory WHERE userID = ? AND itemID = ? AND expiryDate = 0 LIMIT 1"));
+				SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserInventory WHERE userID = ? AND itemID = ? AND expiryDate = 0 LIMIT 1)"));
 				query.bind(1, userID);
 				query.bind(2, item.m_nItemID);
+
 				if (query.executeStep())
 				{
-					return -1; // user already has permanent item
+					if ((int)query.getColumn(0))
+						return -1; // user already has permanent item
 				}
 			}
 
 			{
-				SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM UserInventory WHERE userID = ? AND itemID = ? AND isClanItem = 1 LIMIT 1"));
+				SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserInventory WHERE userID = ? AND itemID = ? AND isClanItem = 1 LIMIT 1)"));
 				query.bind(1, userID);
 				query.bind(2, item.m_nItemID);
+
 				if (query.executeStep())
 				{
-					return -2; // user already has this clan item
+					if ((int)query.getColumn(0))
+						return -2; // user already has this clan item
 				}
 			}
 		}
@@ -632,50 +636,7 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 		if (queryGetFreeInvSlot.executeStep())
 		{
 			slot = queryGetFreeInvSlot.getColumn(0);
-		}
-		else
-		{
-			SQLite::Statement queryGetNextInvSlot(m_Database, OBFUSCATE("SELECT nextInventorySlot FROM UserCharacterExtended WHERE userID = ?"));
-			queryGetNextInvSlot.bind(1, userID);
-			queryGetNextInvSlot.executeStep();
-			slot = queryGetNextInvSlot.getColumn(0);
 
-			SQLite::Statement queryUpdateNextInvSlot(m_Database, OBFUSCATE("UPDATE UserCharacterExtended SET nextInventorySlot = nextInventorySlot + 1 WHERE userID = ?"));
-			queryUpdateNextInvSlot.bind(1, userID);
-			queryUpdateNextInvSlot.exec();
-		}
-
-		SQLite::Statement queryGetInvItem(m_Database, OBFUSCATE("SELECT 1 FROM UserInventory WHERE userID = ? AND slot = ?"));
-		queryGetInvItem.bind(1, userID);
-		queryGetInvItem.bind(2, slot);
-
-		item.m_nSlot = slot;
-
-		if (!queryGetInvItem.executeStep())
-		{
-			SQLite::Statement queryInsertNewInvItem(m_Database, OBFUSCATE("INSERT INTO UserInventory VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-			queryInsertNewInvItem.bind(1, userID);
-			queryInsertNewInvItem.bind(2, slot);
-			queryInsertNewInvItem.bind(3, item.m_nItemID);
-			queryInsertNewInvItem.bind(4, item.m_nCount);
-			queryInsertNewInvItem.bind(5, item.m_nStatus);
-			queryInsertNewInvItem.bind(6, item.m_nInUse);
-			queryInsertNewInvItem.bind(7, item.m_nObtainDate);
-			queryInsertNewInvItem.bind(8, item.m_nExpiryDate);
-			queryInsertNewInvItem.bind(9, item.m_nIsClanItem);
-			queryInsertNewInvItem.bind(10, item.m_nEnhancementLevel);
-			queryInsertNewInvItem.bind(11, item.m_nEnhancementExp);
-			queryInsertNewInvItem.bind(12, item.m_nEnhanceValue);
-			queryInsertNewInvItem.bind(13, item.m_nPaintID);
-			queryInsertNewInvItem.bind(14, serialize_array_int(item.m_nPaintIDList));
-			queryInsertNewInvItem.bind(15, item.m_nPartSlot1);
-			queryInsertNewInvItem.bind(16, item.m_nPartSlot2);
-			queryInsertNewInvItem.bind(17, item.m_nLockStatus);
-
-			queryInsertNewInvItem.exec();
-		}
-		else
-		{
 			SQLite::Statement queryUpdateItem(m_Database, OBFUSCATE("UPDATE UserInventory SET itemID = ?, count = ?, status = ?, inUse = ?, obtainDate = ?, expiryDate = ?, isClanItem = ?, enhancementLevel = ?, enhancementExp = ?, enhanceValue = ?, paintID = ?, paintIDList = ?, partSlot1 = ?, partSlot2 = ?, lockStatus = ? WHERE userID = ? AND slot = ?"));
 			queryUpdateItem.bind(1, item.m_nItemID);
 			queryUpdateItem.bind(2, item.m_nCount);
@@ -697,6 +658,41 @@ int CUserDatabaseSQLite::AddInventoryItem(int userID, CUserInventoryItem& item)
 
 			queryUpdateItem.exec();
 		}
+		else
+		{
+			SQLite::Statement queryGetNextInvSlot(m_Database, OBFUSCATE("SELECT nextInventorySlot FROM UserCharacterExtended WHERE userID = ? LIMIT 1"));
+			queryGetNextInvSlot.bind(1, userID);
+			queryGetNextInvSlot.executeStep();
+
+			slot = queryGetNextInvSlot.getColumn(0);
+
+			SQLite::Statement queryInsertNewInvItem(m_Database, OBFUSCATE("INSERT INTO UserInventory VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
+			queryInsertNewInvItem.bind(1, userID);
+			queryInsertNewInvItem.bind(2, slot);
+			queryInsertNewInvItem.bind(3, item.m_nItemID);
+			queryInsertNewInvItem.bind(4, item.m_nCount);
+			queryInsertNewInvItem.bind(5, item.m_nStatus);
+			queryInsertNewInvItem.bind(6, item.m_nInUse);
+			queryInsertNewInvItem.bind(7, item.m_nObtainDate);
+			queryInsertNewInvItem.bind(8, item.m_nExpiryDate);
+			queryInsertNewInvItem.bind(9, item.m_nIsClanItem);
+			queryInsertNewInvItem.bind(10, item.m_nEnhancementLevel);
+			queryInsertNewInvItem.bind(11, item.m_nEnhancementExp);
+			queryInsertNewInvItem.bind(12, item.m_nEnhanceValue);
+			queryInsertNewInvItem.bind(13, item.m_nPaintID);
+			queryInsertNewInvItem.bind(14, serialize_array_int(item.m_nPaintIDList));
+			queryInsertNewInvItem.bind(15, item.m_nPartSlot1);
+			queryInsertNewInvItem.bind(16, item.m_nPartSlot2);
+			queryInsertNewInvItem.bind(17, item.m_nLockStatus);
+
+			queryInsertNewInvItem.exec();
+		}
+
+		item.m_nSlot = slot;
+
+		SQLite::Statement queryUpdateNextInvSlot(m_Database, OBFUSCATE("UPDATE UserCharacterExtended SET nextInventorySlot = nextInventorySlot + 1 WHERE userID = ?"));
+		queryUpdateNextInvSlot.bind(1, userID);
+		queryUpdateNextInvSlot.exec();
 	}
 	catch (exception& e)
 	{
@@ -728,61 +724,40 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 		int itemsInsertIndex = 0;
 		int itemsUpdateIndex = 0;
 
+		std:vector<int> freeSlots;
+
+		// find free slots
+		SQLite::Statement queryGetFreeInvSlot(m_Database, OBFUSCATE("SELECT slot FROM UserInventory WHERE userID = ? AND itemID = 0 LIMIT ?"));
+		queryGetFreeInvSlot.bind(1, userID);
+		queryGetFreeInvSlot.bind(2, (int)items.size());
+
+		while (queryGetFreeInvSlot.executeStep())
+		{
+			freeSlots.push_back((int)queryGetFreeInvSlot.getColumn(0));
+		}
+
+		SQLite::Statement queryGetNextInvSlot(m_Database, OBFUSCATE("SELECT nextInventorySlot FROM UserCharacterExtended WHERE userID = ? LIMIT 1"));
+		queryGetNextInvSlot.bind(1, userID);
+		queryGetNextInvSlot.executeStep();
+
+		int slot = (int)queryGetNextInvSlot.getColumn(0);
+
 		for (auto& item : items)
 		{
-			if (item.m_nIsClanItem)
+			if (freeSlots.size())
 			{
-				{
-					SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM UserInventory WHERE userID = ? AND itemID = ? AND expiryDate = 0 LIMIT 1"));
-					query.bind(1, userID);
-					query.bind(2, item.m_nItemID);
-					if (query.executeStep())
-					{
-						return -1; // user already has permanent item
-					}
-				}
+				item.m_nSlot = freeSlots.front();
+				freeSlots.erase(freeSlots.begin());
 
-				{
-					SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM UserInventory WHERE userID = ? AND itemID = ? AND isClanItem = 1 LIMIT 1"));
-					query.bind(1, userID);
-					query.bind(2, item.m_nItemID);
-					if (query.executeStep())
-					{
-						return -2; // user already has this clan item
-					}
-				}
-			}
+				if (itemsUpdate[itemsUpdateIndex].size() == 1092) // (1092 * 30 binds) == 32760 < SQLITE_MAX_VARIABLE_NUMBER (32766)
+					itemsUpdateIndex++;
 
-			int slot = -1;
-
-			// find free slot
-			SQLite::Statement queryGetFreeInvSlot(m_Database, OBFUSCATE("SELECT slot FROM UserInventory WHERE userID = ? AND itemID = 0 LIMIT 1"));
-			queryGetFreeInvSlot.bind(1, userID);
-
-			if (queryGetFreeInvSlot.executeStep())
-			{
-				slot = queryGetFreeInvSlot.getColumn(0);
+				itemsUpdate[itemsUpdateIndex].push_back(item);
 			}
 			else
 			{
-				SQLite::Statement queryGetNextInvSlot(m_Database, OBFUSCATE("SELECT nextInventorySlot FROM UserCharacterExtended WHERE userID = ?"));
-				queryGetNextInvSlot.bind(1, userID);
-				queryGetNextInvSlot.executeStep();
-				slot = queryGetNextInvSlot.getColumn(0);
+				item.m_nSlot = slot++;
 
-				SQLite::Statement queryUpdateNextInvSlot(m_Database, OBFUSCATE("UPDATE UserCharacterExtended SET nextInventorySlot = nextInventorySlot + 1 WHERE userID = ?"));
-				queryUpdateNextInvSlot.bind(1, userID);
-				queryUpdateNextInvSlot.exec();
-			}
-
-			SQLite::Statement queryGetInvItem(m_Database, OBFUSCATE("SELECT 1 FROM UserInventory WHERE userID = ? AND slot = ?"));
-			queryGetInvItem.bind(1, userID);
-			queryGetInvItem.bind(2, slot);
-
-			item.m_nSlot = slot;
-
-			if (!queryGetInvItem.executeStep())
-			{
 				if (itemsInsert[itemsInsertIndex].size() == 1927) // (1927 * 17 binds) == 32759 < SQLITE_MAX_VARIABLE_NUMBER (32766)
 					itemsInsertIndex++;
 
@@ -792,13 +767,6 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 					queryInsertNewInvItemStr[itemsInsertIndex] += OBFUSCATE(", (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 				itemsInsert[itemsInsertIndex].push_back(item);
-			}
-			else
-			{
-				if (itemsUpdate[itemsUpdateIndex].size() == 1092) // (1092 * 30 binds) == 32760 < SQLITE_MAX_VARIABLE_NUMBER (32766)
-					itemsUpdateIndex++;
-
-				itemsUpdate[itemsUpdateIndex].push_back(item);
 			}
 		}
 
@@ -837,6 +805,11 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 				queryInsertNewInvItem.exec();
 				index = 1;
 			}
+
+			SQLite::Statement queryUpdateNextInvSlot(m_Database, OBFUSCATE("UPDATE UserCharacterExtended SET nextInventorySlot = nextInventorySlot + ? WHERE userID = ?"));
+			queryUpdateNextInvSlot.bind(1, (1927 * itemsInsertIndex) + (int)itemsInsert[itemsInsertIndex].size());
+			queryUpdateNextInvSlot.bind(2, userID);
+			queryUpdateNextInvSlot.exec();
 		}
 
 		if (itemsUpdate[0].size())
@@ -853,78 +826,77 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, count = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE itemID END, count = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, status = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE count END, status = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, inUse = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE status END, inUse = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, obtainDate = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE inUse END, obtainDate = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, expiryDate = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE obtainDate END, expiryDate = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, isClanItem = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE expiryDate END, isClanItem = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, enhancementLevel = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE isClanItem END, enhancementLevel = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, EnhancementExp = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE enhancementLevel END, enhancementExp = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, enhanceValue = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE enhancementExp END, enhanceValue = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, paintID = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE enhanceValue END, paintID = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, paintIDList = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE paintID END, paintIDList = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, partSlot1 = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE paintIDList END, partSlot1 = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, partSlot2 = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE partSlot1 END, partSlot2 = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" END, lockStatus = CASE");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE partSlot2 END, lockStatus = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
 					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-
-				queryUpdateItemStr[i] += OBFUSCATE(" END WHERE userID = ?");
+				queryUpdateItemStr[i] += OBFUSCATE(" ELSE lockStatus END WHERE userID = ?");
 
 				SQLite::Statement queryUpdateItem(m_Database, queryUpdateItemStr[i]);
 
@@ -1205,7 +1177,7 @@ int CUserDatabaseSQLite::GetInventoryItemBySlot(int userID, int slot, CUserInven
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE userID = ? AND slot = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE userID = ? AND slot = ? LIMIT 1"));
 		query.bind(1, userID);
 		query.bind(2, slot);
 
@@ -1219,6 +1191,32 @@ int CUserDatabaseSQLite::GetInventoryItemBySlot(int userID, int slot, CUserInven
 	catch (exception& e)
 	{
 		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemBySlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
+// gets first user inventory item by itemID
+// returns 0 == database error or no such slot, 1 on success
+int CUserDatabaseSQLite::GetFirstItemByItemID(int userID, int itemID, CUserInventoryItem& item)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE userID = ? AND itemID = ? LIMIT 1"));
+		query.bind(1, userID);
+		query.bind(2, itemID);
+
+		if (!query.executeStep())
+		{
+			return 0;
+		}
+
+		item = query.getColumns<CUserInventoryItem, 17>();
+	}
+	catch (exception& e)
+	{
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetFirstItemByItemID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
 		return 0;
 	}
 
@@ -1251,6 +1249,51 @@ int CUserDatabaseSQLite::GetFirstActiveItemByItemID(int userID, int itemID, CUse
 	return 1;
 }
 
+// gets first user extendable inventory item by itemID
+// returns 0 == database error or no such slot, 1 on success
+int CUserDatabaseSQLite::GetFirstExtendableItemByItemID(int userID, int itemID, CUserInventoryItem& item)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT * FROM UserInventory WHERE userID = ? AND itemID = ? AND expiryDate != 0 AND enhanceValue = 0 AND partSlot1 = 0 AND partSlot2 = 0 LIMIT 1"));
+		query.bind(1, userID);
+		query.bind(2, itemID);
+
+		if (!query.executeStep())
+		{
+			return 0;
+		}
+
+		item = query.getColumns<CUserInventoryItem, 17>();
+	}
+	catch (exception& e)
+	{
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetFirstExtendableItemByItemID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
+// gets user inventory items count
+// returns -1 == database error, items count on success
+int CUserDatabaseSQLite::GetInventoryItemsCount(int userID)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT COUNT(1) FROM UserInventory WHERE userID = ? AND itemID != 0"));
+		query.bind(1, userID);
+		query.executeStep();
+
+		return (int)query.getColumn(0);
+	}
+	catch (exception& e)
+	{
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemsCount: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return -1;
+	}
+}
+
 // checks if user inventory is full
 // returns 0 == inventory is not full, 1 == database error or inventory is full
 int CUserDatabaseSQLite::IsInventoryFull(int userID)
@@ -1273,25 +1316,6 @@ int CUserDatabaseSQLite::IsInventoryFull(int userID)
 	}
 
 	return 0;
-}
-
-// gets user inventory items count
-// returns -1 == database error, items count on success
-int CUserDatabaseSQLite::GetInventoryItemsCount(int userID)
-{
-	try
-	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT COUNT(1) FROM UserInventory WHERE userID = ? AND itemID != 0"));
-		query.bind(1, userID);
-		query.executeStep();
-
-		return (int)query.getColumn(0);
-	}
-	catch (exception& e)
-	{
-		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemsCount: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return -1;
-	}
 }
 
 string GetUserDataString(int flag, bool update)
@@ -1327,7 +1351,7 @@ int CUserDatabaseSQLite::GetUserData(int userID, CUserData& data)
 		// format query
 		string query = GetUserDataString(data.flag, false);
 		query[query.size() - 1] = ' ';
-		query += OBFUSCATE("FROM User WHERE userID = ?"); // TODO: use stringstream
+		query += OBFUSCATE("FROM User WHERE userID = ? LIMIT 1"); // TODO: use stringstream
 
 		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
@@ -1496,12 +1520,12 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 		insertCharacterExtended.bind(13, 0); // killerMarkEffect
 		insertCharacterExtended.exec();
 
-		if ((int)defUser.loadouts.m_Loadouts.size())
+		if ((int)defUser.loadouts.size())
 		{
 			std::string query;
 			query += OBFUSCATE("INSERT INTO UserLoadout VALUES (?, ?, ?, ?, ?, ?)");
 
-			for (int i = 1; i < (int)defUser.loadouts.m_Loadouts.size(); i++)
+			for (int i = 1; i < (int)defUser.loadouts.size(); i++)
 			{
 				query += OBFUSCATE(", (?, ?, ?, ?, ?, ?)");
 			}
@@ -1510,14 +1534,14 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 
 			int bindIndex = 1;
 
-			for (int i = 0; i < (int)defUser.loadouts.m_Loadouts.size(); i++)
+			for (int i = 0; i < (int)defUser.loadouts.size(); i++)
 			{
 				statement.bind(bindIndex++, userID);
 				statement.bind(bindIndex++, i);
-				statement.bind(bindIndex++, defUser.loadouts.m_Loadouts[i][0]);
-				statement.bind(bindIndex++, defUser.loadouts.m_Loadouts[i][1]);
-				statement.bind(bindIndex++, defUser.loadouts.m_Loadouts[i][2]);
-				statement.bind(bindIndex++, defUser.loadouts.m_Loadouts[i][3]);
+				for (auto item : defUser.loadouts[i].items)
+				{
+					statement.bind(bindIndex++, item);
+				}
 			}
 
 			statement.exec();
@@ -1541,8 +1565,10 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 			{
 				statement.bind(bindIndex++, userID);
 				statement.bind(bindIndex++, i);
-				for (int k = 0; k < (int)defUser.buyMenu[i].items.size(); k++)
-					statement.bind(bindIndex++, defUser.buyMenu[i].items[k]);
+				for (auto item : defUser.buyMenu[i].items)
+				{
+					statement.bind(bindIndex++, item);
+				}
 			}
 
 			statement.exec();
@@ -1561,7 +1587,7 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 
 			int bindIndex = 1;
 
-			for (int i = 0; i < 5; i++)
+			for (int i = 0; i < FASTBUY_COUNT; i++)
 			{
 				statement.bind(bindIndex++, userID);
 				statement.bind(bindIndex++, i);
@@ -1675,7 +1701,7 @@ string GetCharacterString(CUserCharacter& character, bool update)
 	if (character.flag & UFLAG_TITLES)
 		query << (update ? OBFUSCATE(" titles = ?,") : OBFUSCATE(" titles,"));
 	if (character.flag & UFLAG_CLAN)
-		query << (update ? OBFUSCATE(" clanID = ?,") : OBFUSCATE(" clanID, (SELECT markID FROM Clan WHERE clanID = UserCharacter.clanID), (SELECT name FROM Clan WHERE clanID = UserCharacter.clanID),"));
+		query << (update ? OBFUSCATE(" clanID = ?,") : OBFUSCATE(" clanID, (SELECT markID FROM Clan WHERE clanID = UserCharacter.clanID LIMIT 1), (SELECT name FROM Clan WHERE clanID = UserCharacter.clanID LIMIT 1),"));
 	if (character.flag & UFLAG_TOURNAMENT)
 		query << (update ? OBFUSCATE(" tournament = ?,") : OBFUSCATE(" tournament,"));
 	if (character.flag & UFLAG_UNK19)
@@ -1695,7 +1721,7 @@ int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
 		// format query
 		string query = GetCharacterString(character, false);
 		query[query.size() - 1] = ' ';
-		query += OBFUSCATE("FROM UserCharacter WHERE userID = ?"); // TODO: use stringstream
+		query += OBFUSCATE("FROM UserCharacter WHERE userID = ? LIMIT 1"); // TODO: use stringstream
 
 		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
@@ -1743,7 +1769,7 @@ int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
 
 				// TODO: rewrite
 				{
-					SQLite::Statement query(m_Database, OBFUSCATE("SELECT tierOri, tierZM, tierZPVE, tierDM FROM UserRank WHERE userID = ?"));
+					SQLite::Statement query(m_Database, OBFUSCATE("SELECT tierOri, tierZM, tierZPVE, tierDM FROM UserRank WHERE userID = ? LIMIT 1"));
 					query.bind(1, userID);
 					if (query.executeStep())
 					{
@@ -1962,7 +1988,7 @@ int CUserDatabaseSQLite::GetCharacterExtended(int userID, CUserCharacterExtended
 		// format query
 		string query = GetCharacterExtendedString(character.flag, false);
 		query[query.size() - 1] = ' ';
-		query += OBFUSCATE("FROM UserCharacterExtended WHERE userID = ?"); // TODO: use stringstream
+		query += OBFUSCATE("FROM UserCharacterExtended WHERE userID = ? LIMIT 1"); // TODO: use stringstream
 
 		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
@@ -2111,7 +2137,7 @@ int CUserDatabaseSQLite::GetUserBan(int userID, UserBan& ban)
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT type, reason, term FROM UserBan WHERE userID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT type, reason, term FROM UserBan WHERE userID = ? LIMIT 1"));
 		statement.bind(1, userID);
 
 		if (statement.executeStep())
@@ -2176,22 +2202,23 @@ int CUserDatabaseSQLite::UpdateUserBan(int userID, UserBan ban)
 
 // gets user loadout
 // returns 0 == database error, 1 on success
-int CUserDatabaseSQLite::GetLoadouts(int userID, CUserLoadout& loadout)
+int CUserDatabaseSQLite::GetLoadouts(int userID, vector<CUserLoadout>& loadouts)
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT slot0, slot1, slot2, slot3 FROM UserLoadout WHERE userID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT slot0, slot1, slot2, slot3 FROM UserLoadout WHERE userID = ? LIMIT ?"));
 		statement.bind(1, userID);
+		statement.bind(2, LOADOUT_COUNT);
 
 		while (statement.executeStep())
 		{
 			vector<int> ld;
-			ld.push_back(statement.getColumn(0));
-			ld.push_back(statement.getColumn(1));
-			ld.push_back(statement.getColumn(2));
-			ld.push_back(statement.getColumn(3));
+			for (int i = 0; i < LOADOUT_SLOT_COUNT; i++)
+			{
+				ld.push_back(statement.getColumn(i));
+			}
 
-			loadout.m_Loadouts.push_back(ld);
+			loadouts.push_back(CUserLoadout(ld));
 		}
 	}
 	catch (exception& e)
@@ -2245,8 +2272,9 @@ int CUserDatabaseSQLite::GetFastBuy(int userID, vector<CUserFastBuy>& fastBuy)
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT name, items FROM UserFastBuy WHERE userID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT name, items FROM UserFastBuy WHERE userID = ? LIMIT ?"));
 		statement.bind(1, userID);
+		statement.bind(2, FASTBUY_COUNT);
 
 		while (statement.executeStep())
 		{
@@ -2298,13 +2326,14 @@ int CUserDatabaseSQLite::GetBuyMenu(int userID, vector<CUserBuyMenu>& buyMenu)
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9 FROM UserBuyMenu WHERE userID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9 FROM UserBuyMenu WHERE userID = ? LIMIT ?"));
 		statement.bind(1, userID);
+		statement.bind(2, BUYMENU_COUNT);
 
 		while (statement.executeStep())
 		{
 			vector<int> bm;
-			for (int i = 0; i < 9; i++)
+			for (int i = 0; i < BUYMENU_SLOT_COUNT; i++)
 			{
 				bm.push_back(statement.getColumn(i));
 			}
@@ -2355,8 +2384,9 @@ int CUserDatabaseSQLite::GetBookmark(int userID, vector<int>& bookmark)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT itemID FROM UserBookmark WHERE userID = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT itemID FROM UserBookmark WHERE userID = ? LIMIT ?"));
 		query.bind(1, userID);
+		query.bind(2, BOOKMARK_COUNT);
 
 		while (query.executeStep())
 		{
@@ -2404,7 +2434,7 @@ int CUserDatabaseSQLite::GetCostumeLoadout(int userID, CUserCostumeLoadout& load
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT head, back, arm, pelvis, face, tattoo, pet FROM UserCostumeLoadout WHERE userID = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT head, back, arm, pelvis, face, tattoo, pet FROM UserCostumeLoadout WHERE userID = ? LIMIT 1"));
 		query.bind(1, userID);
 		if (query.executeStep())
 		{
@@ -2418,8 +2448,9 @@ int CUserDatabaseSQLite::GetCostumeLoadout(int userID, CUserCostumeLoadout& load
 		}
 
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT slot, itemID FROM UserZBCostumeLoadout WHERE userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT slot, itemID FROM UserZBCostumeLoadout WHERE userID = ? LIMIT ?"));
 			query.bind(1, userID);
+			query.bind(2, ZB_COSTUME_SLOT_COUNT_MAX);
 			while (query.executeStep())
 			{
 				int slot = query.getColumn(0);
@@ -2615,7 +2646,7 @@ int CUserDatabaseSQLite::GetDailyRewards(int userID, UserDailyRewards& dailyRewa
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT day, canGetReward FROM UserDailyReward WHERE userID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT day, canGetReward FROM UserDailyReward WHERE userID = ? LIMIT 1"));
 		statement.bind(1, userID);
 
 		if (statement.executeStep())
@@ -2664,27 +2695,30 @@ int CUserDatabaseSQLite::UpdateDailyRewards(int userID, UserDailyRewards& dailyR
 			statement.exec();
 		}
 
-		SQLite::Statement statement_updateItems(m_Database, OBFUSCATE("SELECT 1 FROM UserDailyRewardItems WHERE userID = ?"));
+		SQLite::Statement statement_updateItems(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserDailyRewardItems WHERE userID = ? LIMIT 1)"));
 		statement_updateItems.bind(1, userID);
-
+		
 		if (statement_updateItems.executeStep())
 		{
-			SQLite::Statement statement_deleteItems(m_Database, OBFUSCATE("DELETE FROM UserDailyRewardItems WHERE userID = ?"));
-			statement_deleteItems.bind(1, userID);
-			statement_deleteItems.exec();
-		}
-		else
-		{
-			SQLite::Statement statement_addItems(m_Database, OBFUSCATE("INSERT INTO UserDailyRewardItems VALUES (?, ?, ?, ?, ?)"));
-			for (RewardItem& item : dailyRewards.randomItems)
+			if ((int)statement_updateItems.getColumn(0))
 			{
-				statement_addItems.bind(1, userID);
-				statement_addItems.bind(2, item.itemID);
-				statement_addItems.bind(3, item.count);
-				statement_addItems.bind(4, item.duration);
-				statement_addItems.bind(5, item.eventFlag);
-				statement_addItems.exec();
-				statement_addItems.reset();
+				SQLite::Statement statement_deleteItems(m_Database, OBFUSCATE("DELETE FROM UserDailyRewardItems WHERE userID = ?"));
+				statement_deleteItems.bind(1, userID);
+				statement_deleteItems.exec();
+			}
+			else
+			{
+				SQLite::Statement statement_addItems(m_Database, OBFUSCATE("INSERT INTO UserDailyRewardItems VALUES (?, ?, ?, ?, ?)"));
+				for (RewardItem& item : dailyRewards.randomItems)
+				{
+					statement_addItems.bind(1, userID);
+					statement_addItems.bind(2, item.itemID);
+					statement_addItems.bind(3, item.count);
+					statement_addItems.bind(4, item.duration);
+					statement_addItems.bind(5, item.eventFlag);
+					statement_addItems.exec();
+					statement_addItems.reset();
+				}
 			}
 		}
 	}
@@ -2757,7 +2791,7 @@ int CUserDatabaseSQLite::GetQuestProgress(int userID, int questID, UserQuestProg
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT status, favourite, started FROM UserQuestProgress WHERE userID = ? AND questID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT status, favourite, started FROM UserQuestProgress WHERE userID = ? AND questID = ? LIMIT 1"));
 		statement.bind(1, userID);
 		statement.bind(2, questID);
 		if (statement.executeStep())
@@ -2812,7 +2846,7 @@ int CUserDatabaseSQLite::GetQuestTaskProgress(int userID, int questID, int taskI
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT unitsDone, taskVar, finished FROM UserQuestTaskProgress WHERE userID = ? AND questID = ? AND taskID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT unitsDone, taskVar, finished FROM UserQuestTaskProgress WHERE userID = ? AND questID = ? AND taskID = ? LIMIT 1"));
 		statement.bind(1, userID);
 		statement.bind(2, questID);
 		statement.bind(3, taskID);
@@ -2870,13 +2904,17 @@ bool CUserDatabaseSQLite::IsQuestTaskFinished(int userID, int questID, int taskI
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM UserQuestTaskProgress WHERE userID = ? AND questID = ? AND taskID = ? AND finished = 0"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserQuestTaskProgress WHERE userID = ? AND questID = ? AND taskID = ? AND finished = 0 LIMIT 1)"));
 		query.bind(1, userID);
 		query.bind(2, questID);
 		query.bind(3, taskID);
+
 		if (query.executeStep())
 		{
-			return false;
+			if ((int)query.getColumn(0))
+			{
+				return false;
+			}
 		}
 	}
 	catch (exception& e)
@@ -2909,7 +2947,7 @@ int CUserDatabaseSQLite::GetQuestStat(int userID, int flag, UserQuestStat& stat)
 		// format query
 		string query = GetQuestStatString(flag, false);
 		query[query.size() - 1] = ' ';
-		query += OBFUSCATE("FROM UserQuestStat WHERE userID = ?"); // TODO: use stringstream
+		query += OBFUSCATE("FROM UserQuestStat WHERE userID = ? LIMIT 1"); // TODO: use stringstream
 
 		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
@@ -2981,7 +3019,7 @@ int CUserDatabaseSQLite::GetBingoProgress(int userID, UserBingo& bingo)
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT status, canPlay FROM UserMiniGameBingo WHERE userID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT status, canPlay FROM UserMiniGameBingo WHERE userID = ? LIMIT 1"));
 		statement.bind(1, userID);
 		if (statement.executeStep())
 		{
@@ -3056,7 +3094,7 @@ int CUserDatabaseSQLite::UpdateBingoSlot(int userID, vector<UserBingoSlot>& slot
 		{
 			SQLite::Statement statement(m_Database, OBFUSCATE("DELETE FROM UserMiniGameBingoSlot WHERE userID = ?"));
 			statement.bind(1, userID);
-			statement.executeStep();
+			statement.exec();
 		}
 
 		for (UserBingoSlot& slot : slots)
@@ -3169,7 +3207,7 @@ int CUserDatabaseSQLite::GetUserRank(int userID, CUserCharacter& character)
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT tierOri, tierZM, tierZPVE, tierDM FROM UserRank WHERE userID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT tierOri, tierZM, tierZPVE, tierDM FROM UserRank WHERE userID = ? LIMIT 1"));
 		statement.bind(1, userID);
 
 		if (statement.executeStep())
@@ -3217,7 +3255,7 @@ int CUserDatabaseSQLite::GetBanList(int userID, vector<string>& banList)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT gameName, (SELECT NOT EXISTS(SELECT 1 FROM UserCharacter WHERE gameName = UserBanList.gameName)) FROM UserBanList WHERE userID = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT gameName, (SELECT NOT EXISTS(SELECT 1 FROM UserCharacter WHERE gameName = UserBanList.gameName LIMIT 1)) FROM UserBanList WHERE userID = ?"));
 		query.bind(1, userID);
 		while (query.executeStep())
 		{
@@ -3252,7 +3290,7 @@ int CUserDatabaseSQLite::UpdateBanList(int userID, string gameName, bool remove)
 		else
 		{
 			{
-				SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserCharacter WHERE gameName = ?)"));
+				SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserCharacter WHERE gameName = ? LIMIT 1)"));
 				query.bind(1, gameName);
 				if (query.executeStep())
 				{
@@ -3263,7 +3301,7 @@ int CUserDatabaseSQLite::UpdateBanList(int userID, string gameName, bool remove)
 				}
 			}
 			{
-				SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserBanList WHERE userID = ? AND gameName = ?)"));
+				SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserBanList WHERE userID = ? AND gameName = ? LIMIT 1)"));
 				query.bind(1, userID);
 				query.bind(2, gameName);
 				if (query.executeStep())
@@ -3309,7 +3347,7 @@ bool CUserDatabaseSQLite::IsInBanList(int userID, int destUserID)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT NOT EXISTS(SELECT 1 FROM UserBanList WHERE userID = ? AND gameName = (SELECT gameName FROM UserCharacter WHERE userID = ?))"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT NOT EXISTS(SELECT 1 FROM UserBanList WHERE userID = ? AND gameName = (SELECT gameName FROM UserCharacter WHERE userID = ? LIMIT 1) LIMIT 1)"));
 		query.bind(1, userID);
 		query.bind(2, destUserID);
 		if (query.executeStep())
@@ -3334,7 +3372,7 @@ bool CUserDatabaseSQLite::IsSurveyAnswered(int userID, int surveyID)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserSurveyAnswer WHERE userID = ? AND surveyID = ?)"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM UserSurveyAnswer WHERE userID = ? AND surveyID = ? LIMIT 1)"));
 		query.bind(1, userID);
 		query.bind(2, surveyID);
 		if (query.executeStep())
@@ -3424,7 +3462,7 @@ int CUserDatabaseSQLite::GetWeaponReleaseRow(int userID, UserWeaponReleaseRow& r
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT character, opened FROM UserMiniGameWeaponReleaseItemProgress WHERE userID = ? AND slot = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT character, opened FROM UserMiniGameWeaponReleaseItemProgress WHERE userID = ? AND slot = ? LIMIT 1"));
 		query.bind(1, userID);
 		query.bind(2, row.id);
 		if (query.executeStep())
@@ -3446,11 +3484,11 @@ int CUserDatabaseSQLite::UpdateWeaponReleaseRow(int userID, UserWeaponReleaseRow
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserMiniGameWeaponReleaseItemProgress SET slot = ?, character = ?, opened = ? WHERE userID = ?"));
-		query.bind(1, userID);
-		query.bind(2, row.id);
-		query.bind(3, row.progress);
-		query.bind(4, row.opened);
+		SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserMiniGameWeaponReleaseItemProgress SET character = ?, opened = ? WHERE userID = ? AND slot = ?"));
+		query.bind(1, row.progress);
+		query.bind(2, row.opened);
+		query.bind(3, userID);
+		query.bind(4, row.id);
 		if (!query.exec())
 		{
 			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO UserMiniGameWeaponReleaseItemProgress VALUES (?, ?, ?, ?)"));
@@ -3500,7 +3538,7 @@ int CUserDatabaseSQLite::GetWeaponReleaseCharacter(int userID, UserWeaponRelease
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT count FROM UserMiniGameWeaponReleaseCharacters WHERE userID = ? AND character = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT count FROM UserMiniGameWeaponReleaseCharacters WHERE userID = ? AND character = ? LIMIT 1"));
 		query.bind(1, userID);
 		query.bind(2, character.character);
 		if (query.executeStep())
@@ -3596,8 +3634,9 @@ int CUserDatabaseSQLite::GetAddons(int userID, vector<int>& addons)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT itemID FROM UserAddon WHERE userID = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT itemID FROM UserAddon WHERE userID = ? LIMIT ?"));
 		query.bind(1, userID);
+		query.bind(2, ADDON_COUNT);
 		while (query.executeStep())
 		{
 			addons.push_back(query.getColumn(0));
@@ -3711,39 +3750,42 @@ int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 	try
 	{
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM Clan WHERE name = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM Clan WHERE name = ? LIMIT 1)"));
 			query.bind(1, clanCfg.name);
 			if (query.executeStep())
 			{
-				return -1;
+				if ((int)query.getColumn(0))
+					return -1;
 			}
 		}
 
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM ClanMember WHERE userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM ClanMember WHERE userID = ? LIMIT 1)"));
 			query.bind(1, clanCfg.masterUserID);
 			if (query.executeStep())
 			{
-				return -2;
+				if ((int)query.getColumn(0))
+					return -2;
 			}
 		}
 
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM ClanMemberRequest WHERE userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM ClanMemberRequest WHERE userID = ? LIMIT 1)"));
 			query.bind(1, clanCfg.masterUserID);
 			if (query.executeStep())
 			{
-				return -2;
+				if ((int)query.getColumn(0))
+					return -2;
 			}
 		}
 
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT points FROM UserCharacter WHERE userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT points FROM UserCharacter WHERE userID = ? LIMIT 1"));
 			query.bind(1, clanCfg.masterUserID);
 			if (query.executeStep())
 			{
 				int points = query.getColumn(0);
-				if (points < 100000) // 100k points
+				if (points < 30000) // 30k points
 				{
 					return -3;
 				}
@@ -3753,7 +3795,7 @@ int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 		SQLite::Transaction transaction(m_Database);
 		{
 			IUser* user = g_UserManager.GetUserById(clanCfg.masterUserID);
-			if (!user->UpdatePoints(-100000))
+			if (!user->UpdatePoints(-30000))
 			{
 				return 0;
 			}
@@ -3868,26 +3910,29 @@ int CUserDatabaseSQLite::JoinClan(int userID, int clanID, string& clanName)
 	try
 	{
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM ClanMember WHERE userID = ? AND clanID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM ClanMember WHERE userID = ? AND clanID = ? LIMIT 1)"));
 			query.bind(1, userID);
 			query.bind(2, clanID);
 			if (query.executeStep())
 			{
-				if (0)
+				if ((int)query.getColumn(0))
 				{
-					/*if (LeaveClan(userID) <= 0)
+					if (0)
 					{
-					return 0;
-					}*/
-				}
-				else
-				{
-					return -1; // user already in this clan
+						/*if (LeaveClan(userID) <= 0)
+						{
+						return 0;
+						}*/
+					}
+					else
+					{
+						return -1; // user already in this clan
+					}
 				}
 			}
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT maxMemberCount, memberCount FROM Clan WHERE clanID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT maxMemberCount, memberCount FROM Clan WHERE clanID = ? LIMIT 1"));
 			query.bind(1, clanID);
 			if (query.executeStep())
 			{
@@ -3904,7 +3949,7 @@ int CUserDatabaseSQLite::JoinClan(int userID, int clanID, string& clanName)
 			}
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT joinMethod FROM Clan WHERE clanID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT joinMethod FROM Clan WHERE clanID = ? LIMIT 1"));
 			query.bind(1, clanID);
 			if (query.executeStep())
 			{
@@ -3921,7 +3966,7 @@ int CUserDatabaseSQLite::JoinClan(int userID, int clanID, string& clanName)
 				case 2:
 				{
 					{
-						SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMemberRequest WHERE userID = ?"));
+						SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMemberRequest WHERE userID = ? LIMIT 1"));
 						query.bind(1, userID);
 						if (query.executeStep())
 						{
@@ -3932,7 +3977,7 @@ int CUserDatabaseSQLite::JoinClan(int userID, int clanID, string& clanName)
 							}
 							else
 							{
-								SQLite::Statement query(m_Database, OBFUSCATE("SELECT name FROM Clan WHERE clanID = ?"));
+								SQLite::Statement query(m_Database, OBFUSCATE("SELECT name FROM Clan WHERE clanID = ? LIMIT 1"));
 								query.bind(1, reqClanID);
 								if (query.executeStep())
 								{
@@ -3947,7 +3992,7 @@ int CUserDatabaseSQLite::JoinClan(int userID, int clanID, string& clanName)
 					// add to member request list
 					int inviterUserID = 0;
 					{
-						SQLite::Statement query(m_Database, OBFUSCATE("SELECT userID FROM ClanInvite WHERE destUserID = ? AND clanID = ?"));
+						SQLite::Statement query(m_Database, OBFUSCATE("SELECT userID FROM ClanInvite WHERE destUserID = ? AND clanID = ? LIMIT 1"));
 						query.bind(1, userID);
 						query.bind(2, clanID);
 						if (query.executeStep())
@@ -4032,7 +4077,7 @@ int CUserDatabaseSQLite::LeaveClan(int userID)
 	{
 		int clanID = 0;
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade != 0"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade != 0 LIMIT 1"));
 			query.bind(1, userID);
 			if (!query.executeStep())
 			{
@@ -4076,7 +4121,7 @@ int CUserDatabaseSQLite::DissolveClan(int userID)
 	{
 		int clanID = 0;
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1 LIMIT 1"));
 			query.bind(1, userID);
 			if (!query.executeStep())
 			{
@@ -4170,7 +4215,7 @@ int CUserDatabaseSQLite::GetClanInfo(int clanID, Clan_s& clan)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT Clan.clanID, gameName, name, notice, gameModeID, mapID, time, memberCount, expBonus, pointBonus, markID, maxMemberCount FROM Clan, UserCharacter WHERE userID = Clan.masterUserID AND Clan.clanID = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT Clan.clanID, gameName, name, notice, gameModeID, mapID, time, memberCount, expBonus, pointBonus, markID, maxMemberCount FROM Clan, UserCharacter WHERE userID = Clan.masterUserID AND Clan.clanID = ? LIMIT 1"));
 		query.bind(1, clanID);
 		if (query.executeStep())
 		{
@@ -4231,7 +4276,7 @@ int CUserDatabaseSQLite::AddClanStorageItem(int userID, int pageID, CUserInvento
 
 		int clanID = 0;
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= (SELECT accessGrade FROM ClanStoragePage WHERE clanID = ClanMember.clanID AND pageID = ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= (SELECT accessGrade FROM ClanStoragePage WHERE clanID = ClanMember.clanID AND pageID = ? LIMIT 1) LIMIT 1"));
 			query.bind(1, userID);
 			query.bind(2, pageID);
 			if (!query.executeStep())
@@ -4247,7 +4292,7 @@ int CUserDatabaseSQLite::AddClanStorageItem(int userID, int pageID, CUserInvento
 
 		int slot = 0;
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT slot FROM ClanStorageItem WHERE clanID = ? AND pageID = ? AND itemID = 0"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT slot FROM ClanStorageItem WHERE clanID = ? AND pageID = ? AND itemID = 0 LIMIT 1"));
 			query.bind(1, clanID);
 			query.bind(2, pageID);
 			if (!query.executeStep())
@@ -4309,7 +4354,7 @@ int CUserDatabaseSQLite::DeleteClanStorageItem(int userID, int pageID, int slot)
 	{
 		int clanID = 0;
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= (SELECT accessGrade FROM ClanStoragePage WHERE clanID = ClanMember.clanID AND pageID = ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= (SELECT accessGrade FROM ClanStoragePage WHERE clanID = ClanMember.clanID AND pageID = ? LIMIT 1) LIMIT 1"));
 			query.bind(1, userID);
 			query.bind(2, pageID);
 			if (!query.executeStep())
@@ -4351,7 +4396,7 @@ int CUserDatabaseSQLite::GetClanStorageItem(int userID, int pageID, int slot, CU
 		//int clanID = 0;
 		{
 			// SELECT itemID, itemCount, itemDuration FROM ClanStorageItem INNER JOIN Clan ON ClanStorageItem.clanID = Clan.clanID INNER JOIN ClanStoragePage ON Clan.clanID = ClanStoragePage.clanID AND ClanStoragePage.pageID = ClanStorageItem.pageID INNER JOIN ClanMember ON ClanMember.userID = ? WHERE ClanMember.memberGrade <= ClanStoragePage.accessGrade AND ClanStorageItem.pageID = ? AND ClanStorageItem.slot = ?
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT itemID, itemCount FROM ClanStorageItem INNER JOIN ClanStoragePage ON ClanStorageItem.clanID = ClanStoragePage.clanID AND ClanStoragePage.pageID = ClanStorageItem.pageID INNER JOIN ClanMember ON ClanMember.userID = ? WHERE ClanMember.memberGrade <= ClanStoragePage.accessGrade AND ClanStorageItem.clanID = ClanMember.clanID AND ClanStorageItem.pageID = ? AND ClanStorageItem.slot = ? AND ClanStorageItem.itemID != 0"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT itemID, itemCount FROM ClanStorageItem INNER JOIN ClanStoragePage ON ClanStorageItem.clanID = ClanStoragePage.clanID AND ClanStoragePage.pageID = ClanStorageItem.pageID INNER JOIN ClanMember ON ClanMember.userID = ? WHERE ClanMember.memberGrade <= ClanStoragePage.accessGrade AND ClanStorageItem.clanID = ClanMember.clanID AND ClanStorageItem.pageID = ? AND ClanStorageItem.slot = ? AND ClanStorageItem.itemID != 0 LIMIT 1"));
 			query.bind(1, userID);
 			query.bind(2, pageID);
 			query.bind(3, slot);
@@ -4408,7 +4453,7 @@ int CUserDatabaseSQLite::GetClanStoragePage(int userID, ClanStoragePage& clanSto
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT slot, itemID, itemCount, itemDuration, itemEnhValue FROM ClanStorageItem WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?) AND pageID = ? AND itemID != 0"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT slot, itemID, itemCount, itemDuration, itemEnhValue FROM ClanStorageItem WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1) AND pageID = ? AND itemID != 0"));
 		statement.bind(1, userID);
 		statement.bind(2, clanStoragePage.pageID);
 		while (statement.executeStep())
@@ -4441,7 +4486,7 @@ int CUserDatabaseSQLite::GetClanStorageAccessGrade(int userID, vector<int>& acce
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT accessGrade FROM ClanStoragePage WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT accessGrade FROM ClanStoragePage WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1)"));
 		query.bind(1, userID);
 		while (query.executeStep())
 		{
@@ -4461,10 +4506,11 @@ int CUserDatabaseSQLite::UpdateClanStorageAccessGrade(int userID, int pageID, in
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("UPDATE ClanStoragePage SET accessGrade = ? WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?) AND pageID = ? AND (SELECT memberGrade FROM ClanMember WHERE userID = 1) <= 1"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("UPDATE ClanStoragePage SET accessGrade = ? WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1) AND pageID = ? AND (SELECT memberGrade FROM ClanMember WHERE userID = ? LIMIT 1) <= 1"));
 		statement.bind(1, accessGrade);
 		statement.bind(2, userID);
 		statement.bind(3, pageID);
+		statement.bind(4, userID);
 		if (!statement.exec())
 		{
 			return 0;
@@ -4491,7 +4537,7 @@ int CUserDatabaseSQLite::GetClanUserList(int id, bool byUser, vector<ClanUser>& 
 		}
 		else
 		{
-			strQuery = OBFUSCATE("SELECT ClanMember.userID, gameName, userName, memberGrade FROM ClanMember INNER JOIN UserCharacter ON UserCharacter.userID = ClanMember.userID AND ClanMember.clanID = (SELECT clanID FROM UserCharacter WHERE userID = ?) INNER JOIN User ON UserCharacter.userID = User.userID");
+			strQuery = OBFUSCATE("SELECT ClanMember.userID, gameName, userName, memberGrade FROM ClanMember INNER JOIN UserCharacter ON UserCharacter.userID = ClanMember.userID AND ClanMember.clanID = (SELECT clanID FROM UserCharacter WHERE userID = ? LIMIT 1) INNER JOIN User ON UserCharacter.userID = User.userID");
 		}
 
 		SQLite::Statement query(m_Database, strQuery);
@@ -4521,7 +4567,7 @@ int CUserDatabaseSQLite::GetClanMemberList(int userID, vector<ClanUser>& users)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT ClanMember.userID, memberGrade, gameName, userName, level, kills, deaths FROM ClanMember INNER JOIN UserCharacter ON ClanMember.userID = UserCharacter.userID INNER JOIN User ON UserCharacter.userID = User.userID WHERE (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1) = ClanMember.clanID"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT ClanMember.userID, memberGrade, gameName, userName, level, kills, deaths FROM ClanMember INNER JOIN UserCharacter ON ClanMember.userID = UserCharacter.userID INNER JOIN User ON UserCharacter.userID = User.userID WHERE (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1 LIMIT 1) = ClanMember.clanID"));
 		query.bind(1, userID);
 		while (query.executeStep())
 		{
@@ -4551,7 +4597,7 @@ int CUserDatabaseSQLite::GetClanMemberJoinUserList(int userID, vector<ClanUserJo
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT ClanMemberRequest.userID, userName, gameName, level, kills, deaths, (SELECT gameName FROM UserCharacter WHERE userID = inviterUserID), date FROM ClanMemberRequest INNER JOIN UserCharacter ON ClanMemberRequest.userID = UserCharacter.userID INNER JOIN ClanMember ON ClanMember.userID = ? AND ClanMember.memberGrade <= 1 AND ClanMember.clanID = ClanMemberRequest.clanID INNER JOIN User ON User.userID = ClanMemberRequest.userID"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT ClanMemberRequest.userID, userName, gameName, level, kills, deaths, (SELECT gameName FROM UserCharacter WHERE userID = inviterUserID LIMIT 1), date FROM ClanMemberRequest INNER JOIN UserCharacter ON ClanMemberRequest.userID = UserCharacter.userID INNER JOIN ClanMember ON ClanMember.userID = ? AND ClanMember.memberGrade <= 1 AND ClanMember.clanID = ClanMemberRequest.clanID INNER JOIN User ON User.userID = ClanMemberRequest.userID"));
 		statement.bind(1, userID);
 		while (statement.executeStep())
 		{
@@ -4626,7 +4672,7 @@ int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 		// format query
 		string query = GetClanString(flag, false);
 		query[query.size() - 1] = ' ';
-		query += OBFUSCATE("FROM Clan WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)"); // TODO: use stringstream
+		query += OBFUSCATE("FROM Clan WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1) LIMIT 1"); // TODO: use stringstream
 
 		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userID);
@@ -4706,7 +4752,7 @@ int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 			{
 				// TODO: rewrite
 				{
-					SQLite::Statement query(m_Database, OBFUSCATE("SELECT date, type, string FROM ClanChronicle WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)"));
+					SQLite::Statement query(m_Database, OBFUSCATE("SELECT date, type, string FROM ClanChronicle WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1)"));
 					query.bind(1, userID);
 					while (query.executeStep())
 					{
@@ -4738,7 +4784,7 @@ int CUserDatabaseSQLite::GetClanMember(int userID, ClanUser& clanUser)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT ClanMember.userID, memberGrade, gameName, userName, level, kills, deaths FROM ClanMember INNER JOIN UserCharacter ON UserCharacter.userID = ClanMember.userID AND ClanMember.clanID = (SELECT clanID FROM UserCharacter WHERE userID = ?) INNER JOIN User ON User.userID = UserCharacter.userID"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT ClanMember.userID, memberGrade, gameName, userName, level, kills, deaths FROM ClanMember INNER JOIN UserCharacter ON UserCharacter.userID = ClanMember.userID AND ClanMember.clanID = (SELECT clanID FROM UserCharacter WHERE userID = ? LIMIT 1) INNER JOIN User ON User.userID = UserCharacter.userID LIMIT 1"));
 		query.bind(1, userID);
 		if (query.executeStep())
 		{
@@ -4769,7 +4815,7 @@ int CUserDatabaseSQLite::UpdateClan(int userID, int flag, Clan_s clan)
 		// format query
 		string query = GetClanString(flag, true);
 		query[query.size() - 1] = ' ';
-		query += OBFUSCATE("WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1)"); // TODO: use stringstream
+		query += OBFUSCATE("WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1 LIMIT 1)"); // TODO: use stringstream
 
 		SQLite::Statement statement(m_Database, query);
 		int index = 1;
@@ -4855,7 +4901,7 @@ int CUserDatabaseSQLite::UpdateClanMemberGrade(int userID, const string& targetU
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("UPDATE ClanMember SET memberGrade = ? WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade = 0) AND userID = (SELECT userID FROM User WHERE userName = ?)"));
+		SQLite::Statement query(m_Database, OBFUSCATE("UPDATE ClanMember SET memberGrade = ? WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade = 0 LIMIT 1) AND userID = (SELECT userID FROM User WHERE userName = ? LIMIT 1)"));
 		query.bind(1, newGrade);
 		query.bind(2, userID);
 		query.bind(3, targetUserName);
@@ -4865,7 +4911,7 @@ int CUserDatabaseSQLite::UpdateClanMemberGrade(int userID, const string& targetU
 		}
 
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT ClanMember.userID, memberGrade, gameName, userName, level, kills, deaths FROM ClanMember INNER JOIN UserCharacter ON UserCharacter.userID = ClanMember.userID INNER JOIN User ON User.userID = UserCharacter.userID AND User.userName = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT ClanMember.userID, memberGrade, gameName, userName, level, kills, deaths FROM ClanMember INNER JOIN UserCharacter ON UserCharacter.userID = ClanMember.userID INNER JOIN User ON User.userID = UserCharacter.userID AND User.userName = ? LIMIT 1"));
 			query.bind(1, targetUserName);
 			if (query.executeStep())
 			{
@@ -4893,7 +4939,7 @@ int CUserDatabaseSQLite::ClanReject(int userID, const string& userName)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM ClanMemberRequest WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1) AND userID = (SELECT userID FROM User WHERE userName = ?)"));
+		SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM ClanMemberRequest WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1 LIMIT 1) AND userID = (SELECT userID FROM User WHERE userName = ? LIMIT 1)"));
 		query.bind(1, userID);
 		query.bind(2, userName);
 		if (!query.exec())
@@ -4914,7 +4960,7 @@ int CUserDatabaseSQLite::ClanRejectAll(int userID)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM ClanMemberRequest WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade = 0)"));
+		SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM ClanMemberRequest WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade = 0 LIMIT 1)"));
 		query.bind(1, userID);
 		if (!query.exec())
 		{
@@ -4935,7 +4981,7 @@ int CUserDatabaseSQLite::ClanApprove(int userID, const string& userName)
 	try
 	{
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM ClanMemberRequest WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1) AND userID = (SELECT userID FROM User WHERE userName = ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM ClanMemberRequest WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1 LIMIT 1) AND userID = (SELECT userID FROM User WHERE userName = ? LIMIT 1)"));
 			query.bind(1, userID);
 			query.bind(2, userName);
 			if (!query.exec())
@@ -4944,7 +4990,7 @@ int CUserDatabaseSQLite::ClanApprove(int userID, const string& userName)
 			}
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO ClanMember VALUES ((SELECT clanID FROM ClanMember WHERE userID = ?), (SELECT userID FROM User WHERE userName = ?), ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO ClanMember VALUES ((SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1), (SELECT userID FROM User WHERE userName = ? LIMIT 1), ?)"));
 			query.bind(1, userID);
 			query.bind(2, userName);
 			query.bind(3, 3);
@@ -4954,7 +5000,7 @@ int CUserDatabaseSQLite::ClanApprove(int userID, const string& userName)
 			}
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE Clan SET memberCount = memberCount + 1 WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE Clan SET memberCount = memberCount + 1 WHERE clanID = (SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1)"));
 			query.bind(1, userID);
 			if (!query.exec())
 			{
@@ -4962,7 +5008,7 @@ int CUserDatabaseSQLite::ClanApprove(int userID, const string& userName)
 			}
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserCharacter SET clanID = (SELECT clanID FROM ClanMember WHERE userID = ?) WHERE userID = (SELECT userID FROM User WHERE userName = ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserCharacter SET clanID = (SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1) WHERE userID = (SELECT userID FROM User WHERE userName = ? LIMIT 1)"));
 			query.bind(1, userID);
 			query.bind(2, userName);
 			if (!query.exec())
@@ -4984,11 +5030,12 @@ int CUserDatabaseSQLite::IsClanWithMarkExists(int markID)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM Clan WHERE markID = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT NOT EXISTS(SELECT 1 FROM Clan WHERE markID = ? LIMIT 1)"));
 		query.bind(1, markID);
-		if (!query.executeStep())
+		if (query.executeStep())
 		{
-			return -1;
+			if ((int)query.getColumn(0))
+				return -1;
 		}
 	}
 	catch (exception& e)
@@ -5005,7 +5052,7 @@ int CUserDatabaseSQLite::ClanInvite(int userID, const string& gameName, IUser*& 
 	try
 	{
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1 LIMIT 1"));
 			query.bind(1, userID);
 			if (!query.executeStep())
 			{
@@ -5018,7 +5065,7 @@ int CUserDatabaseSQLite::ClanInvite(int userID, const string& gameName, IUser*& 
 		}
 		int destUserID = 0;
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT userID FROM UserCharacter WHERE gameName = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT userID FROM UserCharacter WHERE gameName = ? LIMIT 1"));
 			query.bind(1, gameName);
 			if (!query.executeStep())
 			{
@@ -5037,7 +5084,7 @@ int CUserDatabaseSQLite::ClanInvite(int userID, const string& gameName, IUser*& 
 		}
 
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID, memberGrade FROM ClanMember WHERE userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID, memberGrade FROM ClanMember WHERE userID = ? LIMIT 1"));
 			query.bind(1, destUserID);
 			if (query.executeStep())
 			{
@@ -5079,7 +5126,7 @@ int CUserDatabaseSQLite::ClanKick(int userID, const string& userName)
 		int clanID = 0;
 		{
 			// TODO: rewrite query (family master can't kick admins)
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM ClanMember WHERE userID = ? AND memberGrade <= 1 LIMIT 1"));
 			query.bind(1, userID);
 			if (!query.executeStep())
 			{
@@ -5092,7 +5139,7 @@ int CUserDatabaseSQLite::ClanKick(int userID, const string& userName)
 		}
 		int targetUserID = 0;
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("SELECT userID FROM ClanMember WHERE userID = (SELECT userID FROM User WHERE userName = ?) AND memberGrade > (SELECT memberGrade FROM ClanMember WHERE userID = ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("SELECT userID FROM ClanMember WHERE userID = (SELECT userID FROM User WHERE userName = ? LIMIT 1) AND memberGrade > (SELECT memberGrade FROM ClanMember WHERE userID = ? LIMIT 1) LIMIT 1"));
 			query.bind(1, userName);
 			query.bind(2, userID);
 			if (!query.executeStep())
@@ -5136,7 +5183,7 @@ int CUserDatabaseSQLite::ClanMasterDelegate(int userID, const string& userName)
 	try
 	{
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE ClanMember SET memberGrade = 0 WHERE userID = (SELECT userID FROM User WHERE userName = ?) AND memberGrade = 1 AND (SELECT memberGrade FROM ClanMember WHERE userID = ?) = 0"));
+			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE ClanMember SET memberGrade = 0 WHERE userID = (SELECT userID FROM User WHERE userName = ? LIMIT 1) AND memberGrade = 1 AND (SELECT memberGrade FROM ClanMember WHERE userID = ? LIMIT 1) = 0"));
 			query.bind(1, userName);
 			query.bind(2, userID);
 			if (!query.exec())
@@ -5145,7 +5192,7 @@ int CUserDatabaseSQLite::ClanMasterDelegate(int userID, const string& userName)
 			}
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE ClanMember SET memberGrade = 0 WHERE userID = ?"));
+			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE ClanMember SET memberGrade = 1 WHERE userID = ?"));
 			query.bind(1, userID);
 			if (!query.exec())
 			{
@@ -5153,7 +5200,7 @@ int CUserDatabaseSQLite::ClanMasterDelegate(int userID, const string& userName)
 			}
 		}
 		{
-			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO ClanChronicle VALUES ((SELECT clanID FROM ClanMember WHERE userID = ?), strftime('%Y%m%d', datetime(?, 'unixepoch')), ?, ?)"));
+			SQLite::Statement query(m_Database, OBFUSCATE("INSERT INTO ClanChronicle VALUES ((SELECT clanID FROM ClanMember WHERE userID = ? LIMIT 1), strftime('%Y%m%d', datetime(?, 'unixepoch')), ?, ?)"));
 			query.bind(1, userID);
 			query.bind(2, g_pServerInstance->GetCurrentTime() * 60); // convert minutes to seconds
 			query.bind(3, 1); // master change
@@ -5178,7 +5225,7 @@ int CUserDatabaseSQLite::IsClanExists(const string& clanName)
 	int clanID = 0;
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM Clan WHERE name = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT clanID FROM Clan WHERE name = ? LIMIT 1"));
 		query.bind(1, clanName);
 		if (query.executeStep())
 		{
@@ -5199,7 +5246,7 @@ int CUserDatabaseSQLite::GetQuestEventProgress(int userID, int questID, UserQues
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT status, favourite, started FROM UserQuestEventProgress WHERE userID = ? AND questID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT status, favourite, started FROM UserQuestEventProgress WHERE userID = ? AND questID = ? LIMIT 1"));
 		statement.bind(1, userID);
 		statement.bind(2, questID);
 		if (statement.executeStep())
@@ -5254,7 +5301,7 @@ int CUserDatabaseSQLite::GetQuestEventTaskProgress(int userID, int questID, int 
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT unitsDone, taskVar, finished FROM UserQuestEventTaskProgress WHERE userID = ? AND questID = ? AND taskID = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT unitsDone, taskVar, finished FROM UserQuestEventTaskProgress WHERE userID = ? AND questID = ? AND taskID = ? LIMIT 1"));
 		statement.bind(1, userID);
 		statement.bind(2, questID);
 		statement.bind(3, taskID);
@@ -5312,13 +5359,14 @@ bool CUserDatabaseSQLite::IsQuestEventTaskFinished(int userID, int questID, int 
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM UserQuestEventTaskProgress WHERE userID = ? AND questID = ? AND taskID = ? AND finished = 1"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT NOT EXISTS(SELECT 1 FROM UserQuestEventTaskProgress WHERE userID = ? AND questID = ? AND taskID = ? AND finished = 1 LIMIT 1)"));
 		query.bind(1, userID);
 		query.bind(2, questID);
 		query.bind(3, taskID);
-		if (!query.executeStep())
+		if (query.executeStep())
 		{
-			return false;
+			if ((int)query.getColumn(0))
+				return false;
 		}
 	}
 	catch (exception& e)
@@ -5337,7 +5385,7 @@ int CUserDatabaseSQLite::IsUserExists(int userID)
 	int retVal = 0;
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM User WHERE userID = ?)"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM User WHERE userID = ? LIMIT 1)"));
 		statement.bind(1, userID);
 		if (statement.executeStep())
 		{
@@ -5360,7 +5408,7 @@ int CUserDatabaseSQLite::IsUserExists(const string& userName, bool searchByUserN
 	int userID = 0;
 	try
 	{
-		string query = searchByUserName ? OBFUSCATE("SELECT userID FROM User WHERE userName = ?") : OBFUSCATE("SELECT userID FROM UserCharacter WHERE gameName = ?");
+		string query = searchByUserName ? OBFUSCATE("SELECT userID FROM User WHERE userName = ? LIMIT 1") : OBFUSCATE("SELECT userID FROM UserCharacter WHERE gameName = ? LIMIT 1");
 
 		SQLite::Statement statement(m_Database, query);
 		statement.bind(1, userName);
@@ -5407,7 +5455,7 @@ int CUserDatabaseSQLite::IsUserSuspect(int userID)
 	try
 	{
 		// TODO: check all hwid logged in on this account
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM SuspectAction WHERE hwid = (SELECT lastHWID FROM User WHERE userID = ?))"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT EXISTS(SELECT 1 FROM SuspectAction WHERE hwid = (SELECT lastHWID FROM User WHERE userID = ? LIMIT 1) LIMIT 1)"));
 		query.bind(1, userID);
 		if (query.executeStep())
 		{
@@ -5654,12 +5702,12 @@ void CUserDatabaseSQLite::OnWeekTick()
 
 			// TODO: affect only users who logged in last week at least once
 			SQLite::Statement query(m_Database, OBFUSCATE("UPDATE UserQuestProgress SET status = 0 WHERE questID > 500 AND questID < 1000"));
-			query.executeStep();
+			query.exec();
 		}
 		// reset task week quest progress
 		{
 			SQLite::Statement query(m_Database, OBFUSCATE("DELETE FROM UserQuestTaskProgress WHERE questID > 500 AND questID < 1000"));
-			query.executeStep();
+			query.exec();
 		}
 
 		// event quests
@@ -5817,11 +5865,12 @@ bool CUserDatabaseSQLite::IsIPBanned(const string& ip)
 {
 	try
 	{
-		SQLite::Statement query(m_Database, OBFUSCATE("SELECT 1 FROM IPBanList WHERE ip = ?"));
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT NOT EXISTS(SELECT 1 FROM IPBanList WHERE ip = ? LIMIT 1)"));
 		query.bind(1, ip);
-		if (!query.executeStep())
+		if (query.executeStep())
 		{
-			return false;
+			if ((int)query.getColumn(0))
+				return false;
 		}
 	}
 	catch (exception& e)
@@ -5886,11 +5935,12 @@ bool CUserDatabaseSQLite::IsHWIDBanned(vector<unsigned char>& hwid)
 {
 	try
 	{
-		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT 1 FROM HWIDBanList WHERE hwid = ?"));
+		SQLite::Statement statement(m_Database, OBFUSCATE("SELECT NOT EXISTS(SELECT 1 FROM HWIDBanList WHERE hwid = ? LIMIT 1)"));
 		statement.bind(1, hwid.data(), hwid.size());
-		if (!statement.executeStep())
+		if (statement.executeStep())
 		{
-			return false;
+			if ((int)statement.getColumn(0))
+				return false;
 		}
 	}
 	catch (exception& e)

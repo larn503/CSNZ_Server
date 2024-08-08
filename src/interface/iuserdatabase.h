@@ -28,7 +28,9 @@ public:
 	virtual int GetInventoryItems(int userID, std::vector<CUserInventoryItem>& items) = 0;
 	virtual int GetInventoryItemsByID(int userID, int itemID, std::vector<CUserInventoryItem>& items) = 0;
 	virtual int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item) = 0;
+	virtual int GetFirstItemByItemID(int userID, int itemID, CUserInventoryItem& item) = 0;
 	virtual int GetFirstActiveItemByItemID(int userID, int itemID, CUserInventoryItem& item) = 0;
+	virtual int GetFirstExtendableItemByItemID(int userID, int itemID, CUserInventoryItem& item) = 0;
 	virtual int GetInventoryItemsCount(int userID) = 0;
 	virtual int IsInventoryFull(int userID) = 0;
 	virtual int GetUserData(int userID, CUserData& data) = 0;
@@ -41,7 +43,7 @@ public:
 	virtual int UpdateCharacterExtended(int userID, CUserCharacterExtended& character) = 0;
 	virtual int GetUserBan(int userID, UserBan& ban) = 0;
 	virtual int UpdateUserBan(int userID, UserBan ban) = 0;
-	virtual int GetLoadouts(int userID, CUserLoadout& loadout) = 0;
+	virtual int GetLoadouts(int userID, std::vector<CUserLoadout>& loadouts) = 0;
 	virtual int UpdateLoadout(int userID, int loadoutID, int slot, int itemID) = 0;
 	virtual int GetFastBuy(int userID, std::vector<CUserFastBuy>& fastBuy) = 0;
 	virtual int UpdateFastBuy(int userID, int slot, const std::string& name, const std::vector<int>& items) = 0;
@@ -156,7 +158,7 @@ public:
 	virtual std::vector<std::vector<unsigned char>> GetHWIDBanList() = 0;
 	virtual bool IsHWIDBanned(std::vector<unsigned char>& hwid) = 0;
 
-	virtual void ResetQuestEvent(int eventID) = 0;
+	virtual void ResetQuestEvent(int questID) = 0;
 
 	virtual void CreateTransaction() = 0;
 	virtual bool CommitTransaction() = 0;

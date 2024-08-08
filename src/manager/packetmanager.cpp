@@ -3581,7 +3581,7 @@ void CPacketManager::SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag,
 	Logger().Warn("SendQuestUpdateQuestStat TODO: reverse\n");
 }
 
-void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const CUserLoadout& loadouts)
+void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const vector<CUserLoadout>& loadouts)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
@@ -3594,19 +3594,19 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
-		if (i < loadouts.m_Loadouts.size())
+		if (i < loadouts.size())
 		{
-			for (int j = 0; j < loadouts.m_Loadouts[i].size(); j++)
+			for (auto item : loadouts[i].items)
 			{
-				msg->WriteUInt16(loadouts.m_Loadouts[i][j]);
+				msg->WriteUInt16(item);
 			}
 		}
 		else
 		{
-			msg->WriteUInt16(0);
-			msg->WriteUInt16(0);
-			msg->WriteUInt16(0);
-			msg->WriteUInt16(0);
+			msg->WriteUInt16(12);
+			msg->WriteUInt16(2);
+			msg->WriteUInt16(161);
+			msg->WriteUInt16(31);
 		}
 	}
 
@@ -3653,18 +3653,9 @@ void CPacketManager::SendFavoriteBuyMenu(IExtendedSocket* socket, const vector<C
 			msg->WriteUInt16(item);
 		}
 
-		if (i == 17)
-		{
-			msg->WriteUInt16(460);
-			msg->WriteUInt16(459);
-			msg->WriteUInt16(1);
-		}
-		else
-		{
-			msg->WriteUInt16(0);
-			msg->WriteUInt16(0);
-			msg->WriteUInt16(0);
-		}
+		msg->WriteUInt16(0);
+		msg->WriteUInt16(0);
+		msg->WriteUInt16(0);
 	}
 
 	socket->Send(msg);
