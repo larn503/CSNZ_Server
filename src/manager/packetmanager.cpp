@@ -626,8 +626,8 @@ void CPacketManager::SendUMsgRewardNotice(IExtendedSocket* socket, const RewardN
 		text = "PntCoupon_MSG";
 		break;
 	default:
-		titleMsg = "";
-		text = "";
+		titleMsg = title;
+		text = description;
 	};
 
 	msg->WriteString(titleMsg);
