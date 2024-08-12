@@ -14,7 +14,7 @@
 #include "common/buildnum.h"
 #include "common/utils.h"
 
-#include <chrono>
+#include <algorithm>
 
 using namespace std;
 
@@ -126,6 +126,10 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 		return OnRoomSetZBAddonRequest(msg, user);
 	case InRoomType::KickRequest:
 		return OnRoomKickRequest(msg, user);
+	case InRoomType::KickClanRequest:
+		return OnRoomKickClanRequest(msg, user);
+	case InRoomType::NoticeClanRequest:
+		return OnRoomNoticeClanRequest(msg, user);
 	default:
 		Logger().Warn("Unknown room request %d\n", type);
 		break;
@@ -229,7 +233,7 @@ bool CChannelManager::OnLobbyMessage(CReceivePacket* msg, IExtendedSocket* socke
 	string gameName = OBFUSCATE("Not logged in");
 	if (user)
 	{
-		CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
 		gameName = character.gameName;
 	}
 
@@ -291,7 +295,7 @@ bool CChannelManager::OnWhisperMessage(CReceivePacket* msg, IUser* userSender)
 			else if (~characterExtendedSender.banSettings & 2 || characterExtendedSender.banSettings & 2 && !g_UserDatabase.IsInBanList(userSender->GetID(), userDest->GetID()))
 			{
 				g_PacketManager.SendUMsgUserMessage(socket, UMsgPacketType::WhisperUserMessage, userNameDest, message, UMsgWhisperType::To);
-				CUserCharacter character = userSender->GetCharacter(UFLAG_GAMENAME);
+				CUserCharacter character = userSender->GetCharacter(UFLAG_LOW_GAMENAME);
 				g_PacketManager.SendUMsgUserMessage(userDest->GetExtendedSocket(), UMsgPacketType::WhisperUserMessage, character.gameName, message, UMsgWhisperType::From);
 			}
 		}
@@ -338,7 +342,7 @@ bool CChannelManager::OnServerYellMessage(CReceivePacket* msg, IUser* user)
 	
 	g_ItemManager.OnItemUse(user, items[0]);
 
-	CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
 	string message = msg->ReadString();
 
 	channel->SendUserMessageToAllUser(UMsgPacketType::ServerYellUserMessage, user->GetID(), character.gameName, message);
@@ -808,7 +812,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				g_UserDatabase.UpdateUserBan(userID, ban);
 
 				CUserCharacter character = {};
-				character.flag = UFLAG_GAMENAME;
+				character.lowFlag = UFLAG_LOW_GAMENAME;
 				g_UserDatabase.GetCharacter(userID, character);
 				if (banType == 1)
 				{
@@ -933,10 +937,10 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 			else if (args[0] == (char*)OBFUSCATE("/tournament"))
 			{
 				// TODO: what the fuck?
-				CUserCharacter character = user->GetCharacter(UFLAG_TOURNAMENT);
+				CUserCharacter character = user->GetCharacter(UFLAG_LOW_TOURNAMENT);
 				user->UpdateTournament(character.tournament ? 0 : 0xFF);
 
-				character = user->GetCharacter(UFLAG_TOURNAMENT);
+				character = user->GetCharacter(UFLAG_LOW_TOURNAMENT);
 
 				g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, character.tournament ? (char*)OBFUSCATE("Tournament HUD is ON") : (char*)OBFUSCATE("Tournament HUD is OFF"));
 
@@ -1064,7 +1068,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				else
 				{
 					CUserCharacter character = {};
-					character.flag = UFLAG_POINTS;
+					character.lowFlag = UFLAG_LOW_POINTS;
 					if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 					{
 						g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("User character does not exist"));
@@ -1164,7 +1168,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				string text = message;
 				text.erase(0, strlen(OBFUSCATE("/sendgmnotice ")));
 
-				CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
+				CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
 
 				channel->SendUserMessageToAllUser(UMsgPacketType::GMNoticeUserMessage, user->GetID(), character.gameName, text);
 
@@ -1214,6 +1218,17 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 		return false;
 	}
 
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME | UFLAG_LOW_CLAN);
+	if (roomSettings->familyBattle)
+	{
+		if (!character.clanID)
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_OPEN_FAILED_CLAN_NOT_MEMBER"));
+			delete roomSettings;
+			return false;
+		}
+	}
+
 	IRoom* newRoom = channel->CreateRoom(user, roomSettings);
 
 	user->SetCurrentRoom(newRoom);
@@ -1224,6 +1239,23 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 	channel->UserLeft(user, true);
 
 	Logger().Info("User '%s' created a new room (RID: %d, name: '%s')\n", user->GetLogName(), newRoom->GetID(), roomSettings->roomName.c_str());
+
+	if (roomSettings->familyBattle)
+	{
+		vector<ClanUser> userList;
+		if (g_UserDatabase.GetClanUserList(user->GetID(), true, userList) <= 0 || userList.size() <= 0)
+		{
+			return false;
+		}
+
+		for (auto clanUser : userList)
+		{
+			if (clanUser.user)
+			{
+				g_PacketManager.SendClanBattleNotice(clanUser.user->GetExtendedSocket(), 0, character.gameName, roomSettings->gameModeId, newRoom->GetID());
+			}
+		}
+	}
 
 	return true;
 }
@@ -1283,7 +1315,50 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 		return false;
 	}
 
+	RoomTeamNum roomTeam = RoomTeamNum::CounterTerrorist;
+	CRoomSettings* roomSettings = room->GetSettings();
+	if (roomSettings->familyBattle)
+	{
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_CLAN);
+		if (!character.clanID)
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_CLAN_NOT_MEMBER"));
+			return false;
+		}
+
+		if (character.clanID != roomSettings->familyBattleClanID1)
+		{
+			if (roomSettings->familyBattleClanID2)
+			{
+				if (character.clanID != roomSettings->familyBattleClanID2)
+				{
+					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_JOIN_FAILED_CLAN_OTHER"));
+					return false;
+				}
+			}
+			else
+				roomSettings->familyBattleClanID2 = character.clanID;
+		}
+
+		if (room->GetStatus() == RoomStatus::STATUS_INGAME && !room->IsUserInFamilyBattleUsers(user->GetID()))
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("You are not participating in this Family Battle."));
+			return false;
+		}
+
+		for (auto u : room->GetUsers())
+		{
+			CUserCharacter character2 = u->GetCharacter(UFLAG_LOW_CLAN);
+			if (!character2.clanID)
+				continue;
+
+			roomTeam = character2.clanID == character.clanID ? room->GetUserTeam(u) : (room->GetUserTeam(u) == RoomTeamNum::Terrorist ? RoomTeamNum::CounterTerrorist : RoomTeamNum::Terrorist);
+			break;
+		}
+	}
+
 	room->AddUser(user);
+	room->SetUserToTeam(user, roomTeam);
 	room->SendJoinNewRoom(user);
 
 	user->SetCurrentRoom(room);
@@ -1340,6 +1415,12 @@ bool CChannelManager::OnSetTeamRequest(CReceivePacket* msg, IUser* user)
 		return false;
 	}
 
+	if (currentRoom->GetSettings()->familyBattle)
+	{
+		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("You cannot move teams in Family Battle."));
+		return false;
+	}
+
 	int newTeam = msg->ReadUInt8();
 
 	currentRoom->SetUserToTeam(user, (RoomTeamNum)newTeam);
@@ -1379,6 +1460,36 @@ bool CChannelManager::OnLeaveRoomRequest(IUser* user)
 		if (user->IsPlaying())
 		{
 			currentRoom->SendPlayerLeaveIngame(user);
+		}
+
+		CRoomSettings* roomSettings = currentRoom->GetSettings();
+		if (roomSettings->familyBattle)
+		{
+			CUserCharacter character = user->GetCharacter(UFLAG_LOW_CLAN);
+			if (character.clanID)
+			{
+				bool found = false;
+				for (auto u : currentRoom->GetUsers())
+				{
+					if (u == user)
+						continue;
+
+					CUserCharacter character2 = u->GetCharacter(UFLAG_LOW_CLAN);
+					if (character2.clanID == character.clanID)
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if (!found)
+				{
+					if (roomSettings->familyBattleClanID1 == character.clanID)
+						roomSettings->familyBattleClanID1 = 0;
+					else if (roomSettings->familyBattleClanID2 == character.clanID)
+						roomSettings->familyBattleClanID2 = 0;
+				}
+			}
 		}
 
 		currentRoom->RemoveUser(user);
@@ -1491,6 +1602,21 @@ bool CChannelManager::OnGameStartRequest(IUser* user)
 	}
 
 	CRoomSettings* roomSettings = currentRoom->GetSettings();
+	if (roomSettings->familyBattle)
+	{
+		if (!roomSettings->familyBattleClanID2 || !currentRoom->GetNumOfReadyRealPlayers())
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_START_FAILED_CLAN_NOT_READY"));
+			return false;
+		}
+
+		if (roomSettings->gameModeId == 32 && currentRoom->GetNumOfReadyRealPlayers() < roomSettings->maxPlayers - 1)
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("The game cannot be started until there are enough players ready for the game.\n(Zombie War Mode can only be started if all 10 players are participating.)"));
+			return false;
+		}
+	}
+
 	g_PacketManager.SendLeagueGaugePacket(user->GetExtendedSocket(), roomSettings->gameModeId);
 
 	// send to the host game start request
@@ -1567,7 +1693,85 @@ bool CChannelManager::OnRoomUpdateSettings(CReceivePacket* msg, IUser* user)
 
 	CRoomSettings newSettings(msg->GetData());
 	if (!newSettings.CheckNewSettings(user, roomSettings))
+	{
+		currentRoom->SendUpdateRoomSettings(user, roomSettings, NULL, NULL, NULL, NULL);
 		return false;
+	}
+
+	if (newSettings.familyBattle)
+	{
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_CLAN);
+		if (!character.clanID)
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_SETTING_FAILED_CLAN_NOT_MEMBER"));
+			currentRoom->SendUpdateRoomSettings(user, roomSettings, NULL, NULL, NULL, NULL);
+			return false;
+		}
+
+		vector<int> clans;
+		clans.push_back(character.clanID);
+		for (auto u : currentRoom->GetUsers())
+		{
+			if (u == user)
+				continue;
+
+			CUserCharacter character2 = u->GetCharacter(UFLAG_LOW_CLAN);
+			if (!character2.clanID)
+			{
+				g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_SETTING_FAILED_NO_CLAN_USER"));
+				currentRoom->SendUpdateRoomSettings(user, roomSettings, NULL, NULL, NULL, NULL);
+				return false;
+			}
+
+			if (find(clans.begin(), clans.end(), character2.clanID) == clans.end())
+				clans.push_back(character2.clanID);
+
+			if (clans.size() > 2)
+			{
+				g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_SETTING_FAILED_TOO_MANY_CLANS"));
+				currentRoom->SendUpdateRoomSettings(user, roomSettings, NULL, NULL, NULL, NULL);
+				return false;
+			}
+		}
+
+		if (currentRoom->GetNumOfPlayers() > newSettings.maxPlayers)
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("ROOM_SETTING_FAILED_TOO_MANY_CLAN_MEMBERS"));
+			currentRoom->SendUpdateRoomSettings(user, roomSettings, NULL, NULL, NULL, NULL);
+			return false;
+		}
+
+		newSettings.familyBattleClanID1 = clans.at(0);
+		if (clans.size() == 2)
+			newSettings.familyBattleClanID2 = clans.at(1);
+
+		RoomTeamNum roomTeamClanID1 = currentRoom->GetUserTeam(user);
+
+		for (auto u : currentRoom->GetUsers())
+		{
+			if (u == user)
+				continue;
+
+			CUserCharacter character2 = u->GetCharacter(UFLAG_LOW_CLAN);
+			if (!character2.clanID)
+				continue;
+
+			RoomTeamNum newTeam = character2.clanID == roomSettings->familyBattleClanID1 ? roomTeamClanID1 : (roomTeamClanID1 == RoomTeamNum::Terrorist ? RoomTeamNum::CounterTerrorist : RoomTeamNum::Terrorist);
+			currentRoom->SetUserToTeam(u, newTeam);
+
+			// inform every user in the room of the changes
+			for (auto u2 : currentRoom->GetUsers())
+			{
+				currentRoom->SendTeamChange(u2, u, newTeam);
+			}
+
+			CDedicatedServer* server = currentRoom->GetServer();
+			if (server)
+			{
+				g_PacketManager.SendRoomSetUserTeam(server->GetSocket(), u, newTeam);
+			}
+		}
+	}
 
 	currentRoom->UpdateSettings(newSettings);
 
@@ -1623,7 +1827,7 @@ bool CChannelManager::OnUserInviteRequest(CReceivePacket* msg, IUser* user)
 			continue;
 		}*/
 
-		CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
 		g_PacketManager.SendSearchRoomNotice(destUser->GetExtendedSocket(), user->GetCurrentRoom(), character.gameName, inviteMsg);
 	}
 
@@ -1729,6 +1933,140 @@ bool CChannelManager::OnRoomKickRequest(CReceivePacket* msg, IUser* user)
 	// add user to channel user list back
 	currentChannel->UserJoin(destUser, true);
 	g_PacketManager.SendLobbyJoin(destUser->GetExtendedSocket(), currentChannel);
+
+	return true;
+}
+
+bool CChannelManager::OnRoomKickClanRequest(CReceivePacket* msg, IUser* user)
+{
+	CChannel* currentChannel = user->GetCurrentChannel();
+	if (currentChannel == NULL)
+	{
+		Logger().Warn("User '%s' tried to kick a clan from a room without current channel\n", user->GetLogName());
+		return false;
+	}
+
+	IRoom* currentRoom = user->GetCurrentRoom();
+	if (currentRoom == NULL)
+	{
+		Logger().Warn("User '%s' tried to kick a clan from a room, although it isn\'t in any\n", user->GetLogName());
+		return false;
+	}
+
+	if (user != currentRoom->GetHostUser())
+	{
+		Logger().Warn("User '%s' tried to kick a clan from a room, although it isn\'t the host (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+		return false;
+	}
+
+	if (user->IsPlaying())
+	{
+		Logger().Warn("User '%s' tried to kick a clan from a room, although it is currently playing (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+		return false;
+	}
+
+	CRoomSettings* roomSettings = currentRoom->GetSettings();
+	if (!roomSettings->familyBattle)
+	{
+		Logger().Warn("User '%s' tried to kick a clan from a room, although the room isn't a family battle (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+		return false;
+	}
+
+	if (!roomSettings->familyBattleClanID2)
+	{
+		return false;
+	}
+
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_CLAN);
+	if (!character.clanID)
+	{
+		Logger().Warn("User '%s' tried to kick a clan from a room, although it has no clan (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+		return false;
+	}
+
+	std::vector<IUser*> kickedUsers;
+	for (auto u : currentRoom->GetUsers())
+	{
+		if (u == user)
+			continue;
+
+		CUserCharacter character2 = u->GetCharacter(UFLAG_LOW_CLAN);
+		if (!character2.clanID)
+			continue;
+
+		if (character2.clanID != character.clanID)
+		{
+			currentRoom->SendPlayerLeaveIngame(u);
+			currentRoom->AddKickedUser(u);
+			currentRoom->RemoveUser(u);
+
+			currentChannel->SendFullUpdateRoomList(u);
+
+			// add user to channel user list back
+			currentChannel->UserJoin(u, true);
+			g_PacketManager.SendLobbyJoin(u->GetExtendedSocket(), currentChannel);
+
+			kickedUsers.push_back(u);
+		}
+	}
+
+	for (auto u : kickedUsers)
+	{
+		g_PacketManager.SendRoomKickClan(u->GetExtendedSocket(), kickedUsers);
+	}
+
+	return true;
+}
+
+bool CChannelManager::OnRoomNoticeClanRequest(CReceivePacket* msg, IUser* user)
+{
+	CChannel* currentChannel = user->GetCurrentChannel();
+	if (currentChannel == NULL)
+	{
+		Logger().Warn("User '%s' tried to send a notice to clan from a room without current channel\n", user->GetLogName());
+		return false;
+	}
+
+	IRoom* currentRoom = user->GetCurrentRoom();
+	if (currentRoom == NULL)
+	{
+		Logger().Warn("User '%s' tried to send a notice to clan from a room, although it isn\'t in any\n", user->GetLogName());
+		return false;
+	}
+
+	if (user->IsPlaying())
+	{
+		Logger().Warn("User '%s' tried to send a notice to clan from a room, although it is currently playing (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+		return false;
+	}
+
+	CRoomSettings* roomSettings = currentRoom->GetSettings();
+	if (!roomSettings->familyBattle)
+	{
+		Logger().Warn("User '%s' tried to send a notice to clan from a room, although the room isn't a family battle (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+		return false;
+	}
+
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME | UFLAG_LOW_CLAN);
+	if (!character.clanID)
+	{
+		Logger().Warn("User '%s' tried to send a notice to clan from a room, although it has no clan (RID: %d)\n", user->GetLogName(), currentRoom->GetID());
+		return false;
+	}
+
+	vector<ClanUser> userList;
+	if (g_UserDatabase.GetClanUserList(user->GetID(), true, userList) <= 0 || userList.size() <= 0)
+	{
+		return false;
+	}
+
+	for (auto clanUser : userList)
+	{
+		if (clanUser.user)
+		{
+			g_PacketManager.SendClanBattleNotice(clanUser.user->GetExtendedSocket(), 1, character.gameName, roomSettings->gameModeId, currentRoom->GetID());
+		}
+	}
 
 	return true;
 }

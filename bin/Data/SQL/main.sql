@@ -1,4 +1,4 @@
-PRAGMA user_version = 3;
+PRAGMA user_version = 4;
 CREATE TABLE IF NOT EXISTS "UserDist" (
 	"userIDNext" INT,
 	"clanIDNext" INT
@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS "UserCharacter" (
 	"clanID"			INT DEFAULT 0,
 	"tournament"		INT DEFAULT 0,
 	"nameplateID"		INT DEFAULT 0,
+	"chatColorID"		INT DEFAULT 0,
 	FOREIGN KEY("userID") REFERENCES "User"("userID") ON DELETE CASCADE,
 	PRIMARY KEY("userID")
 );

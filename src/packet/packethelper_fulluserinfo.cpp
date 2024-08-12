@@ -42,20 +42,21 @@ vector<unsigned char> PackAchievementList(const vector<int>& unpacked)
 
 void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserCharacter& character)
 {
-	buf.writeInt32_LE(character.flag);
+	buf.writeInt32_LE(character.lowFlag);
+	buf.writeInt32_LE(character.highFlag);
 
-	if (character.flag & UFLAG_NAMEPLATE)
+	if (character.lowFlag & UFLAG_LOW_NAMEPLATE)
 	{
 		buf.writeUInt8(0);
 		buf.writeUInt32_LE(character.nameplateID);
 	}
 
-	if (character.flag & UFLAG_GAMENAME)
+	if (character.lowFlag & UFLAG_LOW_GAMENAME)
 	{
 		buf.writeStr(character.gameName);
 	}
 
-	if (character.flag & UFLAG_GAMENAME2)
+	if (character.lowFlag & UFLAG_LOW_GAMENAME2)
 	{
 		buf.writeStr(character.gameName);
 
@@ -64,32 +65,32 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeUInt8(0);
 	}
 
-	if (character.flag & UFLAG_LEVEL)
+	if (character.lowFlag & UFLAG_LOW_LEVEL)
 	{
 		buf.writeUInt32_LE(character.level);
 	}
 
-	if (character.flag & UFLAG_UNK2)
+	if (character.lowFlag & UFLAG_LOW_UNK4)
 	{
 		buf.writeUInt8(0);
 	}
 
-	if (character.flag & UFLAG_EXP)
+	if (character.lowFlag & UFLAG_LOW_EXP)
 	{
 		buf.writeUInt64_LE(character.exp);
 	}
 
-	if (character.flag & UFLAG_CASH)
+	if (character.lowFlag & UFLAG_LOW_CASH)
 	{
 		buf.writeUInt64_LE(character.cash);
 	}
 
-	if (character.flag & UFLAG_POINTS)
+	if (character.lowFlag & UFLAG_LOW_POINTS)
 	{
 		buf.writeUInt64_LE(character.points);
 	}
 
-	if (character.flag & UFLAG_STAT)
+	if (character.lowFlag & UFLAG_LOW_STAT)
 	{
 		buf.writeUInt32_LE(character.battles);
 		buf.writeUInt32_LE(character.win);
@@ -113,7 +114,7 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeUInt32_LE(0); // OriginalTendencyTypeC
 	}
 
-	if (character.flag & UFLAG_LOCATION)
+	if (character.lowFlag & UFLAG_LOW_LOCATION)
 	{
 		buf.writeStr(character.regionName);
 
@@ -124,12 +125,12 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeStr(""); // PCBang (PC Cafe) name? If string isn't empty, a network icon will be right beside the player's name
 	}
 
-	if (character.flag & UFLAG_CASH2)
+	if (character.lowFlag & UFLAG_LOW_CASH2)
 	{
 		buf.writeUInt32_LE(0); // cash points
 	}
 
-	if (character.flag & UFLAG_UNK5)
+	if (character.lowFlag & UFLAG_LOW_UNK11)
 	{
 		buf.writeUInt8(0);
 		for (int i = 0; i < 0; i++)
@@ -139,7 +140,7 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		}
 	}
 
-	if (character.flag & UFLAG_CLAN)
+	if (character.lowFlag & UFLAG_LOW_CLAN)
 	{
 		buf.writeUInt32_LE(character.clanID);
 		buf.writeUInt32_LE(character.clanMarkID);
@@ -150,12 +151,12 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeUInt8(0);
 	}
 
-	if (character.flag & UFLAG_TOURNAMENT)
+	if (character.lowFlag & UFLAG_LOW_TOURNAMENT)
 	{
 		buf.writeUInt8(character.tournament);
 	}
 
-	if (character.flag & UFLAG_RANK)
+	if (character.lowFlag & UFLAG_LOW_RANK)
 	{
 		buf.writeUInt8(0xFF); // byte flag
 
@@ -168,24 +169,24 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeUInt8(character.leagueID); // league
 	}
 
-	if (character.flag & UFLAG_UNK4)
+	if (character.lowFlag & UFLAG_LOW_UNK15)
 	{
 		buf.writeUInt8(0);
 		buf.writeUInt8(0);
 		buf.writeUInt8(0);
 	}
 
-	if (character.flag & UFLAG_PASSWORDBOXES)
+	if (character.lowFlag & UFLAG_LOW_PASSWORDBOXES)
 	{
 		buf.writeUInt16_LE(character.passwordBoxes); // кол-во код боксов
 	}
 
-	if (character.flag & UFLAG_UNK11)
+	if (character.lowFlag & UFLAG_LOW_UNK17)
 	{
 		buf.writeUInt32_LE(0);
 	}
 
-	if (character.flag & UFLAG_ACHIEVEMENT)
+	if (character.lowFlag & UFLAG_LOW_ACHIEVEMENT)
 	{
 		buf.writeUInt16_LE(character.prefixId); // айди префикса перед ником (можно найти в title.csv)
 		buf.writeUInt8(0);
@@ -193,14 +194,14 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeUInt32_LE(character.honorPoints); // кол-во очков чести
 	}
 
-	if (character.flag & UFLAG_ACHIEVEMENTLIST)
+	if (character.lowFlag & UFLAG_LOW_ACHIEVEMENTLIST)
 	{
 		vector<int> list = character.achievementList;
 		sort(list.begin(), list.end());
 		buf.writeArray(PackAchievementList(character.achievementList));
 	}
 
-	if (character.flag & UFLAG_UNK13)
+	if (character.lowFlag & UFLAG_LOW_UNK20)
 	{
 		buf.writeUInt16_LE(0);
 		buf.writeUInt16_LE(0);
@@ -209,13 +210,13 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeUInt16_LE(0);
 	}
 
-	if (character.flag & UFLAG_UNK14)
+	if (character.lowFlag & UFLAG_LOW_UNK21)
 	{
 		buf.writeUInt8(0);
 		buf.writeUInt32_LE(0);
 	}
 
-	if (character.flag & UFLAG_TITLES)
+	if (character.lowFlag & UFLAG_LOW_TITLES)
 	{
 		// TODO: what is it?
 		if (character.titles.size() == 5)
@@ -230,28 +231,28 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		}
 	}
 
-	if (character.flag & UFLAG_UNK16)
+	if (character.lowFlag & UFLAG_LOW_UNK23)
 	{
 		buf.writeUInt8(0);
 	}
 
-	if (character.flag & UFLAG_UNK18)
+	if (character.lowFlag & UFLAG_LOW_UNK25)
 	{
 		buf.writeUInt16_LE(0);
 	}
 
-	if (character.flag & UFLAG_UNK19)
+	if (character.lowFlag & UFLAG_LOW_UNK26)
 	{
 		buf.writeUInt32_LE(character.mileagePoints); 
 		buf.writeUInt32_LE(0); // achievement points
 	}
 
-	if (character.flag & UFLAG_UNK20)
+	if (character.lowFlag & UFLAG_LOW_UNK27)
 	{
 		buf.writeUInt32_LE(userID); // suid TODO: what is it?
 	}
 
-	if (character.flag & UFLAG_UNK21)
+	if (character.lowFlag & UFLAG_LOW_UNK28)
 	{
 		buf.writeUInt8(0);
 		for (int i = 0; i < 0; i++)
@@ -261,20 +262,20 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		}
 	}
 
-	if (character.flag & UFLAG_UNK22)
+	if (character.lowFlag & UFLAG_LOW_UNK29)
 	{
 		buf.writeUInt8(0);
 		for (int i = 0; i < 0; i++)
 			buf.writeUInt16_LE(0);
 	}
 
-	if (character.flag & UFLAG_UNK23)
+	if (character.lowFlag & UFLAG_LOW_UNK23)
 	{
 		buf.writeUInt8(0);
 		buf.writeUInt8(0);
 	}
 
-	if (character.flag & UFLAG_UNK24)
+	if (character.lowFlag & UFLAG_LOW_UNK30)
 	{
 		buf.writeUInt32_LE(0);
 		buf.writeUInt32_LE(0);
@@ -285,5 +286,10 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeUInt32_LE(0);
 		buf.writeUInt8(0);
 		buf.writeUInt8(0);
+	}
+
+	if (character.highFlag & UFLAG_HIGH_CHATCOLOR)
+	{
+		buf.writeInt16_LE(character.chatColorID);
 	}
 }

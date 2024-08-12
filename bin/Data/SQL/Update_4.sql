@@ -1,0 +1,1 @@
+ALTER TABLE UserCharacter ADD COLUMN chatColorID INT DEFAULT 0;

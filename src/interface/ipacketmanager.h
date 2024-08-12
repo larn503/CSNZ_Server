@@ -139,6 +139,7 @@ public:
 	virtual void SendRoomInitiateVoteKick(IExtendedSocket* socket, int userID, int destUserID, int reason) = 0;
 	virtual void SendRoomVoteKickResult(IExtendedSocket* socket, bool kick, int userID, int reason) = 0;
 	virtual void SendRoomWeaponSurvey(IExtendedSocket* socket, const std::vector<int>& weapons) = 0;
+	virtual void SendRoomKickClan(IExtendedSocket* socket, const std::vector<IUser*>& kickedUsers) = 0;
 	
 	virtual void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId) = 0;
 	virtual void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId) = 0;
@@ -215,6 +216,7 @@ public:
 	virtual void SendClanMasterDelegate(IExtendedSocket* socket) = 0;
 	virtual void SendClanKick(IExtendedSocket* socket) = 0;
 	virtual void SendClanChatMessage(IExtendedSocket* socket, const std::string& gameName, const std::string& message) = 0;
+	virtual void SendClanBattleNotice(IExtendedSocket* socket, int type, const std::string& gameName, int gameModeID, int roomID) = 0;
 
 	virtual void SendBanList(IExtendedSocket* socket, const std::vector<std::string>& banList) = 0;
 	virtual void SendBanUpdateList(IExtendedSocket* socket, const std::string& gameName, bool remove = false) = 0;

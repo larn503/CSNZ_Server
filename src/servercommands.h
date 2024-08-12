@@ -138,7 +138,7 @@ void CommandBan(CCommand* cmd, const std::vector<std::string>& args)
 	}
 
 	CUserCharacter character = {};
-	character.flag = UFLAG_GAMENAME;
+	character.lowFlag = UFLAG_LOW_GAMENAME;
 	g_UserDatabase.GetCharacter(userID, character);
 	if (banType == 1)
 	{
@@ -296,7 +296,7 @@ void CommandDbReload(CCommand* cmd, const std::vector<std::string>& args)
 	// send userinfo to users
 	for (auto u : g_UserManager.GetUsers())
 	{
-		CUserCharacter character = u->GetCharacter(UFLAG_ALL);
+		CUserCharacter character = u->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 		g_PacketManager.SendUserUpdateInfo(u->GetExtendedSocket(), u, character);
 	}
 

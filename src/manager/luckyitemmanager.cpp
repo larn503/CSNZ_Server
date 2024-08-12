@@ -296,11 +296,11 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 		return 0;
 	}
 
-	CUserCharacter character = user->GetCharacter(UFLAG_PASSWORDBOXES | UFLAG_GAMENAME);
-	if (!character.flag)
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
+	if (character.lowFlag == 0)
 	{
-		// TODO: send reply and rewrite condition
-		printf("character.gameName.empty()!\n");
+		Logger().Warn("Couldn't get gameName from User '%s' while opening item box\n", user->GetLogName());
+		g_PacketManager.SendItemOpenDecoderErrorReply(user->GetExtendedSocket(), ItemBoxError::FAIL_USEITEM);
 		return 0;
 	}
 

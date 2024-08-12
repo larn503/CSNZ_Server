@@ -31,11 +31,11 @@ public:
 	std::string GetUsername();
 	const char* GetLogName();
 	CUserData GetUser(int flag);
-	CUserCharacter GetCharacter(int flag);
+	CUserCharacter GetCharacter(int lowFlag, int highFlag = 0);
 	CUserCharacterExtended GetCharacterExtended(int flag);
 
 	int UpdateHolepunch(int portId, const std::string& localIpAddress, int localPort, int externalPort);
-	void UpdateClientUserInfo(int flag, CUserCharacter character);
+	void UpdateClientUserInfo(CUserCharacter character);
 	void UpdateGameName(const std::string& gameName);
 	int UpdatePoints(int64_t points);
 	void UpdateCash(int64_t cash);
@@ -43,6 +43,7 @@ public:
 	void UpdatePrefix(int prefixID);
 	void UpdateStat(int battles, int win, int kills, int deaths);
 	void UpdateLocation(int nation, int city, int town);
+	void UpdateChatColor(int chatColorID);
 	void UpdateRank(int leagueID);
 	void UpdateLevel(int level);
 	void UpdateExp(int64_t exp);

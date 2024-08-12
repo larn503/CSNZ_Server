@@ -518,7 +518,7 @@ void CQuestManager::OnReceiveReward(IUser* user, int rewardID, int questID)
 
 	g_PacketManager.SendQuestUpdateMainInfo(user->GetExtendedSocket(), 0xFFFF, quest, questProgress);
 
-	CUserCharacter character = user->GetCharacter(UFLAG_ACHIEVEMENT);
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_ACHIEVEMENT);
 	UserQuestStat stat = {};
 	g_PacketManager.SendQuestUpdateQuestStat(user->GetExtendedSocket(), 1, character.honorPoints, stat); // update honor stat
 }

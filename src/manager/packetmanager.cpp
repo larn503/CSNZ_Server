@@ -14,24 +14,6 @@
 
 using namespace std;
 
-enum OutRoomPacketType
-{
-	CreateAndJoin = 0,
-	PlayerJoin = 1,
-	PlayerLeave = 2,
-	SetPlayerReady = 3,
-	UpdateSettings = 4,
-	SetHost = 5,
-	SetGameResult = 6,
-	KickUser = 7,
-	InitiateVoteKick = 8,
-	VoteKickResult = 9,
-	PlayerLeaveIngame = 10,
-	UserInviteList = 12,
-	SetUserTeam = 13,
-	WeaponSurvey = 35,
-};
-
 CPacketManager g_PacketManager;
 
 CPacketManager::CPacketManager() : CBaseManager("PacketManager")
@@ -1825,7 +1807,7 @@ void CPacketManager::SendLobbyJoin(IExtendedSocket* socket, CChannel* channel)
 		msg->WriteUInt32(user->GetID());
 		msg->WriteString("test_lobby");
 		CPacketHelper_FullUserInfo fullUserInfo;
-		fullUserInfo.Build(msg->m_OutStream, user->GetID(), user->GetCharacter(0xFFFFFFFF));
+		fullUserInfo.Build(msg->m_OutStream, user->GetID(), user->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL));
 	}
 	socket->Send(msg);
 }
@@ -1839,7 +1821,7 @@ void CPacketManager::SendLobbyUserJoin(IExtendedSocket* socket, IUser* joinedUse
 	msg->WriteUInt32(joinedUser->GetID()); // userid
 	msg->WriteString("TIBE YEBAT'?");
 
-	CUserCharacter character = joinedUser->GetCharacter(0xFFFFFFFF);
+	CUserCharacter character = joinedUser->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 
 	CPacketHelper_FullUserInfo fullUserInfo;
 	fullUserInfo.Build(msg->m_OutStream, joinedUser->GetID(), character);
@@ -2016,6 +1998,13 @@ void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 	}
 	if (hFlag & RLHFLAG_WEAPONRESTRICT) {
 		msg->WriteUInt8(roomSettings->weaponRestrict);
+	}
+	if (hFlag & RLHFLAG_FAMILYBATTLE) {
+		msg->WriteUInt8(roomSettings->familyBattle);
+	}
+	if (hFlag & RLHFLAG_FAMILYBATTLECLANIDS) {
+		msg->WriteUInt32(roomSettings->familyBattleClanID1);
+		msg->WriteUInt32(roomSettings->familyBattleClanID2);
 	}
 
 	// studio related
@@ -2650,6 +2639,9 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT) {
 		msg->WriteUInt8(newSettings->weaponRestrict);
 	}
+	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
+		msg->WriteUInt8(newSettings->familyBattle);
+	}
 	if (highFlag & ROOM_HIGH_UNK77) {
 		msg->WriteUInt8(newSettings->unk77);
 	}
@@ -2660,7 +2652,7 @@ void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomI
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::CreateAndJoin);
+	msg->WriteUInt8(OutRoomType::CreateAndJoin);
 
 	msg->WriteUInt8(0);
 	msg->WriteUInt32(roomInfo->GetID());
@@ -2692,7 +2684,7 @@ void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomI
 		msg->WriteUInt16(network.m_nLocalClientPort);
 		msg->WriteUInt16(network.m_nLocalServerPort);
 
-		CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 
 		CPacketHelper_FullUserInfo fullUserInfo;
 		fullUserInfo.Build(msg->m_OutStream, user->GetID(), character);
@@ -2706,7 +2698,7 @@ void CPacketManager::SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, Ro
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::PlayerJoin);
+	msg->WriteUInt8(OutRoomType::PlayerJoin);
 
 	msg->WriteUInt32(user->GetID());
 	msg->WriteUInt32(0);
@@ -2726,7 +2718,7 @@ void CPacketManager::SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, Ro
 	msg->WriteUInt16(network.m_nLocalClientPort);
 	msg->WriteUInt16(network.m_nLocalServerPort);
 
-	CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 
 	CPacketHelper_FullUserInfo fullUserInfo;
 	fullUserInfo.Build(msg->m_OutStream, user->GetID(), character);
@@ -2739,7 +2731,7 @@ void CPacketManager::SendRoomUpdateSettings(IExtendedSocket* socket, CRoomSettin
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::UpdateSettings);
+	msg->WriteUInt8(OutRoomType::UpdateSettings);
 
 	WriteSettings(msg, newSettings, low, lowMid, highMid, high);
 
@@ -2751,7 +2743,7 @@ void CPacketManager::SendRoomSetUserTeam(IExtendedSocket* socket, IUser* user, i
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::SetUserTeam);
+	msg->WriteUInt8(OutRoomType::SetUserTeam);
 
 	msg->WriteUInt32(user->GetID());
 	msg->WriteUInt8(teamNum);
@@ -2777,7 +2769,7 @@ void CPacketManager::SendRoomSetHost(IExtendedSocket* socket, IUser* user)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::SetHost);
+	msg->WriteUInt8(OutRoomType::SetHost);
 	msg->WriteUInt32(user->GetID());
 	msg->WriteUInt8(1);
 
@@ -2789,7 +2781,7 @@ void CPacketManager::SendRoomPlayerLeave(IExtendedSocket* socket, int userId)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::PlayerLeave);
+	msg->WriteUInt8(OutRoomType::PlayerLeave);
 	msg->WriteUInt32(userId);
 
 	socket->Send(msg);
@@ -2800,7 +2792,7 @@ void CPacketManager::SendRoomPlayerLeaveIngame(IExtendedSocket* socket)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::PlayerLeaveIngame);
+	msg->WriteUInt8(OutRoomType::PlayerLeaveIngame);
 
 	socket->Send(msg);
 }
@@ -2810,7 +2802,7 @@ void CPacketManager::SendRoomInviteUserList(IExtendedSocket* socket, IUser* user
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::UserInviteList);
+	msg->WriteUInt8(OutRoomType::UserInviteList);
 
 	CChannel* channel = user->GetCurrentChannel();
 	msg->WriteUInt16(channel->GetUsers().size());
@@ -2819,7 +2811,7 @@ void CPacketManager::SendRoomInviteUserList(IExtendedSocket* socket, IUser* user
 	{
 		msg->WriteUInt32(u->GetID());
 
-		CUserCharacter character = u->GetCharacter(0xFFFFFFFF);
+		CUserCharacter character = u->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 
 		CPacketHelper_FullUserInfo fullUserInfo;
 		fullUserInfo.Build(msg->m_OutStream, user->GetID(), character);
@@ -2833,13 +2825,13 @@ void CPacketManager::SendRoomGameResult(IExtendedSocket* socket, IRoom* room, CG
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::SetGameResult);
+	msg->WriteUInt8(OutRoomType::SetGameResult);
 
 	int winTeam = 0;
 	if (match->m_nCtWinCount > match->m_nTerWinCount)
-		winTeam = 1;
-	else
 		winTeam = 2;
+	else
+		winTeam = 1;
 
 	msg->WriteUInt8(winTeam);
 	msg->WriteUInt8(0);
@@ -3092,7 +3084,7 @@ void CPacketManager::SendRoomKick(IExtendedSocket* socket, int userID)
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::KickUser);
+	msg->WriteUInt8(OutRoomType::KickUser);
 
 	msg->WriteUInt32(userID);
 
@@ -3104,7 +3096,7 @@ void CPacketManager::SendRoomInitiateVoteKick(IExtendedSocket* socket, int userI
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::InitiateVoteKick);
+	msg->WriteUInt8(OutRoomType::InitiateVoteKick);
 
 	msg->WriteUInt32(userID);
 	msg->WriteUInt32(destUserID);
@@ -3118,7 +3110,7 @@ void CPacketManager::SendRoomVoteKickResult(IExtendedSocket* socket, bool kick, 
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::VoteKickResult);
+	msg->WriteUInt8(OutRoomType::VoteKickResult);
 
 	msg->WriteUInt8(kick);
 	if (kick && kick != 1)
@@ -3139,12 +3131,28 @@ void CPacketManager::SendRoomWeaponSurvey(IExtendedSocket* socket, const vector<
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(OutRoomPacketType::WeaponSurvey);
+	msg->WriteUInt8(OutRoomType::WeaponSurvey);
 
 	msg->WriteUInt8(weapons.size());
 	for (auto weaponID : weapons)
 	{
 		msg->WriteUInt16(weaponID);
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRoomKickClan(IExtendedSocket* socket, const vector<IUser*>& kickedUsers)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(OutRoomType::KickClan);
+
+	msg->WriteUInt8(kickedUsers.size());
+	for (auto user : kickedUsers)
+	{
+		msg->WriteUInt32(user->GetID());
 	}
 
 	socket->Send(msg);
@@ -5858,6 +5866,24 @@ void BuildClanInfo(CSendPacket* msg, const Clan_s& clan)
 	// clan storage last updated items
 	BuildClanStorage(msg, clan.lastStorageItems);
 
+	msg->WriteUInt8(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteUInt8(0);
+		msg->WriteUInt8(0);
+		msg->WriteUInt32(0);
+		msg->WriteString("");
+	}
+
+	msg->WriteUInt8(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteUInt8(0);
+		msg->WriteUInt32(0);
+		msg->WriteUInt32(0);
+		msg->WriteUInt32(0);
+	}
+
 	msg->WriteUInt16(0);
 	msg->WriteUInt32(0);
 	msg->WriteUInt16(0);
@@ -6062,7 +6088,7 @@ void CPacketManager::SendClanCreateMemberUserList(IExtendedSocket* socket, const
 	msg->WriteUInt16(users.size());
 	for (auto& user : users)
 	{
-		msg->WriteUInt8(user.character.level);
+		msg->WriteUInt32(user.character.level);
 		msg->WriteString(user.userName);
 		msg->WriteString(user.character.gameName);
 		msg->WriteUInt8(user.memberGrade);
@@ -6088,7 +6114,7 @@ void CPacketManager::SendClanUpdateMemberUserList(IExtendedSocket* socket, const
 	msg->WriteUInt8(remove ? 2 : 1);
 	if (!remove)
 	{
-		msg->WriteUInt8(user.character.level);
+		msg->WriteUInt32(user.character.level);
 		msg->WriteString(user.userName);
 		msg->WriteString(user.character.gameName);
 		msg->WriteUInt8(user.memberGrade);
@@ -6119,7 +6145,7 @@ void CPacketManager::SendClanCreateJoinUserList(IExtendedSocket* socket, const v
 	msg->WriteUInt8(users.size());
 	for (auto& user : users)
 	{
-		msg->WriteUInt8(user.character.level);
+		msg->WriteUInt32(user.character.level);
 		msg->WriteString(user.userName);
 		msg->WriteString(user.character.gameName);
 		msg->WriteString(user.inviterGameName);
@@ -6147,7 +6173,7 @@ void CPacketManager::SendClanUpdateJoinUserList(IExtendedSocket* socket, const C
 	msg->WriteUInt8(remove ? 2 : 1);
 	if (!remove)
 	{
-		msg->WriteUInt8(user.character.level); // level
+		msg->WriteUInt32(user.character.level); // level
 		msg->WriteString(user.userName);
 		msg->WriteString(user.character.gameName);
 		msg->WriteString(user.inviterGameName);
@@ -6238,8 +6264,8 @@ void CPacketManager::SendClanUpdate(IExtendedSocket* socket, int type, int membe
 		msg->WriteUInt16(clan.expBoost);
 		msg->WriteUInt16(clan.pointBoost);
 		msg->WriteUInt16(22); // unk
-		msg->WriteUInt16(33); // unk
-		msg->WriteUInt32(44); // unk
+		msg->WriteUInt32(33); // unk
+		msg->WriteUInt16(44); // unk
 
 		break;
 	case 9:
@@ -6251,6 +6277,27 @@ void CPacketManager::SendClanUpdate(IExtendedSocket* socket, int type, int membe
 	case 11:
 		BuildClanStorage(msg, clan.lastStorageItems);
 		break;
+	case 12:
+	{
+		msg->WriteUInt8(0);
+		for (int i = 0; i < 0; i++)
+		{
+			msg->WriteUInt8(0);
+			msg->WriteUInt8(0);
+			msg->WriteUInt32(0);
+			msg->WriteString("");
+		}
+
+		msg->WriteUInt8(0);
+		for (int i = 0; i < 0; i++)
+		{
+			msg->WriteUInt8(0);
+			msg->WriteUInt32(0);
+			msg->WriteUInt32(0);
+			msg->WriteUInt32(0);
+		}
+		break;
+	}
 	}
 
 	socket->Send(msg);
@@ -6740,6 +6787,20 @@ void CPacketManager::SendClanChatMessage(IExtendedSocket* socket, const string& 
 	msg->WriteUInt8(ClanPacketType::ClanChatMessage);
 	msg->WriteString(gameName);
 	msg->WriteString(message);
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendClanBattleNotice(IExtendedSocket* socket, int type, const string& gameName, int gameModeID, int roomID)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Clan);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(ClanPacketType::ClanBattleNotice);
+	msg->WriteUInt8(type);
+	msg->WriteString(gameName);
+	msg->WriteUInt8(gameModeID);
+	msg->WriteUInt16(roomID);
 
 	socket->Send(msg);
 }

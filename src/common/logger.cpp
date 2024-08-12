@@ -205,11 +205,15 @@ void CConsoleLogger::LogVarg(int level, const char* msg, va_list argptr)
 		break;
 	}
 
+#ifndef WIN32
 	SetTextColor(color);
+#endif
 
 	vprintf(msg, argptr);
 
+#ifndef WIN32
 	SetTextColor(CON_COLOR_WHITE); // reset color to default
+#endif
 
 	if (level == LOG_LEVEL_FATAL_ERROR)
 	{

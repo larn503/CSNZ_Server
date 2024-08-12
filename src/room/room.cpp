@@ -472,6 +472,11 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	if (newSettings.highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT) {
 		m_pSettings->weaponRestrict = newSettings.weaponRestrict;
 	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
+		m_pSettings->familyBattle = newSettings.familyBattle;
+		m_pSettings->familyBattleClanID1 = newSettings.familyBattleClanID1;
+		m_pSettings->familyBattleClanID2 = newSettings.familyBattleClanID2;
+	}
 	if (newSettings.highFlag & ROOM_HIGH_UNK77) {
 		m_pSettings->unk77 = newSettings.unk77;
 	}
@@ -481,7 +486,7 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 {
 	string message = msg->ReadString();
 
-	CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
 	string senderName = character.gameName;
 
 	Logger().Info("User '%s' write to room chat: '%s'\n", senderName.c_str(), message.c_str());
@@ -588,7 +593,7 @@ void CRoom::OnUserTeamMessage(CReceivePacket* msg, IUser* user)
 	string message = msg->ReadString();
 	int userTeam = GetUserTeam(user);
 
-	CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
 
 	for (auto userDest : m_Users)
 	{
@@ -867,6 +872,16 @@ void CRoom::UpdateHost(IUser* newHost)
 			m_pGameMatch->OnHostChanged(newHost);
 		}
 	}
+
+	if (m_pSettings->familyBattle)
+	{
+		CUserCharacter character = newHost->GetCharacter(UFLAG_LOW_CLAN);
+		if (character.clanID)
+		{
+			m_pSettings->familyBattleClanID2 = m_pSettings->familyBattleClanID1;
+			m_pSettings->familyBattleClanID1 = character.clanID;
+		}
+	}
 }
 
 bool CRoom::FindAndUpdateNewHost()
@@ -943,6 +958,14 @@ void CRoom::HostStartGame()
 	else
 	{
 		Logger().Info("Host '%s' started room match (RID: %d, IP: %s, port: %d)\n", m_pHostUser->GetUsername().c_str(), m_nID, m_pHostUser->GetNetworkConfig().m_szExternalIpAddress.c_str(), m_pHostUser->GetNetworkConfig().m_nExternalClientPort);
+	}
+
+	if (m_pSettings->familyBattle)
+	{
+		m_FamilyBattleUsers.clear();
+
+		for (auto u : GetUsers())
+			m_FamilyBattleUsers.push_back(u->GetID());
 	}
 }
 
@@ -1083,4 +1106,9 @@ void CRoom::ChangeMap(int mapId)
 	{
 		g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
 	}
+}
+
+bool CRoom::IsUserInFamilyBattleUsers(int userId)
+{
+	return find(m_FamilyBattleUsers.begin(), m_FamilyBattleUsers.end(), userId) != m_FamilyBattleUsers.end();
 }

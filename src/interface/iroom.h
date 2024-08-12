@@ -87,4 +87,6 @@ public:
 	virtual CDedicatedServer* GetServer() = 0;
 	virtual void SetServer(CDedicatedServer* server) = 0;
 	virtual void ChangeMap(int mapId) = 0;
+
+	virtual bool IsUserInFamilyBattleUsers(int userId) = 0;
 };

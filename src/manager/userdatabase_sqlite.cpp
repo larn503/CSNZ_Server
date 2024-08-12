@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define LAST_DB_VERSION 3
+#define LAST_DB_VERSION 4
 
 //#define OBFUSCATE(data) (string)AY_OBFUSCATE_KEY(data, 'F')
 #undef OBFUSCATE
@@ -548,7 +548,7 @@ void CUserDatabaseSQLite::PrintBackupList()
 		FindClose(hFind);
 	}
 #else
-	printf("CUserDatabaseSQLite::PrintBackupList: not implemented\n");
+	Logger().Warn(OBFUSCATE("CUserDatabaseSQLite::PrintBackupList: not implemented\n"));
 #endif
 }
 
@@ -1478,7 +1478,7 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 		DefaultUser defUser = g_pServerConfig->defUser;
 
 		SQLite::Transaction transcation(m_Database);
-		SQLite::Statement insertCharacter(m_Database, OBFUSCATE("INSERT INTO UserCharacter VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
+		SQLite::Statement insertCharacter(m_Database, OBFUSCATE("INSERT INTO UserCharacter VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
 		insertCharacter.bind(1, userID);
 		insertCharacter.bind(2, gameName);
 		insertCharacter.bind(3, (int64_t)defUser.exp);
@@ -1502,6 +1502,7 @@ int CUserDatabaseSQLite::CreateCharacter(int userID, const string& gameName)
 		insertCharacter.bind(21, 0); // clan
 		insertCharacter.bind(22, 0); // tournament hud
 		insertCharacter.bind(23, 0); // nameplateID
+		insertCharacter.bind(24, 0); // chatColorID
 		insertCharacter.exec();
 
 		SQLite::Statement insertCharacterExtended(m_Database, OBFUSCATE("INSERT INTO UserCharacterExtended VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
@@ -1648,17 +1649,19 @@ string GetCharacterString(CUserCharacter& character, bool update)
 {
 	ostringstream query;
 	query << (update ? OBFUSCATE("UPDATE UserCharacter SET") : OBFUSCATE("SELECT"));
-	if (character.flag & UFLAG_GAMENAME)
+	if (character.lowFlag & UFLAG_LOW_NAMEPLATE)
+		query << (update ? OBFUSCATE(" nameplateID = ?,") : OBFUSCATE(" nameplateID,"));
+	if (character.lowFlag & UFLAG_LOW_GAMENAME)
 		query << (update ? OBFUSCATE(" gameName = ?,") : OBFUSCATE(" gameName,"));
-	if (character.flag & UFLAG_LEVEL)
+	if (character.lowFlag & UFLAG_LOW_LEVEL)
 		query << (update ? OBFUSCATE(" level = ?,") : OBFUSCATE(" level,"));
-	if (character.flag & UFLAG_EXP)
+	if (character.lowFlag & UFLAG_LOW_EXP)
 		query << (update ? OBFUSCATE(" exp = ?,") : OBFUSCATE(" exp,"));
-	if (character.flag & UFLAG_CASH)
+	if (character.lowFlag & UFLAG_LOW_CASH)
 		query << (update ? OBFUSCATE(" cash = ?,") : OBFUSCATE(" cash,"));
-	if (character.flag & UFLAG_POINTS)
+	if (character.lowFlag & UFLAG_LOW_POINTS)
 		query << (update ? OBFUSCATE(" points = ?,") : OBFUSCATE(" points,"));
-	if (character.flag & UFLAG_STAT)
+	if (character.lowFlag & UFLAG_LOW_STAT)
 	{
 		if (update)
 		{
@@ -1676,13 +1679,13 @@ string GetCharacterString(CUserCharacter& character, bool update)
 			query << OBFUSCATE(" battles, win, kills, deaths,");
 		}
 	}
-	if (character.flag & UFLAG_LOCATION)
+	if (character.lowFlag & UFLAG_LOW_LOCATION)
 		query << (update ? OBFUSCATE(" nation = ?, city = ?, town = ?,") : OBFUSCATE(" nation, city, town,"));
-	if (character.flag & UFLAG_RANK)
+	if (character.lowFlag & UFLAG_LOW_RANK)
 		query << (update ? OBFUSCATE(" leagueID = ?,") : OBFUSCATE(" leagueID,"));
-	if (character.flag & UFLAG_PASSWORDBOXES)
+	if (character.lowFlag & UFLAG_LOW_PASSWORDBOXES)
 		query << (update ? OBFUSCATE(" passwordBoxes = ?,") : OBFUSCATE(" passwordBoxes,"));
-	if (character.flag & UFLAG_ACHIEVEMENT)
+	if (character.lowFlag & UFLAG_LOW_ACHIEVEMENT)
 	{
 		if (update)
 		{
@@ -1696,18 +1699,18 @@ string GetCharacterString(CUserCharacter& character, bool update)
 			query << OBFUSCATE(" honorPoints, prefixID,");
 		}
 	}
-	if (character.flag & UFLAG_ACHIEVEMENTLIST)
+	if (character.lowFlag & UFLAG_LOW_ACHIEVEMENTLIST)
 		query << (update ? OBFUSCATE(" achievementList = ?,") : OBFUSCATE(" achievementList,"));
-	if (character.flag & UFLAG_TITLES)
+	if (character.lowFlag & UFLAG_LOW_TITLES)
 		query << (update ? OBFUSCATE(" titles = ?,") : OBFUSCATE(" titles,"));
-	if (character.flag & UFLAG_CLAN)
+	if (character.lowFlag & UFLAG_LOW_CLAN)
 		query << (update ? OBFUSCATE(" clanID = ?,") : OBFUSCATE(" clanID, (SELECT markID FROM Clan WHERE clanID = UserCharacter.clanID LIMIT 1), (SELECT name FROM Clan WHERE clanID = UserCharacter.clanID LIMIT 1),"));
-	if (character.flag & UFLAG_TOURNAMENT)
+	if (character.lowFlag & UFLAG_LOW_TOURNAMENT)
 		query << (update ? OBFUSCATE(" tournament = ?,") : OBFUSCATE(" tournament,"));
-	if (character.flag & UFLAG_UNK19)
+	if (character.lowFlag & UFLAG_LOW_UNK26)
 		query << (update ? OBFUSCATE(" mileagePoints = ?,") : OBFUSCATE(" mileagePoints,"));
-	if (character.flag & UFLAG_NAMEPLATE)
-		query << (update ? OBFUSCATE(" nameplateID = ?,") : OBFUSCATE(" nameplateID,"));
+	if (character.highFlag & UFLAG_HIGH_CHATCOLOR)
+		query << (update ? OBFUSCATE(" chatColorID = ?,") : OBFUSCATE(" chatColorID,"));
 
 	return query.str();
 }
@@ -1729,41 +1732,45 @@ int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
 		if (statement.executeStep())
 		{
 			int index = 0;
-			if (character.flag & UFLAG_GAMENAME)
+			if (character.lowFlag & UFLAG_LOW_NAMEPLATE)
+			{
+				character.nameplateID = statement.getColumn(index++);
+			}
+			if (character.lowFlag & UFLAG_LOW_GAMENAME)
 			{
 				string gameName = statement.getColumn(index++);
 				character.gameName = gameName;
 			}
-			if (character.flag & UFLAG_LEVEL)
+			if (character.lowFlag & UFLAG_LOW_LEVEL)
 			{
 				character.level = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_EXP)
+			if (character.lowFlag & UFLAG_LOW_EXP)
 			{
 				character.exp = statement.getColumn(index++); // no uint64 support ;(
 			}
-			if (character.flag & UFLAG_CASH)
+			if (character.lowFlag & UFLAG_LOW_CASH)
 			{
 				character.cash = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_POINTS)
+			if (character.lowFlag & UFLAG_LOW_POINTS)
 			{
 				character.points = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_STAT)
+			if (character.lowFlag & UFLAG_LOW_STAT)
 			{
 				character.battles = statement.getColumn(index++);
 				character.win = statement.getColumn(index++);
 				character.kills = statement.getColumn(index++);
 				character.deaths = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_LOCATION)
+			if (character.lowFlag & UFLAG_LOW_LOCATION)
 			{
 				character.nation = statement.getColumn(index++);
 				character.city = statement.getColumn(index++);
 				character.town = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_RANK)
+			if (character.lowFlag & UFLAG_LOW_RANK)
 			{
 				character.leagueID = statement.getColumn(index++);
 
@@ -1780,41 +1787,41 @@ int CUserDatabaseSQLite::GetCharacter(int userID, CUserCharacter& character)
 					}
 				}
 			}
-			if (character.flag & UFLAG_PASSWORDBOXES)
+			if (character.lowFlag & UFLAG_LOW_PASSWORDBOXES)
 			{
 				character.passwordBoxes = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_ACHIEVEMENT)
+			if (character.lowFlag & UFLAG_LOW_ACHIEVEMENT)
 			{
 				character.honorPoints = statement.getColumn(index++);
 				character.prefixId = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_ACHIEVEMENTLIST)
+			if (character.lowFlag & UFLAG_LOW_ACHIEVEMENTLIST)
 			{
 				character.achievementList = deserialize_array_int(statement.getColumn(index++));
 			}
-			if (character.flag & UFLAG_TITLES)
+			if (character.lowFlag & UFLAG_LOW_TITLES)
 			{
 				string serialized = statement.getColumn(index++);
 				character.titles = deserialize_array_int(serialized);
 			}
-			if (character.flag & UFLAG_CLAN)
+			if (character.lowFlag & UFLAG_LOW_CLAN)
 			{
 				character.clanID = statement.getColumn(index++);
 				character.clanMarkID = statement.getColumn(index++);
 				character.clanName = (const char*)statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_TOURNAMENT)
+			if (character.lowFlag & UFLAG_LOW_TOURNAMENT)
 			{
 				character.tournament = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_UNK19)
+			if (character.lowFlag & UFLAG_LOW_UNK26)
 			{
 				character.mileagePoints = statement.getColumn(index++);
 			}
-			if (character.flag & UFLAG_NAMEPLATE)
+			if (character.highFlag & UFLAG_HIGH_CHATCOLOR)
 			{
-				character.nameplateID = statement.getColumn(index++);
+				character.chatColorID = statement.getColumn(index++);
 			}
 		}
 		else
@@ -1845,27 +1852,31 @@ int CUserDatabaseSQLite::UpdateCharacter(int userID, CUserCharacter& character)
 		SQLite::Statement statement(m_Database, query);
 		int index = 1;
 
-		if (character.flag & UFLAG_GAMENAME)
+		if (character.lowFlag & UFLAG_LOW_NAMEPLATE)
+		{
+			statement.bind(index++, character.nameplateID);
+		}
+		if (character.lowFlag & UFLAG_LOW_GAMENAME)
 		{
 			statement.bind(index++, character.gameName);
 		}
-		if (character.flag & UFLAG_LEVEL)
+		if (character.lowFlag & UFLAG_LOW_LEVEL)
 		{
 			statement.bind(index++, character.level);
 		}
-		if (character.flag & UFLAG_EXP)
+		if (character.lowFlag & UFLAG_LOW_EXP)
 		{
 			statement.bind(index++, (int64_t)character.exp);
 		}
-		if (character.flag & UFLAG_CASH)
+		if (character.lowFlag & UFLAG_LOW_CASH)
 		{
 			statement.bind(index++, character.cash);
 		}
-		if (character.flag & UFLAG_POINTS)
+		if (character.lowFlag & UFLAG_LOW_POINTS)
 		{
 			statement.bind(index++, character.points);
 		}
-		if (character.flag & UFLAG_STAT)
+		if (character.lowFlag & UFLAG_LOW_STAT)
 		{
 			if (character.statFlag & 0x1)
 			{
@@ -1884,21 +1895,21 @@ int CUserDatabaseSQLite::UpdateCharacter(int userID, CUserCharacter& character)
 				statement.bind(index++, character.deaths);
 			}
 		}
-		if (character.flag & UFLAG_LOCATION)
+		if (character.lowFlag & UFLAG_LOW_LOCATION)
 		{
 			statement.bind(index++, character.nation);
 			statement.bind(index++, character.city);
 			statement.bind(index++, character.town);
 		}
-		if (character.flag & UFLAG_RANK)
+		if (character.lowFlag & UFLAG_LOW_RANK)
 		{
 			statement.bind(index++, character.leagueID);
 		}
-		if (character.flag & UFLAG_PASSWORDBOXES)
+		if (character.lowFlag & UFLAG_LOW_PASSWORDBOXES)
 		{
 			statement.bind(index++, character.passwordBoxes);
 		}
-		if (character.flag & UFLAG_ACHIEVEMENT)
+		if (character.lowFlag & UFLAG_LOW_ACHIEVEMENT)
 		{
 			if (character.achievementFlag & 0x1)
 			{
@@ -1909,31 +1920,31 @@ int CUserDatabaseSQLite::UpdateCharacter(int userID, CUserCharacter& character)
 				statement.bind(index++, character.prefixId);
 			}
 		}
-		if (character.flag & UFLAG_ACHIEVEMENTLIST)
+		if (character.lowFlag & UFLAG_LOW_ACHIEVEMENTLIST)
 		{
 			string serialized = serialize_array_int(character.achievementList);
 			statement.bind(index++, serialized);
 		}
-		if (character.flag & UFLAG_TITLES)
+		if (character.lowFlag & UFLAG_LOW_TITLES)
 		{
 			string serialized = serialize_array_int(character.titles);
 			statement.bind(index++, serialized);
 		}
-		if (character.flag & UFLAG_CLAN)
+		if (character.lowFlag & UFLAG_LOW_CLAN)
 		{
 			statement.bind(index++, character.clanID);
 		}
-		if (character.flag & UFLAG_TOURNAMENT)
+		if (character.lowFlag & UFLAG_LOW_TOURNAMENT)
 		{
 			statement.bind(index++, character.tournament);
 		}
-		if (character.flag & UFLAG_UNK19)
+		if (character.lowFlag & UFLAG_LOW_UNK26)
 		{
 			statement.bind(index++, character.mileagePoints);
 		}
-		if (character.flag & UFLAG_NAMEPLATE)
+		if (character.highFlag & UFLAG_HIGH_CHATCOLOR)
 		{
-			statement.bind(index++, character.nameplateID);
+			statement.bind(index++, character.chatColorID);
 		}
 
 		statement.bind(index++, userID);
@@ -3837,7 +3848,7 @@ int CUserDatabaseSQLite::CreateClan(ClanCreateConfig& clanCfg)
 		}
 
 		CUserCharacter character = {};
-		character.flag = UFLAG_GAMENAME;
+		character.lowFlag = UFLAG_LOW_GAMENAME;
 		if (GetCharacter(clanCfg.masterUserID, character) <= 0)
 		{
 			return 0;
@@ -4680,10 +4691,6 @@ int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 		if (statement.executeStep())
 		{
 			int index = 0;
-			if (flag & CFLAG_ID)
-			{
-				clan.id = statement.getColumn(index++);
-			}
 			if (flag & CFLAG_NAME)
 			{
 				clan.name = (const char*)statement.getColumn(index++);
@@ -4691,10 +4698,6 @@ int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 			if (flag & CFLAG_MASTERUID)
 			{
 				clan.masterUserID = statement.getColumn(index++);
-			}
-			if (flag & CFLAG_CLANMASTER)
-			{
-				clan.clanMaster = (const char*)statement.getColumn(index++);
 			}
 			if (flag & CFLAG_TIME)
 			{
@@ -4739,6 +4742,14 @@ int CUserDatabaseSQLite::GetClan(int userID, int flag, Clan_s& clan)
 			if (flag & CFLAG_MARKCOLOR)
 			{
 				clan.markColor = statement.getColumn(index++);
+			}
+			if (flag & CFLAG_ID)
+			{
+				clan.id = statement.getColumn(index++);
+			}
+			if (flag & CFLAG_CLANMASTER)
+			{
+				clan.clanMaster = (const char*)statement.getColumn(index++);
 			}
 			if (flag & CFLAG_MARKCHANGECOUNT)
 			{

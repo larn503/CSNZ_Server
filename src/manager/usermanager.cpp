@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define SUPPORTED_CLIENT_BUILD "29.07.24"
+#define SUPPORTED_CLIENT_BUILD "12.08.24"
 
 CUserManager g_UserManager;
 
@@ -687,7 +687,7 @@ bool CUserManager::OnCharacterPacket(CReceivePacket* msg, IExtendedSocket* socke
 		return false;
 	}
 
-	CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 
 	g_ItemManager.OnUserLogin(user);
 	g_ClanManager.OnUserLogin(user);
@@ -768,6 +768,26 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* sock
 		int tutorial = msg->ReadUInt8();
 		Logger().Info("RequestTutorial: %d\n", tutorial);
 
+		break;
+	}
+	case UpdateInfoPacketType::RequestUpdateChatColor:
+	{
+		int chatColorID = msg->ReadUInt16();
+
+		if (chatColorID)
+		{
+			string resourceName = g_pItemTable->GetCell<string>("recourcename", to_string(chatColorID));
+			if (resourceName.find("chatcolor_") == std::string::npos)
+				return true;
+
+			CUserInventoryItem item;
+			g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), chatColorID, item);
+
+			if (!item.m_nItemID)
+				return true;
+		}
+
+		user->UpdateChatColor(chatColorID);
 		break;
 	}
 	case 12: // called when click on inventory button
@@ -870,7 +890,7 @@ int CUserManager::LoginUser(IExtendedSocket* socket, const string& userName, con
 	else
 	{
 		// continue login proccess
-		CUserCharacter character = newUser->GetCharacter(0xFFFFFFFF);
+		CUserCharacter character = newUser->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 
 		g_ItemManager.OnUserLogin(newUser);
 		g_ClanManager.OnUserLogin(newUser);
@@ -1151,7 +1171,7 @@ bool CUserManager::OnMessengerPacket(CReceivePacket* msg, IExtendedSocket* socke
 
 		int userID = g_UserDatabase.IsUserExists(gameName, false);
 
-		CUserCharacter character = user->GetCharacter(0xFFFFFFFF);
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 
 		g_PacketManager.SendMessengerUserInfo(socket, userID, character);
 		break;

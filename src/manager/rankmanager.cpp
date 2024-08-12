@@ -228,7 +228,7 @@ bool CRankManager::OnRankInfoRequest(CReceivePacket* msg, IUser* user)
 	std::string userName = msg->ReadString();
 
 	CUserCharacter character = {};
-	character.flag = UFLAG_RANK;
+	character.lowFlag = UFLAG_LOW_RANK;
 	if (g_UserDatabase.GetCharacter(user->GetID(), character) <= 0)
 	{
 		// TODO: send failed reply
@@ -245,7 +245,7 @@ bool CRankManager::OnRankInRoomRequest(CReceivePacket* msg, IUser* user)
 	int userID = msg->ReadUInt8();
 
 	CUserCharacter character = {};
-	character.flag = UFLAG_RANK;
+	character.lowFlag = UFLAG_LOW_RANK;
 	if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 	{
 		// TODO: send failed reply
@@ -269,7 +269,7 @@ bool CRankManager::OnRankSearchNicknameRequest(CReceivePacket* msg, IUser* user)
 	}
 
 	CUserCharacter character = {};
-	character.flag = UFLAG_RANK;
+	character.lowFlag = UFLAG_LOW_RANK;
 	if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 	{
 		// TODO: send failed reply
@@ -293,7 +293,8 @@ bool CRankManager::OnRankUserInfoRequest(CReceivePacket* msg, IUser* user)
 	int userID = msg->ReadUInt32();
 
 	CUserCharacter character = {};
-	character.flag = -1;
+	character.lowFlag = UFLAG_LOW_ALL;
+	character.highFlag = UFLAG_HIGH_ALL;
 	if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 	{
 		g_PacketManager.SendRankReply(user->GetExtendedSocket(), RankReplyCode::RankErrorData);

@@ -46,6 +46,8 @@ private:
 	bool OnUserInviteRequest(CReceivePacket* msg, IUser* user);
 	bool OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user);
 	bool OnRoomKickRequest(CReceivePacket* msg, IUser* user);
+	bool OnRoomKickClanRequest(CReceivePacket* msg, IUser* user);
+	bool OnRoomNoticeClanRequest(CReceivePacket* msg, IUser* user);
 };
 
 extern CChannelManager g_ChannelManager;

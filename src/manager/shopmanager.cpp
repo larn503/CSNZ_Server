@@ -307,7 +307,7 @@ bool CShopManager::BuyProduct(IUser* user, int productTypeId, int productId)
 
 	if (product.isPoints)
 	{
-		CUserCharacter character = user->GetCharacter(UFLAG_POINTS);
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_POINTS);
 		if (character.points < subProduct.price)
 		{
 			// not enough points
@@ -317,7 +317,7 @@ bool CShopManager::BuyProduct(IUser* user, int productTypeId, int productId)
 	}
 	else
 	{
-		CUserCharacter character = user->GetCharacter(UFLAG_CASH);
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_CASH);
 		if (character.cash < subProduct.price)
 		{
 			g_PacketManager.SendShopBuyProductReply(user->GetExtendedSocket(), ShopBuyProductReply::BUY_FAIL_NO_POINT);

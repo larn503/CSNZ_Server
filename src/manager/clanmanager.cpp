@@ -237,7 +237,7 @@ bool CClanManager::OnClanCreateRequest(CReceivePacket* msg, IUser* user)
 		return false;
 	}
 
-	CUserCharacter character = user->GetCharacter(UFLAG_LOCATION);
+	CUserCharacter character = user->GetCharacter(UFLAG_LOW_LOCATION);
 
 	// default config for clan
 	ClanCreateConfig clanCfg = {};
@@ -655,10 +655,11 @@ bool CClanManager::OnClanUpdateMarkRequest(CReceivePacket* msg, IUser* user)
 		g_PacketManager.SendClanMarkReply(user->GetExtendedSocket(), 1, NULL);
 		
 		CUserCharacter character = {};
+		character.lowFlag = UFLAG_LOW_CLAN;
 		character.clanID = clan.id;
 		character.clanName = clan.name;
 		character.clanMarkID = clan.markID;
-		user->UpdateClientUserInfo(UFLAG_CLAN, character);
+		user->UpdateClientUserInfo(character);
 
 		g_PacketManager.SendClanUpdate(user->GetExtendedSocket(), 7, 0, clan);
 	}
@@ -1008,7 +1009,7 @@ bool CClanManager::OnClanChatMessage(CReceivePacket* msg, IUser* user)
 			// you can't send clan message if dest is blocking your chat
 			if (~characterExtendedDest.banSettings & 2 || characterExtendedDest.banSettings & 2 && !g_UserDatabase.IsInBanList(clanUser.userID, user->GetID()))
 			{
-				CUserCharacter character = user->GetCharacter(UFLAG_GAMENAME);
+				CUserCharacter character = user->GetCharacter(UFLAG_LOW_GAMENAME);
 
 				g_PacketManager.SendClanChatMessage(clanUser.user->GetExtendedSocket(), character.gameName, message);
 			}

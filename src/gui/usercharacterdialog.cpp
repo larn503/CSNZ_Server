@@ -21,7 +21,8 @@ CUserCharacterDialog::CUserCharacterDialog(QWidget* parent, int userID) : QDialo
 void CUserCharacterDialog::Init()
 {
 	CUserCharacter character;
-	character.flag = UFLAG_ALL;
+	character.lowFlag = UFLAG_LOW_ALL;
+	character.highFlag = UFLAG_LOW_ALL;
 	if (g_pUserDatabase->GetCharacter(m_nUserID, character) <= 0)
 	{
 		QMessageBox::critical(this, "Error", "Failed to get user character");

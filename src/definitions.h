@@ -471,6 +471,7 @@ enum UpdateInfoPacketType
 	RequestUpdateNickname = 2,
 	RequestUpdateLocation = 4,
 	RequestUpdateTutorial = 7,
+	RequestUpdateChatColor = 15,
 };
 
 // QUEST STUFF
@@ -791,38 +792,41 @@ enum RoomStatus
 };
 
 /*USER STUFF*/
-#define	UFLAG_NAMEPLATE			(1<<0)
-#define	UFLAG_GAMENAME			(1<<1)
-#define	UFLAG_GAMENAME2			(1<<2)
-#define	UFLAG_LEVEL				(1<<3)
-#define	UFLAG_UNK2				(1<<4)
-#define	UFLAG_EXP				(1<<5)
-#define	UFLAG_CASH				(1<<6)
-#define	UFLAG_POINTS			(1<<7)
-#define	UFLAG_STAT				(1<<8)
-#define UFLAG_LOCATION			(1<<9)
-#define	UFLAG_CASH2				(1<<10)
-#define	UFLAG_UNK5				(1<<11)
-#define UFLAG_CLAN				(1<<12)
-#define UFLAG_TOURNAMENT		(1<<13)
-#define UFLAG_RANK				(1<<14)
-#define UFLAG_UNK4				(1<<15)
-#define	UFLAG_PASSWORDBOXES		(1<<16)
-#define	UFLAG_UNK11				(1<<17)
-#define UFLAG_ACHIEVEMENT		(1<<18)
-#define UFLAG_ACHIEVEMENTLIST	(1<<19)
-#define	UFLAG_UNK13				(1<<20)
-#define	UFLAG_UNK14				(1<<21)
-#define UFLAG_TITLES			(1<<22)
-#define	UFLAG_UNK16				(1<<23)
-#define	UFLAG_UNK18				(1<<25)
-#define	UFLAG_UNK19				(1<<26)
-#define	UFLAG_UNK20				(1<<27)
-#define	UFLAG_UNK21				(1<<28)
-#define	UFLAG_UNK22				(1<<29)
-#define	UFLAG_UNK23				(1<<30)
-#define	UFLAG_UNK24				(1<<31)
-#define	UFLAG_ALL				(-1)
+#define	UFLAG_LOW_NAMEPLATE			(1<<0)
+#define	UFLAG_LOW_GAMENAME			(1<<1)
+#define	UFLAG_LOW_GAMENAME2			(1<<2)
+#define	UFLAG_LOW_LEVEL				(1<<3)
+#define	UFLAG_LOW_UNK4				(1<<4)
+#define	UFLAG_LOW_EXP				(1<<5)
+#define	UFLAG_LOW_CASH				(1<<6)
+#define	UFLAG_LOW_POINTS			(1<<7)
+#define	UFLAG_LOW_STAT				(1<<8)
+#define UFLAG_LOW_LOCATION			(1<<9)
+#define	UFLAG_LOW_CASH2				(1<<10)
+#define	UFLAG_LOW_UNK11				(1<<11)
+#define UFLAG_LOW_CLAN				(1<<12)
+#define UFLAG_LOW_TOURNAMENT		(1<<13)
+#define UFLAG_LOW_RANK				(1<<14)
+#define UFLAG_LOW_UNK15				(1<<15)
+#define	UFLAG_LOW_PASSWORDBOXES		(1<<16)
+#define	UFLAG_LOW_UNK17				(1<<17)
+#define UFLAG_LOW_ACHIEVEMENT		(1<<18)
+#define UFLAG_LOW_ACHIEVEMENTLIST	(1<<19)
+#define	UFLAG_LOW_UNK20				(1<<20)
+#define	UFLAG_LOW_UNK21				(1<<21)
+#define UFLAG_LOW_TITLES			(1<<22)
+#define	UFLAG_LOW_UNK23				(1<<23)
+#define	UFLAG_LOW_UNK25				(1<<25)
+#define	UFLAG_LOW_UNK26				(1<<26)
+#define	UFLAG_LOW_UNK27				(1<<27)
+#define	UFLAG_LOW_UNK28				(1<<28)
+#define	UFLAG_LOW_UNK29				(1<<29)
+#define	UFLAG_LOW_UNK30				(1<<30)
+#define	UFLAG_LOW_UNK31				(1<<31)
+#define	UFLAG_LOW_ALL				(-1)
+
+#define UFLAG_HIGH_CHATCOLOR		(1<<0)
+#define UFLAG_HIGH_ALL				(-1)
 
 #define	EXT_UFLAG_GAMEMASTER				(1<<0)
 #define	EXT_UFLAG_KILLSTOGETGACHAPONITEM	(1<<1)
@@ -983,7 +987,8 @@ public:
 class CUserCharacter
 {
 public:
-	int flag;
+	int lowFlag;
+	int highFlag;
 	int statFlag;
 	int achievementFlag;
 
@@ -1014,6 +1019,7 @@ public:
 	int banSettings;
 	int mileagePoints;
 	int nameplateID;
+	int chatColorID;
 };
 
 // internal user data(last login time, config data etc)
@@ -1116,6 +1122,7 @@ enum ClanPacketType
 	ClanUserList = 109,
 	ClanInvite = 112,
 	ClanChatMessage = 113,
+	ClanBattleNotice = 116,
 	RequestClanAchievement = 161,
 	RequestClanInactiveAccounts = 169,
 };
@@ -1289,6 +1296,27 @@ enum InRoomType
 	RoomListRequest = 22,
 	JoinRoomRequest = 23,
 	SetZBAddonsRequest = 35,
+	KickClanRequest = 37,
+	NoticeClanRequest = 38,
+};
+
+enum OutRoomType
+{
+	CreateAndJoin = 0,
+	PlayerJoin = 1,
+	PlayerLeave = 2,
+	SetPlayerReady = 3,
+	UpdateSettings = 4,
+	SetHost = 5,
+	SetGameResult = 6,
+	KickUser = 7,
+	InitiateVoteKick = 8,
+	VoteKickResult = 9,
+	PlayerLeaveIngame = 10,
+	UserInviteList = 12,
+	SetUserTeam = 13,
+	WeaponSurvey = 35,
+	KickClan = 37,
 };
 
 enum UMsgReceiveType
@@ -1427,12 +1455,11 @@ enum UserSurveyAnswerResult
 #define	ROOM_HIGHMID_FLOATINGDAMAGESKIN	(1<<3)
 #define	ROOM_HIGHMID_PLAYERONETEAM		(1<<4)
 #define	ROOM_HIGHMID_WEAPONRESTRICT		(1<<5)
-#define	ROOM_HIGHMID_ALL_SAFE			(ROOM_HIGHMID_FIREBOMB | ROOM_HIGHMID_MUTATIONRESTRICT | ROOM_HIGHMID_MUTATIONLIMIT | ROOM_HIGHMID_FLOATINGDAMAGESKIN | ROOM_HIGHMID_PLAYERONETEAM | ROOM_HIGHMID_WEAPONRESTRICT)
+#define ROOM_HIGHMID_FAMILYBATTLE		(1<<6)
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
 #define	ROOM_HIGH_UNK77					(1<<31)
-#define ROOM_HIGH_ALL_SAFE				(ROOM_HIGH_UNK77)
 #define ROOM_HIGH_ALL					(-1)
 
 // ROOM LIST FLAGS
@@ -1480,7 +1507,9 @@ enum UserSurveyAnswerResult
 #define	RLHFLAG_UNK9				(1<<10)
 #define	RLHFLAG_UNK10				(1<<11)
 #define RLHFLAG_WEAPONRESTRICT		(1<<12)
-#define RLHFLAG_ALL_SAFE			RLHFLAG_UNK | RLHFLAG_ISZBCOMPETITIVE | RLHFLAG_ZBAUTOHUNTING | RLHFLAG_UNK4 | RLHFLAG_UNK5 | RLHFLAG_FIREBOMB | RLHFLAG_MUTATIONRESTRICT | RLHFLAG_MUTATIONLIMIT | RLHFLAG_UNK9 | RLHFLAG_UNK10 | RLHFLAG_WEAPONRESTRICT // all flags that are supported by the server
+#define RLHFLAG_FAMILYBATTLE		(1<<13)
+#define RLHFLAG_FAMILYBATTLECLANIDS	(1<<14)
+#define RLHFLAG_ALL_SAFE			RLHFLAG_UNK | RLHFLAG_ISZBCOMPETITIVE | RLHFLAG_ZBAUTOHUNTING | RLHFLAG_UNK4 | RLHFLAG_UNK5 | RLHFLAG_FIREBOMB | RLHFLAG_MUTATIONRESTRICT | RLHFLAG_MUTATIONLIMIT | RLHFLAG_UNK9 | RLHFLAG_UNK10 | RLHFLAG_WEAPONRESTRICT | RLHFLAG_FAMILYBATTLE | RLHFLAG_FAMILYBATTLECLANIDS // all flags that are supported by the server
 #define RLHFLAG_ALL					(-1)
 
 // inventory related

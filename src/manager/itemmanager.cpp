@@ -416,8 +416,8 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 			if (className == "LobbyBG")
 			{
-				CUserCharacter character = user->GetCharacter(UFLAG_NAMEPLATE);
-				if (character.flag == 0)
+				CUserCharacter character = user->GetCharacter(UFLAG_LOW_NAMEPLATE);
+				if (character.lowFlag == 0)
 				{
 					Logger().Warn("CItemManager::OnItemPacket: cannot use item, database error\n");
 					return false;
@@ -616,7 +616,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		if (!user)
 		{
 			CUserCharacter character;
-			character.flag = UFLAG_PASSWORDBOXES;
+			character.lowFlag = UFLAG_LOW_PASSWORDBOXES;
 			if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 				return ITEM_ADD_DB_ERROR;
 
@@ -796,8 +796,8 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 
 	if (className == "LobbyBG")
 	{
-		CUserCharacter character = user->GetCharacter(UFLAG_NAMEPLATE);
-		if (character.flag == 0)
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_NAMEPLATE);
+		if (character.lowFlag == 0)
 			return ITEM_ADD_DB_ERROR;
 
 		if (character.nameplateID)
@@ -826,6 +826,17 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 			itemInUse = 0;
 		else
 			user->UpdateKillerMarkEffect(itemID);
+	}
+
+	string resourceName = g_pItemTable->GetCell<string>("recourcename", to_string(itemID));
+	if (resourceName.find("chatcolor_") != std::string::npos)
+	{
+		CUserCharacter character = user->GetCharacter(NULL, UFLAG_HIGH_CHATCOLOR);
+		if (character.highFlag == 0)
+			return ITEM_ADD_DB_ERROR;
+
+		if (!character.chatColorID)
+			user->UpdateChatColor(itemID);
 	}
 
 	CUserInventoryItem item;
@@ -929,7 +940,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			if (!user)
 			{
 				CUserCharacter character;
-				character.flag = UFLAG_PASSWORDBOXES;
+				character.lowFlag = UFLAG_LOW_PASSWORDBOXES;
 				if (g_UserDatabase.GetCharacter(userID, character) <= 0)
 				{
 					result = ITEM_ADD_DB_ERROR;
@@ -1107,8 +1118,8 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 		if (className == "LobbyBG")
 		{
-			CUserCharacter character = user->GetCharacter(UFLAG_NAMEPLATE);
-			if (character.flag == 0)
+			CUserCharacter character = user->GetCharacter(UFLAG_LOW_NAMEPLATE);
+			if (character.lowFlag == 0)
 			{
 				result = ITEM_ADD_DB_ERROR;
 				break;
@@ -1146,6 +1157,20 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 				itemInUse = 0;
 			else
 				user->UpdateKillerMarkEffect(itemID);
+		}
+
+		string resourceName = g_pItemTable->GetCell<string>("recourcename", to_string(itemID));
+		if (resourceName.find("chatcolor_") != std::string::npos)
+		{
+			CUserCharacter character = user->GetCharacter(NULL, UFLAG_HIGH_CHATCOLOR);
+			if (character.highFlag == 0)
+			{
+				result = ITEM_ADD_DB_ERROR;
+				break;
+			}
+
+			if (!character.chatColorID)
+				user->UpdateChatColor(itemID);
 		}
 
 		if (itemID == 8357) // superRoom
@@ -1493,8 +1518,8 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 	if (className == "LobbyBG")
 	{
-		CUserCharacter character = user->GetCharacter(UFLAG_NAMEPLATE);
-		if (character.flag == 0)
+		CUserCharacter character = user->GetCharacter(UFLAG_LOW_NAMEPLATE);
+		if (character.lowFlag == 0)
 		{
 			Logger().Warn("CItemManager::RemoveItem: cannot remove item, database error\n");
 			return false;
@@ -1554,6 +1579,30 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 			{
 				characterExt.killerMarkEffect = 0;
 				g_UserDatabase.UpdateCharacterExtended(userID, characterExt);
+			}
+		}
+	}
+
+	string resourceName = g_pItemTable->GetCell<string>("recourcename", to_string(item.m_nItemID));
+	if (resourceName.find("chatcolor_") != std::string::npos)
+	{
+		CUserCharacter character = user->GetCharacter(NULL, UFLAG_HIGH_CHATCOLOR);
+		if (character.highFlag == 0)
+		{
+			Logger().Warn("CItemManager::RemoveItem: cannot remove item, database error\n");
+			return false;
+		}
+
+		if (character.chatColorID == item.m_nItemID)
+		{
+			if (user)
+			{
+				user->UpdateChatColor(0);
+			}
+			else
+			{
+				character.chatColorID = 0;
+				g_UserDatabase.UpdateCharacter(userID, character);
 			}
 		}
 	}

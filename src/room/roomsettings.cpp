@@ -280,6 +280,9 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	if (highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT) {
 		weaponRestrict = inPacket.readUInt8();
 	}
+	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
+		familyBattle = inPacket.readUInt8();
+	}
 	if (highFlag & ROOM_HIGH_UNK77) {
 		unk77 = inPacket.readUInt8();
 	}
@@ -379,6 +382,9 @@ void CRoomSettings::Init()
 	floatingDamageSkin = 0; // high mid flag
 	playerOneTeam = 0;
 	weaponRestrict = 0;
+	familyBattle = 0;
+	familyBattleClanID1 = 0;
+	familyBattleClanID2 = 0;
 }
 
 vector<int> split(const string& s, char delimiter)
@@ -925,6 +931,158 @@ bool CRoomSettings::IsRandomMapAllowed(int gameModeId)
 	return !(IsPlayroomGameMode(gameModeId) || IsVoxelGameMode(gameModeId) || gameModeId == 15 || gameModeId == 17 || gameModeId == 30 || gameModeId == 33 || gameModeId == 50 || gameModeId == 51);
 }
 
+bool CRoomSettings::IsFamilyBattleAllowed(int gameModeId)
+{
+	return (gameModeId == 0 || gameModeId == 2 || gameModeId == 22 || gameModeId == 32 || gameModeId == 40 || gameModeId == 56 || gameModeId == 57);
+}
+
+void CRoomSettings::LoadFamilyBattleSettings(int gameModeId)
+{
+	lowFlag |= ROOM_LOW_MAXPLAYERS;
+	maxPlayers = 10;
+
+	lowFlag |= ROOM_LOW_GAMETIME;
+	gameTime = 150;
+
+	lowFlag |= ROOM_LOW_WEAPONLIMIT;
+	weaponLimit = 0;
+
+	lowFlag |= ROOM_LOW_HOSTAGEKILLLIMIT;
+	hostageKillLimit = 0;
+
+	lowFlag |= ROOM_LOW_FREEZETIME;
+	freezeTime = 0;
+
+	lowFlag |= ROOM_LOW_BUYTIME;
+	buyTime = 20;
+
+	lowFlag |= ROOM_LOW_DISPLAYNICKNAME;
+	displayNickname = 1;
+
+	lowFlag |= ROOM_LOW_TEAMBALANCE;
+	teamBalance = 0;
+
+	lowFlag |= ROOM_LOW_FRIENDLYFIRE;
+	friendlyFire = 0;
+
+	lowFlag |= ROOM_LOW_FLASHLIGHT;
+	flashlight = 1;
+
+	lowFlag |= ROOM_LOW_VIEWFLAG;
+	viewFlag = ((1<<0) | (1<<7) | (1<<5));
+
+	lowFlag |= ROOM_LOW_VOICECHAT;
+	voiceChat = 1;
+
+	lowMidFlag |= ROOM_LOWMID_KDRULE;
+	kdRule = 0;
+
+	lowMidFlag |= ROOM_LOWMID_MANNERLIMIT;
+	mannerLimit = 0;
+
+	highMidFlag |= ROOM_HIGHMID_WEAPONRESTRICT;
+	weaponRestrict = 0;
+
+	switch (gameModeId)
+	{
+	case 0:
+	{
+		lowFlag |= ROOM_LOW_WINLIMIT;
+		winLimit = 8;
+
+		lowFlag |= ROOM_LOW_ROUNDTIME;
+		roundTime = 2;
+
+		weaponLimit = 2;
+
+		lowMidFlag |= ROOM_LOWMID_STARTINGCASH;
+		startingCash = 800;
+
+		lowMidFlag |= ROOM_LOWMID_ENHANCERESTRICT;
+		enhanceRestrict = 1;
+
+		lowMidFlag |= ROOM_LOWMID_LEAGUERULE;
+		leagueRule = 0;
+
+		lowMidFlag |= ROOM_LOWMID_TEAMSWITCH;
+		teamSwitch = 1;
+
+		highMidFlag |= ROOM_HIGHMID_FLOATINGDAMAGESKIN;
+		floatingDamageSkin = 0;
+
+		break;
+	}
+	case 2:
+	{
+		lowFlag |= ROOM_LOW_KILLLIMIT;
+		killLimit = 80;
+
+		weaponLimit = 9;
+
+		highMidFlag |= ROOM_HIGHMID_FLOATINGDAMAGESKIN;
+		floatingDamageSkin = 0;
+
+		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
+		playerOneTeam = 1;
+
+		break;
+	}
+	case 32:
+	{
+		lowFlag |= ROOM_LOW_WINLIMIT;
+		winLimit = 5;
+
+		lowFlag |= ROOM_LOW_ROUNDTIME;
+		roundTime = 2;
+
+		lowMidFlag |= ROOM_LOWMID_LEAGUERULE;
+		leagueRule = 0;
+
+		lowMidFlag |= ROOM_LOWMID_ZBRESPAWN;
+		zbRespawn = 0;
+
+		lowMidFlag |= ROOM_LOWMID_ZBBALANCE;
+		zbBalance = 0;
+
+		break;
+	}
+	case 40:
+	{
+		lowFlag |= ROOM_LOW_KILLLIMIT;
+		killLimit = 120;
+
+		lowMidFlag |= ROOM_LOWMID_GAMERULE;
+		gameRule = 0;
+
+		break;
+	}
+	case 56:
+	{
+		buyTime = 60;
+
+		lowMidFlag |= ROOM_LOWMID_ZBBALANCE;
+		zbBalance = 0;
+
+		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
+		playerOneTeam = 1;
+
+		break;
+	}
+	case 57:
+	{
+		lowFlag |= ROOM_LOW_KILLLIMIT;
+		killLimit = 120;
+
+		buyTime = 60;
+
+		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
+		playerOneTeam = 1;
+
+		break;
+	}
+	}
+}
+
 void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 {
 	lowFlag = ROOM_LOW_ALL;
@@ -1022,6 +1180,9 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 		winLimit = gameModeId == 14 ? 7 : 13;
 		roundTime = 3;
 	}
+
+	if (familyBattle)
+		LoadFamilyBattleSettings(gameModeId);
 }
 
 void CRoomSettings::LoadZbCompetitiveSettings(int gameModeId)
@@ -1350,6 +1511,14 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
 		playerOneTeam = (gameModeId == 3 || gameModeId == 5) ? 1 : 0;
+
+		if (!IsFamilyBattleAllowed(gameModeId))
+		{
+			highMidFlag |= ROOM_HIGHMID_FAMILYBATTLE;
+			familyBattle = 0;
+			familyBattleClanID1 = 0;
+			familyBattleClanID2 = 0;
+		}
 	}
 	else if (g_pServerConfig->room.validateSettings)
 	{
@@ -1576,7 +1745,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 		if (lowMidFlag & ROOM_LOWMID_ZBLIMIT)
 		{
-			if (!(gameModeId == 9 || gameModeId == 14 || gameModeId == 45) && (zbLimitFlag != 0 || !zbLimit.empty()))
+			if (!(gameModeId == 9 || gameModeId == 14 || gameModeId == 20 || gameModeId == 45 || gameModeId == 54) && (zbLimitFlag != 0 || !zbLimit.empty()))
 			{
 				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbLimit, gameModeId: %d\n", user->GetLogName(), gameModeId);
 				lowMidFlag &= ~ROOM_LOWMID_ZBLIMIT;
@@ -1719,7 +1888,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		{
 			if (!(gameModeId == 3 || gameModeId == 5) && playerOneTeam != 0)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow playerOneTeam to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
+				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use playerOneTeam, gameModeId: %d\n", user->GetLogName(), gameModeId);
 				highMidFlag &= ~ROOM_HIGHMID_PLAYERONETEAM;
 			}
 			else if (playerOneTeam > 1)
@@ -1730,6 +1899,34 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		{
 			if (weaponRestrict > 13)
 				weaponRestrict = 13;
+		}
+
+		if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
+		{
+			if (!IsFamilyBattleAllowed(gameModeId))
+			{
+				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use familyBattle, gameModeId: %d\n", user->GetLogName(), gameModeId);
+				highMidFlag &= ~ROOM_HIGHMID_FAMILYBATTLE;
+			}
+			else
+			{
+				if (familyBattle > 1)
+					familyBattle = 1;
+
+				if (familyBattle)
+					LoadFamilyBattleSettings(gameModeId);
+				else
+				{
+					familyBattleClanID1 = 0;
+					familyBattleClanID2 = 0;
+
+					if (gameModeId == 0)
+					{
+						lowMidFlag |= ROOM_LOWMID_ENHANCERESTRICT;
+						enhanceRestrict = 0;
+					}
+				}
+			}
 		}
 	}
 
@@ -2040,6 +2237,15 @@ bool CRoomSettings::CheckSettings(IUser* user)
 				return false;
 			}
 		}
+
+		if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
+		{
+			if (!IsFamilyBattleAllowed(gameModeId))
+			{
+				Logger().Warn("User '%s' tried to create a new room with gameModeId which doesn't allow familyBattle, gameModeId: %d\n", user->GetLogName(), gameModeId);
+				return false;
+			}
+		}
 	}
 
 	LoadDefaultSettings(gameModeId, mapId);
@@ -2098,6 +2304,9 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 
 			LoadNewSettings(gameModeId, roomSettings->mapId, user);
 		}
+
+		if (IsFamilyBattleAllowed(gameModeId) && roomSettings->familyBattle)
+			LoadFamilyBattleSettings(gameModeId);
 	}
 	else
 	{
@@ -2133,7 +2342,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 					lowFlag |= ROOM_LOW_WINLIMIT;
 					winLimit = GetGameModeDefaultSetting(roomSettings->gameModeId, "mode_win_limit_id");
 				}
-				else if (lowFlag & ROOM_LOW_WINLIMIT)
+				else if (lowFlag & ROOM_LOW_WINLIMIT && !(highMidFlag & ROOM_HIGHMID_FAMILYBATTLE))
 				{
 					if (roomSettings->leagueRule || roomSettings->teamSwitch) // changing winLimit with league rule or team switch
 					{

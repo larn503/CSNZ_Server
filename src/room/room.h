@@ -102,6 +102,8 @@ public:
 	void SetServer(CDedicatedServer* server);
 	void ChangeMap(int mapId);
 
+	bool IsUserInFamilyBattleUsers(int userId);
+
 private:
 	IUser* m_pHostUser;
 	class CChannel* m_pParentChannel;
@@ -109,6 +111,7 @@ private:
 	std::vector<IUser*> m_Users;
 	CGameMatch* m_pGameMatch;
 	std::vector<int> m_KickedUsers;
+	std::vector<int> m_FamilyBattleUsers;
 
 	CDedicatedServer* m_pServer;
 

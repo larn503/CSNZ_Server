@@ -48,11 +48,11 @@ public:
 	virtual std::string GetUsername() = 0;
 	virtual const char* GetLogName() = 0;
 	virtual CUserData GetUser(int flag) = 0;
-	virtual CUserCharacter GetCharacter(int flag) = 0;
+	virtual CUserCharacter GetCharacter(int lowFlag, int highFlag = 0) = 0;
 	virtual CUserCharacterExtended GetCharacterExtended(int flag) = 0;
 
 	virtual int UpdateHolepunch(int portId, const std::string& localIpAddress, int localPort, int externalPort) = 0;
-	virtual void UpdateClientUserInfo(int flag, CUserCharacter character) = 0;
+	virtual void UpdateClientUserInfo(CUserCharacter character) = 0;
 	virtual void UpdateGameName(const std::string& gameName) = 0;
 	virtual int UpdatePoints(int64_t points) = 0;
 	virtual void UpdateCash(int64_t cash) = 0;
@@ -60,6 +60,7 @@ public:
 	virtual void UpdatePrefix(int prefixID) = 0;
 	virtual void UpdateStat(int battles, int win, int kills, int deaths) = 0;
 	virtual void UpdateLocation(int nation, int city, int town) = 0;
+	virtual void UpdateChatColor(int chatColorID) = 0;
 	virtual void UpdateRank(int leagueID) = 0;
 	virtual void UpdateLevel(int level) = 0;
 	virtual void UpdateExp(int64_t exp) = 0;

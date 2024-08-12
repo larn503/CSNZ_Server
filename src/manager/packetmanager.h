@@ -166,6 +166,7 @@ public:
 	void SendRoomInitiateVoteKick(IExtendedSocket* socket, int userID, int destUserID, int reason);
 	void SendRoomVoteKickResult(IExtendedSocket* socket, bool kick, int userID, int reason);
 	void SendRoomWeaponSurvey(IExtendedSocket* socket, const std::vector<int>& weapons);
+	void SendRoomKickClan(IExtendedSocket* socket, const std::vector<IUser*>& kickedUsers);
 	
 	void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId);
 	void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId);
@@ -242,6 +243,7 @@ public:
 	void SendClanMasterDelegate(IExtendedSocket* socket);
 	void SendClanKick(IExtendedSocket* socket);
 	void SendClanChatMessage(IExtendedSocket* socket, const std::string& gameName, const std::string& message);
+	void SendClanBattleNotice(IExtendedSocket* socket, int type, const std::string& gameName, int gameModeID, int roomID);
 
 	void SendBanList(IExtendedSocket* socket, const std::vector<std::string>& banList);
 	void SendBanUpdateList(IExtendedSocket* socket, const std::string& gameName, bool remove = false);

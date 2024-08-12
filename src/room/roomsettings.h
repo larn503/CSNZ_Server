@@ -51,6 +51,8 @@ public:
 	bool IsMapValid(int gameModeId, int mapId);
 	bool IsMapPlaylistAllowed(int gameModeId);
 	bool IsRandomMapAllowed(int gameModeId);
+	bool IsFamilyBattleAllowed(int gameModeId);
+	void LoadFamilyBattleSettings(int gameModeId);
 	void LoadDefaultSettings(int gameModeId, int mapId);
 	void LoadZbCompetitiveSettings(int gameModeId);
 	void LoadNewSettings(int gameModeId, int mapId, IUser* user);
@@ -58,7 +60,6 @@ public:
 	bool IsLeagueRuleWinLimitValid(int winLimit);
 	bool IsBuyTimeValid(int gameModeId, int buyTime);
 	bool IsStartingCashValid(int gameModeId, int startingCash);
-	bool IsStartingCashValid(int startingCash);
 	bool IsZombieItem(int itemId);
 	bool IsZbLimitValid(const std::vector<int>& zbLimit);
 	bool IsMutationRestrictValid(const std::vector<int>& mutationRestrictList);
@@ -161,4 +162,7 @@ public:
 	int floatingDamageSkin;
 	int playerOneTeam;
 	int weaponRestrict;
+	int familyBattle;
+	int familyBattleClanID1;
+	int familyBattleClanID2;
 };

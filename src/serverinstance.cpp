@@ -409,7 +409,6 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		g_RankManager.OnRankPacket(msg, s);
 		break;
 	case PacketId::Hack:
-		//printf("shit");
 		break;
 	case PacketId::Report:
 		g_UserManager.OnReportPacket(msg, s);
