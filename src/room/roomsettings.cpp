@@ -1019,11 +1019,11 @@ void CRoomSettings::LoadFamilyBattleSettings(int gameModeId)
 
 		weaponLimit = 9;
 
+		lowMidFlag |= ROOM_LOWMID_INTEGRATEDTEAM;
+		integratedTeam = 1;
+
 		highMidFlag |= ROOM_HIGHMID_FLOATINGDAMAGESKIN;
 		floatingDamageSkin = 0;
-
-		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
-		playerOneTeam = 1;
 
 		break;
 	}
@@ -1063,8 +1063,8 @@ void CRoomSettings::LoadFamilyBattleSettings(int gameModeId)
 		lowMidFlag |= ROOM_LOWMID_ZBBALANCE;
 		zbBalance = 0;
 
-		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
-		playerOneTeam = 1;
+		lowMidFlag |= ROOM_LOWMID_INTEGRATEDTEAM;
+		integratedTeam = 1;
 
 		break;
 	}
@@ -1075,8 +1075,8 @@ void CRoomSettings::LoadFamilyBattleSettings(int gameModeId)
 
 		buyTime = 60;
 
-		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
-		playerOneTeam = 1;
+		lowMidFlag |= ROOM_LOWMID_INTEGRATEDTEAM;
+		integratedTeam = 1;
 
 		break;
 	}
@@ -1520,411 +1520,414 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 			familyBattleClanID2 = 0;
 		}
 	}
-	else if (g_pServerConfig->room.validateSettings)
+	else
 	{
-		if (lowFlag & ROOM_LOW_MAXPLAYERS)
+		if (g_pServerConfig->room.validateSettings)
 		{
-			int gameModeMinPlayers = g_pGameModeListTable->GetCell<int>("mode_minplayer", to_string(gameModeId));
-			if (maxPlayers < gameModeMinPlayers)
+			if (lowFlag & ROOM_LOW_MAXPLAYERS)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with maxPlayers < gameModeMinPlayers: %d, maxPlayers: %d\n", user->GetLogName(), gameModeMinPlayers, maxPlayers);
-				lowFlag &= ~ROOM_LOW_MAXPLAYERS;
-			}
-			else
-			{
-				int gameModeMaxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", to_string(gameModeId));
-				if (maxPlayers > gameModeMaxPlayers)
+				int gameModeMinPlayers = g_pGameModeListTable->GetCell<int>("mode_minplayer", to_string(gameModeId));
+				if (maxPlayers < gameModeMinPlayers)
 				{
-					Logger().Warn("User '%s' tried to update a room\'s settings with maxPlayers > gameModeMaxPlayers: %d, maxPlayers: %d\n", user->GetLogName(), gameModeMaxPlayers, maxPlayers);
+					Logger().Warn("User '%s' tried to update a room\'s settings with maxPlayers < gameModeMinPlayers: %d, maxPlayers: %d\n", user->GetLogName(), gameModeMinPlayers, maxPlayers);
 					lowFlag &= ~ROOM_LOW_MAXPLAYERS;
 				}
-			}
-		}
-
-		if (lowFlag & ROOM_LOW_WINLIMIT)
-		{
-			if (gameModeId != 0 && gameModeId != 3 && !IsSettingValid(gameModeId, "mode_win_limit_id", winLimit))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid winLimit: %d\n", user->GetLogName(), winLimit);
-				lowFlag &= ~ROOM_LOW_WINLIMIT;
-			}
-		}
-
-		if (lowFlag & ROOM_LOW_KILLLIMIT)
-		{
-			if (!IsSettingValid(gameModeId, "mode_kill_limit_id", killLimit))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid killLimit: %d\n", user->GetLogName(), killLimit);
-				lowFlag &= ~ROOM_LOW_KILLLIMIT;
-			}
-		}
-
-		if (lowFlag & ROOM_LOW_GAMETIME)
-		{
-			if (!IsSettingValid(gameModeId, "mode_time_limit_id", gameTime))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid gameTime: %d\n", user->GetLogName(), gameTime);
-				lowFlag &= ~ROOM_LOW_GAMETIME;
-			}
-		}
-
-		if (lowFlag & ROOM_LOW_ROUNDTIME)
-		{
-			if (!IsSettingValid(gameModeId, "mode_roundtime_id", roundTime))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid roundTime: %d\n", user->GetLogName(), roundTime);
-				lowFlag &= ~ROOM_LOW_ROUNDTIME;
-			}
-		}
-
-		if (lowFlag & ROOM_LOW_WEAPONLIMIT)
-		{
-			if (weaponLimit > 17)
-				weaponLimit = 17;
-		}
-
-		if (lowFlag & ROOM_LOW_BUYTIME)
-		{
-			if (!IsBuyTimeValid(gameModeId, buyTime))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid buyTime: %d\n", user->GetLogName(), buyTime);
-				lowFlag &= ~ROOM_LOW_BUYTIME;
-			}
-		}
-
-		if (lowFlag & ROOM_LOW_TEAMBALANCE)
-		{
-			if (!CanChangeTeamBalance(gameModeId) && teamBalance != GetDefaultTeamBalance(gameModeId))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow teamBalance to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowFlag &= ~ROOM_LOW_TEAMBALANCE;
-			}
-			else if (teamBalance > 1)
-				teamBalance = 1;
-		}
-
-		if (lowFlag & ROOM_LOW_FRIENDLYFIRE)
-		{
-			if (!CanChangeFriendlyFire(gameModeId) && friendlyFire != GetDefaultFriendlyFire(gameModeId))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow friendlyFire to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowFlag &= ~ROOM_LOW_FRIENDLYFIRE;
-			}
-			else if (friendlyFire > 1)
-				friendlyFire = 1;
-		}
-
-		if (lowFlag & ROOM_LOW_VIEWFLAG)
-		{
-			if (viewFlag & (1 << 1))
-				viewFlag &= ~(1 << 1);
-
-			if (viewFlag & (1 << 2))
-				viewFlag &= ~(1 << 2);
-
-			if (viewFlag & (1 << 3))
-				viewFlag &= ~(1 << 3);
-
-			if (viewFlag & (1 << 4))
-				viewFlag &= ~(1 << 4);
-		}
-
-		if (lowMidFlag & ROOM_LOWMID_C4TIMER)
-		{
-			if (c4Timer)
-			{
-				CUserInventoryItem item;
-				c4Timer = g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), 112 /* C4Sound */, item);
-			}
-		}
-
-		if (lowMidFlag & ROOM_LOWMID_BOT)
-		{
-			if (!GetDefaultBotAdd(gameModeId))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow bots, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_BOT;
-			}
-			else if (gameModeId == 3 || gameModeId == 4 || gameModeId == 5 || gameModeId == 24)
-			{
-				if (botDifficulty > 7)
-					botDifficulty = 7;
-
-				if (friendlyBots > 15)
-					friendlyBots = 15;
-
-				if (enemyBots < 1)
-					enemyBots = 1;
-
-				if (enemyBots > 16)
-					enemyBots = 16;
-			}
-			else
-			{
-				if (friendlyBots != GetDefaultFriendlyBots(gameModeId))
+				else
 				{
-					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use friendlyBots, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					int gameModeMaxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", to_string(gameModeId));
+					if (maxPlayers > gameModeMaxPlayers)
+					{
+						Logger().Warn("User '%s' tried to update a room\'s settings with maxPlayers > gameModeMaxPlayers: %d, maxPlayers: %d\n", user->GetLogName(), gameModeMaxPlayers, maxPlayers);
+						lowFlag &= ~ROOM_LOW_MAXPLAYERS;
+					}
+				}
+			}
+
+			if (lowFlag & ROOM_LOW_WINLIMIT)
+			{
+				if (gameModeId != 0 && gameModeId != 3 && !IsSettingValid(gameModeId, "mode_win_limit_id", winLimit))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid winLimit: %d\n", user->GetLogName(), winLimit);
+					lowFlag &= ~ROOM_LOW_WINLIMIT;
+				}
+			}
+
+			if (lowFlag & ROOM_LOW_KILLLIMIT)
+			{
+				if (!IsSettingValid(gameModeId, "mode_kill_limit_id", killLimit))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid killLimit: %d\n", user->GetLogName(), killLimit);
+					lowFlag &= ~ROOM_LOW_KILLLIMIT;
+				}
+			}
+
+			if (lowFlag & ROOM_LOW_GAMETIME)
+			{
+				if (!IsSettingValid(gameModeId, "mode_time_limit_id", gameTime))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid gameTime: %d\n", user->GetLogName(), gameTime);
+					lowFlag &= ~ROOM_LOW_GAMETIME;
+				}
+			}
+
+			if (lowFlag & ROOM_LOW_ROUNDTIME)
+			{
+				if (!IsSettingValid(gameModeId, "mode_roundtime_id", roundTime))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid roundTime: %d\n", user->GetLogName(), roundTime);
+					lowFlag &= ~ROOM_LOW_ROUNDTIME;
+				}
+			}
+
+			if (lowFlag & ROOM_LOW_WEAPONLIMIT)
+			{
+				if (weaponLimit > 17)
+					weaponLimit = 17;
+			}
+
+			if (lowFlag & ROOM_LOW_BUYTIME)
+			{
+				if (!IsBuyTimeValid(gameModeId, buyTime))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid buyTime: %d\n", user->GetLogName(), buyTime);
+					lowFlag &= ~ROOM_LOW_BUYTIME;
+				}
+			}
+
+			if (lowFlag & ROOM_LOW_TEAMBALANCE)
+			{
+				if (!CanChangeTeamBalance(gameModeId) && teamBalance != GetDefaultTeamBalance(gameModeId))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow teamBalance to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowFlag &= ~ROOM_LOW_TEAMBALANCE;
+				}
+				else if (teamBalance > 1)
+					teamBalance = 1;
+			}
+
+			if (lowFlag & ROOM_LOW_FRIENDLYFIRE)
+			{
+				if (!CanChangeFriendlyFire(gameModeId) && friendlyFire != GetDefaultFriendlyFire(gameModeId))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow friendlyFire to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowFlag &= ~ROOM_LOW_FRIENDLYFIRE;
+				}
+				else if (friendlyFire > 1)
+					friendlyFire = 1;
+			}
+
+			if (lowFlag & ROOM_LOW_VIEWFLAG)
+			{
+				if (viewFlag & (1 << 1))
+					viewFlag &= ~(1 << 1);
+
+				if (viewFlag & (1 << 2))
+					viewFlag &= ~(1 << 2);
+
+				if (viewFlag & (1 << 3))
+					viewFlag &= ~(1 << 3);
+
+				if (viewFlag & (1 << 4))
+					viewFlag &= ~(1 << 4);
+			}
+
+			if (lowMidFlag & ROOM_LOWMID_C4TIMER)
+			{
+				if (c4Timer)
+				{
+					CUserInventoryItem item;
+					c4Timer = g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), 112 /* C4Sound */, item);
+				}
+			}
+
+			if (lowMidFlag & ROOM_LOWMID_BOT)
+			{
+				if (!GetDefaultBotAdd(gameModeId))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow bots, gameModeId: %d\n", user->GetLogName(), gameModeId);
 					lowMidFlag &= ~ROOM_LOWMID_BOT;
 				}
-				else if (enemyBots != GetDefaultEnemyBots(gameModeId))
+				else if (gameModeId == 3 || gameModeId == 4 || gameModeId == 5 || gameModeId == 24)
 				{
-					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use enemyBots, gameModeId: %d\n", user->GetLogName(), gameModeId);
-					lowMidFlag &= ~ROOM_LOWMID_BOT;
+					if (botDifficulty > 7)
+						botDifficulty = 7;
+
+					if (friendlyBots > 15)
+						friendlyBots = 15;
+
+					if (enemyBots < 1)
+						enemyBots = 1;
+
+					if (enemyBots > 16)
+						enemyBots = 16;
 				}
-				else if (botBalance != GetDefaultBotAdd(gameModeId))
+				else
 				{
-					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use botBalance, gameModeId: %d\n", user->GetLogName(), gameModeId);
-					lowMidFlag &= ~ROOM_LOWMID_BOT;
+					if (friendlyBots != GetDefaultFriendlyBots(gameModeId))
+					{
+						Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use friendlyBots, gameModeId: %d\n", user->GetLogName(), gameModeId);
+						lowMidFlag &= ~ROOM_LOWMID_BOT;
+					}
+					else if (enemyBots != GetDefaultEnemyBots(gameModeId))
+					{
+						Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use enemyBots, gameModeId: %d\n", user->GetLogName(), gameModeId);
+						lowMidFlag &= ~ROOM_LOWMID_BOT;
+					}
+					else if (botBalance != GetDefaultBotAdd(gameModeId))
+					{
+						Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use botBalance, gameModeId: %d\n", user->GetLogName(), gameModeId);
+						lowMidFlag &= ~ROOM_LOWMID_BOT;
+					}
+					else if (botDifficulty > 2)
+						botDifficulty = 2;
 				}
-				else if (botDifficulty > 2)
-					botDifficulty = 2;
 			}
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_STARTINGCASH)
-		{
-			if (!(gameModeId == 0 || gameModeId == 3 || gameModeId == 17 || gameModeId == 50))
+			if (lowMidFlag & ROOM_LOWMID_STARTINGCASH)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use startingCash, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_STARTINGCASH;
-			}
-			else if (!IsStartingCashValid(gameModeId, startingCash))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid startingCash: %d\n", user->GetLogName(), startingCash);
-				lowMidFlag &= ~ROOM_LOWMID_STARTINGCASH;
-			}
-		}
-
-		if (lowMidFlag & ROOM_LOWMID_ENHANCERESTRICT)
-		{
-			if (!(gameModeId == 0 || gameModeId == 22 || gameModeId == 32) && enhanceRestrict != 0)
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use enhanceRestrict, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ENHANCERESTRICT;
-			}
-			else if ((gameModeId == 22 || gameModeId == 32) && enhanceRestrict != 1)
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow enhanceRestrict to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ENHANCERESTRICT;
-			}
-			else if (enhanceRestrict > 1)
-				enhanceRestrict = 1;
-		}
-
-		if (lowMidFlag & ROOM_LOWMID_SD)
-			lowMidFlag &= ~ROOM_LOWMID_SD;
-
-		if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY)
-		{
-			if (gameModeId != 15 && zsDifficulty != 0)
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zsDifficulty, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ZSDIFFICULTY;
-			}
-			else
-			{
-				int mapMaxZsDifficulty = g_pMapListTable->GetCell<int>("ZSmaxDifficulty", to_string(mapId));
-				if (zsDifficulty > mapMaxZsDifficulty)
+				if (!(gameModeId == 0 || gameModeId == 3 || gameModeId == 17 || gameModeId == 50))
 				{
-					Logger().Warn("User '%s' tried to update a room\'s settings with zsDifficulty > mapMaxZsDifficulty: %d, zsDifficulty: %d, mapId: %d\n", user->GetLogName(), mapMaxZsDifficulty, zsDifficulty, mapId);
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use startingCash, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_STARTINGCASH;
+				}
+				else if (!IsStartingCashValid(gameModeId, startingCash))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid startingCash: %d\n", user->GetLogName(), startingCash);
+					lowMidFlag &= ~ROOM_LOWMID_STARTINGCASH;
+				}
+			}
+
+			if (lowMidFlag & ROOM_LOWMID_ENHANCERESTRICT)
+			{
+				if (!(gameModeId == 0 || gameModeId == 22 || gameModeId == 32) && enhanceRestrict != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use enhanceRestrict, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_ENHANCERESTRICT;
+				}
+				else if ((gameModeId == 22 || gameModeId == 32) && enhanceRestrict != 1)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow enhanceRestrict to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_ENHANCERESTRICT;
+				}
+				else if (enhanceRestrict > 1)
+					enhanceRestrict = 1;
+			}
+
+			if (lowMidFlag & ROOM_LOWMID_SD)
+				lowMidFlag &= ~ROOM_LOWMID_SD;
+
+			if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY)
+			{
+				if (gameModeId != 15 && zsDifficulty != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zsDifficulty, gameModeId: %d\n", user->GetLogName(), gameModeId);
 					lowMidFlag &= ~ROOM_LOWMID_ZSDIFFICULTY;
 				}
+				else
+				{
+					int mapMaxZsDifficulty = g_pMapListTable->GetCell<int>("ZSmaxDifficulty", to_string(mapId));
+					if (zsDifficulty > mapMaxZsDifficulty)
+					{
+						Logger().Warn("User '%s' tried to update a room\'s settings with zsDifficulty > mapMaxZsDifficulty: %d, zsDifficulty: %d, mapId: %d\n", user->GetLogName(), mapMaxZsDifficulty, zsDifficulty, mapId);
+						lowMidFlag &= ~ROOM_LOWMID_ZSDIFFICULTY;
+					}
+				}
 			}
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_LEAGUERULE)
-		{
-			if (!(gameModeId == 0 || gameModeId == 32) && leagueRule != 0)
+			if (lowMidFlag & ROOM_LOWMID_LEAGUERULE)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use leagueRule, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_LEAGUERULE;
+				if (!(gameModeId == 0 || gameModeId == 32) && leagueRule != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use leagueRule, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_LEAGUERULE;
+				}
+				else if (leagueRule > 1)
+					leagueRule = 1;
 			}
-			else if (leagueRule > 1)
-				leagueRule = 1;
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_ZBLIMIT)
-		{
-			if (!(gameModeId == 9 || gameModeId == 14 || gameModeId == 20 || gameModeId == 45 || gameModeId == 54) && (zbLimitFlag != 0 || !zbLimit.empty()))
+			if (lowMidFlag & ROOM_LOWMID_ZBLIMIT)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbLimit, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ZBLIMIT;
+				if (!(gameModeId == 9 || gameModeId == 14 || gameModeId == 20 || gameModeId == 45 || gameModeId == 54) && (zbLimitFlag != 0 || !zbLimit.empty()))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbLimit, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_ZBLIMIT;
+				}
+				else if (!IsZbLimitValid(zbLimit))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid zbLimit\n", user->GetLogName());
+					lowMidFlag &= ~ROOM_LOWMID_ZBLIMIT;
+				}
+				else if (zbLimitFlag == 2 || zbLimitFlag > 3)
+					zbLimitFlag = 3;
 			}
-			else if (!IsZbLimitValid(zbLimit))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid zbLimit\n", user->GetLogName());
-				lowMidFlag &= ~ROOM_LOWMID_ZBLIMIT;
-			}
-			else if (zbLimitFlag == 2 || zbLimitFlag > 3)
-				zbLimitFlag = 3;
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_TEAMSWITCH)
-		{
-			if (!(gameModeId == 0 || gameModeId == 3) && teamSwitch != 0)
+			if (lowMidFlag & ROOM_LOWMID_TEAMSWITCH)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use teamSwitch, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_TEAMSWITCH;
+				if (!(gameModeId == 0 || gameModeId == 3) && teamSwitch != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use teamSwitch, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_TEAMSWITCH;
+				}
+				else if (teamSwitch > 1)
+					teamSwitch = 1;
 			}
-			else if (teamSwitch > 1)
-				teamSwitch = 1;
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_ZBRESPAWN)
-		{
-			if (!GetDefaultZbRespawn(gameModeId) && zbRespawn != 0)
+			if (lowMidFlag & ROOM_LOWMID_ZBRESPAWN)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbRespawn, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ZBRESPAWN;
+				if (!GetDefaultZbRespawn(gameModeId) && zbRespawn != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbRespawn, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_ZBRESPAWN;
+				}
+				else if (gameModeId == 56 && zbRespawn != 1)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow zbRespawn to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_ZBRESPAWN;
+				}
+				else if (zbRespawn > 1)
+					zbRespawn = 1;
 			}
-			else if (gameModeId == 56 && zbRespawn != 1)
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow zbRespawn to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ZBRESPAWN;
-			}
-			else if (zbRespawn > 1)
-				zbRespawn = 1;
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_ZBBALANCE)
-		{
-			if (!GetDefaultZbBalance(gameModeId) && gameModeId != 56 && zbBalance != 0)
+			if (lowMidFlag & ROOM_LOWMID_ZBBALANCE)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbBalance, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ZBBALANCE;
+				if (!GetDefaultZbBalance(gameModeId) && gameModeId != 56 && zbBalance != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbBalance, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_ZBBALANCE;
+				}
+				else if (zbBalance > 1)
+					zbBalance = 1;
 			}
-			else if (zbBalance > 1)
-				zbBalance = 1;
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_GAMERULE)
-		{
-			if (gameModeId != 40 && gameRule != 0)
+			if (lowMidFlag & ROOM_LOWMID_GAMERULE)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use gameRule, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_GAMERULE;
+				if (gameModeId != 40 && gameRule != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use gameRule, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_GAMERULE;
+				}
+				else if (gameRule > 1)
+					gameRule = 1;
 			}
-			else if (gameRule > 1)
-				gameRule = 1;
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING)
-		{
-			if (!(gameModeId == 14 || gameModeId == 45) && zbAutoHunting != 0)
+			if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbAutoHunting, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_ZBAUTOHUNTING;
+				if (!(gameModeId == 14 || gameModeId == 45) && zbAutoHunting != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbAutoHunting, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_ZBAUTOHUNTING;
+				}
+				else if (zbAutoHunting > 1)
+					zbAutoHunting = 1;
 			}
-			else if (zbAutoHunting > 1)
-				zbAutoHunting = 1;
-		}
 
-		if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM)
-		{
-			if (!(gameModeId == 2 || gameModeId == 5 || gameModeId == 56 || gameModeId == 57) && integratedTeam != 0)
+			if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use integratedTeam, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				lowMidFlag &= ~ROOM_LOWMID_INTEGRATEDTEAM;
+				if (!(gameModeId == 2 || gameModeId == 5 || gameModeId == 56 || gameModeId == 57) && integratedTeam != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use integratedTeam, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					lowMidFlag &= ~ROOM_LOWMID_INTEGRATEDTEAM;
+				}
+				else if (integratedTeam > 1)
+					integratedTeam = 1;
 			}
-			else if (integratedTeam > 1)
-				integratedTeam = 1;
-		}
 
-		if (highMidFlag & ROOM_HIGHMID_FIREBOMB)
-		{
-			if (!(gameModeId == 14 || gameModeId == 45) && fireBomb != 1)
+			if (highMidFlag & ROOM_HIGHMID_FIREBOMB)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use fireBomb, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				highMidFlag &= ~ROOM_HIGHMID_FIREBOMB;
+				if (!(gameModeId == 14 || gameModeId == 45) && fireBomb != 1)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use fireBomb, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					highMidFlag &= ~ROOM_HIGHMID_FIREBOMB;
+				}
+				else if (fireBomb > 1)
+					fireBomb = 1;
 			}
-			else if (fireBomb > 1)
-				fireBomb = 1;
-		}
 
-		if (highMidFlag & ROOM_HIGHMID_MUTATIONRESTRICT)
-		{
-			if (gameModeId != 45 && (mutationRestrict != 0 || !mutationRestrictList.empty()))
+			if (highMidFlag & ROOM_HIGHMID_MUTATIONRESTRICT)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use mutationRestrict, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				highMidFlag &= ~ROOM_HIGHMID_MUTATIONRESTRICT;
+				if (gameModeId != 45 && (mutationRestrict != 0 || !mutationRestrictList.empty()))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use mutationRestrict, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					highMidFlag &= ~ROOM_HIGHMID_MUTATIONRESTRICT;
+				}
+				else if (!IsMutationRestrictValid(mutationRestrictList))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid mutationRestrictList\n", user->GetLogName());
+					highMidFlag &= ~ROOM_HIGHMID_MUTATIONRESTRICT;
+				}
+				else if (mutationRestrict > 1)
+				{
+					mutationRestrict = 1;
+				}
 			}
-			else if (!IsMutationRestrictValid(mutationRestrictList))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid mutationRestrictList\n", user->GetLogName());
-				highMidFlag &= ~ROOM_HIGHMID_MUTATIONRESTRICT;
-			}
-			else if (mutationRestrict > 1)
-			{
-				mutationRestrict = 1;
-			}
-		}
 
-		if (highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT)
-		{
-			if (gameModeId != 45 && mutationLimit != 20)
+			if (highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use mutationLimit, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				highMidFlag &= ~ROOM_HIGHMID_MUTATIONLIMIT;
+				if (gameModeId != 45 && mutationLimit != 20)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use mutationLimit, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					highMidFlag &= ~ROOM_HIGHMID_MUTATIONLIMIT;
+				}
+				else if (!IsMutationLimitValid(mutationLimit))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with invalid mutationLimit: %d\n", user->GetLogName(), mutationLimit);
+					highMidFlag &= ~ROOM_HIGHMID_MUTATIONLIMIT;
+				}
 			}
-			else if (!IsMutationLimitValid(mutationLimit))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with invalid mutationLimit: %d\n", user->GetLogName(), mutationLimit);
-				highMidFlag &= ~ROOM_HIGHMID_MUTATIONLIMIT;
-			}
-		}
 
-		if (highMidFlag & ROOM_HIGHMID_FLOATINGDAMAGESKIN)
-		{
-			if (!(gameModeId == 0 || gameModeId == 2 || gameModeId == 3 || gameModeId == 5) && floatingDamageSkin != 1)
+			if (highMidFlag & ROOM_HIGHMID_FLOATINGDAMAGESKIN)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow floatingDamageSkin to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				highMidFlag &= ~ROOM_HIGHMID_FLOATINGDAMAGESKIN;
+				if (!(gameModeId == 0 || gameModeId == 2 || gameModeId == 3 || gameModeId == 5) && floatingDamageSkin != 1)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't allow floatingDamageSkin to be changed, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					highMidFlag &= ~ROOM_HIGHMID_FLOATINGDAMAGESKIN;
+				}
+				else if (floatingDamageSkin > 1)
+					floatingDamageSkin = 1;
 			}
-			else if (floatingDamageSkin > 1)
-				floatingDamageSkin = 1;
-		}
 
-		if (highMidFlag & ROOM_HIGHMID_PLAYERONETEAM)
-		{
-			if (!(gameModeId == 3 || gameModeId == 5) && playerOneTeam != 0)
+			if (highMidFlag & ROOM_HIGHMID_PLAYERONETEAM)
 			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use playerOneTeam, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				highMidFlag &= ~ROOM_HIGHMID_PLAYERONETEAM;
+				if (!(gameModeId == 3 || gameModeId == 5) && playerOneTeam != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use playerOneTeam, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					highMidFlag &= ~ROOM_HIGHMID_PLAYERONETEAM;
+				}
+				else if (playerOneTeam > 1)
+					playerOneTeam = 1;
 			}
-			else if (playerOneTeam > 1)
-				playerOneTeam = 1;
-		}
 
-		if (highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT)
-		{
-			if (weaponRestrict > 13)
-				weaponRestrict = 13;
+			if (highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT)
+			{
+				if (weaponRestrict > 13)
+					weaponRestrict = 13;
+			}
+
+			if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
+			{
+				if (!IsFamilyBattleAllowed(gameModeId))
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use familyBattle, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					highMidFlag &= ~ROOM_HIGHMID_FAMILYBATTLE;
+				}
+				else if (familyBattle > 1)
+					familyBattle = 1;
+			}
 		}
 
 		if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
 		{
-			if (!IsFamilyBattleAllowed(gameModeId))
-			{
-				Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use familyBattle, gameModeId: %d\n", user->GetLogName(), gameModeId);
-				highMidFlag &= ~ROOM_HIGHMID_FAMILYBATTLE;
-			}
+			if (familyBattle)
+				LoadFamilyBattleSettings(gameModeId);
 			else
 			{
-				if (familyBattle > 1)
-					familyBattle = 1;
+				familyBattleClanID1 = 0;
+				familyBattleClanID2 = 0;
 
-				if (familyBattle)
-					LoadFamilyBattleSettings(gameModeId);
-				else
+				if (gameModeId == 0)
 				{
-					familyBattleClanID1 = 0;
-					familyBattleClanID2 = 0;
-
-					if (gameModeId == 0)
-					{
-						lowMidFlag |= ROOM_LOWMID_ENHANCERESTRICT;
-						enhanceRestrict = 0;
-					}
+					lowMidFlag |= ROOM_LOWMID_ENHANCERESTRICT;
+					enhanceRestrict = 0;
 				}
 			}
 		}
