@@ -32,7 +32,7 @@ CUserManager::~CUserManager()
 bool CUserManager::Init()
 {
 	for (size_t i = 0; i < g_pServerConfig->defUser.defaultItems.size(); i++)
-		m_DefaultItems.push_back(CUserInventoryItem(i, g_pServerConfig->defUser.defaultItems[i], 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0));
+		m_DefaultItems.push_back(CUserInventoryItem(i, g_pServerConfig->defUser.defaultItems[i], 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 2));
 
 	return true;
 }
@@ -457,6 +457,7 @@ int CUserManager::ChangeUserNickname(IUser* user, const string& newNickname, boo
 			rewardItem.itemID = itemID;
 			rewardItem.count = 1;
 			rewardItem.duration = 0;
+			rewardItem.lockStatus = 2;
 			rewardItems.push_back(rewardItem);
 		}
 

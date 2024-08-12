@@ -322,6 +322,7 @@ struct RewardItem
 	int duration;
 	int enhValue;
 	int eventFlag;
+	int lockStatus;
 };
 struct RewardItemRandomDuration
 {

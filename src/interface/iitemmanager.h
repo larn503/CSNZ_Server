@@ -15,7 +15,7 @@ public:
 	virtual bool LoadRewards() = 0;
 	virtual bool KVToJson() = 0;
 	virtual bool OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket) = 0;
-	virtual int AddItem(int userID, IUser* user, int itemId, int count, int duration) = 0;
+	virtual int AddItem(int userID, IUser* user, int itemId, int count, int duration, int lockStatus = 0) = 0;
 	virtual int AddItems(int userID, IUser* user, std::vector<RewardItem>& item) = 0;
 	virtual bool RemoveItem(int userID, IUser* user, CUserInventoryItem& item) = 0;
 	virtual int UseItem(IUser* user, int slot, int additionalArg = 0, int additionalArg2 = 0) = 0;

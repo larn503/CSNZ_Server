@@ -593,7 +593,7 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	return true;
 }
 
-int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int duration)
+int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int duration, int lockStatus)
 {
 	int itemStatus = 1;
 	int itemInUse = 1;
@@ -687,7 +687,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 			CUserInventoryItem item;
 
 			// push item to vector after adding item to db!
-			item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
+			item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
 
 			if (g_UserDatabase.AddInventoryItem(userID, items.back()) <= 0)
 				return ITEM_ADD_DB_ERROR;
@@ -843,7 +843,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	vector<CUserInventoryItem> items;
 
 	// push new item
-	item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
+	item.PushItem(items, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
 
 	// add new item to db
 	if (g_UserDatabase.AddInventoryItem(userID, items.back()) <= 0)
@@ -924,6 +924,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		int itemID = item.itemID;
 		int duration = item.duration;
 		int count = item.count;
+		int lockStatus = item.lockStatus;
 
 		if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
 			continue;
@@ -1018,7 +1019,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 				CUserInventoryItem item;
 
-				item.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
+				item.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
 			}
 
 			continue;
@@ -1217,7 +1218,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		}
 
 		CUserInventoryItem newItems;
-		newItems.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, 0); // push new items to inventory
+		newItems.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
 	}
 
 	if (result == ITEM_ADD_DB_ERROR)
@@ -1802,6 +1803,7 @@ RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int
 			vector<RewardItem> rewardItems;
 			for (RewardItem& item : reward->items)
 			{
+				item.lockStatus = 0;
 				rewardItems.push_back(item);
 				rewardNotice.items.push_back(item);
 			}
@@ -2664,6 +2666,12 @@ bool CItemManager::OnLockItemRequest(IUser* user, CReceivePacket* msg)
 
 	if (!item.m_nItemID)
 		return false;
+
+	if (item.IsItemDefaultOrPseudo())
+	{
+		// can't switch lock status of default item
+		return false;
+	}
 
 	item.m_nLockStatus = item.m_nLockStatus ? 0 : 1;
 

@@ -664,6 +664,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 					rewardItem.itemID = itemID;
 					rewardItem.count = 1;
 					rewardItem.duration = 0;
+					rewardItem.lockStatus = 0;
 					rewardItems.push_back(rewardItem);
 				}
 
