@@ -2446,10 +2446,10 @@ bool CItemManager::OnWeaponPaintRequest(IUser* user, CReceivePacket* msg)
 	if (!weapon.m_nItemID || !paint.m_nItemID)
 		return false;
 
-	string weaponClassName = g_pItemTable->GetCell<string>("ClassName", to_string(weapon.m_nItemID));
+	int weaponCategory = g_pItemTable->GetCell<int>("Category", to_string(weapon.m_nItemID));
 	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paint.m_nItemID));
 
-	if (weaponClassName != "Equipment" || paintClassName != "WeaponPaintItem")
+	if (weaponCategory != 11 && (weaponCategory < 1 || weaponCategory > 6) || paintClassName != "WeaponPaintItem")
 		return false;
 
 	// If paint is already in the list, don't use it
@@ -2487,10 +2487,10 @@ bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 	if (!weapon.m_nItemID)
 		return false;
 
-	string weaponClassName = g_pItemTable->GetCell<string>("ClassName", to_string(weapon.m_nItemID));
+	int weaponCategory = g_pItemTable->GetCell<int>("Category", to_string(weapon.m_nItemID));
 	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paintID));
 
-	if (weaponClassName != "Equipment" || (paintClassName != "WeaponPaintItem" && paintClassName != "WeaponPaintRemoveItem"))
+	if (weaponCategory != 11 && (weaponCategory < 1 || weaponCategory > 6) || (paintClassName != "WeaponPaintItem" && paintClassName != "WeaponPaintRemoveItem"))
 		return false;
 
 	if (paintClassName != "WeaponPaintRemoveItem")
@@ -2572,10 +2572,10 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 		if (!weapon.m_nItemID || !part.m_nItemID)
 			return false;
 
-		string weaponClassName = g_pItemTable->GetCell<string>("ClassName", to_string(weapon.m_nItemID));
-		string partClassName = g_pItemTable->GetCell<string>("ClassName", to_string(part.m_nItemID));
+		int weaponCategory = g_pItemTable->GetCell<int>("Category", to_string(weapon.m_nItemID));
+		int partCategory = g_pItemTable->GetCell<int>("Category", to_string(part.m_nItemID));
 
-		if (weaponClassName != "Equipment" || partClassName != "WeaponParts")
+		if (weaponCategory != 11 && (weaponCategory < 1 || weaponCategory > 6) || partCategory != 13)
 			return false;
 
 		int partID = msg->ReadUInt8();

@@ -374,9 +374,9 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
 
-		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
+		int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 
-		if (className != "Equipment")
+		if (category != 11 && (category < 1 || category > 6))
 			return false;
 
 		g_UserDatabase.UpdateLoadout(user->GetID(), character.curLoadout, slot, itemID);
@@ -388,9 +388,9 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
 
-		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
+		int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 
-		if (className != "Class")
+		if (category != 7)
 			return false;
 
 		// change bg character...
