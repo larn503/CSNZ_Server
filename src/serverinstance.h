@@ -18,7 +18,7 @@ public:
 	bool LoadConfigs();
 	void UnloadConfigs();
 
-	virtual void OnTCPConnectionCreated(IExtendedSocket* socket);
+	virtual bool OnTCPConnectionCreated(IExtendedSocket* socket);
 	virtual void OnTCPConnectionClosed(IExtendedSocket* socket);
 	virtual void OnTCPMessage(IExtendedSocket* socket, CReceivePacket* msg);
 	virtual void OnTCPError(int errorCode);

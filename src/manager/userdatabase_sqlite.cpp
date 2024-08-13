@@ -710,16 +710,10 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 	try
 	{
 		std::vector<std::vector<CUserInventoryItem>> itemsInsert;
-		std::vector<string> queryInsertNewInvItemStr;
-
 		itemsInsert.resize(ceil((double)items.size() / 1927));
-		queryInsertNewInvItemStr.resize(ceil((double)items.size() / 1927));
 
 		std::vector<std::vector<CUserInventoryItem>> itemsUpdate;
-		std::vector<string> queryUpdateItemStr;
-		
 		itemsUpdate.resize(ceil((double)items.size() / 1092));
-		queryUpdateItemStr.resize(ceil((double)items.size() / 1092));
 
 		int itemsInsertIndex = 0;
 		int itemsUpdateIndex = 0;
@@ -749,7 +743,7 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 				item.m_nSlot = freeSlots.front();
 				freeSlots.erase(freeSlots.begin());
 
-				if (itemsUpdate[itemsUpdateIndex].size() == 1092) // (1092 * 30 binds) == 32760 < SQLITE_MAX_VARIABLE_NUMBER (32766)
+				if (itemsUpdate[itemsUpdateIndex].size() == 1092) // (1092 * 30 binds) + 1 (userID bind) == 32761 < SQLITE_MAX_VARIABLE_NUMBER (32766)
 					itemsUpdateIndex++;
 
 				itemsUpdate[itemsUpdateIndex].push_back(item);
@@ -761,11 +755,6 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 				if (itemsInsert[itemsInsertIndex].size() == 1927) // (1927 * 17 binds) == 32759 < SQLITE_MAX_VARIABLE_NUMBER (32766)
 					itemsInsertIndex++;
 
-				if (itemsInsert[itemsInsertIndex].empty())
-					queryInsertNewInvItemStr[itemsInsertIndex] += OBFUSCATE("INSERT INTO UserInventory VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-				else
-					queryInsertNewInvItemStr[itemsInsertIndex] += OBFUSCATE(", (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
 				itemsInsert[itemsInsertIndex].push_back(item);
 			}
 		}
@@ -775,11 +764,19 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 		if (itemsInsert[0].size())
 		{
 			itemsInsert.resize(itemsInsertIndex + 1);
-			queryInsertNewInvItemStr.resize(itemsInsertIndex + 1);
 
-			for (int i = 0; i < itemsInsertIndex + 1; i++)
+			std::string queryInsertNewInvItemStr;
+			int itemsInsertSize = 0;
+
+			for (int i = 0; i <= itemsInsertIndex; i++)
 			{
-				SQLite::Statement queryInsertNewInvItem(m_Database, queryInsertNewInvItemStr[i]);
+				itemsInsertSize = itemsInsert[i].size();
+
+				queryInsertNewInvItemStr += OBFUSCATE("INSERT INTO UserInventory VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				for (int j = 1; j < itemsInsertSize; j++)
+					queryInsertNewInvItemStr += OBFUSCATE(", (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+				SQLite::Statement queryInsertNewInvItem(m_Database, queryInsertNewInvItemStr);
 
 				for (auto& item : itemsInsert[i])
 				{
@@ -804,6 +801,7 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 
 				queryInsertNewInvItem.exec();
 				index = 1;
+				queryInsertNewInvItemStr.clear();
 			}
 
 			SQLite::Statement queryUpdateNextInvSlot(m_Database, OBFUSCATE("UPDATE UserCharacterExtended SET nextInventorySlot = nextInventorySlot + ? WHERE userID = ?"));
@@ -815,90 +813,92 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 		if (itemsUpdate[0].size())
 		{
 			itemsUpdate.resize(itemsUpdateIndex + 1);
-			queryUpdateItemStr.resize(itemsUpdateIndex + 1);
 
-			for (int i = 0; i < itemsUpdateIndex + 1; i++)
+			std::string queryUpdateItemStr;
+			int itemsUpdateSize = 0;
+
+			for (int i = 0; i <= itemsUpdateIndex; i++)
 			{
-				int itemsUpdateSize = itemsUpdate[i].size();
+				itemsUpdateSize = itemsUpdate[i].size();
 
-				queryUpdateItemStr[i] += OBFUSCATE("UPDATE UserInventory SET itemID = CASE");
+				queryUpdateItemStr += OBFUSCATE("UPDATE UserInventory SET itemID = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE itemID END, count = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE itemID END, count = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE count END, status = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE count END, status = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE status END, inUse = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE status END, inUse = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE inUse END, obtainDate = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE inUse END, obtainDate = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE obtainDate END, expiryDate = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE obtainDate END, expiryDate = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE expiryDate END, isClanItem = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE expiryDate END, isClanItem = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE isClanItem END, enhancementLevel = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE isClanItem END, enhancementLevel = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE enhancementLevel END, enhancementExp = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE enhancementLevel END, enhancementExp = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE enhancementExp END, enhanceValue = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE enhancementExp END, enhanceValue = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE enhanceValue END, paintID = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE enhanceValue END, paintID = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE paintID END, paintIDList = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE paintID END, paintIDList = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE paintIDList END, partSlot1 = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE paintIDList END, partSlot1 = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE partSlot1 END, partSlot2 = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE partSlot1 END, partSlot2 = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE partSlot2 END, lockStatus = CASE");
+				queryUpdateItemStr += OBFUSCATE(" ELSE partSlot2 END, lockStatus = CASE");
 				for (int j = 0; j < itemsUpdateSize; j++)
 				{
-					queryUpdateItemStr[i] += OBFUSCATE(" WHEN slot = ? THEN ?");
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
 				}
-				queryUpdateItemStr[i] += OBFUSCATE(" ELSE lockStatus END WHERE userID = ?");
+				queryUpdateItemStr += OBFUSCATE(" ELSE lockStatus END WHERE userID = ?");
 
-				SQLite::Statement queryUpdateItem(m_Database, queryUpdateItemStr[i]);
+				SQLite::Statement queryUpdateItem(m_Database, queryUpdateItemStr);
 
 				for (auto& item : itemsUpdate[i])
 				{
@@ -980,6 +980,7 @@ int CUserDatabaseSQLite::AddInventoryItems(int userID, std::vector<CUserInventor
 
 				queryUpdateItem.exec();
 				index = 1;
+				queryUpdateItemStr.clear();
 			}
 		}
 	}
@@ -1119,6 +1120,327 @@ int CUserDatabaseSQLite::UpdateInventoryItem(int userID, const CUserInventoryIte
 	return 1;
 }
 
+// updates user inventory items data
+// returns 0 == database error, 1 on success
+int CUserDatabaseSQLite::UpdateInventoryItems(int userID, std::vector<CUserInventoryItem>& items, int flag)
+{
+	try
+	{
+		int flagBinds = 0;
+		for (int i = 0; i < 15; i++)
+		{
+			if (flag & (1<<i))
+				flagBinds += 2;
+		}
+
+		if (!flagBinds)
+			return 0;
+
+		int maxSize = floor((double)32765 / flagBinds); // (maxSize * flagBinds) + 1 (userID bind) must be <= SQLITE_MAX_VARIABLE_NUMBER (32766)
+		// Example:
+		// flagBinds = 2
+		// maxSize = floor((double)32765 / 2) = 16382
+		// (16382 * 2) + 1 = 32765 < SQLITE_MAX_VARIABLE_NUMBER (32766)
+
+		std::vector<std::vector<CUserInventoryItem>> itemsUpdate;
+		itemsUpdate.resize(ceil((double)items.size() / maxSize));
+
+		int itemsUpdateIndex = 0;
+
+		for (auto &item : items)
+		{
+			if (itemsUpdate[itemsUpdateIndex].size() == maxSize)
+				itemsUpdateIndex++;
+
+			itemsUpdate[itemsUpdateIndex].push_back(item);
+		}
+
+		std::string queryUpdateItemStr;
+		int index = 1;
+		int itemsUpdateSize = 0;
+
+		for (int i = 0; i <= itemsUpdateIndex; i++)
+		{
+			itemsUpdateSize = itemsUpdate[i].size();
+
+			queryUpdateItemStr += OBFUSCATE("UPDATE UserInventory SET");
+			if (flag & UITEM_FLAG_ITEMID)
+			{
+				queryUpdateItemStr += OBFUSCATE(" itemID = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE itemID END,");
+			}
+			if (flag & UITEM_FLAG_COUNT)
+			{
+				queryUpdateItemStr += OBFUSCATE(" count = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE count END,");
+			}
+			if (flag & UITEM_FLAG_STATUS)
+			{
+				queryUpdateItemStr += OBFUSCATE(" status = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE status END,");
+			}
+			if (flag & UITEM_FLAG_INUSE)
+			{
+				queryUpdateItemStr += OBFUSCATE(" inUse = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE inUse END,");
+			}
+			if (flag & UITEM_FLAG_OBTAINDATE)
+			{
+				queryUpdateItemStr += OBFUSCATE(" obtainDate = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE obtainDate END,");
+			}
+			if (flag & UITEM_FLAG_EXPIRYDATE)
+			{
+				queryUpdateItemStr += OBFUSCATE(" expiryDate = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE expiryDate END,");
+			}
+			if (flag & UITEM_FLAG_ISCLANITEM)
+			{
+				queryUpdateItemStr += OBFUSCATE(" isClanItem = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE isClanItem END,");
+			}
+			if (flag & UITEM_FLAG_ENHANCEMENTLEVEL)
+			{
+				queryUpdateItemStr += OBFUSCATE(" enhancementLevel = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE enhancementLevel END,");
+			}
+			if (flag & UITEM_FLAG_ENHANCEMENTEXP)
+			{
+				queryUpdateItemStr += OBFUSCATE(" enhancementExp = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE enhancementExp END,");
+			}
+			if (flag & UITEM_FLAG_ENHANCEVALUE)
+			{
+				queryUpdateItemStr += OBFUSCATE(" enhanceValue = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE enhanceValue END,");
+			}
+			if (flag & UITEM_FLAG_PAINTID)
+			{
+				queryUpdateItemStr += OBFUSCATE(" paintID = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE paintID END,");
+			}
+			if (flag & UITEM_FLAG_PAINTIDLIST)
+			{
+				queryUpdateItemStr += OBFUSCATE(" paintIDList = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE paintIDList END,");
+			}
+			if (flag & UITEM_FLAG_PARTSLOT1)
+			{
+				queryUpdateItemStr += OBFUSCATE(" partSlot1 = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE partSlot1 END,");
+			}
+			if (flag & UITEM_FLAG_PARTSLOT2)
+			{
+				queryUpdateItemStr += OBFUSCATE(" partSlot2 = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE partSlot2 END,");
+			}
+			if (flag & UITEM_FLAG_LOCKSTATUS)
+			{
+				queryUpdateItemStr += OBFUSCATE(" lockStatus = CASE");
+				for (int j = 0; j < itemsUpdateSize; j++)
+				{
+					queryUpdateItemStr += OBFUSCATE(" WHEN slot = ? THEN ?");
+				}
+				queryUpdateItemStr += OBFUSCATE(" ELSE lockStatus END,");
+			}
+			queryUpdateItemStr[queryUpdateItemStr.size() - 1] = ' ';
+			queryUpdateItemStr += OBFUSCATE("WHERE userID = ?");
+
+			SQLite::Statement queryUpdateItem(m_Database, queryUpdateItemStr);
+
+			if (flag & UITEM_FLAG_ITEMID)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nItemID);
+				}
+			}
+			if (flag & UITEM_FLAG_COUNT)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nCount);
+				}
+			}
+			if (flag & UITEM_FLAG_STATUS)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nStatus);
+				}
+			}
+			if (flag & UITEM_FLAG_INUSE)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nInUse);
+				}
+			}
+			if (flag & UITEM_FLAG_OBTAINDATE)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nObtainDate);
+				}
+			}
+			if (flag & UITEM_FLAG_EXPIRYDATE)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nExpiryDate);
+				}
+			}
+			if (flag & UITEM_FLAG_ISCLANITEM)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nIsClanItem);
+				}
+			}
+			if (flag & UITEM_FLAG_ENHANCEMENTLEVEL)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nEnhancementLevel);
+				}
+			}
+			if (flag & UITEM_FLAG_ENHANCEMENTEXP)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nEnhancementExp);
+				}
+			}
+			if (flag & UITEM_FLAG_ENHANCEVALUE)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nEnhanceValue);
+				}
+			}
+			if (flag & UITEM_FLAG_PAINTID)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nPaintID);
+				}
+			}
+			if (flag & UITEM_FLAG_PAINTIDLIST)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, serialize_array_int(item.m_nPaintIDList));
+				}
+			}
+			if (flag & UITEM_FLAG_PARTSLOT1)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nPartSlot1);
+				}
+			}
+			if (flag & UITEM_FLAG_PARTSLOT2)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nPartSlot2);
+				}
+			}
+			if (flag & UITEM_FLAG_LOCKSTATUS)
+			{
+				for (auto& item : itemsUpdate[i])
+				{
+					queryUpdateItem.bind(index++, item.m_nSlot);
+					queryUpdateItem.bind(index++, item.m_nLockStatus);
+				}
+			}
+
+			queryUpdateItem.bind(index++, userID);
+
+			queryUpdateItem.exec();
+			index = 1;
+			queryUpdateItemStr.clear();
+		}
+	}
+	catch (exception& e)
+	{
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateInventoryItem: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+
+	return 1;
+}
+
 // gets user inventory
 // returns 0 == database error, 1 on success
 int CUserDatabaseSQLite::GetInventoryItems(int userID, vector<CUserInventoryItem>& items)
@@ -1172,7 +1494,7 @@ int CUserDatabaseSQLite::GetInventoryItemsByID(int userID, int itemID, vector<CU
 }
 
 // gets user inventory item by slot
-// returns 0 == database error or no such slot, 1 on success
+// returns -1 == database error, 0 == no such slot, 1 on success
 int CUserDatabaseSQLite::GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item)
 {
 	try
@@ -1191,14 +1513,14 @@ int CUserDatabaseSQLite::GetInventoryItemBySlot(int userID, int slot, CUserInven
 	catch (exception& e)
 	{
 		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetInventoryItemBySlot: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return -1;
 	}
 
 	return 1;
 }
 
 // gets first user inventory item by itemID
-// returns 0 == database error or no such slot, 1 on success
+// returns -1 == database error, 0 == no such item, 1 on success
 int CUserDatabaseSQLite::GetFirstItemByItemID(int userID, int itemID, CUserInventoryItem& item)
 {
 	try
@@ -1217,14 +1539,14 @@ int CUserDatabaseSQLite::GetFirstItemByItemID(int userID, int itemID, CUserInven
 	catch (exception& e)
 	{
 		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetFirstItemByItemID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return -1;
 	}
 
 	return 1;
 }
 
 // gets first active user inventory item by itemID
-// returns 0 == database error or no such slot, 1 on success
+// returns -1 == database error, 0 == no such item, 1 on success
 int CUserDatabaseSQLite::GetFirstActiveItemByItemID(int userID, int itemID, CUserInventoryItem& item)
 {
 	try
@@ -1243,14 +1565,14 @@ int CUserDatabaseSQLite::GetFirstActiveItemByItemID(int userID, int itemID, CUse
 	catch (exception& e)
 	{
 		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetFirstActiveItemByItemID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return -1;
 	}
 
 	return 1;
 }
 
 // gets first user extendable inventory item by itemID
-// returns 0 == database error or no such slot, 1 on success
+// returns -1 == database error, 0 == no such item, 1 on success
 int CUserDatabaseSQLite::GetFirstExtendableItemByItemID(int userID, int itemID, CUserInventoryItem& item)
 {
 	try
@@ -1269,7 +1591,7 @@ int CUserDatabaseSQLite::GetFirstExtendableItemByItemID(int userID, int itemID, 
 	catch (exception& e)
 	{
 		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetFirstExtendableItemByItemID: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-		return 0;
+		return -1;
 	}
 
 	return 1;

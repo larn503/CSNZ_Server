@@ -46,6 +46,8 @@ CExtendedSocket::~CExtendedSocket()
 	for (auto msg : m_SendPackets)
 		delete msg;
 
+	m_SendPackets.clear();
+
 	if (m_pDecEVPCTX)
 	{
 		EVP_CIPHER_CTX_cleanup(m_pDecEVPCTX);

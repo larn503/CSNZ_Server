@@ -8,7 +8,7 @@ class IExtendedSocket;
 class IServerListenerTCP
 {
 public:
-	virtual void OnTCPConnectionCreated(IExtendedSocket* socket) = 0;
+	virtual bool OnTCPConnectionCreated(IExtendedSocket* socket) = 0;
 	virtual void OnTCPConnectionClosed(IExtendedSocket* socket) = 0;
 	virtual void OnTCPMessage(IExtendedSocket* socket, CReceivePacket* msg) = 0;
 	virtual void OnTCPError(int errorCode) = 0;

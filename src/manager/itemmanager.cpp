@@ -395,7 +395,11 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		if (inventoryType == 1 || className == "LobbyBG" || className == "zbRespawnEffect" || className == "CombatInfoItem") // switch status
 		{
 			vector<CUserInventoryItem> itemsWithSameID;
-			g_UserDatabase.GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID);
+			if (g_UserDatabase.GetInventoryItemsByID(user->GetID(), item.m_nItemID, itemsWithSameID) < 0)
+			{
+				Logger().Warn("CItemManager::OnItemPacket: cannot use item, database error\n");
+				return false;
+			}
 
 			vector<CUserInventoryItem> items;
 
@@ -406,13 +410,14 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 				{
 					i.m_nStatus = 0;
 
-					g_UserDatabase.UpdateInventoryItem(user->GetID(), i, UITEM_FLAG_STATUS);
 					i.PushItem(items, i);
 				}
 			}
 
 			// turn on status of the desired item
 			item.m_nStatus = 1;
+
+			int flag = UITEM_FLAG_STATUS;
 
 			if (className == "LobbyBG")
 			{
@@ -433,13 +438,16 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					if (character.nameplateID)
 					{
 						CUserInventoryItem item1;
-						g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.nameplateID, item1);
+						if (g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.nameplateID, item1) < 0)
+						{
+							Logger().Warn("CItemManager::OnItemPacket: cannot use item, database error\n");
+							return false;
+						}
 
 						if (item1.m_nItemID)
 						{
 							item1.m_nInUse = 0;
 
-							g_UserDatabase.UpdateInventoryItem(user->GetID(), item1, UITEM_FLAG_INUSE);
 							item1.PushItem(items, item1);
 						}
 					}
@@ -447,6 +455,8 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					user->UpdateNameplate(item.m_nItemID);
 					item.m_nInUse = 1;
 				}
+
+				flag |= UITEM_FLAG_INUSE;
 			}
 			else if (className == "zbRespawnEffect")
 			{
@@ -467,13 +477,16 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					if (character.zbRespawnEffect)
 					{
 						CUserInventoryItem item1;
-						g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.zbRespawnEffect, item1);
+						if (g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.zbRespawnEffect, item1) < 0)
+						{
+							Logger().Warn("CItemManager::OnItemPacket: cannot use item, database error\n");
+							return false;
+						}
 
 						if (item1.m_nItemID)
 						{
 							item1.m_nInUse = 0;
 
-							g_UserDatabase.UpdateInventoryItem(user->GetID(), item1, UITEM_FLAG_INUSE);
 							item1.PushItem(items, item1);
 						}
 					}
@@ -481,6 +494,8 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					user->UpdateZbRespawnEffect(item.m_nItemID);
 					item.m_nInUse = 1;
 				}
+
+				flag |= UITEM_FLAG_INUSE;
 			}
 			else if (className == "CombatInfoItem")
 			{
@@ -501,13 +516,16 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					if (character.killerMarkEffect)
 					{
 						CUserInventoryItem item1;
-						g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.killerMarkEffect, item1);
+						if (g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), character.killerMarkEffect, item1) < 0)
+						{
+							Logger().Warn("CItemManager::OnItemPacket: cannot use item, database error\n");
+							return false;
+						}
 
 						if (item1.m_nItemID)
 						{
 							item1.m_nInUse = 0;
 
-							g_UserDatabase.UpdateInventoryItem(user->GetID(), item1, UITEM_FLAG_INUSE);
 							item1.PushItem(items, item1);
 						}
 					}
@@ -515,10 +533,17 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 					user->UpdateKillerMarkEffect(item.m_nItemID);
 					item.m_nInUse = 1;
 				}
+
+				flag |= UITEM_FLAG_INUSE;
 			}
 
-			g_UserDatabase.UpdateInventoryItem(user->GetID(), item, UITEM_FLAG_INUSE | UITEM_FLAG_STATUS);
 			item.PushItem(items, item);
+
+			if (g_UserDatabase.UpdateInventoryItems(user->GetID(), items, flag) <= 0)
+			{
+				Logger().Warn("CItemManager::OnItemPacket: cannot use item, database error\n");
+				return false;
+			}
 
 			// send inventory update to user
 			g_PacketManager.SendInventoryAdd(socket, items);
@@ -635,7 +660,8 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	}
 
 	CUserInventoryItem itemWithSameID;
-	g_UserDatabase.GetFirstItemByItemID(userID, itemID, itemWithSameID);
+	if (g_UserDatabase.GetFirstItemByItemID(userID, itemID, itemWithSameID) < 0)
+		return ITEM_ADD_DB_ERROR;
 
 	int currentTimestamp = g_pServerInstance->GetCurrentTime();
 
@@ -647,7 +673,8 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 		if (duration)
 		{
 			CUserInventoryItem itemToExtend;
-			g_UserDatabase.GetFirstExtendableItemByItemID(userID, itemID, itemToExtend);
+			if (g_UserDatabase.GetFirstExtendableItemByItemID(userID, itemID, itemToExtend) < 0)
+				return ITEM_ADD_DB_ERROR;
 
 			if (itemToExtend.m_nItemID)
 			{
@@ -908,9 +935,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 	if (inventoryItemsCount < 0)
 		return ITEM_ADD_DB_ERROR;
 
-	if (inventoryItemsCount >= g_pServerConfig->inventorySlotMax)
-		return ITEM_ADD_INVENTORY_FULL;
-
+	vector<CUserInventoryItem> insertedItems;
 	vector<CUserInventoryItem> updatedItems;
 
 	int result = ITEM_ADD_SUCCESS;
@@ -919,6 +944,12 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 	for (auto& item : items)
 	{
+		if (inventoryItemsCount + insertedItems.size() >= g_pServerConfig->inventorySlotMax)
+		{
+			result = ITEM_ADD_INVENTORY_FULL;
+			break;
+		}
+
 		int itemStatus = 1;
 		int itemInUse = 1;
 		int itemID = item.itemID;
@@ -969,7 +1000,11 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		}
 
 		CUserInventoryItem itemWithSameID;
-		g_UserDatabase.GetFirstItemByItemID(userID, itemID, itemWithSameID);
+		if (g_UserDatabase.GetFirstItemByItemID(userID, itemID, itemWithSameID) < 0)
+		{
+			result = ITEM_ADD_DB_ERROR;
+			break;
+		}
 
 		int currentTimestamp = g_pServerInstance->GetCurrentTime();
 
@@ -981,7 +1016,11 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			if (duration)
 			{
 				CUserInventoryItem itemToExtend;
-				g_UserDatabase.GetFirstExtendableItemByItemID(userID, itemID, itemToExtend);
+				if (g_UserDatabase.GetFirstExtendableItemByItemID(userID, itemID, itemToExtend) < 0)
+				{
+					result = ITEM_ADD_DB_ERROR;
+					break;
+				}
 
 				if (itemToExtend.m_nItemID)
 				{
@@ -1018,8 +1057,7 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 				itemInUse = 1;
 
 				CUserInventoryItem item;
-
-				item.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
+				item.PushItem(insertedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
 			}
 
 			continue;
@@ -1217,8 +1255,8 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 			}
 		}
 
-		CUserInventoryItem newItems;
-		newItems.PushItem(updatedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
+		CUserInventoryItem item;
+		item.PushItem(insertedItems, itemID, count, itemStatus, itemInUse, currentTimestamp, duration, 0, 0, 0, 0, 0, {}, 0, 0, lockStatus); // push new items to inventory
 	}
 
 	if (result == ITEM_ADD_DB_ERROR)
@@ -1227,28 +1265,38 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 		return ITEM_ADD_DB_ERROR;
 	}
 
-	if (!updatedItems.empty())
+	if (!(updatedItems.empty() && insertedItems.empty()))
 	{
-		if (inventoryItemsCount + updatedItems.size() > g_pServerConfig->inventorySlotMax)
+		if (!insertedItems.empty())
 		{
-			updatedItems.resize(g_pServerConfig->inventorySlotMax - inventoryItemsCount);
-			result = ITEM_ADD_INVENTORY_FULL;
+			if (g_UserDatabase.AddInventoryItems(userID, insertedItems) <= 0)
+			{
+				g_UserDatabase.CommitTransaction();
+				return ITEM_ADD_DB_ERROR;
+			}
 		}
 
-		if (g_UserDatabase.AddInventoryItems(userID, updatedItems) <= 0)
+		if (!updatedItems.empty())
 		{
-			g_UserDatabase.CommitTransaction();
-			return ITEM_ADD_DB_ERROR;
+			if (g_UserDatabase.UpdateInventoryItems(userID, updatedItems, UITEM_FLAG_COUNT) <= 0)
+			{
+				g_UserDatabase.CommitTransaction();
+				return ITEM_ADD_DB_ERROR;
+			}
 		}
+
+		insertedItems.insert(insertedItems.end(), updatedItems.begin(), updatedItems.end());
 
 		if (g_UserDatabase.CommitTransaction() == true)
 		{
 			if (user)
-				g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), updatedItems);
+				g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), insertedItems);
 		}
 		else
 			return ITEM_ADD_DB_ERROR;
 	}
+	else if (g_UserDatabase.CommitTransaction() == false)
+		return ITEM_ADD_DB_ERROR;
 
 	return result;
 }
@@ -1305,43 +1353,35 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 	}
 	default:
 	{
-		int flag = 0;
-
 		int category = g_pItemTable->GetCell<int>("Category", to_string(item.m_nItemID));
 		if (category < 9 || category == 11) // if extentable item(should be moved to onitemuse)
 		{
-			bool extend = false;
+			int flag = 0;
+
 			vector<CUserInventoryItem> items;
-			g_UserDatabase.GetInventoryItemsByID(user->GetID(), item.m_nItemID, items);
-			for (auto& i : items)
+			if (item.m_nExpiryDate)
 			{
-				if (i.m_nStatus == 1)
+				item.ConvertDurationToExpiryDate();
+
+				g_UserDatabase.GetInventoryItemsByID(user->GetID(), item.m_nItemID, items);
+				for (auto& i : items)
 				{
-					if (i.m_nExpiryDate)
+					if (i.m_nExpiryDate && i.m_nStatus)
 					{
-						item.ConvertDurationToExpiryDate();
-						item.m_nStatus = 1;
 						ExtendItem(user->GetID(), user, i, item.m_nExpiryDate);
-						extend = true;
 
-						flag |= UITEM_FLAG_EXPIRYDATE | UITEM_FLAG_STATUS;
+						// remove item
+						RemoveItem(user->GetID(), user, item);
+
+						return ITEM_USE_SUCCESS;
 					}
-
-					// remove item
-					RemoveItem(user->GetID(), user, i);
-
-					break;
 				}
+
+				flag |= UITEM_FLAG_EXPIRYDATE;
 			}
 
 			item.m_nStatus = 1;
 			flag |= UITEM_FLAG_STATUS;
-
-			if (item.m_nExpiryDate && !extend)
-			{
-				item.ConvertDurationToExpiryDate();
-				flag |= UITEM_FLAG_EXPIRYDATE;
-			}
 
 			g_UserDatabase.UpdateInventoryItem(user->GetID(), item, flag);
 
@@ -2742,7 +2782,7 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 	if (g_UserDatabase.GetCostumeLoadout(user->GetID(), loadout) <= 0)
 		return;
 
-	int flag = 0;
+	int flag = UITEM_FLAG_INUSE;
 
 	// unequip costume if item already in use
 	if (item.m_nInUse == 1)
@@ -2781,8 +2821,6 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 		}
 
 		item.m_nInUse = 0;
-
-		flag |= UITEM_FLAG_INUSE;
 	}
 	else
 	{
@@ -2858,7 +2896,6 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 			activeCostumeItem.m_nStatus = 1;
 
 			activeCostumeItem.PushItem(items, activeCostumeItem);
-			g_UserDatabase.UpdateInventoryItem(user->GetID(), activeCostumeItem, UITEM_FLAG_INUSE | UITEM_FLAG_STATUS);
 		}
 
 		item.m_nInUse = 1;
@@ -2868,14 +2905,16 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 
 		item.m_nStatus = 1;
 
-		flag |= UITEM_FLAG_INUSE | UITEM_FLAG_STATUS;
+		flag |= UITEM_FLAG_STATUS;
 	}
 
-	g_UserDatabase.UpdateCostumeLoadout(user->GetID(), loadout, zombieSkinID);
+	if (g_UserDatabase.UpdateCostumeLoadout(user->GetID(), loadout, zombieSkinID) <= 0)
+		return;
 
 	item.PushItem(items, item);
 
-	g_UserDatabase.UpdateInventoryItem(user->GetID(), item, flag);
+	if (g_UserDatabase.UpdateInventoryItems(user->GetID(), items, flag) <= 0)
+		return;
 
 	// send inventory update to user
 	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);

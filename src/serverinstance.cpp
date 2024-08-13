@@ -147,17 +147,17 @@ void CServerInstance::UnloadConfigs()
 	delete g_pServerConfig;
 }
 
-void CServerInstance::OnTCPConnectionCreated(IExtendedSocket* socket)
+bool CServerInstance::OnTCPConnectionCreated(IExtendedSocket* socket)
 {
 	if (g_UserDatabase.IsIPBanned(socket->GetIP()))
 	{
 		Logger().Info("Client (%d, %s) disconnected from the server due to banned ip\n", socket->GetID(), socket->GetIP().c_str());
 		DisconnectClient(socket);
 
-		// return false;
+		return false;
 	}
 
-	// return true;
+	return true;
 }
 
 void CServerInstance::OnTCPConnectionClosed(IExtendedSocket* socket)

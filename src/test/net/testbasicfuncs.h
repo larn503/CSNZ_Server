@@ -25,7 +25,7 @@ public:
 		REQUIRE(m_Server.Start(port, 128) == true);
 	}
 
-	void OnTCPConnectionCreated(IExtendedSocket* socket)
+	bool OnTCPConnectionCreated(IExtendedSocket* socket)
 	{
 		// Send(Server -> Client)
 		{
@@ -39,6 +39,8 @@ public:
 			if (socket->GetPacketsToSend().empty())
 				REQUIRE(sentBytes == bufSize);
 		}
+
+		return true;
 	}
 
 	void OnTCPConnectionClosed(IExtendedSocket* socket)

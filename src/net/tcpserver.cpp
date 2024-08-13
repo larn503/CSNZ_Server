@@ -179,12 +179,19 @@ void CTCPServer::Listen()
 			{
 				IExtendedSocket* socket = Accept(m_nNextClientIndex);
 				if (!socket)
-					return;
+					continue;
 
 				Logger().Info("Client (%d, %s) has been connected to the server\n", m_nNextClientIndex, socket->GetIP().c_str());
 
 				if (m_pListener)
-					m_pListener->OnTCPConnectionCreated(socket);
+				{
+					if (!m_pListener->OnTCPConnectionCreated(socket))
+					{
+						// start cycle from the beggining after pushing to vector, probably not the best solution
+						it = m_fds.begin();
+						continue;
+					}
+				}
 
 				m_nNextClientIndex++;
 
@@ -196,13 +203,14 @@ void CTCPServer::Listen()
 
 				// start cycle from the beggining after pushing to vector, probably not the best solution
 				it = m_fds.begin();
+				continue;
 			}
 			// read from client
 			else
 			{
 				IExtendedSocket* socket = GetExSocketBySocket(it->fd);
 				if (!socket)
-					return;
+					continue;
 
 				CReceivePacket* msg = socket->Read();
 				int readResult = socket->GetReadResult();
@@ -261,7 +269,7 @@ void CTCPServer::Listen()
 		{
 			IExtendedSocket* socket = GetExSocketBySocket(it->fd);
 			if (!socket)
-				return;
+				continue;
 
 			if (socket->GetPacketsToSend().size())
 			{
@@ -297,7 +305,6 @@ void CTCPServer::Listen()
 			if (socket)
 				DisconnectClient(socket);
 
-			m_fds.erase(it);
 			it = m_fds.begin(); // not the best solution
 			continue;
 		}
@@ -372,6 +379,19 @@ void CTCPServer::DisconnectClient(IExtendedSocket* socket)
 		m_pListener->OnTCPConnectionClosed(socket);
 
 	Logger().Info("Client (%d, %s) has been disconnected from the server\n", socket->GetID(), socket->GetIP().c_str());
+
+	SOCKET s = socket->GetSocket();
+	m_fds.erase(remove_if(m_fds.begin(), m_fds.end(),
+		[s](WSAPOLLFD fd)
+		{
+			if (fd.fd == s)
+			{
+				return true;
+			}
+
+			return false;
+		}
+	), m_fds.end());
 
 	delete socket;
 	m_Clients.erase(remove(m_Clients.begin(), m_Clients.end(), socket), m_Clients.end());

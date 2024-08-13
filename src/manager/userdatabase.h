@@ -46,6 +46,7 @@ public:
 	virtual int AddInventoryItem(int userID, CUserInventoryItem& item);
 	virtual int AddInventoryItems(int userID, std::vector<CUserInventoryItem>& items); // TODO
 	virtual int UpdateInventoryItem(int userID, const CUserInventoryItem& item, int flag);
+	virtual int UpdateInventoryItems(int userID, std::vector<CUserInventoryItem>& items, int flag);
 	virtual int GetInventoryItems(int userID, std::vector<CUserInventoryItem>& items);
 	virtual int GetInventoryItemsByID(int userID, int itemID, std::vector<CUserInventoryItem>& items);
 	virtual int GetInventoryItemBySlot(int userID, int slot, CUserInventoryItem& item);

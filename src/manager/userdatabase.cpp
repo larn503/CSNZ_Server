@@ -90,6 +90,14 @@ int CUserDatabaseProxy::UpdateInventoryItem(int userID, const CUserInventoryItem
 	return result;
 }
 
+int CUserDatabaseProxy::UpdateInventoryItems(int userID, vector<CUserInventoryItem>& items, int flag)
+{
+	ExecCalcStart();
+	int result = m_pDatabase->UpdateInventoryItems(userID, items, flag);
+	ExecCalcEnd(__FUNCTION__);
+	return result;
+}
+
 int CUserDatabaseProxy::GetInventoryItems(int userID, vector<CUserInventoryItem>& items)
 {
 	ExecCalcStart();
