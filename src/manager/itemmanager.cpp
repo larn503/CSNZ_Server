@@ -16,6 +16,7 @@
 using namespace std;
 
 #define ITEM_REWARDS_VERSION 1
+#define WEAPON_PAINTS_VERSION 1
 
 CItemManager g_ItemManager;
 
@@ -37,6 +38,9 @@ bool CItemManager::Init()
 			return false;
 	}
 
+	if (!LoadWeaponPaints())
+		return false;
+
 	m_pReinforceMaxLvTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxLv.csv"), rapidcsv::LabelParams(0, 0), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams());
 	m_pReinforceMaxExpTable = new CCSVTable(OBFUSCATE("Data/ReinforceMaxEXP.csv"), rapidcsv::LabelParams(0, 0), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams());
 
@@ -54,6 +58,7 @@ void CItemManager::Shutdown()
 	CBaseManager::Shutdown();
 
 	m_Rewards.clear();
+	m_WeaponPaints.clear();
 
 	delete m_pReinforceMaxLvTable;
 	delete m_pReinforceMaxExpTable;
@@ -94,6 +99,7 @@ bool CItemManager::LoadRewards()
 			reward.honorPoints = jReward.value("HonorPoints", reward.honorPoints);
 			reward.title = jReward.value("Title", "");
 			reward.description = jReward.value("Description", "");
+			reward.localized = jReward.value("Localized", 0);
 
 			if (jReward.contains("Items"))
 			{
@@ -173,6 +179,48 @@ bool CItemManager::LoadRewards()
 	catch (exception& ex)
 	{
 		Logger().Fatal("CItemManager::LoadRewards: an error occured while parsing ItemRewards.json: %s\n", ex.what());
+		return false;
+	}
+
+	return true;
+}
+
+bool CItemManager::LoadWeaponPaints()
+{
+	try
+	{
+		ifstream f("WeaponPaints.json");
+		ordered_json cfg = ordered_json::parse(f, nullptr, false, true);
+
+		if (cfg.is_discarded())
+		{
+			Logger().Fatal("CItemManager::LoadWeaponPaints: couldn't load WeaponPaints.json.\n");
+			return false;
+		}
+
+		int version = cfg.value("Version", 0);
+		if (version != WEAPON_PAINTS_VERSION)
+		{
+			Logger().Fatal("CItemManager::LoadWeaponPaints: %d != WEAPON_PAINTS_VERSION(%d)\n", version, WEAPON_PAINTS_VERSION);
+			return false;
+		}
+
+		for (auto& iWeaponPaint : cfg.items())
+		{
+			json jWeaponPaint = iWeaponPaint.value();
+			if (!jWeaponPaint.is_object())
+				continue;
+
+			WeaponPaint weaponPaint;
+			weaponPaint.itemID = stoi(iWeaponPaint.key());
+			weaponPaint.paintIDs = jWeaponPaint.value("Paints", weaponPaint.paintIDs);
+			
+			m_WeaponPaints.push_back(weaponPaint);
+		}
+	}
+	catch (exception& ex)
+	{
+		Logger().Fatal("CItemManager::LoadWeaponPaints: an error occured while parsing WeaponPaints.json: %s\n", ex.what());
 		return false;
 	}
 
@@ -1418,7 +1466,10 @@ bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 		}
 
 		if (notice.status)
-			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), notice);
+		{
+			Reward* reward = GetRewardByID(rewardID);
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), notice, reward->title, reward->description, reward->localized);
+		}
 	}
 
 	if (item.m_nCount == 0)
@@ -1745,6 +1796,11 @@ Reward* CItemManager::GetRewardByID(int rewardID)
 	return NULL;
 }
 
+std::vector<WeaponPaint> CItemManager::GetWeaponPaints()
+{
+	return m_WeaponPaints;
+}
+
 RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int rewardSelectID, bool ignoreClient, int randomRepeatCount)
 {
 	RewardNotice rewardNotice;
@@ -1882,10 +1938,10 @@ RewardNotice CItemManager::GiveReward(int userID, IUser* user, int rewardID, int
 	{
 		//if (!reward->zbsReward)
 		//	g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
-		if (user->GetRoomData() && user->GetRoomData()->m_bIsIngame)
-			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description, true);
-		else
-			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description);
+		g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description, reward->localized);
+
+		if (user->IsPlaying())
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, reward->title, reward->description, reward->localized, true);
 	}
 
 	return rewardNotice;
@@ -2492,6 +2548,16 @@ bool CItemManager::OnWeaponPaintRequest(IUser* user, CReceivePacket* msg)
 	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paint.m_nItemID));
 
 	if (weaponCategory != 11 && (weaponCategory < 1 || weaponCategory > 6) || paintClassName != "WeaponPaintItem")
+		return false;
+
+	// If weapon can't be painted, don't use it
+	auto it = std::find_if(m_WeaponPaints.begin(), m_WeaponPaints.end(), [weapon](const WeaponPaint& weaponPaint) { return weaponPaint.itemID == weapon.m_nItemID; });
+	if (it == m_WeaponPaints.end())
+		return false;
+
+	// If paint can't be used on this weapon, don't use it
+	std::vector<int> paintIDs = m_WeaponPaints.at(it - m_WeaponPaints.begin()).paintIDs;
+	if (std::find(paintIDs.begin(), paintIDs.end(), paint.m_nItemID) == paintIDs.end())
 		return false;
 
 	// If paint is already in the list, don't use it

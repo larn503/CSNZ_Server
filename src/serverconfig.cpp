@@ -75,7 +75,7 @@ const char* defaultServerConfig = R"(
 		"Encyclopedia": false,
 		"GameModeList": true,
 		"ProgressUnlock": true,
-		"WeaponPaint": true,
+		"WeaponPaints": true,
 		"ReinforceMaxLvl": true,
 		"ReinforceMaxEXP": true,
 		"ReinforceItemsExp": true,
@@ -96,7 +96,11 @@ const char* defaultServerConfig = R"(
 		"RandomWeaponList": true,
 		"ModeEvent": true,
 		"MileageShop": false,
-		"EventShop": false
+		"EventShop": false,
+		"FamilyTotalWarMap": true,
+		"FamilyTotalWar": true,
+		"Unk54": true,
+		"Unk55": true
 	},
 	"DefaultUser": {
 		"GameMaster": true,
@@ -1007,8 +1011,8 @@ bool CServerConfig::Load()
 				metadataToSend |= kMetadataFlag_GameModeList;
 			if (jMetadata.value("ProgressUnlock", false))
 				metadataToSend |= kMetadataFlag_ProgressUnlock;
-			if (jMetadata.value("WeaponPaint", false))
-				metadataToSend |= kMetadataFlag_WeaponPaint;
+			if (jMetadata.value("WeaponPaints", false))
+				metadataToSend |= kMetadataFlag_WeaponPaints;
 			if (jMetadata.value("ReinforceMaxLvl", false))
 				metadataToSend |= kMetadataFlag_ReinforceMaxLvl;
 			if (jMetadata.value("ReinforceMaxEXP", false))
@@ -1051,6 +1055,14 @@ bool CServerConfig::Load()
 				metadataToSend |= kMetadataFlag_MileageShop;
 			if (jMetadata.value("EventShop", false))
 				metadataToSend |= kMetadataFlag_EventShop;
+			if (jMetadata.value("FamilyTotalWarMap", false))
+				metadataToSend |= kMetadataFlag_FamilyTotalWarMap;
+			if (jMetadata.value("FamilyTotalWar", false))
+				metadataToSend |= kMetadataFlag_FamilyTotalWar;
+			if (jMetadata.value("Unk54", false))
+				metadataToSend |= kMetadataFlag_Unk54;
+			if (jMetadata.value("Unk55", false))
+				metadataToSend |= kMetadataFlag_Unk55;
 		}
 		if (cfg.contains("DefaultUser"))
 		{
@@ -1378,7 +1390,7 @@ void CServerConfig::LoadDefaultConfig(ordered_json& cfg)
 	//	{"ClientTable", true},
 	//	{"Unk3", false},
 	//	{"ItemBox", true},
-	//	{"WeaponPaint", true},
+	//	{"WeaponPaints", true},
 	//	{"Unk8", true},
 	//	{"MatchOption", true},
 	//	{"Unk15", true},

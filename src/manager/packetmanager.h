@@ -56,7 +56,7 @@ public:
 	void SendUMsgUserMessage(IExtendedSocket* socket, int type, const std::string& senderName, const std::string& text, int whisperType = 0);
 	void SendUMsgNotice(IExtendedSocket* socket, const Notice_s& notice, bool unk = 1);
 	void SendUMsgExpiryNotice(IExtendedSocket* socket, const std::vector<int>& expiryItems);
-	void SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, std::string title = "", std::string description = "", bool inGame = false, bool scen = false);
+	void SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, std::string title = "", std::string description = "", bool localized = false, bool inGame = false, bool scen = false);
 	void SendUMsgRewardSelect(IExtendedSocket* socket, Reward* reward);
 
 	void SendServerList(IExtendedSocket* socket);
@@ -92,7 +92,7 @@ public:
 	void SendMetadataReinforceMaxEXP(IExtendedSocket* socket);
 	void SendMetadataUnk8(IExtendedSocket* socket);
 	void SendMetadataProgressUnlock(IExtendedSocket* socket);
-	void SendMetadataWeaponPaint(IExtendedSocket* socket);
+	void SendMetadataWeaponPaints(IExtendedSocket* socket, std::vector<WeaponPaint>& weaponPaints);
 	void SendMetadataUnk3(IExtendedSocket* socket);
 	void SendMetadataReinforceItemsExp(IExtendedSocket* socket);
 	void SendMetadataItemExpireTime(IExtendedSocket* socket);
@@ -115,6 +115,10 @@ public:
 	void SendMetadataModeEvent(IExtendedSocket* socket);
 	void SendMetadataMileageShop(IExtendedSocket* socket);
 	void SendMetadataEventShop(IExtendedSocket* socket);
+	void SendMetadataFamilyTotalWarMap(IExtendedSocket* socket);
+	void SendMetadataFamilyTotalWar(IExtendedSocket* socket);
+	void SendMetadataUnk54(IExtendedSocket* socket);
+	void SendMetadataUnk55(IExtendedSocket* socket);
 
 	void SendGameMatchInfo(IExtendedSocket* socket);
 	void SendGameMatchUnk(IExtendedSocket* socket);
@@ -289,7 +293,6 @@ private:
 	CBinMetadata* m_pItemZip;
 	CBinMetadata* m_pCodisDataZip;
 	CBinMetadata* m_pWeaponPropZip;
-	CBinMetadata* m_pPaintItemList;
 	CBinMetadata* m_pReinforceItemsExp;
 	CBinMetadata* m_pRandomWeaponList;
 	CBinMetadata* m_pUnk3;
@@ -302,6 +305,10 @@ private:
 	CBinMetadata* m_pModeEventZip;
 	CBinMetadata* m_pMileageShopZip;
 	CBinMetadata* m_pEventShopZip;
+	CBinMetadata* m_pFamilyTotalWarMapZip;
+	CBinMetadata* m_pFamilyTotalWarZip;
+	CBinMetadata* m_pUnk54;
+	CBinMetadata* m_pUnk55;
 };
 
 extern CPacketManager g_PacketManager;

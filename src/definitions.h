@@ -169,7 +169,7 @@ enum EMetadataPacketType
 	kPacket_Metadata_ModeList = 2,
 	kPacket_Metadata_Unk3 = 3,
 	kPacket_Metadata_ItemBox = 4,
-	KPacket_Metadata_PaintItemList = 6,
+	kPacket_Metadata_WeaponPaints = 6,
 	kPacket_Metadata_Unk8 = 8,
 	kPacket_Metadata_MatchOption = 9,
 	kPacket_Metadata_Unk15 = 15,
@@ -198,6 +198,10 @@ enum EMetadataPacketType
 	kPacket_Metadata_Unk49 = 49,
 	kPacket_Metadata_ModeEvent = 50,
 	kPacket_Metadata_EventShop = 51,
+	kPacket_Metadata_FamilyTotalWarMap = 52,
+	kPacket_Metadata_FamilyTotalWar = 53,
+	kPacket_Metadata_Unk54 = 54,
+	kPacket_Metadata_Unk55 = 55,
 	kPacket_Metadata_Hash = 255
 };
 
@@ -208,7 +212,7 @@ enum EServerConfig_MetadataFlag : uint64_t
 	kMetadataFlag_ModeList = 1LL << 2,
 	kMetadataFlag_Unk3 = 1LL << 3,
 	kMetadataFlag_ItemBox = 1LL << 4,
-	kMetadataFlag_WeaponPaint = 1LL << 5,
+	kMetadataFlag_WeaponPaints = 1LL << 5,
 	kMetadataFlag_Unk8 = 1LL << 6,
 	kMetadataFlag_MatchOption = 1LL << 7,
 	kMetadataFlag_Unk15 = 1LL << 8,
@@ -238,6 +242,10 @@ enum EServerConfig_MetadataFlag : uint64_t
 	kMetadataFlag_ModeEvent = 1LL << 32,
 	kMetadataFlag_MileageShop = 1LL << 33,
 	kMetadataFlag_EventShop = 1LL << 34,
+	kMetadataFlag_FamilyTotalWarMap = 1LL << 35,
+	kMetadataFlag_FamilyTotalWar = 1LL << 36,
+	kMetadataFlag_Unk54 = 1LL << 37,
+	kMetadataFlag_Unk55 = 1LL << 38,
 };
 
 enum ItemPacketType
@@ -344,6 +352,7 @@ struct Reward
 	int rewardId;
 	int lvlRestriction;
 	bool select;
+	bool localized;
 	std::string title;
 	std::string description;
 	std::vector<int> points;
@@ -642,6 +651,7 @@ enum
 	kEventFlag_MissionChain = 1 << 19,
 	kEventFlag_WebEvent = 1 << 21, // WTF?
 	kEventFlag_CPShop = 1 << 22,
+	kEventFlag_ClanWar = 1 << 23,
 };
 enum MiniGamePacketType
 {
@@ -1630,3 +1640,9 @@ enum HostServerPacketType
 };
 
 #define ADDON_COUNT 6
+
+struct WeaponPaint
+{
+	int itemID;
+	std::vector<int> paintIDs;
+};

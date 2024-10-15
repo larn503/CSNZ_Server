@@ -308,6 +308,11 @@ void CommandDbReload(CCommand* cmd, const std::vector<std::string>& args)
 
 	Logger().Info("Sent shop update to: %d\n", g_UserManager.GetUsers().size());
 
+	for (auto u : g_UserManager.GetUsers())
+		g_UserManager.SendMetadata(u->GetExtendedSocket());
+
+	Logger().Info("Sent metadata update to: %d\n", g_UserManager.GetUsers().size());
+
 	Logger().Info("Managers reload successful.\n");
 }
 
@@ -429,8 +434,10 @@ void CommandGiveItem(CCommand* cmd, const std::vector<std::string>& args)
 		}
 		else
 		{
-			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice);
-			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "", "", true);
+			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "QUEST_REWARD_TITLE", "QUEST_REWARD_MSG", true);
+
+			if (user->IsPlaying())
+				g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "QUEST_REWARD_TITLE", "QUEST_REWARD_MSG", true, true);
 		}
 
 		break;

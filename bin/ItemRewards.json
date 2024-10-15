@@ -1,6 +1,9 @@
 {
 	"Version": 1,
 	"1001": {
+		"Title": "LEVEL1_GIFTBOX_TITLE",
+		"Description": "LEVEL1_GIFTBOX_MSG",
+		"Localized": true,
 		"LvlRestriction": 1,
 		"Items": {
 			"1": {
@@ -50,7 +53,10 @@
 		}
 	},
 	"1002": {
-		"LvlRestriction": 3,
+		"Title": "LEVEL4_GIFTBOX_TITLE",
+		"Description": "LEVEL4_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 4,
 		"Items": {
 			"1003": {
 				"Count": 1,
@@ -87,7 +93,10 @@
 		}
 	},
 	"1003": {
-		"LvlRestriction": 5,
+		"Title": "LEVEL6_GIFTBOX_TITLE",
+		"Description": "LEVEL6_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 6,
 		"Items": {
 			"1004": {
 				"Count": 1,
@@ -140,7 +149,10 @@
 		}
 	},
 	"1004": {
-		"LvlRestriction": 10,
+		"Title": "LEVEL8_GIFTBOX_TITLE",
+		"Description": "LEVEL8_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 8,
 		"Items": {
 			"1005": {
 				"Count": 1,
@@ -201,7 +213,10 @@
 		}
 	},
 	"1005": {
-		"LvlRestriction": 15,
+		"Title": "LEVEL11_GIFTBOX_TITLE",
+		"Description": "LEVEL11_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 11,
 		"Items": {
 			"1006": {
 				"Count": 1,
@@ -250,7 +265,10 @@
 		}
 	},
 	"1006": {
-		"LvlRestriction": 20,
+		"Title": "LEVEL14_GIFTBOX_TITLE",
+		"Description": "LEVEL14_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 14,
 		"Items": {
 			"1007": {
 				"Count": 1,
@@ -291,7 +309,10 @@
 		}
 	},
 	"1007": {
-		"LvlRestriction": 25,
+		"Title": "LEVEL18_GIFTBOX_TITLE",
+		"Description": "LEVEL18_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 18,
 		"Items": {
 			"1008": {
 				"Count": 1,
@@ -340,7 +361,10 @@
 		}
 	},
 	"1008": {
-		"LvlRestriction": 30,
+		"Title": "LEVEL23_GIFTBOX_TITLE",
+		"Description": "LEVEL23_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 23,
 		"Items": {
 			"1016": {
 				"Count": 1,
@@ -381,7 +405,10 @@
 		}
 	},
 	"1016": {
-		"LvlRestriction": 35,
+		"Title": "LEVEL28_GIFTBOX_TITLE",
+		"Description": "LEVEL28_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 28,
 		"Items": {
 			"1017": {
 				"Count": 1,
@@ -434,7 +461,10 @@
 		}
 	},
 	"1017": {
-		"LvlRestriction": 40,
+		"Title": "LEVEL33_GIFTBOX_TITLE",
+		"Description": "LEVEL33_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 33,
 		"Items": {
 			"1018": {
 				"Count": 1,
@@ -475,7 +505,10 @@
 		}
 	},
 	"1018": {
-		"LvlRestriction": 45,
+		"Title": "LEVEL38_GIFTBOX_TITLE",
+		"Description": "LEVEL38_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 38,
 		"Items": {
 			"1019": {
 				"Count": 1,
@@ -524,7 +557,10 @@
 		}
 	},
 	"1019": {
-		"LvlRestriction": 50,
+		"Title": "LEVEL43_GIFTBOX_TITLE",
+		"Description": "LEVEL43_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 43,
 		"Items": {
 			"1020": {
 				"Count": 1,
@@ -581,7 +617,10 @@
 		}
 	},
 	"1020": {
-		"LvlRestriction": 55,
+		"Title": "LEVEL48_GIFTBOX_TITLE",
+		"Description": "LEVEL48_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 48,
 		"Items": {
 			"1021": {
 				"Count": 1,
@@ -630,7 +669,10 @@
 		}
 	},
 	"1021": {
-		"LvlRestriction": 60,
+		"Title": "LEVEL54_GIFTBOX_TITLE",
+		"Description": "LEVEL54_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 54,
 		"Items": {
 			"1022": {
 				"Count": 1,
@@ -683,7 +725,10 @@
 		}
 	},
 	"1022": {
-		"LvlRestriction": 65,
+		"Title": "LEVEL60_GIFTBOX_TITLE",
+		"Description": "LEVEL60_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 60,
 		"Items": {
 			"1023": {
 				"Count": 1,
@@ -724,7 +769,10 @@
 		}
 	},
 	"1023": {
-		"LvlRestriction": 70,
+		"Title": "LEVEL66_GIFTBOX_TITLE",
+		"Description": "LEVEL66_GIFTBOX_MSG",
+		"Localized": true,
+		"LvlRestriction": 66,
 		"Items": {
 			"1024": {
 				"Count": 1,
@@ -773,6 +821,9 @@
 		}
 	},
 	"1024": {
+		"Title": "LEVEL72_GIFTBOX_TITLE",
+		"Description": "LEVEL72_GIFTBOX_MSG",
+		"Localized": true,
 		"LvlRestriction": 72,
 		"Items": {
 			"1032": {
@@ -846,6 +897,9 @@
 		}
 	},
 	"1027": {
+		"Title": "ExpCoupon_TITLE",
+		"Description": "ExpCoupon_MSG",
+		"Localized": true,
 		"Exp": [
 			500,
 			1000,
@@ -853,6 +907,9 @@
 		]
 	},
 	"1028": {
+		"Title": "ExpCoupon_TITLE",
+		"Description": "ExpCoupon_MSG",
+		"Localized": true,
 		"Exp": [
 			1000,
 			2000,
@@ -860,6 +917,9 @@
 		]
 	},
 	"1029": {
+		"Title": "ExpCoupon_TITLE",
+		"Description": "ExpCoupon_MSG",
+		"Localized": true,
 		"Exp": [
 			2000,
 			4000,
@@ -867,6 +927,9 @@
 		]
 	},
 	"1030": {
+		"Title": "PntCoupon_TITLE",
+		"Description": "PntCoupon_MSG",
+		"Localized": true,
 		"Points": [
 			250,
 			500,
@@ -874,6 +937,9 @@
 		]
 	},
 	"1031": {
+		"Title": "PntCoupon_TITLE",
+		"Description": "PntCoupon_MSG",
+		"Localized": true,
 		"Points": [
 			500,
 			1000,
@@ -881,6 +947,9 @@
 		]
 	},
 	"1032": {
+		"Title": "PntCoupon_TITLE",
+		"Description": "PntCoupon_MSG",
+		"Localized": true,
 		"Points": [
 			1000,
 			2000,
@@ -888,6 +957,9 @@
 		]
 	},
 	"2189": {
+		"Title": "transbox_weapon_TITLE",
+		"Description": "transbox_weapon_MSG",
+		"Localized": true,
 		"Items": {
 			"8084": {
 				"Count": 1,
@@ -912,6 +984,8 @@
 		}
 	},
 	"2214": {
+		"Title": "Parts Weapon Selection Box",
+		"Description": "You obtained the following item from the Parts Weapon Selection Box.",
 		"Select": true,
 		"Items": {
 			"270": {

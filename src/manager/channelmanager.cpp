@@ -540,7 +540,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 					rewardNotice.points = 0;
 					rewardNotice.honorPoints = 0;
 					rewardNotice.items.push_back(rewardItem);
-					g_PacketManager.SendUMsgRewardNotice(socket, rewardNotice);
+					g_PacketManager.SendUMsgRewardNotice(socket, rewardNotice, "QUEST_REWARD_TITLE", "QUEST_REWARD_MSG", true);
 
 					break;
 				}
@@ -638,8 +638,10 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 					}
 					else
 					{
-						g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice);
-						g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "", "", true);
+						g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "QUEST_REWARD_TITLE", "QUEST_REWARD_MSG", true);
+
+						if (user->IsPlaying())
+							g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), rewardNotice, "QUEST_REWARD_TITLE", "QUEST_REWARD_MSG", true, true);
 					}
 
 					break;

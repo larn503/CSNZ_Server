@@ -24,6 +24,7 @@ public:
 	virtual void Shutdown();
 
 	bool LoadRewards();
+	bool LoadWeaponPaints();
 	bool KVToJson();
 	bool OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	int AddItem(int userID, IUser* user, int itemId, int count, int duration, int lockStatus = 0);
@@ -43,6 +44,8 @@ public:
 	bool OnItemUse(IUser* user, CUserInventoryItem& item, int count = 1);
 
 	Reward* GetRewardByID(int rewardID);
+	std::vector<WeaponPaint> GetWeaponPaints();
+
 private:
 	bool OnDailyRewardsRequest(IUser* user, int requestId);
 	bool OnEnhancementRequest(IUser* user, CReceivePacket* msg);
@@ -56,6 +59,7 @@ private:
 	void InsertExp(IUser* user, CUserInventoryItem& targetItem, std::vector<CUserInventoryItem>& items);
 
 	std::vector<Reward> m_Rewards;
+	std::vector<WeaponPaint> m_WeaponPaints;
 
 	CCSVTable* m_pReinforceMaxLvTable;
 	CCSVTable* m_pReinforceMaxExpTable;

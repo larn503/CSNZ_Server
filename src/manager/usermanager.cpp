@@ -562,8 +562,8 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 		g_PacketManager.SendMetadataUnk3(socket);
 	if (flag & kMetadataFlag_ItemBox)
 		g_PacketManager.SendMetadataItemBox(socket, g_LuckyItemManager.GetItems());
-	if (flag & kMetadataFlag_WeaponPaint)
-		g_PacketManager.SendMetadataWeaponPaint(socket);
+	if (flag & kMetadataFlag_WeaponPaints)
+		g_PacketManager.SendMetadataWeaponPaints(socket, g_ItemManager.GetWeaponPaints());
 	if (flag & kMetadataFlag_Unk8)
 		g_PacketManager.SendMetadataUnk8(socket);
 	if (flag & kMetadataFlag_MatchOption)
@@ -622,6 +622,14 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 		g_PacketManager.SendMetadataModeEvent(socket);
 	if (flag & kMetadataFlag_EventShop)
 		g_PacketManager.SendMetadataEventShop(socket);
+	if (flag & kMetadataFlag_FamilyTotalWarMap)
+		g_PacketManager.SendMetadataFamilyTotalWarMap(socket);
+	if (flag & kMetadataFlag_FamilyTotalWar)
+		g_PacketManager.SendMetadataFamilyTotalWar(socket);
+	if (flag & kMetadataFlag_Unk54)
+		g_PacketManager.SendMetadataUnk54(socket);
+	if (flag & kMetadataFlag_Unk55)
+		g_PacketManager.SendMetadataUnk55(socket);
 }
 
 void CUserManager::SendUserLoadout(IUser* user)

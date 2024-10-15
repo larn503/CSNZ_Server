@@ -39,7 +39,8 @@ CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 	m_pWeaponPropZip = NULL;
 	m_pModeEventZip = NULL;
 	m_pEventShopZip = NULL;
-	m_pPaintItemList = NULL;
+	m_pFamilyTotalWarMapZip = NULL;
+	m_pFamilyTotalWarZip = NULL;
 	m_pReinforceItemsExp = NULL;
 	m_pRandomWeaponList = NULL;
 	m_pUnk3 = NULL;
@@ -49,6 +50,8 @@ CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 	m_pUnk31 = NULL;
 	m_pUnk43 = NULL;
 	m_pUnk49 = NULL;
+	m_pUnk54 = NULL;
+	m_pUnk55 = NULL;
 }
 
 CPacketManager::~CPacketManager()
@@ -78,7 +81,8 @@ bool CPacketManager::Init()
 	m_pWeaponPropZip = LoadBinaryMetadata("WeaponProp.json", true);
 	m_pModeEventZip = LoadBinaryMetadata("ModeEvent.csv", true);
 	m_pEventShopZip = LoadBinaryMetadata("EventShop.csv", true);
-	m_pPaintItemList = LoadBinaryMetadata("Metadata_PaintItemList.bin");
+	m_pFamilyTotalWarMapZip = LoadBinaryMetadata("FamilyTotalWarMap.csv", true);
+	m_pFamilyTotalWarZip = LoadBinaryMetadata("FamilyTotalWar.json", true);
 	m_pReinforceItemsExp = LoadBinaryMetadata("Metadata_ReinforceItemsExp.bin");
 	m_pRandomWeaponList = LoadBinaryMetadata("Metadata_RandomWeaponList.bin");
 	m_pUnk3 = LoadBinaryMetadata("Metadata_Unk3.bin");
@@ -88,11 +92,14 @@ bool CPacketManager::Init()
 	m_pUnk31 = LoadBinaryMetadata("Metadata_Unk31.bin");
 	m_pUnk43 = LoadBinaryMetadata("Metadata_Unk43.bin");
 	m_pUnk49 = LoadBinaryMetadata("Metadata_Unk49.bin");
+	m_pUnk54 = LoadBinaryMetadata("Metadata_Unk54.bin");
+	m_pUnk55 = LoadBinaryMetadata("Metadata_Unk55.bin");
 
 	if (!m_pMapListZip || !m_pClientTableZip || !m_pWeaponPartsZip || !m_pMileageShopZip || !m_pMatchingZip || !m_pProgressUnlockZip || !m_pGameModeListZip ||
 		!m_pReinforceMaxLvlZip || !m_pReinforceMaxExpZip || !m_pItemExpireTimeZip || !m_pHonorMoneyShopZip || !m_pScenarioTX_CommonZip || !m_pScenarioTX_DediZip ||
-		!m_pShopItemList_DediZip || !m_pZBCompetitiveZip || !m_pPPSystemZip || !m_pItemZip || !m_pCodisDataZip || !m_pWeaponPropZip ||
-		!m_pPaintItemList || !m_pReinforceItemsExp || !m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49 || !m_pModeEventZip || !m_pEventShopZip)
+		!m_pShopItemList_DediZip || !m_pZBCompetitiveZip || !m_pPPSystemZip || !m_pItemZip || !m_pCodisDataZip || !m_pWeaponPropZip || !m_pReinforceItemsExp ||
+		!m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49 || !m_pModeEventZip || !m_pEventShopZip ||
+		!m_pFamilyTotalWarMapZip || !m_pFamilyTotalWarZip || !m_pUnk54 || !m_pUnk55)
 	{
 		Logger().Fatal("Failed to load metadata\n");
 		return false;
@@ -147,9 +154,11 @@ void CPacketManager::Shutdown()
 		delete m_pModeEventZip;
 	if (m_pEventShopZip)
 		delete m_pEventShopZip;
+	if (m_pFamilyTotalWarMapZip)
+		delete m_pFamilyTotalWarMapZip;
+	if (m_pFamilyTotalWarZip)
+		delete m_pFamilyTotalWarZip;
 
-	if (m_pPaintItemList)
-		delete m_pPaintItemList;
 	if (m_pReinforceItemsExp)
 		delete m_pReinforceItemsExp;
 	if (m_pUnk3)
@@ -168,6 +177,10 @@ void CPacketManager::Shutdown()
 		delete m_pUnk43;
 	if (m_pUnk49)
 		delete m_pUnk49;
+	if (m_pUnk54)
+		delete m_pUnk54;
+	if (m_pUnk55)
+		delete m_pUnk55;
 }
 
 CSendPacket* CPacketManager::CreatePacket(IExtendedSocket* socket, int msgID)
@@ -432,15 +445,12 @@ void CPacketManager::SendUMsgExpiryNotice(IExtendedSocket* socket, const vector<
 	socket->Send(msg);
 }
 
-void CPacketManager::SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, string title, string description, bool inGame, bool scen)
+void CPacketManager::SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, string title, string description, bool localized, bool inGame, bool scen)
 {
-	string titleMsg;
-	string text;
-
 	CSendPacket* msg = CreatePacket(socket, PacketId::UMsg);
 	msg->BuildHeader();
 
-	if (!title.size() && !description.size() && !scen)
+	if (localized && !scen)
 	{
 		msg->WriteUInt8(inGame ? UMsgPacketType::RewardInGameNoticeMsgLocalized : UMsgPacketType::RewardNoticeMsgLocalized);
 	}
@@ -452,7 +462,6 @@ void CPacketManager::SendUMsgRewardNotice(IExtendedSocket* socket, const RewardN
 	{
 		msg->WriteUInt8(inGame ? UMsgPacketType::RewardInGameNoticeMsg : UMsgPacketType::RewardNoticeMsg);
 	}
-
 
 	msg->WriteUInt16(reward.items.size());
 
@@ -531,112 +540,13 @@ void CPacketManager::SendUMsgRewardNotice(IExtendedSocket* socket, const RewardN
 		msg->WriteUInt32(0);
 	}
 
-	switch (reward.rewardId)
-	{
-	case 1:
-		titleMsg = "QUEST_REWARD_TITLE";
-		text = "QUEST_REWARD_MSG";
-		break;
-	case 2:
-		titleMsg = "BINGO_PRIZE_TITLE";
-		text = "BINGO_PRIZE_MSG";
-		break;
-	case 3:
-		titleMsg = "BINGO_CLEAR_PRIZE_TITLE";
-		text = "BINGO_CLEAR_PRIZE_MSG";
-		break;
-	case 1001:
-		titleMsg = "GIFT_LEVEL1_TITLE";
-		text = "GIFT_LEVEL1_MSG";
-		break;
-	case 1002:
-		titleMsg = "GIFT_LEVEL3_TITLE";
-		text = "GIFT_LEVEL3_MSG";
-		break;
-	case 1003:
-		titleMsg = "GIFT_LEVEL5_TITLE";
-		text = "GIFT_LEVEL5_MSG";
-		break;
-	case 1004:
-		titleMsg = "GIFT_LEVEL10_TITLE";
-		text = "GIFT_LEVEL10_MSG";
-		break;
-	case 1005:
-		titleMsg = "GIFT_LEVEL15_TITLE";
-		text = "GIFT_LEVEL15_MSG";
-		break;
-	case 1006:
-		titleMsg = "GIFT_LEVEL20_TITLE";
-		text = "GIFT_LEVEL20_MSG";
-		break;
-	case 1007:
-		titleMsg = "GIFT_LEVEL25_TITLE";
-		text = "GIFT_LEVEL25_MSG";
-		break;
-	case 1008:
-		titleMsg = "GIFT_LEVEL30_TITLE";
-		text = "GIFT_LEVEL30_MSG";
-		break;
-	case 1016:
-		titleMsg = "GIFT_LEVEL35_TITLE";
-		text = "GIFT_LEVEL35_MSG";
-		break;
-	case 1017:
-		titleMsg = "GIFT_LEVEL40_TITLE";
-		text = "GIFT_LEVEL40_MSG";
-		break;
-	case 1018:
-		titleMsg = "GIFT_LEVEL45_TITLE";
-		text = "GIFT_LEVEL45_MSG";
-		break;
-	case 1019:
-		titleMsg = "GIFT_LEVEL50_TITLE";
-		text = "GIFT_LEVEL30_MSG";
-		break;
-	case 1020:
-		titleMsg = "GIFT_LEVEL55_TITLE";
-		text = "GIFT_LEVEL55_MSG";
-		break;
-	case 1021:
-		titleMsg = "GIFT_LEVEL60_TITLE";
-		text = "GIFT_LEVEL60_MSG";
-		break;
-	case 1022:
-		titleMsg = "GIFT_LEVEL65_TITLE";
-		text = "GIFT_LEVEL65_MSG";
-		break;
-	case 1023:
-		titleMsg = "GIFT_LEVEL70_TITLE";
-		text = "GIFT_LEVEL70_MSG";
-		break;
-	case 1024:
-		titleMsg = "GIFT_LEVEL72_TITLE";
-		text = "GIFT_LEVEL72_MSG";
-		break;
-	case 1027:
-	case 1028:
-	case 1029:
-		titleMsg = "ExpCoupon_TITLE";
-		text = "ExpCoupon_MSG";
-		break;
-	case 1030:
-	case 1031:
-	case 1032:
-		titleMsg = "PntCoupon_TITLE";
-		text = "PntCoupon_MSG";
-		break;
-	default:
-		titleMsg = title;
-		text = description;
-	};
-
-	msg->WriteString(titleMsg);
-	msg->WriteString(text);
+	msg->WriteString(title);
+	msg->WriteString(description);
 
 	msg->WriteUInt8(0); // additional str
 	for (int i = 0; i < 0; i++)
 	{
-		msg->WriteString("fuck");
+		msg->WriteString("");
 	}
 
 	socket->Send(msg);
@@ -672,11 +582,11 @@ void CPacketManager::SendUMsgRewardSelect(IExtendedSocket* socket, Reward* rewar
 	msg->WriteString(reward->title); // reward title
 	msg->WriteString(reward->description); // reward desc
 	msg->WriteUInt8(0); // additional strings count
+	msg->WriteUInt32(reward->rewardId);
 	for (int i = 0; i < 0; i++)
 	{
 		msg->WriteString("");
 	}
-	msg->WriteUInt32(reward->rewardId);
 
 	socket->Send(msg);
 }
@@ -1006,15 +916,24 @@ void CPacketManager::SendMetadataUnk8(IExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataWeaponPaint(IExtendedSocket* socket)
+void CPacketManager::SendMetadataWeaponPaints(IExtendedSocket* socket, std::vector<WeaponPaint>& weaponPaints)
 {
-	if (!m_pPaintItemList)
-		return;
-
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pPaintItemList->GetBuf(), m_pPaintItemList->GetBufSize());
+	msg->WriteUInt8(kPacket_Metadata_WeaponPaints);
+
+	msg->WriteUInt16(weaponPaints.size());
+	for (auto &weaponPaint : weaponPaints)
+	{
+		msg->WriteUInt16(weaponPaint.itemID);
+
+		msg->WriteUInt16(weaponPaint.paintIDs.size());
+		for (auto &paintID : weaponPaint.paintIDs)
+		{
+			msg->WriteUInt16(paintID);
+		}
+	}
 
 	socket->Send(msg);
 }
@@ -1464,6 +1383,64 @@ void CPacketManager::SendMetadataEventShop(IExtendedSocket* socket)
 
 	msg->WriteUInt16(m_pEventShopZip->GetBufSize());
 	msg->WriteData(m_pEventShopZip->GetBuf(), m_pEventShopZip->GetBufSize());
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMetadataFamilyTotalWarMap(IExtendedSocket* socket)
+{
+	if (!m_pFamilyTotalWarMapZip)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(kPacket_Metadata_FamilyTotalWarMap);
+
+	msg->WriteUInt16(m_pFamilyTotalWarMapZip->GetBufSize());
+	msg->WriteData(m_pFamilyTotalWarMapZip->GetBuf(), m_pFamilyTotalWarMapZip->GetBufSize());
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMetadataFamilyTotalWar(IExtendedSocket* socket)
+{
+	if (!m_pFamilyTotalWarZip)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(kPacket_Metadata_FamilyTotalWar);
+
+	msg->WriteUInt16(m_pFamilyTotalWarZip->GetBufSize());
+	msg->WriteData(m_pFamilyTotalWarZip->GetBuf(), m_pFamilyTotalWarZip->GetBufSize());
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMetadataUnk54(IExtendedSocket* socket)
+{
+	if (!m_pUnk54)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteData(m_pUnk54->GetBuf(), m_pUnk54->GetBufSize());
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMetadataUnk55(IExtendedSocket* socket)
+{
+	if (!m_pUnk55)
+		return;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
+	msg->BuildHeader();
+
+	msg->WriteData(m_pUnk55->GetBuf(), m_pUnk55->GetBufSize());
 
 	socket->Send(msg);
 }
@@ -2872,7 +2849,9 @@ void CPacketManager::SendRoomGameResult(IExtendedSocket* socket, IRoom* room, CG
 		msg->WriteUInt16(0); // accessories bonus exp
 		msg->WriteUInt16(0); // team/clan bonus exp
 		msg->WriteUInt16(0);
-		msg->WriteUInt16(0); 
+		msg->WriteUInt16(0);
+		msg->WriteUInt16(0);
+		msg->WriteUInt16(0);
 		msg->WriteUInt8(0); // kakaito huita sleva
 		msg->WriteUInt8(0); // headshots
 		msg->WriteUInt8(0); // frag kills
@@ -5819,6 +5798,7 @@ void BuildClanInfo(CSendPacket* msg, const Clan_s& clan)
 	for (int i = 0; i < 0; i++)
 	{
 		msg->WriteUInt16(0);
+		msg->WriteUInt16(0);
 		msg->WriteUInt32(0);
 	}
 
@@ -5884,6 +5864,9 @@ void BuildClanInfo(CSendPacket* msg, const Clan_s& clan)
 		msg->WriteUInt32(0);
 	}
 
+	msg->WriteUInt32(0);
+	msg->WriteUInt8(0);
+	msg->WriteUInt8(0);
 	msg->WriteUInt16(0);
 	msg->WriteUInt32(0);
 	msg->WriteUInt16(0);
@@ -5915,6 +5898,8 @@ void CPacketManager::SendClanList(IExtendedSocket* socket, const vector<ClanList
 		msg->WriteString(clan.noticeMsg);
 		msg->WriteUInt8(0);
 		msg->WriteUInt32(0); // float?
+		msg->WriteUInt32(0);
+		msg->WriteUInt8(0);
 	}
 
 	socket->Send(msg);
@@ -6296,6 +6281,13 @@ void CPacketManager::SendClanUpdate(IExtendedSocket* socket, int type, int membe
 			msg->WriteUInt32(0);
 			msg->WriteUInt32(0);
 		}
+		break;
+	}
+	case 13:
+	{
+		msg->WriteUInt32(0);
+		msg->WriteUInt8(0);
+		msg->WriteUInt8(0);
 		break;
 	}
 	}

@@ -29,7 +29,7 @@ public:
 	virtual void SendUMsgUserMessage(IExtendedSocket* socket, int type, const std::string& senderName, const std::string& text, int whisperType = 0) = 0;
 	virtual void SendUMsgNotice(IExtendedSocket* socket, const Notice_s& notice, bool unk = 1) = 0;
 	virtual void SendUMsgExpiryNotice(IExtendedSocket* socket, const std::vector<int>& expiryItems) = 0;
-	virtual void SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, std::string title = "", std::string description = "", bool inGame = false, bool scen = false) = 0;
+	virtual void SendUMsgRewardNotice(IExtendedSocket* socket, const RewardNotice& reward, std::string title = "", std::string description = "", bool localized = false, bool inGame = false, bool scen = false) = 0;
 	virtual void SendUMsgRewardSelect(IExtendedSocket* socket, Reward* reward) = 0;
 
 	virtual void SendServerList(IExtendedSocket* socket) = 0;
@@ -65,7 +65,7 @@ public:
 	virtual void SendMetadataReinforceMaxEXP(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataUnk8(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataProgressUnlock(IExtendedSocket* socket) = 0;
-	virtual void SendMetadataWeaponPaint(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataWeaponPaints(IExtendedSocket* socket, std::vector<WeaponPaint>& weaponPaints) = 0;
 	virtual void SendMetadataUnk3(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataReinforceItemsExp(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataItemExpireTime(IExtendedSocket* socket) = 0;
@@ -88,6 +88,10 @@ public:
 	virtual void SendMetadataModeEvent(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataMileageShop(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataEventShop(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataFamilyTotalWarMap(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataFamilyTotalWar(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataUnk54(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataUnk55(IExtendedSocket* socket) = 0;
 
 	virtual void SendGameMatchInfo(IExtendedSocket* socket) = 0;
 	virtual void SendGameMatchUnk(IExtendedSocket* socket) = 0;

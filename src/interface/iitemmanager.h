@@ -8,11 +8,13 @@ class CUserInventoryItem;
 struct RewardItem;
 struct RewardNotice;
 struct Reward;
+struct WeaponPaint;
 
 class IItemManager : public IBaseManager
 {
 public:
 	virtual bool LoadRewards() = 0;
+	virtual bool LoadWeaponPaints() = 0;
 	virtual bool KVToJson() = 0;
 	virtual bool OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket) = 0;
 	virtual int AddItem(int userID, IUser* user, int itemId, int count, int duration, int lockStatus = 0) = 0;
@@ -32,4 +34,5 @@ public:
 	virtual bool OnItemUse(IUser* user, CUserInventoryItem& item, int count = 1) = 0;
 
 	virtual Reward* GetRewardByID(int rewardID) = 0;
+	virtual std::vector<WeaponPaint> GetWeaponPaints() = 0;
 };

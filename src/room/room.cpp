@@ -761,12 +761,6 @@ void CRoom::SendGameEnd(IUser* user)
 {
 	g_PacketManager.SendHostStop(user->GetExtendedSocket());
 	g_PacketManager.SendRoomGameResult(user->GetExtendedSocket(), this, m_pGameMatch);
-
-	CGameMatchUserStat* stat = m_pGameMatch->GetGameUserStat(user);
-	if (stat)
-	{
-		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), va("m_nKills: %d\nm_nDeaths: %d\nm_nScore: %d", stat->m_nKills, stat->m_nDeaths, stat->m_nScore));
-	}
 }
 
 void CRoom::SendRoomStatus(IUser* user)
@@ -914,12 +908,12 @@ void CRoom::HostStartGame()
 	if (m_pSettings->isZbCompetitive)
 	{
 		vector<int> zbCompetitiveMaps;
-		vector<int> column = g_pMapListTable->GetColumn<int>("map_name");
-		for (auto mapID : column)
+		vector<string> column = g_pMapListTable->GetRowNames();
+		for (auto &mapID : column)
 		{
-			if (g_pMapListTable->GetCell<int>("zb_competitive", std::to_string(mapID)))
+			if (g_pMapListTable->GetCell<int>("zb_competitive", mapID))
 			{
-				zbCompetitiveMaps.push_back(mapID);
+				zbCompetitiveMaps.push_back(atoi(mapID.c_str()));
 			}
 		}
 

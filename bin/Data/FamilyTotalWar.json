@@ -1,0 +1,69 @@
+{
+    "StrategicStrongHold_ContributionLevel" : {
+        "BonusPercentage_1" : 120,
+        "BonusPercentage_2" : 110,
+        "BonusPercentage_3" : 105
+    },
+
+    "AddMaterial": 100,
+    "MaterialWaitingTimeSecPer_AddMaterial": 60,
+
+    "MaterialLimit": 1000,
+
+    "WithDrawCheckPeriod": 5,
+    "WithDrawMaterialThreshold": 20,
+
+    "OldSeasonList": [1],
+    "CurSeason": 1,
+
+    "RewardDetailURL": "https://www.nexon.com/Home/Game",
+
+    "PrepareStartTime": "2024-08-21 04:00:00",
+    "PrepareEndTime": "2024-08-28 03:00:00",
+    "TotalWarStartTime": "2024-08-28 04:00:00",
+    "TotalWarEndTime": "2024-09-19 00:05:00",
+    "RewardStartTime": "2024-09-19 04:00:00",
+    "RewardEndTime": "2024-10-23 04:00:00",
+    
+    "LastSeasonRewardStartTime": "2024-09-19 04:00:00",
+    "LastSeasonRewardEndTime": "2024-10-23 04:00:00",
+
+    "MapInfo": [
+		{
+            "20240808150": {
+                "Supplies" : {
+                    "Zone_1" : 1400,
+                    "Zone_2" : 1500,
+                    "Zone_3" : 2500,
+                    "Hub"    : 3000,
+                    "Refuge" : 2500
+                },
+
+                "EvaluationScore" : {
+                    "Zone_1" : 100,
+                    "Zone_2" : 200,
+                    "Zone_3" : 300,
+                    "Hub" : 300,
+                    "Refuge" : 300,
+                    "Strategic_FirstOccupation" : 10000,
+                    "Strategic_Maintain" : 5000
+                },
+
+                "EvaluationGrade" : {
+                    "RequiredPoint_0" : 0,
+                    "RequiredPoint_1" : 1500,
+                    "RequiredPoint_2" : 5000,
+                    "RequiredPoint_3" : 11000,
+                    "RequiredPoint_4" : 31000,
+                    "RequiredPoint_5" : 55000
+                },
+
+                "ContributionGrade": {
+                    "RequiredPercentage_1" : 10,
+                    "RequiredPercentage_2" : 25,
+                    "RequiredPercentage_3" : 50
+                }
+            }
+        }
+	]
+}

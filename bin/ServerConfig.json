@@ -27,7 +27,7 @@
 		"Encyclopedia": false,
 		"GameModeList": true,
 		"ProgressUnlock": true,
-		"WeaponPaint": true,
+		"WeaponPaints": true,
 		"ReinforceMaxLvl": true,
 		"ReinforceMaxEXP": true,
 		"ReinforceItemsExp": true,
@@ -48,7 +48,11 @@
 		"RandomWeaponList": true,
 		"ModeEvent": true,
 		"MileageShop": false,
-		"EventShop": false
+		"EventShop": false,
+		"FamilyTotalWarMap": true,
+		"FamilyTotalWar": true,
+		"Unk54": true,
+		"Unk55": true
 	},
 	"DefaultUser": {
 		"GameMaster": true,
