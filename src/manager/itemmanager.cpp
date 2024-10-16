@@ -2544,12 +2544,6 @@ bool CItemManager::OnWeaponPaintRequest(IUser* user, CReceivePacket* msg)
 	if (!weapon.m_nItemID || !paint.m_nItemID)
 		return false;
 
-	int weaponCategory = g_pItemTable->GetCell<int>("Category", to_string(weapon.m_nItemID));
-	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paint.m_nItemID));
-
-	if (weaponCategory != 11 && (weaponCategory < 1 || weaponCategory > 6) || paintClassName != "WeaponPaintItem")
-		return false;
-
 	// If weapon can't be painted, don't use it
 	auto it = std::find_if(m_WeaponPaints.begin(), m_WeaponPaints.end(), [weapon](const WeaponPaint& weaponPaint) { return weaponPaint.itemID == weapon.m_nItemID; });
 	if (it == m_WeaponPaints.end())
@@ -2595,11 +2589,17 @@ bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 	if (!weapon.m_nItemID)
 		return false;
 
-	int weaponCategory = g_pItemTable->GetCell<int>("Category", to_string(weapon.m_nItemID));
-	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paintID));
-
-	if (weaponCategory != 11 && (weaponCategory < 1 || weaponCategory > 6) || (paintClassName != "WeaponPaintItem" && paintClassName != "WeaponPaintRemoveItem"))
+	// If weapon can't be painted, don't use it
+	auto it = std::find_if(m_WeaponPaints.begin(), m_WeaponPaints.end(), [weapon](const WeaponPaint& weaponPaint) { return weaponPaint.itemID == weapon.m_nItemID; });
+	if (it == m_WeaponPaints.end())
 		return false;
+
+	// If paint can't be used on this weapon, don't use it
+	std::vector<int> paintIDs = m_WeaponPaints.at(it - m_WeaponPaints.begin()).paintIDs;
+	if (std::find(paintIDs.begin(), paintIDs.end(), paintID) == paintIDs.end())
+		return false;
+
+	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paintID));
 
 	if (paintClassName != "WeaponPaintRemoveItem")
 	{

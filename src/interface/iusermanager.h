@@ -14,6 +14,8 @@ class IUser;
 class IUserManager : public IBaseManager
 {
 public:
+	virtual bool LoadZombieWarWeaponList() = 0;
+	virtual bool LoadRandomWeaponList() = 0;
 	virtual bool OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket) = 0;
 	virtual bool OnUdpPacket(CReceivePacket* msg, IExtendedSocket* socket) = 0;
 	virtual bool OnOptionPacket(CReceivePacket* msg, IExtendedSocket* socket) = 0;

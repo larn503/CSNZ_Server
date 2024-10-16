@@ -17,7 +17,10 @@
 
 using namespace std;
 
-#define SUPPORTED_CLIENT_BUILD "04.08.24"
+#define SUPPORTED_CLIENT_BUILD "16.10.24"
+
+#define ZOMBIE_WAR_WEAPON_LIST_VERSION 1
+#define RANDOM_WEAPON_LIST_VERSION 1
 
 CUserManager g_UserManager;
 
@@ -34,12 +37,106 @@ bool CUserManager::Init()
 	for (size_t i = 0; i < g_pServerConfig->defUser.defaultItems.size(); i++)
 		m_DefaultItems.push_back(CUserInventoryItem(i, g_pServerConfig->defUser.defaultItems[i], 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 2));
 
+	if (!LoadZombieWarWeaponList())
+		return false;
+
+	if (!LoadRandomWeaponList())
+		return false;
+
 	return true;
 }
 
 void CUserManager::Shutdown()
 {
 	m_DefaultItems.clear();
+	m_ZombieWarWeaponList.clear();
+	m_RandomWeaponList.clear();
+}
+
+bool CUserManager::LoadZombieWarWeaponList()
+{
+	try
+	{
+		ifstream f("ZombieWarWeaponList.json");
+		ordered_json cfg = ordered_json::parse(f, nullptr, false, true);
+
+		if (cfg.is_discarded())
+		{
+			Logger().Fatal("CUserManager::LoadZombieWarWeaponList: couldn't load ZombieWarWeaponList.json.\n");
+			return false;
+		}
+
+		int version = cfg.value("Version", 0);
+		if (version != ZOMBIE_WAR_WEAPON_LIST_VERSION)
+		{
+			Logger().Fatal("CUserManager::LoadZombieWarWeaponList: %d != ZOMBIE_WAR_WEAPON_LIST_VERSION(%d)\n", version, ZOMBIE_WAR_WEAPON_LIST_VERSION);
+			return false;
+		}
+
+		m_ZombieWarWeaponList = cfg.value("Weapons", m_ZombieWarWeaponList);
+	}
+	catch (exception& ex)
+	{
+		Logger().Fatal("CUserManager::LoadRandomWeaponList: an error occured while parsing RandomWeaponList.json: %s\n", ex.what());
+		return false;
+	}
+
+	return true;
+}
+
+bool CUserManager::LoadRandomWeaponList()
+{
+	try
+	{
+		ifstream f("RandomWeaponList.json");
+		ordered_json cfg = ordered_json::parse(f, nullptr, false, true);
+
+		if (cfg.is_discarded())
+		{
+			Logger().Fatal("CUserManager::LoadRandomWeaponList: couldn't load RandomWeaponList.json.\n");
+			return false;
+		}
+
+		int version = cfg.value("Version", 0);
+		if (version != RANDOM_WEAPON_LIST_VERSION)
+		{
+			Logger().Fatal("CUserManager::LoadRandomWeaponList: %d != RANDOM_WEAPON_LIST_VERSION(%d)\n", version, RANDOM_WEAPON_LIST_VERSION);
+			return false;
+		}
+
+		for (auto& iRandomWeapon : cfg.items())
+		{
+			json jRandomWeapon = iRandomWeapon.value();
+			if (!jRandomWeapon.is_object())
+				continue;
+
+			RandomWeapon randomWeapon;
+			randomWeapon.itemID = stoi(iRandomWeapon.key());
+
+			for (auto& iModeFlag : jRandomWeapon.items())
+			{
+				json jModeFlag = iModeFlag.value();
+				if (!jModeFlag.is_object())
+					continue;
+
+				RandomWeaponModeFlag randomWeaponModeFlag;
+				randomWeaponModeFlag.modeFlag = stoi(iModeFlag.key());
+				randomWeaponModeFlag.dropRate = jModeFlag.value("DropRate", 0);
+				randomWeaponModeFlag.enhanceProbability = jModeFlag.value("EnhanceProbability", 0);
+
+				randomWeapon.modeFlags.push_back(randomWeaponModeFlag);
+			}
+
+			m_RandomWeaponList.push_back(randomWeapon);
+		}
+	}
+	catch (exception& ex)
+	{
+		Logger().Fatal("CUserManager::LoadRandomWeaponList: an error occured while parsing RandomWeaponList.json: %s\n", ex.what());
+		return false;
+	}
+
+	return true;
 }
 
 bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
@@ -568,8 +665,8 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 		g_PacketManager.SendMetadataUnk8(socket);
 	if (flag & kMetadataFlag_MatchOption)
 		g_PacketManager.SendMetadataMatchOption(socket);
-	if (flag & kMetadataFlag_Unk15)
-		g_PacketManager.SendMetadataUnk15(socket);
+	if (flag & kMetadataFlag_ZombieWarWeaponList)
+		g_PacketManager.SendMetadataZombieWarWeaponList(socket, m_ZombieWarWeaponList);
 	if (flag & kMetadataFlag_WeaponParts)
 		g_PacketManager.SendMetadataWeaponParts(socket);
 	if (flag & kMetadataFlag_MileageShop)
@@ -617,7 +714,7 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 	if (flag & kMetadataFlag_Hash)
 		g_PacketManager.SendMetadataHash(socket);
 	if (flag & kMetadataFlag_RandomWeaponList)
-		g_PacketManager.SendMetadataRandomWeaponList(socket);
+		g_PacketManager.SendMetadataRandomWeaponList(socket, m_RandomWeaponList);
 	if (flag & kMetadataFlag_ModeEvent)
 		g_PacketManager.SendMetadataModeEvent(socket);
 	if (flag & kMetadataFlag_EventShop)

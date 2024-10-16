@@ -172,7 +172,7 @@ enum EMetadataPacketType
 	kPacket_Metadata_WeaponPaints = 6,
 	kPacket_Metadata_Unk8 = 8,
 	kPacket_Metadata_MatchOption = 9,
-	kPacket_Metadata_Unk15 = 15,
+	kPacket_Metadata_ZombieWarWeaponList = 15,
 	kPacket_Metadata_RandomWeaponList = 16,
 	kPacket_Metadata_WeaponParts = 17,
 	kPacket_Metadata_MileageShop = 18,
@@ -215,7 +215,7 @@ enum EServerConfig_MetadataFlag : uint64_t
 	kMetadataFlag_WeaponPaints = 1LL << 5,
 	kMetadataFlag_Unk8 = 1LL << 6,
 	kMetadataFlag_MatchOption = 1LL << 7,
-	kMetadataFlag_Unk15 = 1LL << 8,
+	kMetadataFlag_ZombieWarWeaponList = 1LL << 8,
 	kMetadataFlag_WeaponParts = 1LL << 9,
 	kMetadataFlag_Unk20 = 1LL << 10,
 	kMetadataFlag_Encyclopedia = 1LL << 11,
@@ -1645,4 +1645,17 @@ struct WeaponPaint
 {
 	int itemID;
 	std::vector<int> paintIDs;
+};
+
+struct RandomWeaponModeFlag
+{
+	int modeFlag;
+	int dropRate;
+	int enhanceProbability;
+};
+
+struct RandomWeapon
+{
+	int itemID;
+	std::vector<RandomWeaponModeFlag> modeFlags;
 };

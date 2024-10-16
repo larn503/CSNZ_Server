@@ -97,8 +97,8 @@ public:
 	void SendMetadataReinforceItemsExp(IExtendedSocket* socket);
 	void SendMetadataItemExpireTime(IExtendedSocket* socket);
 	void SendMetadataUnk20(IExtendedSocket* socket);
-	void SendMetadataUnk15(IExtendedSocket* socket);
-	void SendMetadataRandomWeaponList(IExtendedSocket* socket);
+	void SendMetadataZombieWarWeaponList(IExtendedSocket* socket, std::vector<int>& zombieWarWeapons);
+	void SendMetadataRandomWeaponList(IExtendedSocket* socket, std::vector<RandomWeapon>& randomWeapons);
 	void SendMetadataHash(IExtendedSocket* socket);
 	void SendMetadataUnk31(IExtendedSocket* socket);
 	void SendMetadataHonorMoneyShop(IExtendedSocket* socket);
@@ -294,10 +294,8 @@ private:
 	CBinMetadata* m_pCodisDataZip;
 	CBinMetadata* m_pWeaponPropZip;
 	CBinMetadata* m_pReinforceItemsExp;
-	CBinMetadata* m_pRandomWeaponList;
 	CBinMetadata* m_pUnk3;
 	CBinMetadata* m_pUnk8;
-	CBinMetadata* m_pUnk15;
 	CBinMetadata* m_pUnk20;
 	CBinMetadata* m_pUnk31;
 	CBinMetadata* m_pUnk43;

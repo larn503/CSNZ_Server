@@ -42,10 +42,8 @@ CPacketManager::CPacketManager() : CBaseManager("PacketManager")
 	m_pFamilyTotalWarMapZip = NULL;
 	m_pFamilyTotalWarZip = NULL;
 	m_pReinforceItemsExp = NULL;
-	m_pRandomWeaponList = NULL;
 	m_pUnk3 = NULL;
 	m_pUnk8 = NULL;
-	m_pUnk15 = NULL;
 	m_pUnk20 = NULL;
 	m_pUnk31 = NULL;
 	m_pUnk43 = NULL;
@@ -84,10 +82,8 @@ bool CPacketManager::Init()
 	m_pFamilyTotalWarMapZip = LoadBinaryMetadata("FamilyTotalWarMap.csv", true);
 	m_pFamilyTotalWarZip = LoadBinaryMetadata("FamilyTotalWar.json", true);
 	m_pReinforceItemsExp = LoadBinaryMetadata("Metadata_ReinforceItemsExp.bin");
-	m_pRandomWeaponList = LoadBinaryMetadata("Metadata_RandomWeaponList.bin");
 	m_pUnk3 = LoadBinaryMetadata("Metadata_Unk3.bin");
 	m_pUnk8 = LoadBinaryMetadata("Metadata_Unk8.bin");
-	m_pUnk15 = LoadBinaryMetadata("Metadata_Unk15.bin");
 	m_pUnk20 = LoadBinaryMetadata("Metadata_Unk20.bin");
 	m_pUnk31 = LoadBinaryMetadata("Metadata_Unk31.bin");
 	m_pUnk43 = LoadBinaryMetadata("Metadata_Unk43.bin");
@@ -98,8 +94,8 @@ bool CPacketManager::Init()
 	if (!m_pMapListZip || !m_pClientTableZip || !m_pWeaponPartsZip || !m_pMileageShopZip || !m_pMatchingZip || !m_pProgressUnlockZip || !m_pGameModeListZip ||
 		!m_pReinforceMaxLvlZip || !m_pReinforceMaxExpZip || !m_pItemExpireTimeZip || !m_pHonorMoneyShopZip || !m_pScenarioTX_CommonZip || !m_pScenarioTX_DediZip ||
 		!m_pShopItemList_DediZip || !m_pZBCompetitiveZip || !m_pPPSystemZip || !m_pItemZip || !m_pCodisDataZip || !m_pWeaponPropZip || !m_pReinforceItemsExp ||
-		!m_pRandomWeaponList || !m_pUnk3 || !m_pUnk8 || !m_pUnk15 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49 || !m_pModeEventZip || !m_pEventShopZip ||
-		!m_pFamilyTotalWarMapZip || !m_pFamilyTotalWarZip || !m_pUnk54 || !m_pUnk55)
+		!m_pUnk3 || !m_pUnk8 || !m_pUnk20 || !m_pUnk31 || !m_pUnk43 || !m_pUnk49 || !m_pModeEventZip || !m_pEventShopZip || !m_pFamilyTotalWarMapZip ||
+		!m_pFamilyTotalWarZip || !m_pUnk54 || !m_pUnk55)
 	{
 		Logger().Fatal("Failed to load metadata\n");
 		return false;
@@ -165,10 +161,6 @@ void CPacketManager::Shutdown()
 		delete m_pUnk3;
 	if (m_pUnk8)
 		delete m_pUnk8;
-	if (m_pUnk15)
-		delete m_pUnk15;
-	if (m_pRandomWeaponList)
-		delete m_pRandomWeaponList;
 	if (m_pUnk20)
 		delete m_pUnk20;
 	if (m_pUnk31)
@@ -1086,62 +1078,41 @@ void CPacketManager::SendMetadataUnk20(IExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataUnk15(IExtendedSocket* socket)
+void CPacketManager::SendMetadataZombieWarWeaponList(IExtendedSocket* socket, std::vector<int>& zombieWarWeapons)
 {
-	if (!m_pUnk15)
-		return;
-
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	msg->WriteData(m_pUnk15->GetBuf(), m_pUnk15->GetBufSize());
+	msg->WriteUInt8(kPacket_Metadata_ZombieWarWeaponList);
+
+	msg->WriteUInt16(zombieWarWeapons.size());
+	for (auto &itemID : zombieWarWeapons)
+	{
+		msg->WriteUInt32(itemID);
+	}
 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendMetadataRandomWeaponList(IExtendedSocket* socket)
+void CPacketManager::SendMetadataRandomWeaponList(IExtendedSocket* socket, std::vector<RandomWeapon>& randomWeapons)
 {
-	if (!m_pRandomWeaponList)
-		return;
-
 	CSendPacket* msg = CreatePacket(socket, PacketId::Metadata);
 	msg->BuildHeader();
 
-	//unsigned char* buf = (unsigned char*)m_pRandomWeaponList->GetBuf();
-	//std::vector<unsigned char> vec(buf, buf + m_pRandomWeaponList->GetBufSize());
-	//Buffer bufer(vec);
-	//bufer.readInt8();
+	msg->WriteUInt8(kPacket_Metadata_RandomWeaponList);
 
-	//int size = bufer.readUInt32_LE();
-	//for (int i = 0; i < size; i++)
-	//{
-	//	int itemID = bufer.readUInt32_LE(); // itemID
-	//	int size_2 = bufer.readUInt32_LE();
-	//	printf("(1): itemID: %d\n", itemID);
-	//	for (int j = 0; j < size_2; j++)
-	//	{
-	//		int unk2 = bufer.readUInt8(); // 0, 1, 2, 3, 4, 5
-	//		int unk3 = bufer.readUInt32_LE(); // weird numbers (111, 222, 444, ...)
-	//		int unk4 = bufer.readUInt32_LE(); // 0, 50, 100
-	//		printf("(2): %d, %d, %d\n", unk2, unk3, unk4);
-	//	}
-	//}
-
-	//msg->WriteUInt8(kPacket_Metadata_RandomWeaponList);
-	//msg->WriteUInt32(0); // size
-	//for (int i = 0; i < 0; i++)
-	//{
-	//	msg->WriteUInt32(0); // itemID
-	//	msg->WriteUInt32(0); // size_2
-	//	for (int j = 0; j < 0; j++)
-	//	{
-	//		msg->WriteUInt8(0); // 0, 1, 2, 3, 4, 5
-	//		msg->WriteUInt32(0); // weird numbers (111, 222, 444, ...)
-	//		msg->WriteUInt32(0); // 0, 50, 100
-	//	}
-	//}
-
-	msg->WriteData(m_pRandomWeaponList->GetBuf(), m_pRandomWeaponList->GetBufSize());
+	msg->WriteUInt32(randomWeapons.size());
+	for (auto &randomWeapon : randomWeapons)
+	{
+		msg->WriteUInt32(randomWeapon.itemID);
+		msg->WriteUInt32(randomWeapon.modeFlags.size());
+		for (auto &modeFlag : randomWeapon.modeFlags)
+		{
+			msg->WriteUInt8(modeFlag.modeFlag);
+			msg->WriteUInt32(modeFlag.dropRate);
+			msg->WriteUInt32(modeFlag.enhanceProbability);
+		}
+	}
 
 	socket->Send(msg);
 }

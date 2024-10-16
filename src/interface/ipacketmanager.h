@@ -70,8 +70,8 @@ public:
 	virtual void SendMetadataReinforceItemsExp(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataItemExpireTime(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataUnk20(IExtendedSocket* socket) = 0;
-	virtual void SendMetadataUnk15(IExtendedSocket* socket) = 0;
-	virtual void SendMetadataRandomWeaponList(IExtendedSocket* socket) = 0;
+	virtual void SendMetadataZombieWarWeaponList(IExtendedSocket* socket, std::vector<int>& zombieWarWeapons) = 0;
+	virtual void SendMetadataRandomWeaponList(IExtendedSocket* socket, std::vector<RandomWeapon>& randomWeapons) = 0;
 	virtual void SendMetadataHash(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataUnk31(IExtendedSocket* socket) = 0;
 	virtual void SendMetadataHonorMoneyShop(IExtendedSocket* socket) = 0;

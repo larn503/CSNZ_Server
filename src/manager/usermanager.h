@@ -15,6 +15,8 @@ public:
 	virtual void Shutdown();
 	virtual void OnSecondTick(time_t curTime);
 
+	bool LoadZombieWarWeaponList();
+	bool LoadRandomWeaponList();
 	bool OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnUdpPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnOptionPacket(CReceivePacket* msg, IExtendedSocket* socket);
@@ -79,6 +81,8 @@ private:
 
 	std::vector<IUser*> m_Users;
 	std::vector<CUserInventoryItem> m_DefaultItems;
+	std::vector<int> m_ZombieWarWeaponList;
+	std::vector<RandomWeapon> m_RandomWeaponList;
 };
 
 extern CUserManager g_UserManager;

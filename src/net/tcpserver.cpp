@@ -187,7 +187,7 @@ void CTCPServer::Listen()
 				{
 					if (!m_pListener->OnTCPConnectionCreated(socket))
 					{
-						// start cycle from the beggining after pushing to vector, probably not the best solution
+						// start cycle from the beginning after disconnecting the IP banned client, probably not the best solution
 						it = m_fds.begin();
 						continue;
 					}
@@ -201,7 +201,7 @@ void CTCPServer::Listen()
 				fd.revents = 0;
 				m_fds.push_back(fd);
 
-				// start cycle from the beggining after pushing to vector, probably not the best solution
+				// start cycle from the beginning after pushing to vector, probably not the best solution
 				it = m_fds.begin();
 				continue;
 			}
@@ -217,37 +217,25 @@ void CTCPServer::Listen()
 				if (readResult == 0)
 				{
 					it->revents |= POLLHUP;
-
-					// connection closed
-					DisconnectClient(socket);
 				}
 				else if (readResult == SOCKET_ERROR)
 				{
 					it->revents |= POLLERR;
-
-					// error, close connection
-					DisconnectClient(socket);
 
 					if (m_pListener)
 						m_pListener->OnTCPError(0);
 				}
 				else if (!msg)
 				{
-					it->revents |= POLLERR;
-
 					// packet is not valid or wrong sequence or decryption failed
-					/// @fixme should we disconnect here? (in official, they kick incorrect seq)
-
 					// exclude case when message is not fully read
 					if (!socket->GetMsg())
 					{
-						DisconnectClient(socket);
+						it->revents |= POLLERR;
 
 						if (m_pListener)
 							m_pListener->OnTCPError(0);
 					}
-					else
-						continue;
 				}
 				else
 				{
@@ -284,9 +272,6 @@ void CTCPServer::Listen()
 
 						Logger().Warn("An error occurred while sending packet from queue: WSAGetLastError: %d, queue.size: %d\n", error, socket->GetPacketsToSend().size());
 
-						// error, close connection
-						DisconnectClient(socket);
-
 						if (m_pListener)
 							m_pListener->OnTCPError(0);
 					}
@@ -298,7 +283,7 @@ void CTCPServer::Listen()
 			}
 		}
 
-		// since disconnect called, I just log double confirm issues
+		// client closed the connection or had a socket error or sent an invalid packet or sent wrong sequence or decryption failed
 		if (it->revents & (POLLERR | POLLHUP) && it->fd != m_Socket)
 		{
 			IExtendedSocket* socket = GetExSocketBySocket(it->fd);

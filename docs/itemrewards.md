@@ -12,7 +12,7 @@
 		"HonorPoints": [<int>], // the same as points (array) (def. empty)
 		"Title": <string>, // reward title (def. "")
 		"Description": <string>, // reward description (def. "")
-		"Localized": <bool>, // if set to true, title and description fields will determine the string to use from the language files
+		"Localized": <bool>, // if set to true, title and description fields will determine the string to use from the language files (def. false)
 		"Items": { // array of items
 			"<int>": { // Item ID
 				"Count": <int>, // count (def. 1)

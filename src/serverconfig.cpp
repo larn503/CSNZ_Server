@@ -69,7 +69,7 @@ const char* defaultServerConfig = R"(
 		"ItemBox": true,
 		"Unk8": true,
 		"MatchOption": true,
-		"Unk15": true,
+		"ZombieWarWeaponList": true,
 		"WeaponParts": true,
 		"Unk20": true,
 		"Encyclopedia": false,
@@ -999,8 +999,8 @@ bool CServerConfig::Load()
 				metadataToSend |= kMetadataFlag_Unk8;
 			if (jMetadata.value("MatchOption", false))
 				metadataToSend |= kMetadataFlag_MatchOption;
-			if (jMetadata.value("Unk15", false))
-				metadataToSend |= kMetadataFlag_Unk15;
+			if (jMetadata.value("ZombieWarWeaponList", false))
+				metadataToSend |= kMetadataFlag_ZombieWarWeaponList;
 			if (jMetadata.value("WeaponParts", false))
 				metadataToSend |= kMetadataFlag_WeaponParts;
 			if (jMetadata.value("Unk20", false))
@@ -1393,7 +1393,7 @@ void CServerConfig::LoadDefaultConfig(ordered_json& cfg)
 	//	{"WeaponPaints", true},
 	//	{"Unk8", true},
 	//	{"MatchOption", true},
-	//	{"Unk15", true},
+	//	{"ZombieWarWeaponList", true},
 	//	{"WeaponParts", true},
 	//	{"Unk20", false},
 	//	{"Encyclopedia", false},
