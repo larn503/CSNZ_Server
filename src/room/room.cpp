@@ -415,8 +415,78 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 		m_pSettings->zbLimitFlag = newSettings.zbLimitFlag;
 		m_pSettings->zbLimit = newSettings.zbLimit;
 	}
-	if (newSettings.lowMidFlag & ROOM_LOWMID_UNK62) {
-		m_pSettings->unk62 = newSettings.unk62;
+	if (newSettings.lowMidFlag & ROOM_LOWMID_VOXEL) {
+		m_pSettings->voxelFlag = newSettings.voxelFlag;
+		if (m_pSettings->voxelFlag & VOXELFLAG_ID) {
+			m_pSettings->voxel_id = newSettings.voxel_id;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEID) {
+			m_pSettings->voxel_resource_id = newSettings.voxel_resource_id;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEMAXPLAYER) {
+			m_pSettings->voxel_resource_max_player = newSettings.voxel_resource_max_player;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_TITLE) {
+			m_pSettings->voxel_title = newSettings.voxel_title;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEMODE) {
+			m_pSettings->voxel_resource_mode = newSettings.voxel_resource_mode;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_PERMISSION) {
+			m_pSettings->voxel_permission = newSettings.voxel_permission;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_DESCRIPTION) {
+			m_pSettings->voxel_description = newSettings.voxel_description;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_PARENTSSLOTID) {
+			m_pSettings->voxel_parents_slot_id = newSettings.voxel_parents_slot_id;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_IMAGEID) {
+			m_pSettings->voxel_image_id = newSettings.voxel_image_id;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_CREATORNICKNAME) {
+			m_pSettings->voxel_creator_nickname = newSettings.voxel_creator_nickname;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_CREATORUSERNAME) {
+			m_pSettings->voxel_creator_username = newSettings.voxel_creator_username;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_LIKECOUNT) {
+			m_pSettings->voxel_like_count = newSettings.voxel_like_count;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_PLAYCOUNT) {
+			m_pSettings->voxel_play_count = newSettings.voxel_play_count;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_BOOKMARKCOUNT) {
+			m_pSettings->voxel_bookmark_count = newSettings.voxel_bookmark_count;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_UNK15) {
+			m_pSettings->voxel_unk15_size = newSettings.voxel_unk15_size;
+			m_pSettings->voxel_unk15_vec = newSettings.voxel_unk15_vec;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_CUBECOUNT) {
+			m_pSettings->voxel_cube_count = newSettings.voxel_cube_count;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_UNK17) {
+			m_pSettings->voxel_unk17 = newSettings.voxel_unk17;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_UNK18) {
+			m_pSettings->voxel_unk18 = newSettings.voxel_unk18;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_SLOTCATEGORY) {
+			m_pSettings->voxel_slot_category = newSettings.voxel_slot_category;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_SANDBOXSCRIPT) {
+			m_pSettings->voxel_sandbox_script = newSettings.voxel_sandbox_script;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_SAVEGROUPID) {
+			m_pSettings->voxel_savegroup_id = newSettings.voxel_savegroup_id;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_UNK22) {
+			m_pSettings->voxel_unk22 = newSettings.voxel_unk22;
+		}
+		if (m_pSettings->voxelFlag & VOXELFLAG_UNK23) {
+			m_pSettings->voxel_unk23 = newSettings.voxel_unk23;
+		}
 	}
 	if (newSettings.lowMidFlag & ROOM_LOWMID_UNK63) {
 		m_pSettings->unk63 = newSettings.unk63;
@@ -501,11 +571,18 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 		{
 			if (isNumber(results[1]))
 			{
+				int voxelFlag = 0;
 				m_pSettings->gameModeId = stoi(results[1]);
+
+				if (m_pSettings->gameModeId == 38 && m_pSettings->mapId == 254)
+				{
+					voxelFlag = ROOM_LOWMID_VOXEL;
+					m_pSettings->voxel_creator_username = user->GetUsername();
+				}
 
 				for (auto u : m_Users) // send gamemode update to all users
 				{
-					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_GAMEMODEID);
+					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_GAMEMODEID, voxelFlag);
 				}
 			}
 			else
@@ -574,6 +651,41 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 		{
 			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changebotscount usage: /changebotscount <enemy bots> <friendly bots>");
 		}
+
+		return;
+	}
+	else if (!message.find("/changemaxplayers") && m_pHostUser == user)
+	{
+		istringstream iss(message);
+		vector<string> results((istream_iterator<string>(iss)),
+			istream_iterator<string>());
+
+		if (results.size() == 2)
+		{
+			if (isNumber(results[1]))
+			{
+				m_pSettings->maxPlayers = stoi(results[1]);
+
+				for (auto u : m_Users) // send max players update to all users
+				{
+					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAXPLAYERS);
+				}
+			}
+			else
+			{
+				g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemaxplayers usage: /changemaxplayers <value>");
+			}
+		}
+		else
+		{
+			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemaxplayers usage: /changemaxplayers <value>");
+		}
+
+		return;
+	}
+	else if (!message.find("/help") && m_pHostUser == user)
+	{
+		g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "Available commands: /help, /changegm, /changemap, /changebotscount, /changemaxplayers");
 
 		return;
 	}

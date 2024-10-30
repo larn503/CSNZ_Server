@@ -130,7 +130,9 @@ enum PacketId
 	RewardHistory = 186,
 	Steam = 192,
 	Captcha = 193,
-	// missing 62 packets
+	ClanTotalWar = 194,
+	ContributionPassInven = 195,
+	// missing 60 packets
 };
 
 enum HostPacketType
@@ -1445,7 +1447,7 @@ enum UserSurveyAnswerResult
 #define ROOM_LOWMID_MANNERLIMIT			(1<<15)
 #define ROOM_LOWMID_MAPID2				(1<<16)
 #define ROOM_LOWMID_ZBLIMIT				(1<<17)
-#define ROOM_LOWMID_UNK62				(1<<18)
+#define ROOM_LOWMID_VOXEL				(1<<18)
 #define ROOM_LOWMID_UNK63				(1<<20)
 #define ROOM_LOWMID_UNK64				(1<<21)
 #define ROOM_LOWMID_TEAMSWITCH			(1<<22)
@@ -1659,3 +1661,28 @@ struct RandomWeapon
 	int itemID;
 	std::vector<RandomWeaponModeFlag> modeFlags;
 };
+
+// Studio mode flags
+#define VOXELFLAG_ID				(1<<0)
+#define VOXELFLAG_RESOURCEID		(1<<1)
+#define VOXELFLAG_RESOURCEMAXPLAYER	(1<<2)
+#define VOXELFLAG_TITLE				(1<<3)
+#define VOXELFLAG_RESOURCEMODE		(1<<4)
+#define VOXELFLAG_PERMISSION		(1<<5)
+#define VOXELFLAG_DESCRIPTION		(1<<6)
+#define VOXELFLAG_PARENTSSLOTID		(1<<7)
+#define VOXELFLAG_IMAGEID			(1<<8)
+#define VOXELFLAG_CREATORNICKNAME	(1<<9)
+#define VOXELFLAG_CREATORUSERNAME	(1<<10)
+#define VOXELFLAG_LIKECOUNT			(1<<11)
+#define VOXELFLAG_PLAYCOUNT			(1<<12)
+#define VOXELFLAG_BOOKMARKCOUNT		(1<<13)
+#define VOXELFLAG_UNK15				(1<<14)
+#define VOXELFLAG_CUBECOUNT			(1<<15)
+#define VOXELFLAG_UNK17				(1<<16)
+#define VOXELFLAG_UNK18				(1<<17)
+#define VOXELFLAG_SLOTCATEGORY		(1<<19)
+#define VOXELFLAG_SANDBOXSCRIPT		(1<<21)
+#define VOXELFLAG_SAVEGROUPID		(1<<22)
+#define VOXELFLAG_UNK22				(1<<23)
+#define VOXELFLAG_UNK23				(1<<24)

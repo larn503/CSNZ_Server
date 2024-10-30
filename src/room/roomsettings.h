@@ -23,6 +23,12 @@ struct mapPlaylist_data
 	int mapId;
 };
 
+struct voxel_15_data
+{
+	int unk1;
+	std::string unk2;
+};
+
 class CRoomSettings
 {
 public:
@@ -55,6 +61,7 @@ public:
 	void LoadFamilyBattleSettings(int gameModeId);
 	void LoadDefaultSettings(int gameModeId, int mapId);
 	void LoadZbCompetitiveSettings(int gameModeId);
+	void ParseSlotDetails(std::string voxelId);
 	void LoadNewSettings(int gameModeId, int mapId, IUser* user);
 	bool IsSettingValid(int gameModeId, const std::string& setting, int value);
 	bool IsLeagueRuleWinLimitValid(int winLimit);
@@ -141,7 +148,31 @@ public:
 	int mapId2;
 	int zbLimitFlag;
 	std::vector<int> zbLimit;
-	int unk62;
+	int voxelFlag;
+	std::string voxel_id;
+	std::string voxel_resource_id;
+	int voxel_resource_max_player;
+	std::string voxel_title;
+	int voxel_resource_mode;
+	int voxel_permission;
+	std::string voxel_description;
+	std::string voxel_parents_slot_id;
+	std::string voxel_image_id;
+	std::string voxel_creator_nickname;
+	std::string voxel_creator_username;
+	int voxel_like_count;
+	int voxel_play_count;
+	int voxel_bookmark_count;
+	int voxel_unk15_size;
+	std::vector<voxel_15_data> voxel_unk15_vec;
+	int voxel_cube_count;
+	int voxel_unk17;
+	int voxel_unk18;
+	int voxel_slot_category;
+	int voxel_sandbox_script;
+	std::string voxel_savegroup_id;
+	int voxel_unk22;
+	int voxel_unk23;
 	int unk63;
 	std::vector<int> unk63_vec;
 	int unk64;

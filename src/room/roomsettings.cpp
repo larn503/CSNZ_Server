@@ -7,6 +7,8 @@
 
 #include "serverconfig.h"
 
+#include "manager/voxelmanager.h"
+
 using namespace std;
 
 CRoomSettings::CRoomSettings()
@@ -215,10 +217,85 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 			zbLimit.push_back(inPacket.readUInt32_LE());
 		}
 	}
-	if (lowMidFlag & ROOM_LOWMID_UNK62) {
-		unk62 = inPacket.readUInt32_LE(); // user char flag
-		// shit related to studio mode should be here
-		// if (unk62)
+	if (lowMidFlag & ROOM_LOWMID_VOXEL) {
+		voxelFlag = inPacket.readUInt32_LE();
+		if (voxelFlag & VOXELFLAG_ID) {
+			voxel_id = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_RESOURCEID) {
+			voxel_resource_id = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_RESOURCEMAXPLAYER) {
+			voxel_resource_max_player = inPacket.readUInt8();
+		}
+		if (voxelFlag & VOXELFLAG_TITLE) {
+			voxel_title = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_RESOURCEMODE) {
+			voxel_resource_mode = inPacket.readUInt8();
+		}
+		if (voxelFlag & VOXELFLAG_PERMISSION) {
+			voxel_permission = inPacket.readUInt8();
+		}
+		if (voxelFlag & VOXELFLAG_DESCRIPTION) {
+			voxel_description = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_PARENTSSLOTID) {
+			voxel_parents_slot_id = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_IMAGEID) {
+			voxel_image_id = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_CREATORNICKNAME) {
+			voxel_creator_nickname = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_CREATORUSERNAME) {
+			voxel_creator_username = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_LIKECOUNT) {
+			voxel_like_count = inPacket.readUInt32_LE();
+		}
+		if (voxelFlag & VOXELFLAG_PLAYCOUNT) {
+			voxel_play_count = inPacket.readUInt32_LE();
+		}
+		if (voxelFlag & VOXELFLAG_BOOKMARKCOUNT) {
+			voxel_bookmark_count = inPacket.readUInt32_LE();
+		}
+		if (voxelFlag & VOXELFLAG_UNK15) {
+			voxel_unk15_size = inPacket.readUInt32_LE();
+			for (int i = 0; i < voxel_unk15_size; i++)
+			{
+				voxel_15_data dat;
+				dat.unk1 = inPacket.readUInt32_LE();
+				dat.unk2 = inPacket.readStr().c_str();
+
+				voxel_unk15_vec.push_back(dat);
+			}
+		}
+		if (voxelFlag & VOXELFLAG_CUBECOUNT) {
+			voxel_cube_count = inPacket.readUInt32_LE();
+		}
+		if (voxelFlag & VOXELFLAG_UNK17) {
+			voxel_unk17 = inPacket.readUInt32_LE();
+		}
+		if (voxelFlag & VOXELFLAG_UNK18) {
+			voxel_unk18 = inPacket.readUInt32_LE();
+		}
+		if (voxelFlag & VOXELFLAG_SLOTCATEGORY) {
+			voxel_slot_category = inPacket.readUInt8();
+		}
+		if (voxelFlag & VOXELFLAG_SANDBOXSCRIPT) {
+			voxel_sandbox_script = inPacket.readUInt8();
+		}
+		if (voxelFlag & VOXELFLAG_SAVEGROUPID) {
+			voxel_savegroup_id = inPacket.readStr().c_str();
+		}
+		if (voxelFlag & VOXELFLAG_UNK22) {
+			voxel_unk22 = inPacket.readUInt8();
+		}
+		if (voxelFlag & VOXELFLAG_UNK23) {
+			voxel_unk23 = inPacket.readUInt8();
+		}
 	}
 	if (lowMidFlag & ROOM_LOWMID_UNK63) {
 		unk63 = inPacket.readUInt8();
@@ -363,7 +440,30 @@ void CRoomSettings::Init()
 	mannerLimit = 0;
 	mapId2 = 0;
 	zbLimitFlag = 0;
-	unk62 = 0;
+	voxelFlag = 0;
+	voxel_id = "";
+	voxel_resource_id = "";
+	voxel_resource_max_player = 0;
+	voxel_title = "";
+	voxel_resource_mode = 0;
+	voxel_permission = 0;
+	voxel_description = "";
+	voxel_parents_slot_id = "";
+	voxel_image_id = "";
+	voxel_creator_nickname = "";
+	voxel_creator_username = "";
+	voxel_like_count = 0;
+	voxel_play_count = 0;
+	voxel_bookmark_count = 0;
+	voxel_unk15_size = 0;
+	voxel_cube_count = 0;
+	voxel_unk17 = 0;
+	voxel_unk18 = 0;
+	voxel_slot_category = 0;
+	voxel_sandbox_script = 0;
+	voxel_savegroup_id = "";
+	voxel_unk22 = 0;
+	voxel_unk23 = 0;
 	unk63 = 0;
 	unk64 = 0;
 	teamSwitch = 0;
@@ -1086,7 +1186,7 @@ void CRoomSettings::LoadFamilyBattleSettings(int gameModeId)
 void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 {
 	lowFlag = ROOM_LOW_ALL;
-	lowMidFlag = ROOM_LOWMID_ALL & ~ROOM_LOWMID_UNK62;
+	lowMidFlag = ROOM_LOWMID_ALL;
 	highMidFlag = ROOM_HIGHMID_ALL;
 	highFlag = ROOM_HIGH_ALL;
 
@@ -1183,6 +1283,9 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 
 	if (familyBattle)
 		LoadFamilyBattleSettings(gameModeId);
+
+	if (mapId != 254) // Not studio map
+		lowMidFlag &= ~ROOM_LOWMID_VOXEL;
 }
 
 void CRoomSettings::LoadZbCompetitiveSettings(int gameModeId)
@@ -1261,6 +1364,78 @@ void CRoomSettings::LoadZbCompetitiveSettings(int gameModeId)
 
 	highMidFlag |= ROOM_HIGHMID_MUTATIONLIMIT;
 	mutationLimit = gameModeId == 45 ? 40 : 0;
+}
+
+void CRoomSettings::ParseSlotDetails(std::string voxel_id)
+{
+	std::string response = g_VoxelManager.GetSlotDetails(voxel_id);
+	if (!response.empty())
+	{
+		ordered_json responseJson = ordered_json::parse(response, nullptr, true, true);
+
+		bool succeed = responseJson.value("succeed", false);
+
+		if (succeed)
+		{
+			if (responseJson.contains("result"))
+			{
+				ordered_json jSlotDetails = responseJson["result"];
+
+				voxelFlag = VOXELFLAG_ID;
+				voxel_id = jSlotDetails.value("id", "");
+
+				voxelFlag |= VOXELFLAG_RESOURCEID;
+				voxel_resource_id = jSlotDetails.value("resource_id", "");
+
+				voxelFlag |= VOXELFLAG_RESOURCEMAXPLAYER;
+				lowFlag |= ROOM_LOW_MAXPLAYERS;
+				voxel_resource_max_player = maxPlayers = jSlotDetails.value("resource_max_player", 0);
+
+				voxelFlag |= VOXELFLAG_TITLE;
+				voxel_title = jSlotDetails.value("title", "");
+
+				voxelFlag |= VOXELFLAG_RESOURCEMODE;
+				lowFlag |= ROOM_LOW_GAMEMODEID;
+				voxel_resource_mode = gameModeId = jSlotDetails.value("resource_mode", 0);
+
+				voxelFlag |= VOXELFLAG_PERMISSION;
+				voxel_permission = jSlotDetails.value("permission", 0);
+
+				voxelFlag |= VOXELFLAG_DESCRIPTION;
+				voxel_description = jSlotDetails.value("description", "");
+
+				voxelFlag |= VOXELFLAG_IMAGEID;
+				voxel_image_id = jSlotDetails.value("image_id", "");
+
+				voxelFlag |= VOXELFLAG_CREATORNICKNAME;
+				voxel_creator_nickname = jSlotDetails.value("creator_nickname", "");
+
+				voxelFlag |= VOXELFLAG_CREATORUSERNAME;
+				voxel_creator_username = voxel_creator_nickname;
+
+				voxelFlag |= VOXELFLAG_LIKECOUNT;
+				voxel_like_count = jSlotDetails.value("like_count", 0);
+
+				voxelFlag |= VOXELFLAG_PLAYCOUNT;
+				voxel_play_count = jSlotDetails.value("play_count", 0);
+
+				voxelFlag |= VOXELFLAG_CUBECOUNT;
+				voxel_cube_count = jSlotDetails.value("cube_count", 0);
+
+				voxelFlag |= VOXELFLAG_SLOTCATEGORY;
+				voxel_slot_category = jSlotDetails.value("slot_category", 0);
+
+				voxelFlag |= VOXELFLAG_SANDBOXSCRIPT;
+				voxel_sandbox_script = jSlotDetails.value("sandbox_script", 0);
+
+				voxelFlag |= VOXELFLAG_SAVEGROUPID;
+				voxel_savegroup_id = jSlotDetails.value("savegroup_id", "");
+
+				voxelFlag |= VOXELFLAG_UNK23;
+				voxel_unk23 = 0;
+			}
+		}
+	}
 }
 
 void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
@@ -1357,8 +1532,8 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (lowMidFlag & ROOM_LOWMID_MAPID2)
 			lowMidFlag &= ~ROOM_LOWMID_MAPID2;
 
-		if (lowMidFlag & ROOM_LOWMID_UNK62)
-			lowMidFlag &= ~ROOM_LOWMID_UNK62;
+		if (mapId != 254) // Not studio map
+			lowMidFlag &= ~ROOM_LOWMID_VOXEL;
 
 		if (lowMidFlag & ROOM_LOWMID_UNK63)
 			lowMidFlag &= ~ROOM_LOWMID_UNK63;
@@ -2086,6 +2261,24 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 bool CRoomSettings::CheckSettings(IUser* user)
 {
+	if (mapId == 254)
+	{
+		// Manually settings this, because client doesn't set them...
+		lowFlag |= ROOM_LOW_ROOMNAME;
+		roomName = "Fire in the Hole!";
+
+		lowFlag |= ROOM_LOW_PASSWORD;
+		password = "";
+
+		lowFlag |= ROOM_LOW_WINLIMIT;
+		winLimit = 0;
+
+		lowFlag |= ROOM_LOW_KILLLIMIT;
+		killLimit = 0;
+
+		ParseSlotDetails(voxel_id);
+	}
+
 	if (g_pServerConfig->room.validateSettings)
 	{
 		if (!(lowFlag & ROOM_LOW_ROOMNAME && lowFlag & ROOM_LOW_PASSWORD && lowFlag & ROOM_LOW_GAMEMODEID && lowFlag & ROOM_LOW_MAPID && lowFlag & ROOM_LOW_MAXPLAYERS && lowFlag & ROOM_LOW_WINLIMIT && lowFlag & ROOM_LOW_KILLLIMIT))
@@ -2258,6 +2451,9 @@ bool CRoomSettings::CheckSettings(IUser* user)
 
 bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 {
+	if (mapId == 254 && voxel_id != roomSettings->voxel_id)
+		ParseSlotDetails(voxel_id);
+
 	if (lowFlag & ROOM_LOW_GAMEMODEID && gameModeId != roomSettings->gameModeId)
 	{
 		if (g_pServerConfig->room.validateSettings)

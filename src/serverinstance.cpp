@@ -13,6 +13,7 @@
 #include "manager/minigamemanager.h"
 #include "manager/clanmanager.h"
 #include "manager/rankmanager.h"
+#include "manager/voxelmanager.h"
 
 #include "net/receivepacket.h"
 #include "common/buildnum.h"
@@ -442,6 +443,9 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		break;
 	case PacketId::Kick:
 		g_UserManager.OnKickPacket(msg, s);
+		break;
+	case PacketId::Voxel:
+		g_VoxelManager.OnPacket(msg, s);
 		break;
 	default:
 		Logger().Warn("Unimplemented packet: %d\n", msg->GetID());

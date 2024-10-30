@@ -171,7 +171,10 @@ public:
 	void SendRoomVoteKickResult(IExtendedSocket* socket, bool kick, int userID, int reason);
 	void SendRoomWeaponSurvey(IExtendedSocket* socket, const std::vector<int>& weapons);
 	void SendRoomKickClan(IExtendedSocket* socket, const std::vector<IUser*>& kickedUsers);
-	
+	void SendRoomUnk32(IExtendedSocket* socket);
+	void SendRoomUnk33(IExtendedSocket* socket);
+	void SendRoomUnk34(IExtendedSocket* socket);
+
 	void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId);
 	void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId);
 	void SendHostStop(IExtendedSocket* socket);
@@ -271,6 +274,16 @@ public:
 	void SendPacketFromFile(IExtendedSocket* socket, const std::string& filename);
 
 	void SendKickPacket(IExtendedSocket* socket, int userID);
+
+	void SendVoxelUnk4(IExtendedSocket* socket);
+	void SendVoxelUnk8(IExtendedSocket* socket);
+	void SendVoxelUnk9(IExtendedSocket* socket);
+	void SendVoxelUnk10(IExtendedSocket* socket);
+	void SendVoxelURLs(IExtendedSocket* socket, const std::string& voxelVxlURL, const std::string& voxelVmgURL);
+	void SendVoxelUnk38(IExtendedSocket* socket);
+	void SendVoxelUnk46(IExtendedSocket* socket);
+	void SendVoxelUnk47(IExtendedSocket* socket);
+	void SendVoxelUnk58(IExtendedSocket* socket);
 
 private:
 	CBinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);

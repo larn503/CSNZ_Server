@@ -2512,10 +2512,82 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 			}
 		}
 	}
-	if (lowMidFlag & ROOM_LOWMID_UNK62) {
-		msg->WriteUInt32(newSettings->unk62); // user char flag
-		// some shit should be here (studio mode related)
-		// if (newSettings->unk62)
+	if (lowMidFlag & ROOM_LOWMID_VOXEL) {
+		msg->WriteUInt32(newSettings->voxelFlag);
+		if (newSettings->voxelFlag & VOXELFLAG_ID) {
+			msg->WriteString(newSettings->voxel_id);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_RESOURCEID) {
+			msg->WriteString(newSettings->voxel_resource_id);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_RESOURCEMAXPLAYER) {
+			msg->WriteUInt8(newSettings->voxel_resource_max_player);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_TITLE) {
+			msg->WriteString(newSettings->voxel_title);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_RESOURCEMODE) {
+			msg->WriteUInt8(newSettings->voxel_resource_mode);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_PERMISSION) {
+			msg->WriteUInt8(newSettings->voxel_permission);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_DESCRIPTION) {
+			msg->WriteString(newSettings->voxel_description);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_PARENTSSLOTID) {
+			msg->WriteString(newSettings->voxel_parents_slot_id);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_IMAGEID) {
+			msg->WriteString(newSettings->voxel_image_id);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_CREATORNICKNAME) {
+			msg->WriteString(newSettings->voxel_creator_nickname);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_CREATORUSERNAME) {
+			msg->WriteString(newSettings->voxel_creator_username);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_LIKECOUNT) {
+			msg->WriteUInt32(newSettings->voxel_like_count);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_PLAYCOUNT) {
+			msg->WriteUInt32(newSettings->voxel_play_count);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_BOOKMARKCOUNT) {
+			msg->WriteUInt32(newSettings->voxel_bookmark_count);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_UNK15) {
+			msg->WriteUInt32(newSettings->voxel_unk15_size);
+			for (int i = 0; i < newSettings->voxel_unk15_size; i++)
+			{
+				msg->WriteUInt32(newSettings->voxel_unk15_vec[i].unk1);
+				msg->WriteString(newSettings->voxel_unk15_vec[i].unk2);
+			}
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_CUBECOUNT) {
+			msg->WriteUInt32(newSettings->voxel_cube_count);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_UNK17) {
+			msg->WriteUInt32(newSettings->voxel_unk17);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_UNK18) {
+			msg->WriteUInt32(newSettings->voxel_unk18);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_SLOTCATEGORY) {
+			msg->WriteUInt8(newSettings->voxel_slot_category);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_SANDBOXSCRIPT) {
+			msg->WriteUInt8(newSettings->voxel_sandbox_script);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_SAVEGROUPID) {
+			msg->WriteString(newSettings->voxel_savegroup_id);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_UNK22) {
+			msg->WriteUInt8(newSettings->voxel_unk22);
+		}
+		if (newSettings->voxelFlag & VOXELFLAG_UNK23) {
+			msg->WriteUInt8(newSettings->voxel_unk23);
+		}
 	}
 	if (lowMidFlag & ROOM_LOWMID_UNK63) {
 		msg->WriteUInt8(newSettings->unk63);
@@ -3103,6 +3175,57 @@ void CPacketManager::SendRoomKickClan(IExtendedSocket* socket, const vector<IUse
 	for (auto user : kickedUsers)
 	{
 		msg->WriteUInt32(user->GetID());
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRoomUnk32(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(32);
+
+	msg->WriteUInt16(0);
+	msg->WriteUInt16(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteString("");
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRoomUnk33(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(33);
+
+	msg->WriteUInt16(0);
+	msg->WriteUInt16(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteString("");
+		msg->WriteUInt16(0);
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRoomUnk34(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(34);
+
+	msg->WriteUInt8(0);
+	for (int i = 0; i < 0; i++)
+	{
+		// same as in BuildRoomInfo...
 	}
 
 	socket->Send(msg);
@@ -6974,6 +7097,219 @@ void CPacketManager::SendKickPacket(IExtendedSocket* socket, int userID)
 
 	msg->WriteUInt32(userID);
 	msg->WriteUInt8(1);
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk4(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(4);
+
+	msg->WriteUInt8(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteUInt32(1);
+		msg->WriteString("");
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk8(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(8);
+
+	msg->WriteUInt8(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteUInt32(1);
+		msg->WriteString("");
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk9(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(9);
+
+	msg->WriteUInt8(0);
+	msg->WriteUInt8(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteUInt32(0); // voxelFlag
+		if (0 & VOXELFLAG_ID) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_RESOURCEID) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_RESOURCEMAXPLAYER) {
+			msg->WriteUInt8(0);
+		}
+		if (0 & VOXELFLAG_TITLE) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_RESOURCEMODE) {
+			msg->WriteUInt8(0);
+		}
+		if (0 & VOXELFLAG_PERMISSION) {
+			msg->WriteUInt8(0);
+		}
+		if (0 & VOXELFLAG_DESCRIPTION) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_PARENTSSLOTID) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_IMAGEID) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_CREATORNICKNAME) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_CREATORUSERNAME) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_LIKECOUNT) {
+			msg->WriteUInt32(0);
+		}
+		if (0 & VOXELFLAG_PLAYCOUNT) {
+			msg->WriteUInt32(0);
+		}
+		if (0 & VOXELFLAG_BOOKMARKCOUNT) {
+			msg->WriteUInt32(0);
+		}
+		if (0 & VOXELFLAG_UNK15) {
+			msg->WriteUInt32(0);
+			for (int i = 0; i < 0; i++)
+			{
+				msg->WriteUInt32(0);
+				msg->WriteString("");
+			}
+		}
+		if (0 & VOXELFLAG_CUBECOUNT) {
+			msg->WriteUInt32(0);
+		}
+		if (0 & VOXELFLAG_UNK17) {
+			msg->WriteUInt32(0);
+		}
+		if (0 & VOXELFLAG_UNK18) {
+			msg->WriteUInt32(0);
+		}
+		if (0 & VOXELFLAG_SLOTCATEGORY) {
+			msg->WriteUInt8(0);
+		}
+		if (0 & VOXELFLAG_SANDBOXSCRIPT) {
+			msg->WriteUInt8(0);
+		}
+		if (0 & VOXELFLAG_SAVEGROUPID) {
+			msg->WriteString("");
+		}
+		if (0 & VOXELFLAG_UNK22) {
+			msg->WriteUInt8(0);
+		}
+		if (0 & VOXELFLAG_UNK23) {
+			msg->WriteUInt8(0);
+		}
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk10(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(10);
+
+	msg->WriteUInt8(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteString("");
+		msg->WriteString("");
+		msg->WriteUInt8(0);
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelURLs(IExtendedSocket* socket, const std::string& voxelVxlURL, const std::string& voxelVmgURL)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(20);
+
+	msg->WriteString(voxelVxlURL);
+	msg->WriteString(voxelVmgURL);
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk38(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(38);
+
+	msg->WriteUInt8(0);
+	msg->WriteUInt16(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteString("");
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk46(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(46);
+
+	msg->WriteUInt16(0);
+	for (int i = 0; i < 0; i++)
+	{
+		msg->WriteString("");
+	}
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk47(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(47);
+
+	msg->WriteString("");
+
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVoxelUnk58(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(58);
+
+	msg->WriteUInt8(6);
 
 	socket->Send(msg);
 }

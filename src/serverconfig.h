@@ -42,6 +42,10 @@ public:
 	bool crypt;
 	int mainMenuSkinEvent;
 	int banListMaxSize;
+	std::string voxelHTTPIP;
+	std::string voxelHTTPPort;
+	std::string voxelVxlURL;
+	std::string voxelVmgURL;
 };
 
 extern class CServerConfig* g_pServerConfig;

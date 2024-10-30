@@ -144,6 +144,9 @@ public:
 	virtual void SendRoomVoteKickResult(IExtendedSocket* socket, bool kick, int userID, int reason) = 0;
 	virtual void SendRoomWeaponSurvey(IExtendedSocket* socket, const std::vector<int>& weapons) = 0;
 	virtual void SendRoomKickClan(IExtendedSocket* socket, const std::vector<IUser*>& kickedUsers) = 0;
+	virtual void SendRoomUnk32(IExtendedSocket* socket) = 0;
+	virtual void SendRoomUnk33(IExtendedSocket* socket) = 0;
+	virtual void SendRoomUnk34(IExtendedSocket* socket) = 0;
 	
 	virtual void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId) = 0;
 	virtual void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId) = 0;
@@ -242,4 +245,16 @@ public:
 	virtual void SendUpdateInfo(IExtendedSocket* socket) = 0;
 
 	virtual void SendPacketFromFile(IExtendedSocket* socket, const std::string& filename) = 0;
+
+	virtual void SendKickPacket(IExtendedSocket* socket, int userID) = 0;
+
+	virtual void SendVoxelUnk4(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelUnk8(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelUnk9(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelUnk10(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelURLs(IExtendedSocket* socket, const std::string& voxelVxlURL, const std::string& voxelVmgURL) = 0;
+	virtual void SendVoxelUnk38(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelUnk46(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelUnk47(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelUnk58(IExtendedSocket* socket) = 0;
 };

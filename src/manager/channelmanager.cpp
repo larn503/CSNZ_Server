@@ -130,6 +130,15 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 		return OnRoomKickClanRequest(msg, user);
 	case InRoomType::NoticeClanRequest:
 		return OnRoomNoticeClanRequest(msg, user);
+	case 32:
+		g_PacketManager.SendRoomUnk32(socket);
+		break;
+	case 33:
+		g_PacketManager.SendRoomUnk33(socket);
+		break;
+	case 34:
+		g_PacketManager.SendRoomUnk34(socket);
+		break;
 	default:
 		Logger().Warn("Unknown room request %d\n", type);
 		break;

@@ -947,6 +947,12 @@ const char* defaultServerConfig = R"(
 				}
 			}
 		}
+	},
+	"Voxel": {
+		"VoxelHTTPIP": "52.28.231.59",
+		"VoxelHTTPPort": "3000",
+		"VoxelVxlURL": "http://d1u9da8nyooy18.cloudfront.net/resources_prod/%s.vxl",
+		"VoxelVmgURL": "https://d1u9da8nyooy18.cloudfront.net/images_prod/%s.vmg"
 	}
 }
 )";
@@ -1350,6 +1356,16 @@ bool CServerConfig::Load()
 				}	
 				surveys.push_back(survey);
 			}
+		}
+
+		if (cfg.contains("Voxel"))
+		{
+			json jVoxel = cfg["Voxel"];
+
+			voxelHTTPIP = jVoxel.value("VoxelHTTPIP", "52.28.231.59");
+			voxelHTTPPort = jVoxel.value("VoxelHTTPPort", "3000");
+			voxelVxlURL = jVoxel.value("VoxelVxlURL", "http://d1u9da8nyooy18.cloudfront.net/resources_prod/%s.vxl");
+			voxelVmgURL = jVoxel.value("VoxelVmgURL", "https://d1u9da8nyooy18.cloudfront.net/images_prod/%s.vmg");
 		}
 	}
 	catch (exception& ex)

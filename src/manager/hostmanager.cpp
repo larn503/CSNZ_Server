@@ -177,7 +177,7 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 			inGameItems.begin(),
 			inGameItems.end(),
 			[](const CUserInventoryItem& item) -> bool { // TODO: improve condition
-				return !(item.m_nItemID && item.m_nInUse && g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID)));
+				return !(item.m_nItemID && item.m_nInUse && item.m_nStatus && g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID)));
 			}
 		),
 		inGameItems.end()

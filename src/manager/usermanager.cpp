@@ -558,9 +558,15 @@ int CUserManager::ChangeUserNickname(IUser* user, const string& newNickname, boo
 			rewardItems.push_back(rewardItem);
 		}
 
-		g_ItemManager.AddItems(user->GetID(), user, rewardItems);
+		// give a user lvl box 1
+		RewardItem rewardItem;
+		rewardItem.itemID = 1001;
+		rewardItem.count = 1;
+		rewardItem.duration = 0;
+		rewardItem.lockStatus = 0;
+		rewardItems.push_back(rewardItem);
 
-		g_ItemManager.GiveReward(user->GetID(), user, 1001); // lvl box 1
+		g_ItemManager.AddItems(user->GetID(), user, rewardItems);
 	}
 	else
 	{
@@ -644,6 +650,8 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 
 	// FROM ~X.03.24: without this packet, client doesn't show inventory and user info on top left, weird
 	g_PacketManager.SendUpdateInfo(socket);
+
+	g_PacketManager.SendVoxelURLs(socket, g_pServerConfig->voxelVxlURL, g_pServerConfig->voxelVmgURL);
 }
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)
