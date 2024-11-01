@@ -1002,6 +1002,9 @@ string CRoomSettings::GetGameModeNameByID(int gameModeId)
 
 bool CRoomSettings::IsMapValid(int gameModeId, int mapId)
 {
+	if (gameModeId == 38 || gameModeId == 39)
+		return mapId == 254;
+
 	string gameModeName = GetGameModeNameByID(gameModeId);
 
 	if (gameModeName.empty())
@@ -1284,7 +1287,7 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 	if (familyBattle)
 		LoadFamilyBattleSettings(gameModeId);
 
-	if (mapId != 254) // Not studio map
+	if (mapId != 254) // Not studio mode
 		lowMidFlag &= ~ROOM_LOWMID_VOXEL;
 }
 
@@ -1532,7 +1535,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (lowMidFlag & ROOM_LOWMID_MAPID2)
 			lowMidFlag &= ~ROOM_LOWMID_MAPID2;
 
-		if (mapId != 254) // Not studio map
+		if (mapId != 254) // Not studio mode
 			lowMidFlag &= ~ROOM_LOWMID_VOXEL;
 
 		if (lowMidFlag & ROOM_LOWMID_UNK63)
@@ -1556,8 +1559,11 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 	if (lowFlag & ROOM_LOW_GAMEMODEID)
 	{
-		lowFlag |= ROOM_LOW_MAXPLAYERS;
-		maxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", to_string(gameModeId));
+		if (mapId != 254) // Not studio mode
+		{
+			lowFlag |= ROOM_LOW_MAXPLAYERS;
+			maxPlayers = g_pGameModeListTable->GetCell<int>("mode_maxplayer", to_string(gameModeId));
+		}
 
 		lowFlag |= ROOM_LOW_WINLIMIT;
 		winLimit = GetGameModeDefaultSetting(gameModeId, "mode_win_limit_id");
@@ -1893,12 +1899,12 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 			if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY)
 			{
-				if (gameModeId != 15 && zsDifficulty != 0)
+				if ((gameModeId != 15 && gameModeId != 53) && zsDifficulty != 1)
 				{
-					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zsDifficulty, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zsDifficulty, gameModeId: %d, zsDifficulty: %d\n", user->GetLogName(), gameModeId, zsDifficulty);
 					lowMidFlag &= ~ROOM_LOWMID_ZSDIFFICULTY;
 				}
-				else
+				else if (gameModeId == 15)
 				{
 					int mapMaxZsDifficulty = g_pMapListTable->GetCell<int>("ZSmaxDifficulty", to_string(mapId));
 					if (zsDifficulty > mapMaxZsDifficulty)
@@ -2009,7 +2015,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 			if (highMidFlag & ROOM_HIGHMID_FIREBOMB)
 			{
-				if (!(gameModeId == 14 || gameModeId == 45) && fireBomb != 1)
+				if (!(gameModeId == 14 || gameModeId == 45 || gameModeId == 55) && fireBomb != 1)
 				{
 					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use fireBomb, gameModeId: %d\n", user->GetLogName(), gameModeId);
 					highMidFlag &= ~ROOM_HIGHMID_FIREBOMB;
@@ -2080,7 +2086,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 			if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
 			{
-				if (!IsFamilyBattleAllowed(gameModeId))
+				if (!IsFamilyBattleAllowed(gameModeId) && familyBattle != 0)
 				{
 					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use familyBattle, gameModeId: %d\n", user->GetLogName(), gameModeId);
 					highMidFlag &= ~ROOM_HIGHMID_FAMILYBATTLE;
@@ -2110,8 +2116,11 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 	if (lowFlag & ROOM_LOW_MAPID)
 	{
-		lowFlag |= ROOM_LOW_MAXPLAYERS;
-		maxPlayers = g_pMapListTable->GetCell<int>("max_player", to_string(mapId));
+		if (mapId != 254) // Not studio mode
+		{
+			lowFlag |= ROOM_LOW_MAXPLAYERS;
+			maxPlayers = g_pMapListTable->GetCell<int>("max_player", to_string(mapId));
+		}
 
 		int restriction = GetMapDefaultWeaponRestrict(mapId);
 		if (restriction)
@@ -2436,7 +2445,7 @@ bool CRoomSettings::CheckSettings(IUser* user)
 
 		if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
 		{
-			if (!IsFamilyBattleAllowed(gameModeId))
+			if (!IsFamilyBattleAllowed(gameModeId) && familyBattle != 0)
 			{
 				Logger().Warn("User '%s' tried to create a new room with gameModeId which doesn't allow familyBattle, gameModeId: %d\n", user->GetLogName(), gameModeId);
 				return false;
