@@ -60,6 +60,7 @@ const char* defaultServerConfig = R"(
 	"AllowedClientTimestamp": 0,
 	"AllowedLauncherVersion": 67,
 	"MaxRegistrationsPerIP": 3,
+	"SSL": false,
 	"Crypt": false,
 	"MainMenuSkinEvent": 0,
 	"BanListMaxSize": 300,
