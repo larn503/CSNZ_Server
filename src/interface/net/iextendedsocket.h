@@ -6,6 +6,8 @@
 typedef int SOCKET;
 #endif
 
+#include <wolfssl/ssl.h>
+
 #include <string>
 #include <vector>
 
@@ -23,6 +25,7 @@ public:
 	virtual void SetCryptOutput(bool val) = 0;
 	virtual unsigned char* GetCryptKey() = 0;
 	virtual unsigned char* GetCryptIV() = 0;
+	virtual void SetSSLObject(WOLFSSL* ssl) = 0;
 	virtual void SetIP(const std::string& addr) = 0;
 	virtual void SetHWID(const std::vector<unsigned char>& hwid) = 0;
 	virtual const std::string& GetIP() = 0;

@@ -36,6 +36,7 @@ CServerConfig::CServerConfig()
 	allowedLauncherVersion = 0;
 	allowedClientTimestamp = 0;
 	maxRegistrationsPerIP = 0;
+	ssl = false;
 	crypt = false;
 	mainMenuSkinEvent = 0;
 	banListMaxSize = 0;
@@ -987,6 +988,7 @@ bool CServerConfig::Load()
 		allowedClientTimestamp = cfg.value("AllowedClientTimestamp", 0);
 		allowedLauncherVersion = cfg.value("AllowedLauncherVersion", 67);
 		maxRegistrationsPerIP = cfg.value("MaxRegistrationsPerIP", 1);
+		ssl = cfg.value("SSL", false);
 		crypt = cfg.value("Crypt", false);
 		mainMenuSkinEvent = cfg.value("MainMenuSkinEvent", 0);
 		banListMaxSize = cfg.value("BanListMaxSize", 300);

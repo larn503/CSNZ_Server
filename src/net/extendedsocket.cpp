@@ -32,6 +32,7 @@ CExtendedSocket::CExtendedSocket(SOCKET socket, unsigned int id)
 	m_pDecEVPCTX = NULL;
 	m_bCryptInput = false;
 	m_bCryptOutput = false;
+	m_pSSL = NULL;
 }
 
 /**
@@ -58,6 +59,15 @@ CExtendedSocket::~CExtendedSocket()
 	{
 		EVP_CIPHER_CTX_cleanup(m_pEncEVPCTX);
 		EVP_CIPHER_CTX_free(m_pEncEVPCTX);
+	}
+
+	if (m_pSSL)
+	{
+		// Notify the client that the connection is ending
+		wolfSSL_shutdown(m_pSSL);
+
+		// Cleanup after this connection
+		wolfSSL_free(m_pSSL);
 	}
 
 	closesocket(m_Socket);
@@ -163,7 +173,12 @@ void CExtendedSocket::ResetSeq()
  */
 int CExtendedSocket::Read(char* buf, int len)
 {
-	int recvResult = recv(m_Socket, buf, len, 0);
+	int recvResult = 0;
+
+	if (m_pSSL)
+		recvResult = wolfSSL_read(m_pSSL, buf, len);
+	else
+		recvResult = recv(m_Socket, buf, len, 0);
 
 	m_nReadResult += recvResult;
 	m_nBytesReceived += recvResult;
@@ -352,7 +367,10 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 
 	do
 	{
-		bytesSent = send(m_Socket, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize, 0);
+		if (m_pSSL)
+			bytesSent = wolfSSL_write(m_pSSL, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize);
+		else
+			bytesSent = send(m_Socket, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize, 0);
 		if (bytesSent <= 0)
 			return bytesSent;
 

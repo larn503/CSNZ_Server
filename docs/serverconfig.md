@@ -14,7 +14,8 @@
 	"AllowedClientTimestamp": <int>, // allowed timestamp of client libraries: hw.dll, client.dll, mp.dll, cstrike-online.exe, gameui.dll, vgui2.dll (CheckClientBuild must be true to work)
 	"AllowedLauncherVersion": <int>, // allowed launcher version (def. 67) (CheckClientBuild must be true to work)
 	"MaxRegistrationsPerIP": <int>, // the maximum number of users that can be registered on the same IP (def. 1)
-	"Crypt": <bool>, // enable/disable packet encryption (def. false)
+	"SSL": <bool>, // enable/disable ssl encryption. requires a certificate file (Data/Certs/server-cert.pem) and a private key file (Data/Certs/server-key.pem) (def. false)
+	"Crypt": <bool>, // enable/disable evp encryption (def. false)
 	"MainMenuSkinEvent": <int>, // main menu skin event (5 - christmas, 6 - halloween, 7 - halloween + snow, 8 - easter bunny) (def. 0)
 	"BanListMaxSize": <int>, // the maximum number of names a user can have on its ban list (def. 300)
 	"Metadata": { // metadata configuration, enables/disables the sending of a given metadata to the client

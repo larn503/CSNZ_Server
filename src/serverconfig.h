@@ -39,6 +39,7 @@ public:
 	WeaponReleaseConfig weaponRelease;
 	std::vector<std::string> nameBlacklist;
 	std::vector<Survey> surveys;
+	bool ssl;
 	bool crypt;
 	int mainMenuSkinEvent;
 	int banListMaxSize;

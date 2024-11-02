@@ -74,7 +74,7 @@ bool CServerInstance::Init()
 	g_pGameModeListTable = new CCSVTable("Data/GameModeList.csv", rapidcsv::LabelParams(0, 0), rapidcsv::SeparatorParams(), rapidcsv::ConverterParams(true), rapidcsv::LineReaderParams());
 
 	if (!Manager().InitAll() ||
-		!m_TCPServer.Start(g_pServerConfig->tcpPort, g_pServerConfig->tcpSendBufferSize) ||
+		!m_TCPServer.Start(g_pServerConfig->tcpPort, g_pServerConfig->tcpSendBufferSize, g_pServerConfig->ssl) ||
 		!m_UDPServer.Start(g_pServerConfig->udpPort))
 	{
 		Logger().Error("Server initialization failed.\n");

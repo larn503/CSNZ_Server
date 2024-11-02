@@ -2,6 +2,7 @@
 
 #include "socketshared.h"
 #include "common/thread.h"
+#include <wolfssl/ssl.h>
 
 #include <string>
 #include <vector>
@@ -20,7 +21,7 @@ public:
 	CTCPServer();
 	~CTCPServer();
 	
-	bool Start(const std::string& port, int tcpSendBufferSize);
+	bool Start(const std::string& port, int tcpSendBufferSize, bool ssl);
 	void Stop();
 	void Listen();
 
@@ -45,4 +46,5 @@ private:
 	CCriticalSection* m_pCriticalSection;
 
 	std::vector<WSAPOLLFD> m_fds;
+	WOLFSSL_CTX* m_pCTX;
 };
