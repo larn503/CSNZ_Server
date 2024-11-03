@@ -418,7 +418,9 @@
 		"1": {
 			"Type": 1,
 			"Name": "Server information",
-			"Description": "Welcome to the CSO server. Report about bugs in vk group: vk.com/csnz_server"
+			"Description": "Welcome to the CSO server. Report about bugs in discord: https://discord.gg/EvUAY6D",
+			"StartDate": 0,
+			"EndDate": 0
 		}
 	},
 	"GameMatch": {

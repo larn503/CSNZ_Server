@@ -467,7 +467,9 @@ const char* defaultServerConfig = R"(
 		"1": {
 			"Type": 1,
 			"Name": "Server information",
-			"Description": "Welcome to the CSO server. Report about bugs in vk group: vk.com/csnz_server"
+			"Description": "Welcome to the CSO server. Report about bugs in discord: https://discord.gg/EvUAY6D"
+			"StartDate": 0,
+			"EndDate": 0
 		}
 	},
 	"GameMatch": {
@@ -1175,6 +1177,8 @@ bool CServerConfig::Load()
 				notice.type = (NoticeType)kvp.second.value("Type", 0);
 				notice.name = kvp.second.value("Name", "");
 				notice.description = kvp.second.value("Description", "");
+				notice.startDate = kvp.second.value("StartDate", 0);
+				notice.endDate = kvp.second.value("StartDate", 0);
 
 				notices.push_back(notice);
 			}

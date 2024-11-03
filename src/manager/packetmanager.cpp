@@ -410,10 +410,10 @@ void CPacketManager::SendUMsgNotice(IExtendedSocket* socket, const Notice_s& not
 	msg->WriteUInt8(UMsgPacketType::Notice);
 
 	msg->WriteUInt16(notice.id + 10000);
-	msg->WriteUInt8(1);
+	msg->WriteUInt8(notice.type);
 	msg->WriteString("https://discord.com/invite/EvUAY6D");
-	msg->WriteUInt32(g_pServerInstance->GetCurrentTime() - 1000);
-	msg->WriteUInt32(g_pServerInstance->GetCurrentTime() + 2000);
+	msg->WriteUInt32(notice.startDate);
+	msg->WriteUInt32(notice.endDate);
 	msg->WriteString(notice.name);
 	msg->WriteString(notice.description);
 

@@ -91,7 +91,9 @@
 		"<int>": { // notice ID
 			"Type": <int>, // type of the notice (1 - hot, 2 - notice, 3 - event, 4 - etc) (def. 0)
 			"Name":	<string>, // notice name (def. "")
-			"Description": <string> // notice description (def. "")
+			"Description": <string>, // notice description (def. "")
+			"StartDate": <int>, // notice start date unix timestamp (def. 0)
+			"EndDate": <int> // notice end date unix timestamp (def. 0)
 		}
 	},
 
