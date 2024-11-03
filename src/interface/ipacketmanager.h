@@ -146,7 +146,7 @@ public:
 	virtual void SendRoomKickClan(IExtendedSocket* socket, const std::vector<IUser*>& kickedUsers) = 0;
 	virtual void SendRoomUnk32(IExtendedSocket* socket) = 0;
 	virtual void SendRoomUnk33(IExtendedSocket* socket) = 0;
-	virtual void SendRoomUnk34(IExtendedSocket* socket) = 0;
+	virtual void SendVoxelRoomList(IExtendedSocket* socket, const std::vector<IRoom*>& rooms) = 0;
 	
 	virtual void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId) = 0;
 	virtual void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId) = 0;

@@ -48,6 +48,7 @@ private:
 	bool OnRoomKickRequest(CReceivePacket* msg, IUser* user);
 	bool OnRoomKickClanRequest(CReceivePacket* msg, IUser* user);
 	bool OnRoomNoticeClanRequest(CReceivePacket* msg, IUser* user);
+	bool OnVoxelRoomListRequest(CReceivePacket* msg, IUser* user);
 };
 
 extern CChannelManager g_ChannelManager;

@@ -1308,6 +1308,7 @@ enum InRoomType
 	UserInviteRequest = 19,
 	RoomListRequest = 22,
 	JoinRoomRequest = 23,
+	VoxelRoomListRequest = 34,
 	SetZBAddonsRequest = 35,
 	KickClanRequest = 37,
 	NoticeClanRequest = 38,
@@ -1328,6 +1329,7 @@ enum OutRoomType
 	PlayerLeaveIngame = 10,
 	UserInviteList = 12,
 	SetUserTeam = 13,
+	VoxelRoomList = 34,
 	WeaponSurvey = 35,
 	KickClan = 37,
 };

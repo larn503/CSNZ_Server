@@ -136,9 +136,8 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 	case 33:
 		g_PacketManager.SendRoomUnk33(socket);
 		break;
-	case 34:
-		g_PacketManager.SendRoomUnk34(socket);
-		break;
+	case InRoomType::VoxelRoomListRequest:
+		return OnVoxelRoomListRequest(msg, user);
 	default:
 		Logger().Warn("Unknown room request %d\n", type);
 		break;
@@ -2079,6 +2078,29 @@ bool CChannelManager::OnRoomNoticeClanRequest(CReceivePacket* msg, IUser* user)
 			g_PacketManager.SendClanBattleNotice(clanUser.user->GetExtendedSocket(), 1, character.gameName, roomSettings->gameModeId, currentRoom->GetID());
 		}
 	}
+
+	return true;
+}
+
+bool CChannelManager::OnVoxelRoomListRequest(CReceivePacket* msg, IUser* user)
+{
+	string voxel_id = msg->ReadString();
+
+	vector<IRoom*>& rooms = channelServers[0]->GetChannels()[0]->GetRooms();
+
+	rooms.erase(
+		remove_if(
+			rooms.begin(),
+			rooms.end(),
+			[voxel_id](IRoom* room) -> bool {
+				CRoomSettings* roomSettings = room->GetSettings();
+				return !(roomSettings->voxel_id == voxel_id);
+			}
+		),
+		rooms.end()
+	);
+
+	g_PacketManager.SendVoxelRoomList(user->GetExtendedSocket(), rooms);
 
 	return true;
 }

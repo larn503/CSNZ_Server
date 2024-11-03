@@ -171,13 +171,26 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 	vector<CUserInventoryItem> inGameItems = g_UserManager.GetDefaultInventoryItems();
 	g_UserDatabase.GetInventoryItems(userID, inGameItems);
 
-	// remove non ingame, inactive items
+	// remove slots with itemID 0, not in use and non in-game items
 	inGameItems.erase(
 		remove_if(
 			inGameItems.begin(),
 			inGameItems.end(),
-			[](const CUserInventoryItem& item) -> bool { // TODO: improve condition
-				return !(item.m_nItemID && item.m_nInUse && item.m_nStatus && g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID)));
+			[](const CUserInventoryItem& item) -> bool {
+				return !(item.m_nItemID && item.m_nInUse && g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID)));
+			}
+		),
+		inGameItems.end()
+	);
+
+	// remove weapons with "activated" status
+	inGameItems.erase(
+		remove_if(
+			inGameItems.begin(),
+			inGameItems.end(),
+			[](const CUserInventoryItem& item) -> bool {
+				int category = g_pItemTable->GetCell<int>("Category", to_string(item.m_nItemID));
+				return ((category >= 1 && category <= 6 || category == 11) ? !item.m_nStatus : false);
 			}
 		),
 		inGameItems.end()

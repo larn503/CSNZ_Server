@@ -173,7 +173,7 @@ public:
 	void SendRoomKickClan(IExtendedSocket* socket, const std::vector<IUser*>& kickedUsers);
 	void SendRoomUnk32(IExtendedSocket* socket);
 	void SendRoomUnk33(IExtendedSocket* socket);
-	void SendRoomUnk34(IExtendedSocket* socket);
+	void SendVoxelRoomList(IExtendedSocket* socket, const std::vector<IRoom*>& rooms);
 
 	void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId);
 	void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId);

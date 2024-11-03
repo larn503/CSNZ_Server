@@ -1958,14 +1958,14 @@ void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 	// studio related
 	if (roomSettings->mapId == 254)
 	{
-		msg->WriteUInt32(0); // some flags
+		msg->WriteUInt32(roomSettings->voxelFlag);
 
-		//if (flag & 0x8) {
-		//	msg->WriteString("test");
-		//}
-		//if (flag & 0x100) {
-		//	msg->WriteString("test");
-		//}
+		if (roomSettings->voxelFlag & VOXELFLAG_TITLE) {
+			msg->WriteString(roomSettings->voxel_title);
+		}
+		if (roomSettings->voxelFlag & VOXELFLAG_IMAGEID) {
+			msg->WriteString(roomSettings->voxel_image_id);
+		}
 	}
 }
 
@@ -3215,17 +3215,17 @@ void CPacketManager::SendRoomUnk33(IExtendedSocket* socket)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRoomUnk34(IExtendedSocket* socket)
+void CPacketManager::SendVoxelRoomList(IExtendedSocket* socket, const vector<IRoom*>& rooms)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(34);
+	msg->WriteUInt8(OutRoomType::VoxelRoomList);
 
-	msg->WriteUInt8(0);
-	for (int i = 0; i < 0; i++)
+	msg->WriteUInt8(rooms.size());
+	for (auto room : rooms)
 	{
-		// same as in BuildRoomInfo...
+		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL_SAFE);
 	}
 
 	socket->Send(msg);
