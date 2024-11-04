@@ -389,6 +389,7 @@ struct RewardNotice
 
 enum NoticeType
 {
+	NOTICE_NEW = 0,
 	NOTICE_HOT = 1,
 	NOTICE_NOTICE = 2,
 	NOTICE_EVENT = 3,

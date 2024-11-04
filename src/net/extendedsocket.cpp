@@ -176,7 +176,7 @@ int CExtendedSocket::Read(char* buf, int len)
 	int recvResult = 0;
 
 	if (m_pSSL)
-		recvResult = wolfSSL_read(m_pSSL, buf, len);
+		recvResult = wolfSSL_recv(m_pSSL, buf, len, 0);
 	else
 		recvResult = recv(m_Socket, buf, len, 0);
 
@@ -218,14 +218,14 @@ CReceivePacket* CExtendedSocket::Read()
 			int outLen = 0;
 			if (EVP_DecryptUpdate(m_pDecEVPCTX, packetDataBuf.data(), &outLen, packetDataBuf.data(), recvResult) != 1)
 			{
-				Logger().Error("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+				Logger().Error("CExtendedSocket::Read(%s): EVP_DecryptUpdate failed\n", GetIP().c_str());
 				return NULL;
 			}
 
 			int finalLen = 0;
 			if (EVP_DecryptFinal_ex(m_pDecEVPCTX, packetDataBuf.data() + outLen, &finalLen) != 1)
 			{
-				Logger().Error("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+				Logger().Error("CExtendedSocket::Read(%s): EVP_DecryptUpdate failed\n", GetIP().c_str());
 				return NULL;
 			}
 		}
@@ -284,7 +284,7 @@ CReceivePacket* CExtendedSocket::Read()
 			int outLen = 0;
 			if (EVP_DecryptUpdate(m_pDecEVPCTX, packetDataBuf.data(), &outLen, packetDataBuf.data(), recvResult) != 1)
 			{
-				Logger().Error("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+				Logger().Error("CExtendedSocket::Read(%s): EVP_DecryptUpdate failed\n", GetIP().c_str());
 				delete m_pMsg;
 				m_pMsg = NULL;
 				return NULL;
@@ -293,7 +293,7 @@ CReceivePacket* CExtendedSocket::Read()
 			int finalLen = 0;
 			if (EVP_DecryptFinal_ex(m_pDecEVPCTX, packetDataBuf.data() + outLen, &finalLen) != 1)
 			{
-				Logger().Error("CExtendedSocket::Read: EVP_DecryptUpdate failed\n");
+				Logger().Error("CExtendedSocket::Read(%s): EVP_DecryptUpdate failed\n", GetIP().c_str());
 				delete m_pMsg;
 				m_pMsg = NULL;
 				return NULL;
@@ -316,7 +316,7 @@ CReceivePacket* CExtendedSocket::Read()
 	}
 
 #if 0
-	Logger().Info("CExtendedSocket::Read: recvResult: %d, packetDataBuf.size: %d, m_nPacketReceivedSize: %d, m_pMsg->GetLength: %d, m_pMsg->GetSequence: %d, m_nPacketToReceiveFullSize: %d\n", recvResult, packetDataBuf.size(), m_nPacketReceivedSize, m_pMsg->GetLength(), m_pMsg->GetSequence(), m_nPacketToReceiveFullSize);
+	Logger().Info("CExtendedSocket::Read(%s): recvResult: %d, packetDataBuf.size: %d, m_nPacketReceivedSize: %d, m_pMsg->GetLength: %d, m_pMsg->GetSequence: %d, m_nPacketToReceiveFullSize: %d\n", GetIP().c_str(), recvResult, packetDataBuf.size(), m_nPacketReceivedSize, m_pMsg->GetLength(), m_pMsg->GetSequence(), m_nPacketToReceiveFullSize);
 #endif
 
 	m_pMsg->GetData().setReadOffset(0);
@@ -334,7 +334,7 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 {
 	if (!serverHelloMsg && buffer.size() > PACKET_MAX_SIZE)
 	{
-		Logger().Error("CExtendedSocket::Send() buffer.size(): %d > PACKET_MAX_SIZE!!!, ID: %d, seq: %d. Packet not sent.\n", buffer.size(), buffer[4], buffer[1]);
+		Logger().Error("CExtendedSocket::Send(%s) buffer.size(): %d > PACKET_MAX_SIZE!!!, ID: %d, seq: %d. Packet not sent.\n", GetIP().c_str(), buffer.size(), buffer[4], buffer[1]);
 		return 0;
 	}
 
@@ -343,20 +343,20 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 		int encLen = 0;
 		if (EVP_EncryptUpdate(m_pEncEVPCTX, buffer.data(), &encLen, buffer.data(), buffer.size()) != 1)
 		{
-			Logger().Info("CExtendedSocket::Send: EVP_EncryptUpdate failed\n");
+			Logger().Info("CExtendedSocket::Send(%s): EVP_EncryptUpdate failed\n", GetIP().c_str());
 			return 0;
 		}
 
 		int finalLen = 0;
 		if (EVP_EncryptFinal_ex(m_pEncEVPCTX, buffer.data() + encLen, &finalLen) != 1)
 		{
-			Logger().Info("CExtendedSocket::Read: EVP_EncryptUpdate failed\n");
+			Logger().Info("CExtendedSocket::Send(%s): EVP_EncryptUpdate failed\n", GetIP().c_str());
 			return 0;
 		}
 
 		if (encLen != buffer.size())
 		{
-			Logger().Info("CExtendedSocket::Send: encLen != buffer.size()\n");
+			Logger().Info("CExtendedSocket::Send(%s): encLen != buffer.size()\n", GetIP().c_str());
 			return 0;
 		}
 	}
@@ -368,7 +368,14 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 	do
 	{
 		if (m_pSSL)
-			bytesSent = wolfSSL_write(m_pSSL, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize);
+		{
+			int err;
+			do
+			{
+				bytesSent = wolfSSL_send(m_pSSL, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize, 0);
+				err = wolfSSL_get_error(m_pSSL, bytesSent);
+			} while (err == WOLFSSL_ERROR_WANT_READ || err == WOLFSSL_ERROR_WANT_WRITE);
+		}
 		else
 			bytesSent = send(m_Socket, (const char*)&buffer[m_nPacketSentSize], buffer.size() - m_nPacketSentSize, 0);
 		if (bytesSent <= 0)
@@ -379,12 +386,11 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 		m_nBytesSent += bytesSent;
 		if (m_nBytesSent < 0)
 			m_nBytesSent = 0;
-	}
-	while (m_nPacketSentSize != buffer.size());
+	} while (m_nPacketSentSize != buffer.size());
 
 #ifdef _DEBUG
 	if (!serverHelloMsg)
-		Logger().Debug("CExtendedSocket::Send() seq: %d, buffer.size(): %d, bytesSent: %d, id: %d\n", buffer[1], buffer.size(), bytesSent, buffer[4]);
+		Logger().Debug("CExtendedSocket::Send(%s) seq: %d, buffer.size(): %d, id: %d\n", GetIP().c_str(), buffer[1], buffer.size(), buffer[4]);
 #endif
 
 	return m_nPacketSentSize;

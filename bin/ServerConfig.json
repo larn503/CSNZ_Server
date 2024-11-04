@@ -416,7 +416,7 @@
 	},
 	"Notices": {
 		"1": {
-			"Type": 1,
+			"Type": 0,
 			"Name": "Server information",
 			"Description": "Welcome to the CSO server. Report about bugs in discord: https://discord.gg/EvUAY6D",
 			"StartDate": 0,

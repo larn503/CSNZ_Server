@@ -89,7 +89,7 @@
 	
 	"Notices": { // notice information in main menu (array)
 		"<int>": { // notice ID
-			"Type": <int>, // type of the notice (1 - hot, 2 - notice, 3 - event, 4 - etc) (def. 0)
+			"Type": <int>, // type of the notice (0 - new, else not new) (def. 0)
 			"Name":	<string>, // notice name (def. "")
 			"Description": <string>, // notice description (def. "")
 			"StartDate": <int>, // notice start date unix timestamp (def. 0)
