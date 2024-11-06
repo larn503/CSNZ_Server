@@ -54,6 +54,7 @@ public:
 	CDedicatedServer* GetServerBySocket(IExtendedSocket* socket);
 	void RemoveServer(IExtendedSocket* socket);
 	void TransferServer(IExtendedSocket* socket, const std::string& ipAddress, int port);
+	std::vector<CDedicatedServer*>& GetServers();
 
 private:
 	std::vector<CDedicatedServer*> m_vServerPools;

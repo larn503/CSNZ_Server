@@ -300,18 +300,23 @@ void CommandDbReload(CCommand* cmd, const std::vector<std::string>& args)
 		g_PacketManager.SendUserUpdateInfo(u->GetExtendedSocket(), u, character);
 	}
 
-	Logger().Info("Sent user update info to: %d\n", g_UserManager.GetUsers().size());
+	Logger().Info("Sent user update info to %d users\n", g_UserManager.GetUsers().size());
 
 	// send shop update to users
 	for (auto u : g_UserManager.GetUsers())
 		g_PacketManager.SendShopUpdate(u->GetExtendedSocket(), g_ShopManager.GetProducts());
 
-	Logger().Info("Sent shop update to: %d\n", g_UserManager.GetUsers().size());
+	Logger().Info("Sent shop update to %d users\n", g_UserManager.GetUsers().size());
 
 	for (auto u : g_UserManager.GetUsers())
 		g_UserManager.SendMetadata(u->GetExtendedSocket());
 
-	Logger().Info("Sent metadata update to: %d\n", g_UserManager.GetUsers().size());
+	Logger().Info("Sent metadata update to %d users\n", g_UserManager.GetUsers().size());
+
+	for (auto d : g_DedicatedServerManager.GetServers())
+		g_UserManager.SendMetadata(d->GetSocket());
+
+	Logger().Info("Sent metadata update to %d dedicated servers\n", g_DedicatedServerManager.GetServers().size());
 
 	Logger().Info("Managers reload successful.\n");
 }

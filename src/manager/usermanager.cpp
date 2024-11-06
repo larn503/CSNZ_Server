@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define SUPPORTED_CLIENT_BUILD "30.10.24"
+#define SUPPORTED_CLIENT_BUILD "05.11.24"
 
 #define ZOMBIE_WAR_WEAPON_LIST_VERSION 1
 #define RANDOM_WEAPON_LIST_VERSION 1
@@ -164,24 +164,7 @@ bool CUserManager::OnLoginPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		return true;
 	}
 
-	if (g_pServerConfig->crypt)
-	{
-		if (!socket->SetupCrypt())
-		{
-			Logger().Info("Client (%s) disconnected from the server (Crypt failed)\n", socket->GetIP().c_str());
-
-			g_pServerInstance->DisconnectClient(socket);
-
-			return true;
-		}
-
-		unsigned char* key = socket->GetCryptKey();
-		unsigned char* iv = socket->GetCryptIV();
-
-		g_PacketManager.SendCrypt(socket, 0, key, iv);
-
-		g_PacketManager.SendCrypt(socket, 1, key, iv);
-	}
+	SendCrypt(socket);
 
 	return true;
 }
@@ -735,6 +718,28 @@ void CUserManager::SendMetadata(IExtendedSocket* socket)
 		g_PacketManager.SendMetadataUnk54(socket);
 	if (flag & kMetadataFlag_Unk55)
 		g_PacketManager.SendMetadataUnk55(socket);
+}
+
+void CUserManager::SendCrypt(IExtendedSocket* socket)
+{
+	if (!socket->GetSSLObject() && g_pServerConfig->crypt)
+	{
+		if (!socket->SetupCrypt())
+		{
+			Logger().Info("Client (%s) disconnected from the server (Crypt failed)\n", socket->GetIP().c_str());
+
+			g_pServerInstance->DisconnectClient(socket);
+		}
+		else
+		{
+			unsigned char* key = socket->GetCryptKey();
+			unsigned char* iv = socket->GetCryptIV();
+
+			g_PacketManager.SendCrypt(socket, 0, key, iv);
+
+			g_PacketManager.SendCrypt(socket, 1, key, iv);
+		}
+	}
 }
 
 void CUserManager::SendUserLoadout(IUser* user)
@@ -1339,7 +1344,7 @@ bool CUserManager::OnLeaguePacket(CReceivePacket* msg, IExtendedSocket* socket)
 
 bool CUserManager::OnCryptPacket(CReceivePacket* msg, IExtendedSocket* socket)
 {
-	if (g_pServerConfig->crypt)
+	if (!socket->GetSSLObject() && g_pServerConfig->crypt)
 		socket->SetCryptInput(true);
 
 	return true;

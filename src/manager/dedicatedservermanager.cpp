@@ -11,6 +11,7 @@ CDedicatedServer::CDedicatedServer(IExtendedSocket* socket, int ip, int port)
 	m_pRoom = NULL;
 	m_iLastMemory = 0;
 
+	g_UserManager.SendCrypt(socket);
 	g_UserManager.SendMetadata(socket);
 }
 
@@ -211,4 +212,9 @@ void CDedicatedServerManager::TransferServer(IExtendedSocket* socket, const std:
 		return;
 
 	g_PacketManager.SendHostServerTransfer(socket, ipAddress, port);
+}
+
+std::vector<CDedicatedServer*>& CDedicatedServerManager::GetServers()
+{
+	return m_vServerPools;
 }

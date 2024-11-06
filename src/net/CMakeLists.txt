@@ -23,4 +23,5 @@ target_include_directories(net PUBLIC
 	"../"
 	"../public"
 	"../thirdparty/wolfssl"
+	"../thirdparty/json/include"
 )

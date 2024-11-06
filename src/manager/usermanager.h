@@ -61,6 +61,7 @@ public:
 	std::vector<CUserInventoryItem>& GetDefaultInventoryItems();
 
 	void SendMetadata(IExtendedSocket* socket);
+	void SendCrypt(IExtendedSocket* socket);
 
 private:
 	void SendGuestUserPacket(IExtendedSocket* socket);

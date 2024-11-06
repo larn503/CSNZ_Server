@@ -32,6 +32,8 @@ CExtendedSocket::CExtendedSocket(SOCKET socket, unsigned int id)
 	m_pDecEVPCTX = NULL;
 	m_bCryptInput = false;
 	m_bCryptOutput = false;
+	memset(m_pCryptKey, 0, 64);
+	memset(m_pCryptIV, 0, 64);
 	m_pSSL = NULL;
 }
 
@@ -79,14 +81,6 @@ CExtendedSocket::~CExtendedSocket()
  */
 bool CExtendedSocket::SetupCrypt()
 {
-	if (m_pEncEVPCTX && m_pDecEVPCTX)
-	{
-		return true;
-	}
-
-	memset(m_pCryptKey, 0, 64);
-	memset(m_pCryptIV, 0, 64);
-
 	int keyLen = EVP_BytesToKey(EVP_aes_128_cbc(), EVP_md5(), NULL, m_HWID.data(), m_HWID.size(), 1, m_pCryptKey, m_pCryptIV);
 	if (!keyLen)
 	{
@@ -338,6 +332,10 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 		return 0;
 	}
 
+#ifdef _DEBUG
+	auto rawBuffer = buffer;
+#endif
+
 	if (m_bCryptOutput)
 	{
 		int encLen = 0;
@@ -390,7 +388,7 @@ int CExtendedSocket::Send(vector<unsigned char>& buffer, bool serverHelloMsg)
 
 #ifdef _DEBUG
 	if (!serverHelloMsg)
-		Logger().Debug("CExtendedSocket::Send(%s) seq: %d, buffer.size(): %d, id: %d\n", GetIP().c_str(), buffer[1], buffer.size(), buffer[4]);
+		Logger().Debug("CExtendedSocket::Send(%s) seq: %d, buffer.size(): %d, id: %d\n", GetIP().c_str(), rawBuffer[1], rawBuffer.size(), rawBuffer[4]);
 #endif
 
 	return m_nPacketSentSize;

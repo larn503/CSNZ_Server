@@ -36,6 +36,7 @@ public:
 	void SetCryptOutput(bool val) { m_bCryptOutput = val; }
 	unsigned char* GetCryptKey() { return m_pCryptKey; }
 	unsigned char* GetCryptIV() { return m_pCryptIV; }
+	WOLFSSL*& GetSSLObject() { return m_pSSL; }
 	void SetSSLObject(WOLFSSL* ssl) { m_pSSL = ssl; }
 	int GetSeq();
 	int LoggerGetSeq();

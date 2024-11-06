@@ -58,4 +58,5 @@ public:
 	virtual std::vector<CUserInventoryItem>& GetDefaultInventoryItems() = 0;
 
 	virtual void SendMetadata(IExtendedSocket* socket) = 0;
+	virtual void SendCrypt(IExtendedSocket* socket) = 0;
 };

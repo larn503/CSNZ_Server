@@ -24,6 +24,7 @@ public:
 	bool Start(const std::string& port, int tcpSendBufferSize, bool ssl);
 	void Stop();
 	void Listen();
+	void InitSSLContext();
 
 	IExtendedSocket* Accept(unsigned int id);
 	IExtendedSocket* GetExSocketBySocket(SOCKET socket);

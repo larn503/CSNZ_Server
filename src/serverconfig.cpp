@@ -1178,7 +1178,7 @@ bool CServerConfig::Load()
 				notice.name = kvp.second.value("Name", "");
 				notice.description = kvp.second.value("Description", "");
 				notice.startDate = kvp.second.value("StartDate", 0) / 60;
-				notice.endDate = kvp.second.value("StartDate", 0) / 60;
+				notice.endDate = kvp.second.value("EndDate", 0) / 60;
 
 				notices.push_back(notice);
 			}

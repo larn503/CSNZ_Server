@@ -129,6 +129,9 @@ bool CServerInstance::Reload()
 		{
 			return false;
 		}
+
+		if (g_pServerConfig->ssl)
+			m_TCPServer.InitSSLContext();
 	}
 
 	if (!Manager().ReloadAll())
