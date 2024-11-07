@@ -1954,6 +1954,9 @@ void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 		msg->WriteUInt32(roomSettings->familyBattleClanID1);
 		msg->WriteUInt32(roomSettings->familyBattleClanID2);
 	}
+	if (hFlag & RLHFLAG_WEAPONBUYCOOLTIME) {
+		msg->WriteUInt8(roomSettings->weaponBuyCoolTime);
+	}
 
 	// studio related
 	if (roomSettings->mapId == 254)
@@ -1987,7 +1990,7 @@ void CPacketManager::SendRoomListFull(IExtendedSocket* socket, const vector<IRoo
 
 	for (auto room : rooms)
 	{
-		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL_SAFE);
+		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL);
 	}
 
 	socket->Send(msg);
@@ -2343,6 +2346,8 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 	if (lowFlag & ROOM_LOW_WEAPONLIMIT) {
 		msg->WriteUInt8(newSettings->weaponLimit);
+		if (newSettings->weaponLimit == 18)
+			msg->WriteArray(newSettings->weaponLimitCustom);
 	}
 	if (lowFlag & ROOM_LOW_HOSTAGEKILLLIMIT) {
 		msg->WriteUInt8(newSettings->hostageKillLimit);
@@ -2662,6 +2667,10 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
 		msg->WriteUInt8(newSettings->familyBattle);
 	}
+	if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
+		msg->WriteUInt8(newSettings->weaponBuyCoolTime);
+	}
+
 	if (highFlag & ROOM_HIGH_UNK77) {
 		msg->WriteUInt8(newSettings->unk77);
 	}
@@ -3225,7 +3234,7 @@ void CPacketManager::SendVoxelRoomList(IExtendedSocket* socket, const vector<IRo
 	msg->WriteUInt8(rooms.size());
 	for (auto room : rooms)
 	{
-		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL_SAFE);
+		BuildRoomInfo(msg, room, RLFLAG_ALL, RLHFLAG_ALL);
 	}
 
 	socket->Send(msg);

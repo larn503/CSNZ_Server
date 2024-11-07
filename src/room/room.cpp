@@ -292,6 +292,8 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	}
 	if (newSettings.lowFlag & ROOM_LOW_WEAPONLIMIT) {
 		m_pSettings->weaponLimit = newSettings.weaponLimit;
+		if (m_pSettings->weaponLimit == 18)
+			m_pSettings->weaponLimitCustom = newSettings.weaponLimitCustom;
 	}
 	if (newSettings.lowFlag & ROOM_LOW_HOSTAGEKILLLIMIT) {
 		m_pSettings->hostageKillLimit = newSettings.hostageKillLimit;
@@ -547,6 +549,10 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 		m_pSettings->familyBattleClanID1 = newSettings.familyBattleClanID1;
 		m_pSettings->familyBattleClanID2 = newSettings.familyBattleClanID2;
 	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
+		m_pSettings->weaponBuyCoolTime = newSettings.weaponBuyCoolTime;
+	}
+
 	if (newSettings.highFlag & ROOM_HIGH_UNK77) {
 		m_pSettings->unk77 = newSettings.unk77;
 	}

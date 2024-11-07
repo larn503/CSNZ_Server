@@ -70,6 +70,8 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	}
 	if (lowFlag & ROOM_LOW_WEAPONLIMIT) {
 		weaponLimit = inPacket.readUInt8();
+		if (weaponLimit == 18)
+			weaponLimitCustom = inPacket.readArr(64);
 	}
 	if (lowFlag & ROOM_LOW_HOSTAGEKILLLIMIT) {
 		hostageKillLimit = inPacket.readUInt8();
@@ -360,13 +362,12 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
 		familyBattle = inPacket.readUInt8();
 	}
-	if (highFlag & ROOM_HIGH_UNK77) {
-		unk77 = inPacket.readUInt8();
+	if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
+		weaponBuyCoolTime = inPacket.readUInt8();
 	}
 
-	if (highFlag)
-	{
-		Logger().Warn("CRoomSettings: got high flag!\n");
+	if (highFlag & ROOM_HIGH_UNK77) {
+		unk77 = inPacket.readUInt8();
 	}
 }
 
@@ -485,6 +486,7 @@ void CRoomSettings::Init()
 	familyBattle = 0;
 	familyBattleClanID1 = 0;
 	familyBattleClanID2 = 0;
+	weaponBuyCoolTime = 0;
 }
 
 vector<int> split(const string& s, char delimiter)
@@ -1039,6 +1041,11 @@ bool CRoomSettings::IsFamilyBattleAllowed(int gameModeId)
 	return (gameModeId == 0 || gameModeId == 2 || gameModeId == 22 || gameModeId == 32 || gameModeId == 40 || gameModeId == 56 || gameModeId == 57);
 }
 
+bool CRoomSettings::IsWeaponBuyCoolTimeAllowed(int gameModeId)
+{
+	return (gameModeId == 8 || gameModeId == 9 || gameModeId == 14 || gameModeId == 24 || gameModeId == 29 || gameModeId == 45 || gameModeId == 54);
+}
+
 void CRoomSettings::LoadFamilyBattleSettings(int gameModeId)
 {
 	lowFlag |= ROOM_LOW_MAXPLAYERS;
@@ -1203,6 +1210,7 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 	gameTime = GetGameModeDefaultSetting(gameModeId, "mode_time_limit_id");
 	roundTime = GetGameModeDefaultSetting(gameModeId, "mode_roundtime_id");
 	weaponLimit = GetGameModeDefaultWeaponLimit(gameModeId);
+	weaponLimitCustom.clear();
 	hostageKillLimit = 0;
 	freezeTime = 0;
 	buyTime = GetDefaultBuyTime(gameModeId);
@@ -1286,6 +1294,8 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 
 	if (familyBattle)
 		LoadFamilyBattleSettings(gameModeId);
+
+	weaponBuyCoolTime = 0;
 
 	if (mapId != 254) // Not studio mode
 		lowMidFlag &= ~ROOM_LOWMID_VOXEL;
@@ -1762,8 +1772,8 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 
 			if (lowFlag & ROOM_LOW_WEAPONLIMIT)
 			{
-				if (weaponLimit > 17)
-					weaponLimit = 17;
+				if (weaponLimit > 18)
+					weaponLimit = 18;
 			}
 
 			if (lowFlag & ROOM_LOW_BUYTIME)
@@ -2093,6 +2103,17 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 				}
 				else if (familyBattle > 1)
 					familyBattle = 1;
+			}
+
+			if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME)
+			{
+				if (!IsWeaponBuyCoolTimeAllowed(gameModeId) && weaponBuyCoolTime != 0)
+				{
+					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use weaponBuyCoolTime, gameModeId: %d\n", user->GetLogName(), gameModeId);
+					highMidFlag &= ~ROOM_HIGHMID_WEAPONBUYCOOLTIME;
+				}
+				else if (weaponBuyCoolTime > 1)
+					weaponBuyCoolTime = 1;
 			}
 		}
 

@@ -58,6 +58,7 @@ public:
 	bool IsMapPlaylistAllowed(int gameModeId);
 	bool IsRandomMapAllowed(int gameModeId);
 	bool IsFamilyBattleAllowed(int gameModeId);
+	bool IsWeaponBuyCoolTimeAllowed(int gameModeId);
 	void LoadFamilyBattleSettings(int gameModeId);
 	void LoadDefaultSettings(int gameModeId, int mapId);
 	void LoadZbCompetitiveSettings(int gameModeId);
@@ -99,6 +100,7 @@ public:
 	int gameTime;
 	int roundTime;
 	int weaponLimit;
+	std::vector<unsigned char> weaponLimitCustom;
 	int hostageKillLimit;
 	int freezeTime;
 	int buyTime;
@@ -196,4 +198,5 @@ public:
 	int familyBattle;
 	int familyBattleClanID1;
 	int familyBattleClanID2;
+	int weaponBuyCoolTime;
 };
