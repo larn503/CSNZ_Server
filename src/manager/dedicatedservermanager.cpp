@@ -1,6 +1,7 @@
 #include "dedicatedservermanager.h"
 #include "usermanager.h"
 #include "packetmanager.h"
+#include "serverconfig.h"
 #include "common/utils.h"
 
 CDedicatedServer::CDedicatedServer(IExtendedSocket* socket, int ip, int port)
@@ -13,6 +14,7 @@ CDedicatedServer::CDedicatedServer(IExtendedSocket* socket, int ip, int port)
 
 	g_UserManager.SendCrypt(socket);
 	g_UserManager.SendMetadata(socket);
+	g_PacketManager.SendVoxelURLs(socket, g_pServerConfig->voxelVxlURL, g_pServerConfig->voxelVmgURL);
 }
 
 void CDedicatedServer::SetRoom(IRoom* room)
