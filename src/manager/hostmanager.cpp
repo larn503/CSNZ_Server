@@ -45,7 +45,6 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	switch (type)
 	{
 	case HostPacketType::GameStart:
-		room->OnGameStart();
 		break;
 	case HostPacketType::SaveData:
 		return OnSaveData(msg, gameMatch);

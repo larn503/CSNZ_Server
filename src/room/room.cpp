@@ -1057,6 +1057,8 @@ void CRoom::HostStartGame()
 
 	SendStartMatch(m_pHostUser);
 
+	OnGameStart();
+
 	SendReadyStatusToAll();
 
 	m_pHostUser->GetCurrentChannel()->SendUpdateRoomList(this);

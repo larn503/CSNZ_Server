@@ -1093,5 +1093,69 @@
 				"Duration": 0
 			}
 		}
+	},
+	// Zombie Scenario bonus chest reward
+	"3000": { // Normal (Regular, Light, Heavy, Voodoo, Psycho, Sting Finger, Venom Guard)
+		"Points": [ 500 ]
+	},
+	"3001": { // Medium (Juggernaut, Deimos, Ganymede)
+		"Points": [ 1500 ] 
+	},
+	"3002": { // Boss
+		"Points": [ 2500 ] 
+	},
+	"3003": { // Normal Hard
+		"Points": [ 1000 ] 
+	},
+	"3004": { // Medium Hard
+		"Points": [ 3000 ] 
+	},
+	"3005": { // Boss Hard
+		"Points": [ 5000 ] 
+	},
+	"3007": { // Normal Easy
+		"Points": [ 250 ] 
+	},
+	"3008": { // Medium Easy
+		"Points": [ 750 ] 
+	},
+	"3009": { // Boss Easy
+		"Points": [ 1250 ] 
+	},
+	"3010": { // Human Normal
+		"Points": [ 500 ] 
+	},
+	"3011": { // Human Medium
+		"Points": [ 1500 ] 
+	},
+	"3012": { // Human Boss
+		"Points": [ 2500 ] 
+	},
+	"3013": { // Human Trooper
+		"Points": [ 500 ] 
+	},
+	"3014": { // Human Ghost
+		"Points": [ 550 ] 
+	},
+	"3015": { // Human Lancer
+		"Points": [ 600 ] 
+	},
+	"3016": { // Human Titan
+		"Points": [ 650 ] 
+	},
+	"3017": { // Juggernaut
+		"Points": [ 3000 ] 
+	},
+	"3018": { // Siege Type Deimos
+		"Points": [ 3000 ]
+	},
+	"3019": { // Phobos
+		"Points": [ 3000 ] 
+	},
+	"3020": { // Siege Type Phobos
+		"Points": [ 3000 ] 
+	},
+	"3021": { // Oberon
+		"Points": [ 3000 ] 
 	}
 }
