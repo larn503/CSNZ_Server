@@ -293,30 +293,34 @@ void CommandDbReload(CCommand* cmd, const std::vector<std::string>& args)
 		return;
 	}
 
-	// send userinfo to users
+	auto usersSize = g_UserManager.GetUsers().size();
+
+	// send userinfo, shop, metadata and voxel urls update to users
 	for (auto u : g_UserManager.GetUsers())
 	{
 		CUserCharacter character = u->GetCharacter(UFLAG_LOW_ALL, UFLAG_HIGH_ALL);
 		g_PacketManager.SendUserUpdateInfo(u->GetExtendedSocket(), u, character);
+		g_PacketManager.SendShopUpdate(u->GetExtendedSocket(), g_ShopManager.GetProducts());
+		g_UserManager.SendMetadata(u->GetExtendedSocket());
+		g_PacketManager.SendVoxelURLs(u->GetExtendedSocket(), g_pServerConfig->voxelVxlURL, g_pServerConfig->voxelVmgURL);
 	}
 
-	Logger().Info("Sent user update info to %d users\n", g_UserManager.GetUsers().size());
+	Logger().Info("Sent user update info to %d users\n", usersSize);
+	Logger().Info("Sent shop update to %d users\n", usersSize);
+	Logger().Info("Sent metadata update to %d users\n", usersSize);
+	Logger().Info("Sent voxel urls update to %d users\n", usersSize);
 
-	// send shop update to users
-	for (auto u : g_UserManager.GetUsers())
-		g_PacketManager.SendShopUpdate(u->GetExtendedSocket(), g_ShopManager.GetProducts());
+	auto dedisSize = g_DedicatedServerManager.GetServers().size();
 
-	Logger().Info("Sent shop update to %d users\n", g_UserManager.GetUsers().size());
-
-	for (auto u : g_UserManager.GetUsers())
-		g_UserManager.SendMetadata(u->GetExtendedSocket());
-
-	Logger().Info("Sent metadata update to %d users\n", g_UserManager.GetUsers().size());
-
+	// send metadata and voxel urls update to dedicated servers
 	for (auto d : g_DedicatedServerManager.GetServers())
+	{
 		g_UserManager.SendMetadata(d->GetSocket());
+		g_PacketManager.SendVoxelURLs(d->GetSocket(), g_pServerConfig->voxelVxlURL, g_pServerConfig->voxelVmgURL);
+	}
 
-	Logger().Info("Sent metadata update to %d dedicated servers\n", g_DedicatedServerManager.GetServers().size());
+	Logger().Info("Sent metadata update to %d dedicated servers\n", dedisSize);
+	Logger().Info("Sent voxel urls update to %d dedicated servers\n", dedisSize);
 
 	Logger().Info("Managers reload successful.\n");
 }

@@ -62,7 +62,7 @@ public:
 	void LoadFamilyBattleSettings(int gameModeId);
 	void LoadDefaultSettings(int gameModeId, int mapId);
 	void LoadZbCompetitiveSettings(int gameModeId);
-	void ParseSlotDetails(std::string voxelId);
+	bool ParseSlotDetails(std::string voxelId);
 	void LoadNewSettings(int gameModeId, int mapId, IUser* user);
 	bool IsSettingValid(int gameModeId, const std::string& setting, int value);
 	bool IsLeagueRuleWinLimitValid(int winLimit);

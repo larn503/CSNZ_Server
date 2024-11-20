@@ -1379,7 +1379,7 @@ void CRoomSettings::LoadZbCompetitiveSettings(int gameModeId)
 	mutationLimit = gameModeId == 45 ? 40 : 0;
 }
 
-void CRoomSettings::ParseSlotDetails(std::string voxel_id)
+bool CRoomSettings::ParseSlotDetails(std::string voxel_id)
 {
 	std::string response = g_VoxelManager.GetSlotDetails(voxel_id);
 	if (!response.empty())
@@ -1446,9 +1446,13 @@ void CRoomSettings::ParseSlotDetails(std::string voxel_id)
 
 				voxelFlag |= VOXELFLAG_UNK23;
 				voxel_unk23 = 0;
+
+				return true;
 			}
 		}
 	}
+
+	return false;
 }
 
 void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
@@ -2293,6 +2297,9 @@ bool CRoomSettings::CheckSettings(IUser* user)
 {
 	if (mapId == 254)
 	{
+		if (!ParseSlotDetails(voxel_id))
+			return false;
+
 		// Manually settings this, because client doesn't set them...
 		lowFlag |= ROOM_LOW_ROOMNAME;
 		roomName = "Fire in the Hole!";
@@ -2305,8 +2312,6 @@ bool CRoomSettings::CheckSettings(IUser* user)
 
 		lowFlag |= ROOM_LOW_KILLLIMIT;
 		killLimit = 0;
-
-		ParseSlotDetails(voxel_id);
 	}
 
 	if (g_pServerConfig->room.validateSettings)
@@ -2482,7 +2487,10 @@ bool CRoomSettings::CheckSettings(IUser* user)
 bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 {
 	if (mapId == 254 && voxel_id != roomSettings->voxel_id)
-		ParseSlotDetails(voxel_id);
+	{
+		if (!ParseSlotDetails(voxel_id))
+			return false;
+	}
 
 	if (lowFlag & ROOM_LOW_GAMEMODEID && gameModeId != roomSettings->gameModeId)
 	{
