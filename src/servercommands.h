@@ -20,10 +20,13 @@ void CommandHelp(CCommand* cmd, const std::vector<std::string>& args)
 void CommandUsers(CCommand* cmd, const std::vector<std::string>& args)
 {
 	Logger().Info(va("%-6s|%-32s|%-8s|%-6s|%-15s| (online: %d | connected: %d)\n",
-		"UserID", "Username/IP", "Uptime", "Status", "IP Address", g_UserManager.GetUsers().size(), g_pServerInstance->GetClients().size()));
+		"UserID", "Username/IP", "Uptime", "Status", "IP Address", g_UserManager.GetUsers().size(), g_pServerInstance->GetClients().size() - g_DedicatedServerManager.GetServers().size()));
 
 	for (auto sock : g_pServerInstance->GetClients())
 	{
+		if (g_DedicatedServerManager.GetServerBySocket(sock))
+			continue;
+
 		IUser* user = g_UserManager.GetUserBySocket(sock);
 		if (user)
 		{

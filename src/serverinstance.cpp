@@ -100,7 +100,7 @@ bool CServerInstance::Init()
 		return false;
 	}
 
-	Logger().Info("Server starts listening. Server developers: Jusic, Hardee, NekoMeow. Thx to Ochii for CSO2 server.\nFor more information visit discord.gg/EvUAY6D\n");
+	Logger().Info("Server starts listening. Server developers: Jusic, Hardee, NekoMeow, Smilex_Gamer, xRiseless. Thx to Ochii for CSO2 server.\nFor more information visit discord.gg/EvUAY6D\n");
 	Logger().Info("Server build: %s, %s\n", build_number(),
 #ifdef PUBLIC_RELEASE
 		"Public Release");
@@ -510,7 +510,7 @@ double CServerInstance::GetMemoryInfo()
 
 const char* CServerInstance::GetMainInfo()
 {
-	return va("Memory usage: %.02fmb. Connected users: %d. Logged in users: %d.", GetMemoryInfo(), static_cast<int>(m_TCPServer.GetClients().size()), static_cast<int>(g_UserManager.GetUsers().size()));
+	return va("Memory usage: %.02fmb. Connected users: %d. Logged in users: %d. Connected dedicated servers: %d.", GetMemoryInfo(), static_cast<int>(m_TCPServer.GetClients().size() - g_DedicatedServerManager.GetServers().size()), static_cast<int>(g_UserManager.GetUsers().size()), static_cast<int>(g_DedicatedServerManager.GetServers().size()));
 }
 
 void CServerInstance::DisconnectClient(IExtendedSocket* socket)

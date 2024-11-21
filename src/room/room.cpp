@@ -567,133 +567,137 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 
 	Logger().Info("User '%s' write to room chat: '%s'\n", senderName.c_str(), message.c_str());
 
-	if (!message.find("/changegm") && m_pHostUser == user)
+	CUserCharacterExtended characterExtended = user->GetCharacterExtended(EXT_UFLAG_GAMEMASTER);
+	if (characterExtended.gameMaster && m_pHostUser == user)
 	{
-		istringstream iss(message);
-		vector<string> results((istream_iterator<string>(iss)),
-			istream_iterator<string>());
-
-		if (results.size() == 2)
+		if (!message.find("/changegm"))
 		{
-			if (isNumber(results[1]))
+			istringstream iss(message);
+			vector<string> results((istream_iterator<string>(iss)),
+				istream_iterator<string>());
+
+			if (results.size() == 2)
 			{
-				int voxelFlag = 0;
-				m_pSettings->gameModeId = stoi(results[1]);
-
-				if (m_pSettings->gameModeId == 38 && m_pSettings->mapId == 254)
+				if (isNumber(results[1]))
 				{
-					voxelFlag = ROOM_LOWMID_VOXEL;
-					m_pSettings->voxel_creator_username = user->GetUsername();
+					int voxelFlag = 0;
+					m_pSettings->gameModeId = stoi(results[1]);
+
+					if (m_pSettings->gameModeId == 38 && m_pSettings->mapId == 254)
+					{
+						voxelFlag = ROOM_LOWMID_VOXEL;
+						m_pSettings->voxel_creator_username = user->GetUsername();
+					}
+
+					for (auto u : m_Users) // send gamemode update to all users
+					{
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_GAMEMODEID, voxelFlag);
+					}
 				}
-
-				for (auto u : m_Users) // send gamemode update to all users
+				else
 				{
-					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_GAMEMODEID, voxelFlag);
+					g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changegm usage: /changegm <gameMode>");
 				}
 			}
 			else
 			{
 				g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changegm usage: /changegm <gameMode>");
 			}
-		}
-		else
-		{
-			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changegm usage: /changegm <gameMode>");
-		}
 
-		return;
-	}
-	else if (!message.find("/changemap") && m_pHostUser == user)
-	{
-		istringstream iss(message);
-		vector<string> results((istream_iterator<string>(iss)),
-			istream_iterator<string>());
-
-		if (results.size() == 2)
+			return;
+		}
+		else if (!message.find("/changemap"))
 		{
-			if (isNumber(results[1]))
+			istringstream iss(message);
+			vector<string> results((istream_iterator<string>(iss)),
+				istream_iterator<string>());
+
+			if (results.size() == 2)
 			{
-				m_pSettings->mapId = stoi(results[1]);
-				m_pSettings->mapId2 = m_pSettings->mapId;
-
-				for (auto u : m_Users)
+				if (isNumber(results[1]))
 				{
-					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
+					m_pSettings->mapId = stoi(results[1]);
+					m_pSettings->mapId2 = m_pSettings->mapId;
+
+					for (auto u : m_Users)
+					{
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAPID, ROOM_LOWMID_MAPID2);
+					}
+				}
+				else
+				{
+					g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemap usage: /changemap <mapId>");
 				}
 			}
 			else
 			{
 				g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemap usage: /changemap <mapId>");
 			}
-		}
-		else
-		{
-			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemap usage: /changemap <mapId>");
-		}
 
-		return;
-	}
-	else if (!message.find("/changebotscount") && m_pHostUser == user)
-	{
-		istringstream iss(message);
-		vector<string> results((istream_iterator<string>(iss)),
-			istream_iterator<string>());
-
-		if (results.size() == 3)
+			return;
+		}
+		else if (!message.find("/changebotscount"))
 		{
-			if (isNumber(results[1]) && isNumber(results[2]))
+			istringstream iss(message);
+			vector<string> results((istream_iterator<string>(iss)),
+				istream_iterator<string>());
+
+			if (results.size() == 3)
 			{
-				m_pSettings->enemyBots = stoi(results[1]);
-				m_pSettings->friendlyBots = stoi(results[2]);
-				m_pSettings->botAdd = 1;
-
-				for (auto u : m_Users)
+				if (isNumber(results[1]) && isNumber(results[2]))
 				{
-					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_BOT);
+					m_pSettings->enemyBots = stoi(results[1]);
+					m_pSettings->friendlyBots = stoi(results[2]);
+					m_pSettings->botAdd = 1;
+
+					for (auto u : m_Users)
+					{
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, 0, ROOM_LOWMID_BOT);
+					}
 				}
 			}
-		}
-		else
-		{
-			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changebotscount usage: /changebotscount <enemy bots> <friendly bots>");
-		}
-
-		return;
-	}
-	else if (!message.find("/changemaxplayers") && m_pHostUser == user)
-	{
-		istringstream iss(message);
-		vector<string> results((istream_iterator<string>(iss)),
-			istream_iterator<string>());
-
-		if (results.size() == 2)
-		{
-			if (isNumber(results[1]))
+			else
 			{
-				m_pSettings->maxPlayers = stoi(results[1]);
+				g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changebotscount usage: /changebotscount <enemy bots> <friendly bots>");
+			}
 
-				for (auto u : m_Users) // send max players update to all users
+			return;
+		}
+		else if (!message.find("/changemaxplayers"))
+		{
+			istringstream iss(message);
+			vector<string> results((istream_iterator<string>(iss)),
+				istream_iterator<string>());
+
+			if (results.size() == 2)
+			{
+				if (isNumber(results[1]))
 				{
-					g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAXPLAYERS);
+					m_pSettings->maxPlayers = stoi(results[1]);
+
+					for (auto u : m_Users) // send max players update to all users
+					{
+						g_PacketManager.SendRoomUpdateSettings(u->GetExtendedSocket(), m_pSettings, ROOM_LOW_MAXPLAYERS);
+					}
+				}
+				else
+				{
+					g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemaxplayers usage: /changemaxplayers <value>");
 				}
 			}
 			else
 			{
 				g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemaxplayers usage: /changemaxplayers <value>");
 			}
+
+			return;
 		}
-		else
+		else if (!message.find("/help"))
 		{
-			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "/changemaxplayers usage: /changemaxplayers <value>");
+			g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "Available commands: /help, /changegm, /changemap, /changebotscount, /changemaxplayers");
+
+			return;
 		}
-
-		return;
-	}
-	else if (!message.find("/help") && m_pHostUser == user)
-	{
-		g_PacketManager.SendUMsgNoticeMessageInChat(user->GetExtendedSocket(), "Available commands: /help, /changegm, /changemap, /changebotscount, /changemaxplayers");
-
-		return;
 	}
 
 	for (auto userDest : m_Users)
