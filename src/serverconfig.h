@@ -47,6 +47,7 @@ public:
 	std::string voxelHTTPPort;
 	std::string voxelVxlURL;
 	std::string voxelVmgURL;
+	std::vector<std::string> dedicatedServerWhitelist;
 };
 
 extern class CServerConfig* g_pServerConfig;

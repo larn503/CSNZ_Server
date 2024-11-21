@@ -80,7 +80,6 @@ public:
 	void SendNewUser(IUser* user, IUser* newUser);
 	void SendUserReadyStatus(IUser* user, IUser* player);
 	void SendConnectHost(IUser* user, IUser* host);
-	void SendGuestData(IUser* host, IUser* guest);
 	void SendStartMatch(IUser* host);
 	void SendCloseResultWindow(IUser* user);
 	void SendTeamChange(IUser* user, IUser* player, RoomTeamNum newTeamNum);

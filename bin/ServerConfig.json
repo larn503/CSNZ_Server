@@ -585,7 +585,7 @@
 		}
 	},
 	"Room": {
-		"HostConnectingMethod": 0,
+		"HostConnectingMethod": 2,
 		"ValidateSettings": false
 	},
 	"MiniGames": {
@@ -908,5 +908,8 @@
 		"VoxelHTTPPort": "3000",
 		"VoxelVxlURL": "http://d1u9da8nyooy18.cloudfront.net/resources_prod/%s.vxl",
 		"VoxelVmgURL": "https://d1u9da8nyooy18.cloudfront.net/images_prod/%s.vmg"
-	}
+	},
+	"DedicatedServerWhitelist": [
+		"127.0.0.1"
+	]
 }

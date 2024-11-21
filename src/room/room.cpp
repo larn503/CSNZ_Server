@@ -820,37 +820,25 @@ void CRoom::SendUserReadyStatus(IUser* user, IUser* player)
 
 void CRoom::SendConnectHost(IUser* user, IUser* host)
 {
-	//g_PacketManager.SendUDPHostData(user->GetExtendedSocket(), true, host->GetData()->userId, host->GetNetworkConfig().m_szExternalIpAddress, host->GetNetworkConfig().m_nExternalServerPort);
 	if (g_pServerConfig->room.connectingMethod)
-	{
-		g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host);
-		//g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
-	}
-	else
 	{
 		if (m_pServer)
 			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetIP(), m_pServer->GetPort(), user->GetID());
 		else
 			g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host);
-			//g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), ip_string_to_int(host->GetNetworkConfig().m_szExternalIpAddress), false, host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
 	}
-}
-
-void CRoom::SendGuestData(IUser* host, IUser* guest)
-{
-	//CPacket_UDP hostData(host->m_pSocket);
-	//hostData.Send(hostData.Build(0, guest->m_pData->userId, guest->externalIpAddress, 27015));
+	else
+	{
+		g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host);
+	}
 }
 
 void CRoom::SendStartMatch(IUser* host)
 {
 	if (g_pServerConfig->room.connectingMethod)
 	{
-		g_PacketManager.SendHostGameStart(host->GetExtendedSocket(), host->GetID());
-	}
-	else
-	{
-		m_pServer = g_DedicatedServerManager.GetAvailableServerFromPools(this);
+		if (m_pServer == NULL)
+			m_pServer = g_DedicatedServerManager.GetAvailableServerFromPools(this);
 
 		if (m_pServer)
 		{
@@ -861,6 +849,10 @@ void CRoom::SendStartMatch(IUser* host)
 		{
 			g_PacketManager.SendHostGameStart(host->GetExtendedSocket(), host->GetID());
 		}
+	}
+	else
+	{
+		g_PacketManager.SendHostGameStart(host->GetExtendedSocket(), host->GetID());
 	}
 
 }
@@ -1086,11 +1078,8 @@ void CRoom::HostStartGame()
 void CRoom::UserGameJoin(IUser* user)
 {
 	SetUserIngame(user, true);
-	SendGuestData(m_pHostUser, user);
 	SendConnectHost(user, m_pHostUser);
 	SendReadyStatusToAll(user);
-
-	//m_pGameMatch->Connect(user);
 
 	Logger().Info("User '%s' joining room match (RID: %d)\n", user->GetLogName(), m_nID);
 }
@@ -1103,11 +1092,7 @@ void CRoom::EndGame(bool forcedEnd)
 	ResetStatusIngameUsers();
 
 	if (m_pServer)
-	{
-		m_pServer->SetRoom(NULL);
 		g_PacketManager.SendHostStop(m_pServer->GetSocket());
-		m_pServer = NULL;
-	}
 
 	for (auto u : m_Users)
 	{
@@ -1159,6 +1144,16 @@ void CRoom::EndGame(bool forcedEnd)
 
 	delete m_pGameMatch;
 	m_pGameMatch = NULL;
+
+	// If HostConnectingMethod is set to dedicated server only and the map playlist is still on-going, don't release the dedicated server yet
+	if (g_pServerConfig->room.connectingMethod == 1 && m_pSettings->mapPlaylistSize && m_pSettings->mapPlaylistIndex != 1)
+		return;
+	
+	if (m_pServer)
+	{
+		m_pServer->SetRoom(NULL);
+		m_pServer = NULL;
+	}
 }
 
 int CRoom::GetID()

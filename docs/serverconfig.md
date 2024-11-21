@@ -123,7 +123,7 @@
 	},
 
 	"Room": { // room configuration
-		"HostConnectingMethod": <int>, // method that will be used to connect to the game host, 0 - direct connection/dedicated server (host restart functionality is unavailable), 1 - peer to peer connection (def. 0)
+		"HostConnectingMethod": <int>, // method that will be used to connect to the game host, 0 - peer to peer only, 1 - dedicated server only, 2 - peer to peer or dedicated server (def. 2)
 		"ValidateSettings": <bool> // validate room settings (def. false)
 	},
 
@@ -181,7 +181,11 @@
 		"VoxelHTTPPort": <string>, // studio http port, used by server to get studio map info (def. "3000")
 		"VoxelVxlURL": <string>, // studio vxl url, used by client to download studio maps (def. "http://d1u9da8nyooy18.cloudfront.net/resources_prod/%s.vxl")
 		"VoxelVmgURL": <string> // studio vmg url, used by client to download studio images (def. "https://d1u9da8nyooy18.cloudfront.net/images_prod/%s.vmg")
-	}
+	},
+
+	"DedicatedServerWhitelist": [ // dedicated server IP whitelist (array) (def. [ "127.0.0.1" ])
+		<string>
+	]
 }
 ```
 def. means that if the field is undefined, the default value will be used

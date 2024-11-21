@@ -634,7 +634,7 @@ const char* defaultServerConfig = R"(
 		}
 	},
 	"Room": {
-		"HostConnectingMethod": 0,
+		"HostConnectingMethod": 2,
 		"ValidateSettings": false
 	},
 	"MiniGames": {
@@ -957,7 +957,8 @@ const char* defaultServerConfig = R"(
 		"VoxelHTTPPort": "3000",
 		"VoxelVxlURL": "http://d1u9da8nyooy18.cloudfront.net/resources_prod/%s.vxl",
 		"VoxelVmgURL": "https://d1u9da8nyooy18.cloudfront.net/images_prod/%s.vmg"
-	}
+	},
+	"DedicatedServerWhitelist": [ "127.0.0.1" ]
 }
 )";
 
@@ -1242,7 +1243,7 @@ bool CServerConfig::Load()
 		if (cfg.contains("Room"))
 		{
 			json jRoom = cfg["Room"];
-			room.connectingMethod = jRoom.value("HostConnectingMethod", 0);
+			room.connectingMethod = jRoom.value("HostConnectingMethod", 2);
 			room.validateSettings = jRoom.value("ValidateSettings", false);
 		}
 
@@ -1373,6 +1374,15 @@ bool CServerConfig::Load()
 			voxelHTTPPort = jVoxel.value("VoxelHTTPPort", "3000");
 			voxelVxlURL = jVoxel.value("VoxelVxlURL", "http://d1u9da8nyooy18.cloudfront.net/resources_prod/%s.vxl");
 			voxelVmgURL = jVoxel.value("VoxelVmgURL", "https://d1u9da8nyooy18.cloudfront.net/images_prod/%s.vmg");
+		}
+
+		if (cfg.contains("DedicatedServerWhitelist"))
+		{
+			json jDedicatedServerWhitelist = cfg["DedicatedServerWhitelist"];
+			for (auto& ip : jDedicatedServerWhitelist)
+			{
+				dedicatedServerWhitelist.push_back(ip);
+			}
 		}
 	}
 	catch (exception& ex)

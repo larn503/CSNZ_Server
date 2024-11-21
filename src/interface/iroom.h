@@ -68,7 +68,6 @@ public:
 	virtual void SendNewUser(IUser* user, IUser* newUser) = 0;
 	virtual void SendUserReadyStatus(IUser* user, IUser* player) = 0;
 	virtual void SendConnectHost(IUser* user, IUser* host) = 0;
-	virtual void SendGuestData(IUser* host, IUser* guest) = 0;
 	virtual void SendStartMatch(IUser* host) = 0;
 	virtual void SendCloseResultWindow(IUser* user) = 0;
 	virtual void SendTeamChange(IUser* user, IUser* player, RoomTeamNum newTeamNum) = 0;

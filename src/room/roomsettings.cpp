@@ -1537,9 +1537,6 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (lowMidFlag & ROOM_LOWMID_MAPPLAYLISTINDEX)
 			lowMidFlag &= ~ROOM_LOWMID_MAPPLAYLISTINDEX;
 
-		if (lowMidFlag & ROOM_LOWMID_SD)
-			lowMidFlag &= ~ROOM_LOWMID_SD;
-
 		if (lowMidFlag & ROOM_LOWMID_MANNERLIMIT)
 		{
 			if (mannerLimit > 2)
@@ -1908,9 +1905,6 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 					enhanceRestrict = 1;
 			}
 
-			if (lowMidFlag & ROOM_LOWMID_SD)
-				lowMidFlag &= ~ROOM_LOWMID_SD;
-
 			if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY)
 			{
 				if ((gameModeId != 15 && gameModeId != 53) && zsDifficulty != 1)
@@ -2120,6 +2114,9 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 					weaponBuyCoolTime = 1;
 			}
 		}
+
+		if (lowMidFlag & ROOM_LOWMID_SD)
+			lowMidFlag &= ~ROOM_LOWMID_SD;
 
 		if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
 		{

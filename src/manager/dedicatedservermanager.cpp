@@ -81,7 +81,13 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 	{
 	case HostServerPacketType::AddServer:
 	{
-		/// @todo make whitelist...
+		// If dedicated server is not in whitelist, don't add it to the pool
+		if (std::find(g_pServerConfig->dedicatedServerWhitelist.begin(), g_pServerConfig->dedicatedServerWhitelist.end(), socket->GetIP()) == g_pServerConfig->dedicatedServerWhitelist.end())
+		{
+			Logger().Warn("CDedicatedServerManager::OnPacket(AddServer): IP %s is not in the dedicated server whitelist, ignoring\n", socket->GetIP().c_str());
+			return true;
+		}
+
 		int port = msg->ReadUInt16(); // -port, default is 27015
 		int ip = msg->ReadUInt32(true); // ip from -hostip dedi argument
 
@@ -106,7 +112,7 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 	}
 	case HostServerPacketType::Unk2:
 	{
-		// Something related to a file named "rev.txt", what the fuck?
+		// Integer in "rev.txt" file
 		int unk = msg->ReadUInt32();
 		Logger().Warn("CDedicatedServerManager::OnPacket(2): %d\n", unk);
 

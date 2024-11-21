@@ -450,7 +450,7 @@ struct ServerConfigGameMatch_s
 
 struct ServerConfigRoom_s
 {
-	int connectingMethod; // 0 - connecting to the dedicated server (host restart functionality is unavailable), 1 - connecting to the server hosted by user
+	int connectingMethod;
 	bool validateSettings;
 	std::vector<std::string> roomDefaultTitles;
 };

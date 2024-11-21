@@ -1633,6 +1633,12 @@ bool CChannelManager::OnGameStartRequest(IUser* user)
 	// send to the host game start request
 	if (currentRoom->GetStatus() == RoomStatus::STATUS_WAITING && currentRoom->GetHostUser() == user)
 	{
+		if (g_pServerConfig->room.connectingMethod == 1 && !g_DedicatedServerManager.IsPoolAvailable() && currentRoom->GetServer() == NULL)
+		{
+			g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), OBFUSCATE("Cannot start game due to no available dedicated server"));
+			return false;
+		}
+
 		currentRoom->HostStartGame();
 
 		return true;
