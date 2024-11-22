@@ -1104,7 +1104,8 @@ void CRoom::EndGame(bool forcedEnd)
 		if (u->GetRoomData()->m_bIsIngame)
 		{
 			SetUserIngame(u, false);
-			SendGameEnd(u);
+			if (!forcedEnd)
+				SendGameEnd(u);
 		}
 	}
 
