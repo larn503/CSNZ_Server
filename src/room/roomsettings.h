@@ -199,4 +199,9 @@ public:
 	int familyBattleClanID1;
 	int familyBattleClanID2;
 	int weaponBuyCoolTime;
+	int zbRebalance;
+	int unk79_1;
+	std::string unk79_2;
+	std::string unk79_3;
+	int unk79_4;
 };

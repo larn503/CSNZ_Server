@@ -11,51 +11,55 @@
     "MaterialLimit": 1000,
 
     "WithDrawCheckPeriod": 5,
-    "WithDrawMaterialThreshold": 20,
+    "WithDrawMaterialThreshold": 60,
+
+    "StrongHoldCompetitionInfoRequestDelayTime": 10,
 
     "OldSeasonList": [1],
-    "CurSeason": 1,
+    "CurSeason": 2,
 
-    "RewardDetailURL": "https://www.nexon.com/Home/Game",
+    "ClanAgitEvalGradeAtLeast": 4,
 
-    "PrepareStartTime": "2024-08-21 04:00:00",
-    "PrepareEndTime": "2024-08-28 03:00:00",
-    "TotalWarStartTime": "2024-08-28 04:00:00",
-    "TotalWarEndTime": "2024-09-19 00:05:00",
-    "RewardStartTime": "2024-09-19 04:00:00",
-    "RewardEndTime": "2024-10-23 04:00:00",
+    "RewardDetailURL": "https://forum.nexon.com/csnexon/board_view?board=5702&thread=2684549",
+
+    "PrepareStartTime"  : "2024-11-27 04:00:00",
+    "PrepareEndTime"    : "2024-12-04 03:00:00",
+    "TotalWarStartTime" : "2024-12-04 04:00:00",
+    "TotalWarEndTime"   : "2024-12-24 00:05:00",
+    "RewardStartTime"   : "2024-12-24 04:00:00",
+    "RewardEndTime"     : "2025-01-22 04:00:00",
     
-    "LastSeasonRewardStartTime": "2024-09-19 04:00:00",
-    "LastSeasonRewardEndTime": "2024-10-23 04:00:00",
+    "LastSeasonRewardStartTime" : "2024-12-24 04:00:00",
+    "LastSeasonRewardEndTime"   : "2025-01-22 04:00:00",
 
     "MapInfo": [
 		{
             "20240808150": {
                 "Supplies" : {
-                    "Zone_1" : 1400,
-                    "Zone_2" : 1500,
-                    "Zone_3" : 2500,
-                    "Hub"    : 3000,
-                    "Refuge" : 2500
+                    "Zone_1" : 500,
+                    "Zone_2" : 600,
+                    "Zone_3" : 700,
+                    "Hub"    : 800,
+                    "Refuge" : 1000
                 },
 
                 "EvaluationScore" : {
-                    "Zone_1" : 100,
-                    "Zone_2" : 200,
-                    "Zone_3" : 300,
-                    "Hub" : 300,
-                    "Refuge" : 300,
-                    "Strategic_FirstOccupation" : 10000,
-                    "Strategic_Maintain" : 5000
+                    "Zone_1"                    : 100,
+                    "Zone_2"                    : 200,
+                    "Zone_3"                    : 300,
+                    "Hub"                       : 300,
+                    "Refuge"                    : 300,
+                    "Strategic_FirstOccupation" : 5000,
+                    "Strategic_Maintain"        : 1000
                 },
 
                 "EvaluationGrade" : {
                     "RequiredPoint_0" : 0,
-                    "RequiredPoint_1" : 1500,
+                    "RequiredPoint_1" : 1000,
                     "RequiredPoint_2" : 5000,
-                    "RequiredPoint_3" : 11000,
-                    "RequiredPoint_4" : 31000,
-                    "RequiredPoint_5" : 55000
+                    "RequiredPoint_3" : 15000,
+                    "RequiredPoint_4" : 25000,
+                    "RequiredPoint_5" : 35000
                 },
 
                 "ContributionGrade": {
