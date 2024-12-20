@@ -73,9 +73,9 @@ After some time you are going to get more and more points and it will be easier 
 * Sort all working maps and gamemodes, return old event maps.
 
 # Building
-Release has all files for client, you can find their source in their original repos. All my changes was done in server.
-[Client Source](https://github.com/JusicP/Launcher_CSNZ)
-[HLDS Source](https://github.com/SmilexGamer/HLDS_CSNZ)
+Release has all files for client, you can find their source in their original repos. All my changes was done in server.  
+[Client Source](https://github.com/JusicP/Launcher_CSNZ)  
+[HLDS Source](https://github.com/SmilexGamer/HLDS_CSNZ)  
 
 Currently only Windows and Linux are supported, other platforms not tested.
 
@@ -106,6 +106,3 @@ cd PathToRepo/CSNZ_Server/src
 cmake -S . -B build
 cmake --build build
 ```
-
-# Documentation
-You can find server documentation in [DOCUMENTATION.md](doc/documentation.md) file.
