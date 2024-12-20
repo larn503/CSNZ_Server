@@ -488,7 +488,7 @@ void CUser::OnTick()
 
 	if (m_nUptime % 1800 == 0)
 	{
-		g_PacketManager.SendUMsgNoticeMessageInChat(m_pSocket, OBFUSCATE("The server team would appreciate your financial support: https://discord.gg/EvUAY6D"));
+		g_PacketManager.SendUMsgNoticeMessageInChat(m_pSocket, OBFUSCATE("The original server team would appreciate your financial support: https://discord.gg/EvUAY6D"));
 	}
 }
 

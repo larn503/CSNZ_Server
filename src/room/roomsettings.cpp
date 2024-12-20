@@ -365,15 +365,6 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
 		weaponBuyCoolTime = inPacket.readUInt8();
 	}
-	if (highMidFlag & ROOM_HIGHMID_ZBREBALANCE) {
-		zbRebalance = inPacket.readUInt8();
-	}
-	if (highMidFlag & ROOM_HIGHMID_UNK79) {
-		unk79_1 = inPacket.readInt32_LE();
-		unk79_2 = inPacket.readStr();
-		unk79_3 = inPacket.readStr();
-		unk79_4 = inPacket.readInt32_LE();
-	}
 
 	if (highFlag & ROOM_HIGH_UNK77) {
 		unk77 = inPacket.readUInt8();
@@ -496,11 +487,6 @@ void CRoomSettings::Init()
 	familyBattleClanID1 = 0;
 	familyBattleClanID2 = 0;
 	weaponBuyCoolTime = 0;
-	zbRebalance = 0;
-	unk79_1 = 0;
-	unk79_2 = "";
-	unk79_3 = "";
-	unk79_4 = 0;
 }
 
 vector<int> split(const string& s, char delimiter)
@@ -1310,11 +1296,6 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 		LoadFamilyBattleSettings(gameModeId);
 
 	weaponBuyCoolTime = 0;
-	zbRebalance = gameModeId == 14 ? 1 : 0;
-	unk79_1 = 0;
-	unk79_2 = "";
-	unk79_3 = "";
-	unk79_4 = 0;
 
 	if (mapId != 254) // Not studio mode
 		lowMidFlag &= ~ROOM_LOWMID_VOXEL;
@@ -2131,17 +2112,6 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 				}
 				else if (weaponBuyCoolTime > 1)
 					weaponBuyCoolTime = 1;
-			}
-
-			if (highMidFlag & ROOM_HIGHMID_ZBREBALANCE)
-			{
-				if (gameModeId != 14 && zbRebalance != 0)
-				{
-					Logger().Warn("User '%s' tried to update a room\'s settings with gameModeId that doesn't use zbRebalance, gameModeId: %d\n", user->GetLogName(), gameModeId);
-					highMidFlag &= ~ROOM_HIGHMID_ZBREBALANCE;
-				}
-				else if (zbRebalance > 1)
-					zbRebalance = 1;
 			}
 		}
 

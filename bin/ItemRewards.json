@@ -1,1126 +1,1817 @@
 {
 	"Version": 1,
-	"1001": {
-		"Title": "LEVEL1_GIFTBOX_TITLE",
-		"Description": "LEVEL1_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 1,
-		"Items": {
+	"3950":		// Easy chest
+	{
+		"RandomItems":
+		{
 			"1": {
-				"Count": 1,
-				"Duration": 3
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"258": {},
+					"259": {},
+					"260": {},
+					"955": {}
+					
+				}
 			},
-			"1002": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"1030": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"136": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"173": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"258": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"32": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"363": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"367": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"45": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"5": {
-				"Count": 1,
-				"Duration": 3
+			"2": {
+				"Durations": {
+					"100": [1]
+				},
+				"99": {
+					"258": {}
+				},
+				"1": {
+					"564": {},
+					"706": {},
+					"784": {},
+					"752": {},
+					"776": {}
+				}
 			}
 		}
 	},
-	"1002": {
-		"Title": "LEVEL4_GIFTBOX_TITLE",
-		"Description": "LEVEL4_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 4,
-		"Items": {
-			"1003": {
-				"Count": 1,
-				"Duration": 0
+	"3951":		// Normal chest
+	{
+		"HonorPoints": [0,0,0,1],
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"258": {},
+					"259": {},
+					"260": {},
+					"1027": {},
+					"1030": {},
+					"8310": {
+						"Count": 2
+					},
+					"8311": {
+						"Count": 2
+					},
+					"955": {
+						"Count": 2
+					}
+					
+				}
 			},
-			"1030": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"138": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"148": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"173": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"24": {
-				"Count": 1,
-				"Duration": 3
-			},
-			"258": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"419": {
-				"Count": 1,
-				"Duration": 30
+			"2": {
+				"Durations": {
+					"100": [1]
+				},
+				"80": {
+					"258": {}
+				},
+				"20": {
+					"564": {},
+					"706": {},
+					"784": {},
+					"752": {},
+					"776": {}
+				}
 			}
 		}
 	},
-	"1003": {
-		"Title": "LEVEL6_GIFTBOX_TITLE",
-		"Description": "LEVEL6_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 6,
-		"Items": {
-			"1004": {
-				"Count": 1,
-				"Duration": 0
+	"2526":		// Hard chest
+	{
+		"HonorPoints": [1],
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"258": {
+						"Count": 2
+					},
+					"259": {
+						"Count": 2
+					},
+					"260": {
+						"Count": 2
+					},
+					"300": {
+						"Count": 1
+					},
+					"1027": {},
+					"1030": {},
+					"8566": {},
+					"955": {
+						"Count": 3
+					}
+					
+				}
 			},
-			"1030": {
-				"Count": 3,
-				"Duration": 0
+			"2": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"258": {
+						"Count": 2
+					},
+					"259": {
+						"Count": 2
+					},
+					"260": {
+						"Count": 2
+					},
+					"1027": {},
+					"1030": {},
+					"8566": {},
+					"8481": {},
+					"955": {
+						"Count": 3
+					}
+					
+				}
 			},
-			"136": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"158": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"173": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"18": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"22": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"259": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"37": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"385": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"4": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"418": {
-				"Count": 1,
-				"Duration": 30
+			"3": {
+				"Durations": {
+					"100": [1]
+				},
+				"100": {
+					"564": {},
+					"706": {},
+					"784": {},
+					"752": {},
+					"776": {},
+					"8192": {},
+					"8164": {}
+				}
 			}
 		}
 	},
-	"1004": {
-		"Title": "LEVEL8_GIFTBOX_TITLE",
-		"Description": "LEVEL8_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 8,
-		"Items": {
-			"1005": {
-				"Count": 1,
-				"Duration": 0
+	"2527":		// Very Hard Chest
+	{
+		"HonorPoints": [2,2,2,2,3,3,4],
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"259": {
+						"Count": 5
+					},
+					"260": {
+						"Count": 3
+					},
+					"300": {
+						"Count": 1
+					},
+					"1027": {},
+					"1028": {},
+					"1030": {},
+					"1031": {},
+					"8566": {},
+					"8481": {},
+					"8482": {},
+					"955": {
+						"Count": 10
+					}
+				}
 			},
-			"1030": {
-				"Count": 3,
-				"Duration": 0
+			"2": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"259": {
+						"Count": 5
+					},
+					"260": {
+						"Count": 3
+					},
+					"300": {
+						"Count": 1
+					},
+					"1027": {},
+					"1028": {},
+					"1030": {},
+					"1031": {},
+					"2620": {},
+					"955": {
+						"Count": 10
+					}
+				}
 			},
-			"15": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"173": {
-				"Count": 10,
-				"Duration": 0
-			},
-			"175": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"176": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"21": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"260": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"285": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"286": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"300": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"38": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"47": {
-				"Count": 1,
-				"Duration": 7
-			},
-			"55": {
-				"Count": 1,
-				"Duration": 7
+			"3": {
+				"Durations": {
+					"100": [1,2]
+				},
+				"100": {
+					"8108": {},
+					"8047": {},
+					"8094": {},
+					"844": {}
+				}
 			}
 		}
 	},
-	"1005": {
-		"Title": "LEVEL11_GIFTBOX_TITLE",
-		"Description": "LEVEL11_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 11,
-		"Items": {
-			"1006": {
-				"Count": 1,
-				"Duration": 0
+	"2528":		// Hell Chest
+	{
+		"HonorPoints": [5,6,7,8,9,10],
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"259": {
+						"Count": 10
+					},
+					"260": {
+						"Count": 5
+					},
+					"300": {
+						"Count": 1
+					},
+					"1028": {},
+					"1029": {},
+					"1031": {},
+					"1032": {},
+					"8566": {},
+					"8481": {},
+					"8482": {},
+					"2620": {},
+					"2766": {},
+					"955": {
+						"Count": 20
+					}
+				}
 			},
-			"1030": {
-				"Count": 3,
-				"Duration": 0
+			"2": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"1028": {},
+					"1029": {},
+					"1031": {},
+					"1032": {},
+					"259": {
+						"Count": 5
+					},
+					"260": {
+						"Count": 3
+					},
+					"300": {
+						"Count": 1
+					},
+					"2620": {},
+					"955": {
+						"Count": 10
+					}
+				}
 			},
-			"159": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"163": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"164": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"173": {
-				"Count": 15,
-				"Duration": 0
-			},
-			"187": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"260": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"261": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"300": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"46": {
-				"Count": 1,
-				"Duration": 10
+			"3": {
+				"Durations": {
+					"100": [1,2]
+				},
+				"100": {
+					"8108": {},
+					"8047": {},
+					"8094": {},
+					"844": {}
+				}
 			}
 		}
 	},
-	"1006": {
-		"Title": "LEVEL14_GIFTBOX_TITLE",
-		"Description": "LEVEL14_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 14,
-		"Items": {
-			"1007": {
-				"Count": 1,
-				"Duration": 0
+	"3954":		// Inferno Chest
+	{
+		"HonorPoints": [20,30,40,50],
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"259": {
+						"Count": 20
+					},
+					"260": {
+						"Count": 20
+					},
+					"300": {
+						"Count": 2
+					},
+					"1029": {},
+					"1032": {},
+					"8481": {},
+					"8482": {},
+					"2620": {},
+					"955": {
+						"Count": 25
+					}
+				}
 			},
-			"1031": {
-				"Count": 1,
-				"Duration": 0
+			"2": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"1028": {},
+					"1029": {},
+					"1031": {},
+					"1032": {},
+					"300": {
+						"Count": 3
+					},
+					"2620": {},
+					"2766": {}
+				}
 			},
-			"149": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"173": {
-				"Count": 20,
-				"Duration": 0
-			},
-			"197": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"259": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"397": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"417": {
-				"Count": 1,
-				"Duration": 10
-			},
-			"48": {
-				"Count": 1,
-				"Duration": 10
+			"3": {
+				"Durations": {
+					"100": [0]
+				},
+				"100": {
+					"8293": {}
+				}
 			}
 		}
 	},
-	"1007": {
-		"Title": "LEVEL18_GIFTBOX_TITLE",
-		"Description": "LEVEL18_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 18,
+	"2196":{
 		"Items": {
-			"1008": {
+			"8009": {
+
+			},
+			"8010": {
+
+			},
+			"8011": {
+
+			},
+			"8012": {
+
+			},
+			"8013": {
+
+			},
+			"8014": {
+
+			},
+			"8015": {
+
+			},
+			"8016": {
+
+			},
+			"8017": {
+
+			},
+			"8018": {
+
+			},
+			"8019": {
+
+			},
+			"8020": {
+
+			}
+		}
+	},
+	"2197":{
+		"Items": {
+			"8021": {
+
+			},
+			"8022": {
+
+			},
+			"8023": {
+
+			},
+			"8024": {
+
+			},
+			"8025": {
+
+			},
+			"8026": {
+
+			},
+			"8027": {
+
+			},
+			"8028": {
+
+			},
+			"8029": {
+
+			},
+			"8030": {
+
+			},
+			"8031": {
+
+			},
+			"8032": {
+
+			}
+		}
+	},
+	"2067":{
+		"Select": 1,
+		"Items": {
+			"910": {
+
+			},
+			"909": {
+
+			},
+			"908": {
+
+			},
+			"907": {
+
+			},
+			"906": {
+
+			},
+			"905": {
+
+			},
+			"904": {
+
+			},
+			"903": {
+
+			},
+			"902": {
+
+			},
+			"901": {
+
+			}
+		}
+	},
+	"2766":
+	{
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [1,3,5]
+				},
+				"100": {
+					"9098": {
+						
+					},
+					"8825": {
+						
+					},
+					"8787": {
+						
+					},
+					"8709": {
+						
+					},
+					"8621": {
+						
+					},
+					"8474": {
+						
+					},
+					"8425": {
+						
+					},
+					"8314": {
+						
+					},
+					"8171": {
+						
+					},
+					"8663": {
+						
+					},
+					"8381": {
+						
+					},
+					"8699": {
+						
+					},
+					"8901": {
+						
+					},
+					"8530": {
+						
+					},
+					"8487": {
+						
+					},
+					"8248": {
+						
+					}
+				}
+			},
+			"2": {
+				"Durations": {
+					"100": [1,2,3]
+				},
+				"100": {
+					"1027": {
+						
+					},
+					"1028": {
+						
+					},
+					"1029": {
+						
+					},
+					"8357": {
+						
+					},
+					"8623": {
+						
+					},
+					"111": {
+						
+					},
+					"8571": {
+						
+					}
+				}
+			},
+			"3": {
+				"Durations": {
+					"100": [0]
+				},
+				"33": {
+					"8481": {
+							
+					},
+					"8482": {
+						
+					},
+					"8566": {
+						
+					}
+				},
+				"67": {
+					"676": {
+						"Count": 1,
+						"Duration": 0
+					}
+				}
+			}
+		}
+	},
+	"2189":
+	{
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [7]
+				},
+				"100": {
+					"943": {
+						
+					},
+					"944": {
+						
+					},
+					"8084": {
+						
+					},
+					"8085": {
+						
+					}
+				}
+			}
+		}
+	},
+	"2620":
+	{
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"85": [3,5,7,14],
+					"15": [-1]
+				},
+				"100": {
+					"877":
+					{
+
+					},
+					"841":
+					{
+
+					},
+					"825":
+					{
+
+					},
+					"810":
+					{
+
+					},
+					"809":
+					{
+
+					}
+				}
+			},
+			"2": {
+				"Durations": {
+					"100": [1,2,3]
+				},
+				"100": {
+					"1027": {
+						
+					},
+					"1028": {
+						
+					},
+					"1029": {
+						
+					},
+					"8357": {
+						
+					},
+					"8623": {
+						
+					},
+					"111": {
+						
+					},
+					"8571": {
+						
+					}
+				}
+			},
+			"3": {
+				"Durations": {
+					"100": [0]
+				},
+				"33": {
+					"8481": {
+							
+					},
+					"8482": {
+						
+					},
+					"8566": {
+						
+					}
+				},
+				"67": {
+					"676": {
+						"Count": 1,
+						"Duration": 0
+					}
+				}
+			}
+		}
+	},
+	"2574":
+	{
+		"Select": 1,
+		"Items":
+		{
+			"4601":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4602":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4603":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4604":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4605":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4606":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4607":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4608":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4609":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4610":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4611":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4612":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4613":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4614":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4615":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"4616":
+			{
+			"Count": 1,
+			"Duration": 0
+			},
+			"676":
+			{
+			"Count": 300,
+			"Duration": 0
+			}
+		}
+	},
+	"2214":
+	{
+		"Select": 1,
+		"Items":
+		{
+			"703":
+			{
+			},
+			"363":
+			{
+			},
+			"792":
+			{
+			},
+			"556":
+			{
+			},
+			"270":
+			{
+			},
+			"983":
+			{
+			},
+			"899":
+			{
+			},
+			"719":
+			{
+			},
+			"924":
+			{
+			},
+			"769":
+			{
+			},
+			"8193":
+			{
+			},
+			"8119":
+			{
+			},
+			"8118":
+			{
+			},
+			"816":
+			{
+			},
+			"495":
+			{
+			},
+			"752":
+			{
+			},
+			"849":
+			{
+			},
+			"504":
+			{
+			},
+			"768":
+			{
+			},
+			"893":
+			{
+			},
+			"554":
+			{
+			},
+			"776":
+			{
+			},
+			"928":
+			{
+			},
+			"964":
+			{
+			},
+			"969":
+			{
+			},
+			"981":
+			{
+			}
+		}
+	},
+	"1001": // Level 1 Box
+	{
+		"LvlRestriction": 10,
+		"Items":
+		{
+			"1002": // Level 3 Box
+			{
 				"Count": 1,
 				"Duration": 0
 			},
-			"1031": {
+			"8310": // Cash Decoder
+			{
 				"Count": 2,
 				"Duration": 0
-			},
-			"173": {
-				"Count": 25,
+			}
+		}
+	},
+	"1002": // Level 3 Box
+	{
+		"LvlRestriction": 20,
+		"Items":
+		{
+			"1003": // Level 5 Box
+			{
+				"Count": 1,
 				"Duration": 0
 			},
-			"242": {
-				"Count": 1,
-				"Duration": 10
+			"8310": // Cash Decoder
+			{
+				"Count": 3,
+				"Duration": 0
 			},
-			"248": {
+			"968": // battle hecate II
+			{
 				"Count": 1,
-				"Duration": 10
+				"Duration": 14
 			},
-			"259": {
+			"955": // top30
+			{
+				"Count": 5,
+				"Duration": 0
+			},
+			"258": // HP 30%
+			{
 				"Count": 10,
 				"Duration": 0
 			},
-			"285": {
+			"259": // HP 100%
+			{
+				"Count": 5,
+				"Duration": 0
+			},
+			"260": // Revive
+			{
+				"Count": 5,
+				"Duration": 0
+			},
+			"1030": // Point Coupon LV1
+			{
+				"Count": 3,
+				"Duration": 0
+			}
+		}
+	},
+	"1003": // Level 5 Box
+	{
+		"LvlRestriction": 30,
+		"Items":
+		{
+			"1004": // Level 10 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"8310": // Cash Decoder
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"955": // top30
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"258": // HP 30%
+			{
+				"Count": 5,
+				"Duration": 0
+			},
+			"259": // HP 100%
+			{
+				"Count": 5,
+				"Duration": 0
+			},
+			"260": // Revive
+			{
+				"Count": 5,
+				"Duration": 0
+			},
+			"1030": // Point Coupon LV1
+			{
+				"Count":1,
+				"Duration": 0
+			}
+		}
+	},
+	"1004": // Level 10 Box
+	{
+		"LvlRestriction": 40,
+		"Items":
+		{
+			"1005": // Level 15 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"8310": // Cash Decoder
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"279": // m4d
+			{
+				"Count": 1,
+				"Duration": 7
+			},
+			"280": // ak47d
+			{
+				"Count": 1,
+				"Duration": 7
+			},
+			"281": // dragon knife
+			{
+				"Count": 1,
+				"Duration": 7
+			},
+			"1030": // Point Coupon LV1
+			{
+				"Count":1,
+				"Duration": 0
+			}
+		}
+	},
+	"1005": // Level 15 Box
+	{
+		"LvlRestriction": 50,
+		"Items":
+		{
+			"1006": // Level 20 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"8310": // Cash Decoder
+			{
+				"Count":15,
+				"Duration": 0
+			},
+			"955": // top30
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"1030": // Point Coupon LV1
+			{
+				"Count":1,
+				"Duration": 0
+			}
+		}
+	},
+	"1006": // Level 20 Box
+	{
+		"LvlRestriction": 55,
+		"Items":
+		{
+			"1007": // Level 25 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"8310": // Cash Decoder
+			{
+				"Count":20,
+				"Duration": 0
+			},
+			"2599": // Epic
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"955": // HP 100%
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"809": // M4 DK
+			{
+				"Count":1,
+				"Duration": 3
+			},
+			"810": // AK PALADIN
+			{
+				"Count":1,
+				"Duration": 3
+			},
+			"1030": // Point Coupon LVL1
+			{
+				"Count":3,
+				"Duration": 0
+			}
+		}
+	},
+	"1007": // Level 25 Box
+	{
+		"LvlRestriction": 70,
+		"Items":
+		{
+			"1008": // Level 30 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"8310": // Cash Decoder
+			{
+				"Count":15,
+				"Duration": 0
+			},
+			"8311": // Class Decoder
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"8308": // unique
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"891": // LYCAN
+			{
+				"Count":1,
+				"Duration": 3
+			},
+			"841": // Hammer
+			{
+				"Count":1,
+				"Duration": 3
+			},
+			"667": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"666": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"665": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"664": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"1030": // Point Coupon LV1
+			{
+				"Count":3,
+				"Duration": 0
+			}
+		}
+	},
+	"1008": // Level 30 Box
+	{
+		"LvlRestriction": 80,
+		"Items":
+		{
+			"2196": {
+				"Count": 1,
+				"Duration": 0
+			},
+			"1016": // Level 35 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"2599": // Epic
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"957": // M Decoder
+			{
+				"Count":3,
+				"Duration": 0
+			},
+			"9084": // Paints
+			{
+				"Count":3,
+				"Duration": 0
+			},
+			"844": // Drill
+			{
+				"Count":1,
+				"Duration": 3
+			},
+			"825": // AWP BUff
+			{
+				"Count":1,
+				"Duration": 3
+			},
+			"1030": // Point Coupon LV1
+			{
+				"Count":5,
+				"Duration": 0
+			}
+		}
+	},
+	"1016": // Level 35 Box
+	{
+		"LvlRestriction": 90,
+		"Items":
+		{
+			"1017": // Level 40 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"2599": // Epic
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"259": // HP 100%
+			{
+				"Count":20,
+				"Duration": 0
+			},
+			"300": // Round Retry
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"260": // Battle Revival
+			{
+				"Count":15,
+				"Duration": 0
+			},
+			"1031": // Point Coupon LV2
+			{
+				"Count":1,
+				"Duration": 0
+			}
+		}
+	},
+	"1017": // Level 40 Box
+	{
+		"LvlRestriction": 100,
+		"Items":
+		{
+			"1018": // Level 45 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"2599": // Cash Decoder
+			{
+				"Count":15,
+				"Duration": 0
+			},
+			"919": // Rubeblade
+			{
+				"Count": 1,
+				"Duration": 3
+			},
+			"943": // Flora paladin
+			{
+				"Count": 1,
+				"Duration":3
+			},
+			"944": // Doroty DK
+			{
+				"Count": 1,
+				"Duration":3
+			},
+			"259": // HP 100%
+			{
+				"Count":20,
+				"Duration": 0
+			},
+			"300": // Round Retry
+			{
+				"Count":2,
+				"Duration": 0
+			},
+			"260": // Battle Revival
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"663": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"662": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"661": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"660": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"1031": // Point Coupon LV2
+			{
+				"Count":1,
+				"Duration": 0
+			}
+		}
+	},
+	"1018": // Level 45 Box
+	{
+		"LvlRestriction": 110,
+		"Items":
+		{
+			"1019": // Level 50 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"2599": // Epic
+			{
+				"Count":20,
+				"Duration": 0
+			},
+			"9084": // Paint
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"8312": // Premium Class
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"8308": // Unique
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"259": // HP 100%
+			{
+				"Count":20,
+				"Duration": 0
+			},
+			"300": // Round Retry
+			{
+				"Count":3,
+				"Duration": 0
+			},
+			"260": // Battle Revival
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"1031": // Point Coupon LV2
+			{
+				"Count":1,
+				"Duration": 0
+			}
+		}
+	},
+	"1019": // Level 50 Box
+	{
+		"LvlRestriction": 120,
+		"Items":
+		{
+			"1020": // Level 55 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"2197": {
+				"Count": 1,
+				"Duration": 0
+			},
+			"2599": // Epic
+			{
+				"Count":25,
+				"Duration": 0
+			},
+			"8308": // Unique
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"285": // Stamina Drug
+			{
+				"Count": 1,
+				"Duration": 30
+			},
+			"286": // Power Ampiflier
+			{
+				"Count": 1,
+				"Duration": 30
+			},
+			"288": // Money Extractor
+			{
+				"Count": 1,
+				"Duration": 30
+			},
+			"287": // Secret Research Fund
+			{
+				"Count": 1,
+				"Duration": 30
+			},
+			"957": // M Decoder
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"354": // MG3 Gold
+			{
+				"Count": 1,
+				"Duration":15
+			},
+			"246": // AWP Camo
+			{
+				"Count": 1,
+				"Duration": -1
+			},
+			"279": // M4A1 Dragon
+			{
+				"Count": 1,
+				"Duration":15
+			},
+			"280": // AK47 Dragon
+			{
+				"Count": 1,
+				"Duration":15
+			},
+			"281": // Knife Dragon
+			{
+				"Count": 1,
+				"Duration":15
+			},
+			"659": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"658": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"657": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"656": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"1031": // Point Coupon LV2
+			{
+				"Count":2,
+				"Duration": 0
+			},
+			"108":
+			{
+				"Count":1,
+				"Duration":-1
+			}
+		}
+	},
+	"1020": // Level 55 Box
+	{
+		"LvlRestriction": 130,
+		"Items":
+		{
+			"1021": // Level 60 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"2599": // Epic
+			{
+				"Count":25,
+				"Duration": 0
+			},
+			"955": // top 30
+			{
+				"Count":30,
+				"Duration": 0
+			},
+			"8094": // Magnum Launcher
+			{
+				"Count": 1,
+				"Duration":3
+			},
+			"8108": // Gunslinger
+			{
+				"Count": 1,
+				"Duration":3
+			},
+			"259": // HP 100%
+			{
+				"Count":20,
+				"Duration": 0
+			},
+			"360": // Alice red
+			{
+				"Count":1
+			},
+			"361": // Alice blue
+			{
+				"Count":1
+			},
+			"300": // Round Retry
+			{
+				"Count":5,
+				"Duration": 0
+			},
+			"260": // Battle Revival
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"1031": // Point Coupon LV2
+			{
+				"Count":2,
+				"Duration": 0
+			}
+		}
+	},
+	"1021": // Level 60 Box
+	{
+		"LvlRestriction": 140,
+		"Items":
+		{
+			"1022": // Level 65 Box
+			{
+				"Count": 1,
+				"Duration": 0
+			},
+			"2599": // Epic
+			{
+				"Count":30,
+				"Duration": 0
+			},
+			"8308": // Unique
+			{
+				"Count":15,
+				"Duration": 0
+			},
+			"8312": // Unique
+			{
+				"Count":15,
+				"Duration": 0
+			},
+			"8055": // Drill Gold
+			{
+				"Count": 1,
+				"Duration":3
+			},
+			"8106": // Dragon Cannon gold
+			{
+				"Count": 1,
+				"Duration":3
+			},
+			"259": // HP 100%
+			{
+				"Count":30,
+				"Duration": 0
+			},
+			"300": // Round Retry
+			{
+				"Count":10,
+				"Duration": 0
+			},
+			"260": // Battle Revival
+			{
+				"Count":20,
+				"Duration": 0
+			},
+			"136": // Zombie Mode Item A
+			{
+				"Count": 1,
+				"Duration": 30
+			},
+			"138": // Zombie Mode Item C
+			{
+				"Count": 1,
+				"Duration": 30
+			},
+			"111": // Damage Display
+			{
 				"Count": 1,
 				"Duration": 15
 			},
-			"286": {
-				"Count": 1,
-				"Duration": 15
+			"655": // Band
+			{
+				"Count":1,
+				"Duration": -1
 			},
-			"287": {
-				"Count": 1,
-				"Duration": 15
+			"654": // Band
+			{
+				"Count":1,
+				"Duration": -1
 			},
-			"288": {
-				"Count": 1,
-				"Duration": 15
+			"653": // Band
+			{
+				"Count":1,
+				"Duration": -1
 			},
-			"320": {
-				"Count": 1,
-				"Duration": 30
+			"652": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"1031": // Point Coupon LV2
+			{
+				"Count":2,
+				"Duration": 0
 			}
 		}
 	},
-	"1008": {
-		"Title": "LEVEL23_GIFTBOX_TITLE",
-		"Description": "LEVEL23_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 23,
-		"Items": {
-			"1016": {
+	"1022": // Level 65 Box
+	{
+		"LvlRestriction": 150,
+		"Items":
+		{
+			"1023": // Level 70 Box
+			{
 				"Count": 1,
 				"Duration": 0
 			},
-			"1031": {
-				"Count": 2,
+			"2599": // Epic
+			{
+				"Count":30,
 				"Duration": 0
 			},
-			"173": {
-				"Count": 30,
+			"8293": // Trans
+			{
+				"Count":1,
 				"Duration": 0
 			},
-			"259": {
-				"Count": 10,
+			"8532": // Astra
+			{
+				"Count":1,
+				"Duration": 2
+			},
+			"8702": // Drill gigantic
+			{
+				"Count":1,
+				"Duration": 2
+			},
+			"2766": // Epics
+			{
+				"Count":1,
 				"Duration": 0
 			},
-			"260": {
-				"Count": 5,
+			"8047": // Swords
+			{
+				"Count":1,
+				"Duration": 2
+			},
+			"1032": // Point Coupon LV3
+			{
+				"Count":1,
 				"Duration": 0
-			},
-			"282": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"300": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"304": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"321": {
-				"Count": 1,
-				"Duration": 30
 			}
 		}
 	},
-	"1016": {
-		"Title": "LEVEL28_GIFTBOX_TITLE",
-		"Description": "LEVEL28_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 28,
-		"Items": {
-			"1017": {
+	"1023": // Level 70 Box
+	{
+		"LvlRestriction": 160,
+		"Items":
+		{
+			"1024": // Level 72 Box
+			{
 				"Count": 1,
 				"Duration": 0
 			},
-			"1031": {
-				"Count": 2,
+			"2599": // Epic
+			{
+				"Count":30,
 				"Duration": 0
 			},
-			"163": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"164": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"173": {
-				"Count": 35,
+			"8293": // Trans
+			{
+				"Count":1,
 				"Duration": 0
 			},
-			"175": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"176": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"259": {
-				"Count": 10,
+			"2766": // Epics
+			{
+				"Count":3,
 				"Duration": 0
 			},
-			"260": {
-				"Count": 5,
+			"1032": // Point Coupon LV3
+			{
+				"Count":1,
 				"Duration": 0
-			},
-			"300": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"373": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"56": {
-				"Count": 1,
-				"Duration": -1
 			}
 		}
 	},
-	"1017": {
-		"Title": "LEVEL33_GIFTBOX_TITLE",
-		"Description": "LEVEL33_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 33,
-		"Items": {
-			"1018": {
-				"Count": 1,
+	"1024": // Level 72 Box
+	{
+		"LvlRestriction": 200,
+		"Items":
+		{
+			"2599": // Epic
+			{
+				"Count":50,
 				"Duration": 0
 			},
-			"1031": {
-				"Count": 3,
+			"8293": // Trans
+			{
+				"Count":3,
 				"Duration": 0
 			},
-			"173": {
-				"Count": 40,
+			"2766": // Epics
+			{
+				"Count":3,
 				"Duration": 0
 			},
-			"259": {
-				"Count": 20,
+			"8530": // Quantum
+			{
+				"Count":1,
+				"Duration": 7
+			},
+			"259": // HP 100%
+			{
+				"Count":100,
 				"Duration": 0
 			},
-			"260": {
-				"Count": 10,
+			"300": // Round Retry
+			{
+				"Count":10,
 				"Duration": 0
 			},
-			"300": {
-				"Count": 10,
+			"260": // Battle Revival
+			{
+				"Count":100,
 				"Duration": 0
 			},
-			"390": {
+			"252": // Zombie Mode Item H
+			{
 				"Count": 1,
-				"Duration": 30
+				"Duration":100
 			},
-			"393": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"395": {
-				"Count": 1,
-				"Duration": 30
-			}
-		}
-	},
-	"1018": {
-		"Title": "LEVEL38_GIFTBOX_TITLE",
-		"Description": "LEVEL38_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 38,
-		"Items": {
-			"1019": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"1031": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"173": {
-				"Count": 45,
-				"Duration": 0
-			},
-			"259": {
-				"Count": 20,
-				"Duration": 0
-			},
-			"260": {
-				"Count": 10,
-				"Duration": 0
-			},
-			"300": {
-				"Count": 10,
-				"Duration": 0
-			},
-			"391": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"392": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"394": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"420": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"54": {
-				"Count": 1,
-				"Duration": 30
-			}
-		}
-	},
-	"1019": {
-		"Title": "LEVEL43_GIFTBOX_TITLE",
-		"Description": "LEVEL43_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 43,
-		"Items": {
-			"1020": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"1031": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"173": {
-				"Count": 50,
-				"Duration": 0
-			},
-			"246": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"254": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"279": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"280": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"281": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"285": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"286": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"287": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"288": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"354": {
-				"Count": 1,
-				"Duration": 30
-			}
-		}
-	},
-	"1020": {
-		"Title": "LEVEL48_GIFTBOX_TITLE",
-		"Description": "LEVEL48_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 48,
-		"Items": {
-			"1021": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"1032": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"173": {
-				"Count": 55,
-				"Duration": 0
-			},
-			"253": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"259": {
-				"Count": 20,
-				"Duration": 0
-			},
-			"260": {
-				"Count": 10,
-				"Duration": 0
-			},
-			"300": {
-				"Count": 10,
-				"Duration": 0
-			},
-			"362": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"421": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"446": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"447": {
-				"Count": 1,
-				"Duration": 30
-			}
-		}
-	},
-	"1021": {
-		"Title": "LEVEL54_GIFTBOX_TITLE",
-		"Description": "LEVEL54_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 54,
-		"Items": {
-			"1022": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"1032": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"111": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"136": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"138": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"173": {
-				"Count": 60,
-				"Duration": 0
-			},
-			"259": {
-				"Count": 30,
-				"Duration": 0
-			},
-			"260": {
-				"Count": 20,
-				"Duration": 0
-			},
-			"300": {
-				"Count": 20,
-				"Duration": 0
-			},
-			"343": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"355": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"431": {
-				"Count": 1,
-				"Duration": -1
-			}
-		}
-	},
-	"1022": {
-		"Title": "LEVEL60_GIFTBOX_TITLE",
-		"Description": "LEVEL60_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 60,
-		"Items": {
-			"1023": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"1032": {
-				"Count": 3,
-				"Duration": 0
-			},
-			"173": {
-				"Count": 65,
-				"Duration": 0
-			},
-			"259": {
-				"Count": 30,
-				"Duration": 0
-			},
-			"260": {
-				"Count": 20,
-				"Duration": 0
-			},
-			"300": {
-				"Count": 20,
-				"Duration": 0
-			},
-			"382": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"55": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"8": {
-				"Count": 1,
-				"Duration": -1
-			}
-		}
-	},
-	"1023": {
-		"Title": "LEVEL66_GIFTBOX_TITLE",
-		"Description": "LEVEL66_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 66,
-		"Items": {
-			"1024": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"1032": {
-				"Count": 5,
-				"Duration": 0
-			},
-			"160": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"173": {
-				"Count": 70,
-				"Duration": 0
-			},
-			"212": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"237": {
-				"Count": 1,
-				"Duration": 30
-			},
-			"259": {
-				"Count": 50,
-				"Duration": 0
-			},
-			"260": {
-				"Count": 50,
-				"Duration": 0
-			},
-			"300": {
-				"Count": 50,
-				"Duration": 0
-			},
-			"371": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"434": {
-				"Count": 1,
-				"Duration": -1
-			}
-		}
-	},
-	"1024": {
-		"Title": "LEVEL72_GIFTBOX_TITLE",
-		"Description": "LEVEL72_GIFTBOX_MSG",
-		"Localized": true,
-		"LvlRestriction": 72,
-		"Items": {
-			"1032": {
-				"Count": 10,
-				"Duration": 0
-			},
-			"136": {
+			"138": // Zombie Mode Item C
+			{
 				"Count": 1,
 				"Duration": 100
 			},
-			"137": {
+			"137": // Zombie Mode Item B
+			{
 				"Count": 1,
 				"Duration": 100
 			},
-			"138": {
+			"136": // Zombie Mode Item A
+			{
 				"Count": 1,
 				"Duration": 100
 			},
-			"173": {
-				"Count": 72,
+			"1032": // Point Coupon LV3
+			{
+				"Count":1,
 				"Duration": 0
 			},
-			"245": {
+			"651": // Band
+			{
+				"Count":1,
+				"Duration": -1
+			},
+			"111": // Damage Display
+			{
 				"Count": 1,
 				"Duration": -1
 			},
-			"249": {
+			"8623": // Damage Meter
+			{
 				"Count": 1,
 				"Duration": -1
 			},
-			"252": {
-				"Count": 1,
-				"Duration": 100
-			},
-			"259": {
-				"Count": 100,
-				"Duration": 0
-			},
-			"260": {
-				"Count": 100,
-				"Duration": 0
-			},
-			"270": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"300": {
-				"Count": 100,
-				"Duration": 0
-			},
-			"320": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"321": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"383": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"397": {
-				"Count": 1,
-				"Duration": -1
-			},
-			"452": {
+			"8357": // Premium
+			{
 				"Count": 1,
 				"Duration": -1
 			}
 		}
 	},
-	"1027": {
-		"Title": "ExpCoupon_TITLE",
-		"Description": "ExpCoupon_MSG",
-		"Localized": true,
-		"Exp": [
-			500,
-			1000,
-			2000
-		]
+
+	// Level/Exp Coupons
+	"1027": // Exp Coupon LV1
+	{ 
+		"Exp": [3000, 5000, 10000] 
 	},
-	"1028": {
-		"Title": "ExpCoupon_TITLE",
-		"Description": "ExpCoupon_MSG",
-		"Localized": true,
-		"Exp": [
-			1000,
-			2000,
-			4000
-		]
+	"1028": // Exp Coupon LV2
+	{ 
+		"Exp": [5000, 10000, 20000]
 	},
-	"1029": {
-		"Title": "ExpCoupon_TITLE",
-		"Description": "ExpCoupon_MSG",
-		"Localized": true,
-		"Exp": [
-			2000,
-			4000,
-			8000
-		]
+	"1029": // Exp Coupon LV3
+	{ 
+		"Exp": [20000, 40000, 80000] 
+	}, 
+	"1030": // Point Coupon LV1
+	{ 
+		"Points": [2500, 5000, 10000] 
+	}, 
+	"1031": // Point Coupon LV2
+	{ 
+		"Points": [15000, 25000, 50000] 
+	}, 
+	"1032": // Point Coupon LV3 
+	{ 
+		"Points": [50000, 75000, 100000, 125000, 150000, 200000, 500000] 
 	},
-	"1030": {
-		"Title": "PntCoupon_TITLE",
-		"Description": "PntCoupon_MSG",
-		"Localized": true,
-		"Points": [
-			250,
-			500,
-			1000
-		]
+	
+		// Zombie Scenario bonus chest reward
+	"3000": { // Normal (HARD) (Regular, Light, Heavy, Voodoo, Psycho, Sting Finger, Venom Guard)
+		"Points": [ 125, 250, 375, 500]
 	},
-	"1031": {
-		"Title": "PntCoupon_TITLE",
-		"Description": "PntCoupon_MSG",
-		"Localized": true,
-		"Points": [
-			500,
-			1000,
-			2000
-		]
+	"3001": { // Medium (HARD) (Juggernaut, Deimos, Ganymede)
+		"Points": [ 500,750,1000]
 	},
-	"1032": {
-		"Title": "PntCoupon_TITLE",
-		"Description": "PntCoupon_MSG",
-		"Localized": true,
-		"Points": [
-			1000,
-			2000,
-			4000
-		]
+	"3002": { // Boss (HARD)
+		"Points": [ 1000,1500,2000,2500,3000,3500,4000,4500,5000,10000 ] 
 	},
-	"2189": {
-		"Title": "transbox_weapon_TITLE",
-		"Description": "transbox_weapon_MSG",
-		"Localized": true,
-		"Items": {
-			"8084": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"8085": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"8167": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"943": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"944": {
-				"Count": 1,
-				"Duration": 0
-			}
-		}
+	"3003": { // Normal (Very Hard+)
+		"Points": [ 500,750,750,1000 ] 
 	},
-	"2214": {
-		"Title": "Parts Weapon Selection Box",
-		"Description": "You obtained the following item from the Parts Weapon Selection Box.",
-		"Select": true,
-		"Items": {
-			"270": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"363": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"495": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"504": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"554": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"556": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"703": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"719": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"752": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"768": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"769": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"776": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"792": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"8118": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"8119": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"816": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"8193": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"849": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"893": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"899": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"924": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"928": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"964": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"969": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"981": {
-				"Count": 1,
-				"Duration": 0
-			},
-			"983": {
-				"Count": 1,
-				"Duration": 0
-			}
-		}
+	"3004": { // Medium (Very Hard+)
+		"Points": [ 1000,1500,1500,1500,2000 ] 
 	},
-	// Zombie Scenario bonus chest reward
-	"3000": { // Normal (Regular, Light, Heavy, Voodoo, Psycho, Sting Finger, Venom Guard)
-		"Points": [ 500 ]
+	"3005": { // Boss (Very Hard+)
+		"Points": [ 5000,10000,15000,20000,25000,30000,35000,40000,45000,50000 ] 
 	},
-	"3001": { // Medium (Juggernaut, Deimos, Ganymede)
-		"Points": [ 1500 ] 
+	"3007": { // Normal (Easy-Normal)
+		"Points": [ 125 ] 
 	},
-	"3002": { // Boss
-		"Points": [ 2500 ] 
-	},
-	"3003": { // Normal Hard
-		"Points": [ 1000 ] 
-	},
-	"3004": { // Medium Hard
-		"Points": [ 3000 ] 
-	},
-	"3005": { // Boss Hard
-		"Points": [ 5000 ] 
-	},
-	"3007": { // Normal Easy
+	"3008": { // Medium (Easy-Normal)
 		"Points": [ 250 ] 
 	},
-	"3008": { // Medium Easy
-		"Points": [ 750 ] 
-	},
-	"3009": { // Boss Easy
-		"Points": [ 1250 ] 
+	"3009": { // Boss (Easy-Normal)
+		"Points": [ 1000 ] 
 	},
 	"3010": { // Human Normal
 		"Points": [ 500 ] 
@@ -1150,12 +1841,143 @@
 		"Points": [ 3000 ]
 	},
 	"3019": { // Phobos
-		"Points": [ 3000 ] 
+		"Points": [ 3000,6000,9000,15000 ] 
 	},
 	"3020": { // Siege Type Phobos
-		"Points": [ 3000 ] 
+		"Points": [ 3000,6000,9000,15000 ] 
 	},
 	"3021": { // Oberon
-		"Points": [ 3000 ] 
+		"Points": [ 3000,6000,9000,15000 ] 
+	},
+	"3999": { // unknown
+		"Points": [ 3000,6000,9000,15000 ] 
+	},
+	"3066": { // unknown
+		"Points": [ 3000,6000,9000,15000 ] 
+	},
+	"3050": { // Elite Monster Prize
+		"RandomItems":
+		{
+			"1": {
+				"Durations": {
+					"100": [-1]
+				},
+				"100": {
+					"3619":
+					{
+
+					},
+					"3620":
+					{
+
+					},
+					"3621":
+					{
+
+					},
+					"3622":
+					{
+
+					},
+					"3623":
+					{
+
+					},
+					"3624":
+					{
+
+					},
+					"3625":
+					{
+
+					},
+					"3626":
+					{
+
+					},
+					"3627":
+					{
+
+					},
+					"3628":
+					{
+
+					},
+					"3629":
+					{
+
+					},
+					"3630":
+					{
+
+					},
+					"3631":
+					{
+
+					},
+					"3632":
+					{
+
+					},
+					"3633":
+					{
+
+					},
+					"3634":
+					{
+
+					},
+					"3635":
+					{
+
+					},
+					"3636":
+					{
+
+					},
+					"3637":
+					{
+
+					},
+					"3638":
+					{
+
+					},
+					"3639":
+					{
+
+					},
+					"3640":
+					{
+
+					},
+					"3641":
+					{
+
+					},
+					"3642":
+					{
+
+					},
+					"3643":
+					{
+
+					},
+					"3644":
+					{
+
+					},
+					"3645":
+					{
+
+					},
+					"3646":
+					{
+
+					}
+				}
+			}
+		}
 	}
 }
+

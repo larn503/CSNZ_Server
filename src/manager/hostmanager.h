@@ -27,7 +27,7 @@ private:
 	bool OnUpdateScore(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
 	bool OnGameEvent(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
 	bool OnUpdateClass(CReceivePacket* msg, IRoom* room, CGameMatch* gameMatch);
-	bool OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket, CGameMatch* gameMatch);
 	bool OnGameEnd(IExtendedSocket* socket);
 	bool OnUserWeapon(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnUserSpawn(CReceivePacket* msg, IExtendedSocket* socket);

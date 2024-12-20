@@ -118,7 +118,7 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	}
 	case 19:
 	{
-		OnZbsResult(msg, socket);
+		OnZbsResult(msg, socket, gameMatch);
 		break;
 	}
 	case 21:
@@ -213,21 +213,18 @@ bool CHostManager::OnUseInGameItem(CReceivePacket* msg, IExtendedSocket* socket,
 
 	if (destUser == NULL)
 		return false;
-
 	IRoom* destRoom = destUser->GetCurrentRoom();
 
 	if (destRoom != room)
 		return false;
-
 	int itemID = msg->ReadUInt16();
 	int count = msg->ReadUInt16();
 
 	vector<CUserInventoryItem> items;
+	//g_UserDatabase.GetFirstActiveItemByItemID
 	if (!g_UserDatabase.GetInventoryItemsByID(destUser->GetID(), itemID, items))
 		return false;
-
-	g_ItemManager.UseItem(destUser, items[0].GetGameSlot());
-
+	int result = g_ItemManager.UseItem(destUser, items[0].GetGameSlot(), count);
 	g_PacketManager.SendHostOnItemUse(socket, userID, items[0].m_nItemID);
 
 	return true;
@@ -380,7 +377,9 @@ bool CHostManager::OnUpdateWinCounter(CReceivePacket* msg, CGameMatch* gameMatch
 	int unk4 = msg->ReadInt8();
 	int unk5 = msg->ReadInt8();
 
-	gameMatch->OnUpdateWinCounter(ter, ct);
+	Logger().Info("ter: %d, ct: %d, unk1: %d, unk2: %d, unk3: %d, unk4: %d, unk5: %d", ter, ct, unk1, unk2, unk3, unk4, unk5);
+
+	gameMatch->OnUpdateWinCounter(unk1, ct);
 
 	return true;
 }
@@ -446,7 +445,7 @@ bool CHostManager::OnGameEvent(CReceivePacket* msg, IRoom* room, CGameMatch* gam
 	else if (type == 34) // dropbox pickup
 	{
 		int rewardID = msg->ReadUInt32();
-
+		//Logger().Info("userId: %d got dropbox %d", userID, rewardID);
 		//Logger().Info(LOG_INTERNAL, CON_WARNING, OBFUSCATE("[User '%s'] Game event - dropbox: userID: %d, rewardID: %d\n"), user->GetLogName(), userID, rewardID);
 		gameMatch->OnDropBoxPickup(destUser, rewardID);
 	}
@@ -496,10 +495,29 @@ bool CHostManager::OnUpdateClass(CReceivePacket* msg, IRoom* room, CGameMatch* g
 	return true;
 }
 
-bool CHostManager::OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket)
+bool CHostManager::OnZbsResult(CReceivePacket* msg, IExtendedSocket* socket, CGameMatch* match)
 {
 	Logger().Warn("CHostManager::OnZbsResult\n");
-
+	//Logger().Info("ZBS End packet: %d len\n", msg->GetLength());
+	//Logger().Info("ZBS End Sequence packet: %d len\n", msg->GetSequence());
+	int unk1 = msg->ReadInt8();	
+	int players = msg->ReadInt8(); // Player Counter
+	for (int i = 0; i < players; i++) {
+		int userID = msg->ReadUInt32();
+		int elites = msg->ReadUInt8(); // Elite bosses
+		int unk3 = msg->ReadInt8(); // maybe elites int16 but not sure
+		IUser* destUser = g_UserManager.GetUserById(userID);
+		if (destUser == NULL) {
+			continue;
+		}
+		CGameMatchUserStat* stat = match->GetGameUserStat(destUser);
+		if (stat)
+		{
+			stat->m_nElites = elites;
+		}
+		//Logger().Info("UserID: %d, elites: %d, unk3: %d\n", userID, elites, unk3);
+	}
+	match->OnZBSWin();
 	return true;
 }
 

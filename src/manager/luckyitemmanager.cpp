@@ -368,9 +368,8 @@ int CLuckyItemManager::OpenItemBox(IUser* user, int itemBoxID, int itemBoxOpenCo
 		item.grade = rate.grade;
 		item.duration = duration;
 		result.items.push_back(item);
-
 		// send notification in lobby chat to all users
-		if (item.grade == ItemBoxGrades::PREMIUM || item.grade == ItemBoxGrades::ADVANCED)
+		if (item.duration == -1 && (item.grade == ItemBoxGrades::PREMIUM))
 		{
 			// TODO: make method in manager for this
 			for (auto u : g_UserManager.GetUsers())

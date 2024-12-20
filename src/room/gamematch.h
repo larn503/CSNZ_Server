@@ -57,6 +57,7 @@ public:
 
 	// zbs
 	int m_nRank;
+	int m_nElites;
 };
 
 class CGameMatch
@@ -97,6 +98,8 @@ public:
 	void PrintGameResult();
 
 	void OnZBSWin();
+	int ChangeRewardOnZSDifficulty(int rewardID);
+	double GetZSDifficultyCoef(int difficulty);
 
 	std::vector<CGameMatchUserStat*> m_UserStats;
 
@@ -108,6 +111,7 @@ public:
 
 private:
 	int m_nSecondCounter;
+	bool m_nZbsWin;
 
 	std::vector<unsigned char> m_SaveData;
 

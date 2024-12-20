@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define SUPPORTED_CLIENT_BUILD "30.11.24"
+#define SUPPORTED_CLIENT_BUILD "29.11.24"
 
 #define ZOMBIE_WAR_WEAPON_LIST_VERSION 1
 #define RANDOM_WEAPON_LIST_VERSION 1
@@ -569,7 +569,7 @@ void CUserManager::SendGuestUserPacket(IExtendedSocket* socket)
 {
 	g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Welcome to the CSN:S server. Enter /login <username> <password> to login to your account."));
 	g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("If you don't have an account enter /register <username> <password>"));
-	g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Server developers: Jusic, Hardee, NekoMeow, Smilex_Gamer, xRiseless. Our Discord: https://discord.gg/EvUAY6D"));
+	g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("Server developers: Jusic, Hardee, NekoMeow, Smilex_Gamer, xRiseless. Fork by larn503. Discord: https://discord.gg/EvUAY6D"));
 }
 
 void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
@@ -615,7 +615,7 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	g_PacketManager.SendShopPopularProducts(socket, g_ShopManager.GetPopularProducts());
 
 	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \n
-	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \n");
+	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: discord.gg/EvUAY6D \n");
 	g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, text);
 
 	if (!g_pServerConfig->welcomeMessage.empty())

@@ -1957,9 +1957,6 @@ void BuildRoomInfo(CSendPacket* msg, IRoom* room, int lFlag, int hFlag)
 	if (hFlag & RLHFLAG_WEAPONBUYCOOLTIME) {
 		msg->WriteUInt8(roomSettings->weaponBuyCoolTime);
 	}
-	if (hFlag & RLHFLAG_ZBREBALANCE) {
-		msg->WriteUInt8(roomSettings->zbRebalance);
-	}
 
 	// studio related
 	if (roomSettings->mapId == 254)
@@ -2672,15 +2669,6 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 	if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
 		msg->WriteUInt8(newSettings->weaponBuyCoolTime);
-	}
-	if (highMidFlag & ROOM_HIGHMID_ZBREBALANCE) {
-		msg->WriteUInt8(newSettings->zbRebalance);
-	}
-	if (highMidFlag & ROOM_HIGHMID_UNK79) {
-		msg->WriteUInt32(newSettings->unk79_1);
-		msg->WriteString(newSettings->unk79_2);
-		msg->WriteString(newSettings->unk79_3);
-		msg->WriteUInt32(newSettings->unk79_4);
 	}
 
 	if (highFlag & ROOM_HIGH_UNK77) {

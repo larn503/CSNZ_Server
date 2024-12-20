@@ -552,15 +552,6 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	if (newSettings.highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
 		m_pSettings->weaponBuyCoolTime = newSettings.weaponBuyCoolTime;
 	}
-	if (newSettings.highMidFlag & ROOM_HIGHMID_ZBREBALANCE) {
-		m_pSettings->zbRebalance = newSettings.zbRebalance;
-	}
-	if (newSettings.highMidFlag & ROOM_HIGHMID_UNK79) {
-		m_pSettings->unk79_1 = newSettings.unk79_1;
-		m_pSettings->unk79_2 = newSettings.unk79_2;
-		m_pSettings->unk79_3 = newSettings.unk79_3;
-		m_pSettings->unk79_4 = newSettings.unk79_4;
-	}
 
 	if (newSettings.highFlag & ROOM_HIGH_UNK77) {
 		m_pSettings->unk77 = newSettings.unk77;

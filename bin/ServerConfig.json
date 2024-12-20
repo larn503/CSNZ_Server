@@ -4,13 +4,13 @@
 	"Port": "30002",
 	"TCPSendBufferSize": 131072,
 	"MaxPlayers": 100,
-	"WelcomeMessage": "https://discord.gg/EvUAY6D",
+	"WelcomeMessage": "",
 	"RestartOnCrash": false,
 	"InventorySlotMax": 3000,
 	"CheckClientBuild": false,
 	"AllowedClientTimestamp": 0,
 	"AllowedLauncherVersion": 67,
-	"MaxRegistrationsPerIP": 3,
+	"MaxRegistrationsPerIP": 10,
 	"SSL": false,
 	"Crypt": false,
 	"MainMenuSkinEvent": 0,
@@ -59,7 +59,7 @@
 		"GameMaster": true,
 		"Level": 1,
 		"Exp": 0,
-		"Points": 100000,
+		"Points": 5000,
 		"HonorPoints": 0,
 		"PrefixID": 0,
 		"Kills": 0,
@@ -418,7 +418,7 @@
 		"1": {
 			"Type": 0,
 			"Name": "Server information",
-			"Description": "Welcome to the CSO server. Report about bugs in discord: https://discord.gg/EvUAY6D",
+			"Description": "Balepka CSO Server! Welcome :3",
 			"StartDate": 0,
 			"EndDate": 0
 		}
@@ -427,48 +427,48 @@
 		"CalcResults": {
 			"GameModeCoefficient": {
 				"0": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"1": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"2": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"3": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"4": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"5": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"8": {
-					"Exp": 300,
-					"Points": 270
+					"Exp": 80,
+					"Points": 80
 				},
 				"9": {
-					"Exp": 300,
-					"Points": 270
+					"Exp": 80,
+					"Points": 80
 				},
 				"10": {
-					"Exp": 210,
-					"Points": 180
+					"Exp": 30,
+					"Points": 30
 				},
 				"12": {
 					"Exp": 55,
 					"Points": 50
 				},
 				"14": {
-					"Exp": 300,
-					"Points": 270
+					"Exp": 50,
+					"Points": 150
 				},
 				"15": {
 					"Exp": 5,
@@ -483,31 +483,31 @@
 					"Points": 4
 				},
 				"19": {
-					"Exp": 210,
+					"Exp": 100,
 					"Points": 180
 				},
 				"20": {
-					"Exp": 320,
+					"Exp": 100,
 					"Points": 290
 				},
 				"21": {
-					"Exp": 210,
+					"Exp": 100,
 					"Points": 180
 				},
 				"22": {
-					"Exp": 240,
+					"Exp": 100,
 					"Points": 210
 				},
 				"23": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"24": {
-					"Exp": 300,
+					"Exp": 100,
 					"Points": 270
 				},
 				"25": {
-					"Exp": 230,
+					"Exp": 100,
 					"Points": 200
 				},
 				"26": {
@@ -515,7 +515,7 @@
 					"Points": 8
 				},
 				"27": {
-					"Exp": 240,
+					"Exp": 100,
 					"Points": 210
 				},
 				"28": {
@@ -523,8 +523,12 @@
 					"Points": 8
 				},
 				"29": {
-					"Exp": 310,
-					"Points": 260
+					"Exp": 50,
+					"Points": 50
+				},
+				"45": {
+					"Exp": 100,
+					"Points": 150
 				}
 			},
 			"BonusPercentage": {
@@ -548,38 +552,317 @@
 					},
 					"182": {
 						"Exp": 50
+					},
+					"8357": {
+						"Exp": 50,
+						"Points": 50
+					},
+					"8571": {
+						"Exp": 100
+					},
+					"8134":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8135":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8107":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"1056":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"1055":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8167":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8084":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8085":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"943":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"944":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8196":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8195":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8223":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8224":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8559":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"154":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"155":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"362":
+					{
+						"Exp": 20,
+						"Points": 10
+					},
+					"8251":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8252":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8287":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8288":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8335":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8336":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8352":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8353":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8418":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8419":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8439":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8440":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8488":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8489":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8526":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8527":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8560":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8572":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8573":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8629":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8630":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8659":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8660":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8703":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8704":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8747":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8748":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8813":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8814":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8857":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8858":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8903":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8904":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8932":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8933":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8952":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8988":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"8989":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"9025":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"9026":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"9055":
+					{
+						"Exp": 10,
+						"Points": 10
+					},
+					"9056":
+					{
+						"Exp": 10,
+						"Points": 10
 					}
 				},
 				"Classes": {
-					"55": {
-						"Exp": 20,
-						"Points": 20
-					},
-					"47": {
-						"Exp": 5,
-						"Points": 5
-					},
-					"48": {
-						"Exp": 20
-					},
-					"154": {
-						"Exp": 10,
-						"Points": 10
-					},
-					"155": {
-						"Exp": 10,
-						"Points": 10
-					},
-					"362": {
-						"Exp": 20,
-						"Points": 10
-					},
-					"376": {
-						"Exp": 10
-					},
-					"377": {
-						"Exp": 10
-					}
+					
 				}
 			}
 		}
@@ -884,24 +1167,6 @@
 	"FlockingFlyerType": 0,
 	"NameBlacklist": [],
 	"Surveys": {
-		"1": {
-			"Title": "User survey",
-			"Questions": {
-				"1": {
-					"Question": "Do you like CSN:S?",
-					"AnswerType": 0,
-					"AnswerCheckBoxType": 1,
-					"Answers": {
-						"1": {
-							"Answer": "Yes"
-						},
-						"2": {
-							"Answer": "No"
-						}
-					}
-				}
-			}
-		}
 	},
 	"Voxel": {
 		"VoxelHTTPIP": "52.28.231.59",

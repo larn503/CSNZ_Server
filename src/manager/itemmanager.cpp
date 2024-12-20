@@ -1383,7 +1383,7 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 	}
 	else if (className == "Requirement" || className == "RewardItem" || className == "NicknameChange")
 	{
-		OnItemUse(user, item, additionalArg);
+		bool result = OnItemUse(user, item, additionalArg);
 		return ITEM_USE_SUCCESS;
 	}
 
@@ -1471,7 +1471,6 @@ bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 			g_PacketManager.SendUMsgRewardNotice(user->GetExtendedSocket(), notice, reward->title, reward->description, reward->localized);
 		}
 	}
-
 	if (item.m_nCount == 0)
 	{
 		RemoveItem(user->GetID(), user, item);

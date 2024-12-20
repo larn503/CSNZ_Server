@@ -1473,8 +1473,6 @@ enum UserSurveyAnswerResult
 #define	ROOM_HIGHMID_WEAPONRESTRICT		(1<<5)
 #define ROOM_HIGHMID_FAMILYBATTLE		(1<<6)
 #define ROOM_HIGHMID_WEAPONBUYCOOLTIME	(1<<7)
-#define ROOM_HIGHMID_ZBREBALANCE		(1<<8)
-#define ROOM_HIGHMID_UNK79				(1<<9)
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
@@ -1529,7 +1527,6 @@ enum UserSurveyAnswerResult
 #define RLHFLAG_FAMILYBATTLE		(1<<13)
 #define RLHFLAG_FAMILYBATTLECLANIDS	(1<<14)
 #define RLHFLAG_WEAPONBUYCOOLTIME	(1<<15)
-#define RLHFLAG_ZBREBALANCE			(1<<16)
 #define RLHFLAG_ALL					(-1)
 
 // inventory related

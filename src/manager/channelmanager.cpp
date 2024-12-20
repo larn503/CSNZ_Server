@@ -462,6 +462,7 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/removeitem, /sendnotice, /addexp, /status, /ban, /hban, /ipban"));
 				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/unban, /getuid, /tournament, /givereward, /giverewardtoall, /addwpnreleasechar, /addpoints"));
 				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/givepoints, /setitemstatus, /setiteminuse, /sendgmnotice, /weaponrelease, /bingo"));
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setprefix"));
 				return true;
 			}
 			else if (args[0] == (char*)OBFUSCATE("/disconnect"))
@@ -1185,8 +1186,8 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 
 				return true;
 			}
+			
 		}
-
 		if (args[0] == (char*)OBFUSCATE("/weaponrelease"))
 		{
 			if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
@@ -1197,6 +1198,29 @@ bool CChannelManager::OnCommandHandler(IExtendedSocket* socket, IUser* user, con
 		{
 			if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_Bingo_NEW || g_pServerConfig->activeMiniGamesFlag & kEventFlag_Bingo)
 				g_MiniGameManager.OnBingoUpdateRequest(user);
+			return true;
+		}
+		else if (args[0] == (char*)OBFUSCATE("/setprefix")) {
+			if (!(args.size() >= 2))
+			{
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setprefix usage: /setprefix <prefixID>"));
+				return true;
+			}
+			if (!isNumber(args[1]))
+			{
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setprefix usage: /setprefix <prefixID>"));
+				return true;
+			}
+			if (args[1].length() > 6) {
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setprefix usage: /setprefix <prefixID>"));
+				return true;
+			}
+			int prefix = stoi(args[1]);
+			if (prefix < 0) {
+				g_PacketManager.SendUMsgNoticeMessageInChat(socket, OBFUSCATE("/setprefix usage: /setprefix <prefixID>"));
+				return true;
+			}
+			user->UpdatePrefix(prefix);
 			return true;
 		}
 	}

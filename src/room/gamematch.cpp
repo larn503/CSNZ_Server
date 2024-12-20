@@ -34,6 +34,7 @@ CGameMatchUserStat::CGameMatchUserStat()
 	m_nClassItemID = 0;
 	m_nIsLevelUp = false;
 	m_nRank = 0;
+	m_nElites = 0;
 }
 
 void CGameMatchUserStat::IncrementScore(int score)
@@ -192,6 +193,7 @@ CGameMatch::CGameMatch(IRoom* room, int gameMode, int mapID)
 	m_nTerWinCount = 0;
 	m_nFirstPlaceUserId = 0;
 	m_nSecondCounter = 0;
+	m_nZbsWin = false;
 }
 
 CGameMatch::~CGameMatch()
@@ -309,8 +311,11 @@ void CGameMatch::OnKillEvent(IUser* user, GameMatch_KillEvent& killEvent)
 		}
 	}
 
+	return;
+	// No longer need
 	// TODO: rewrite
 	// random gachapon item for each 100 kills
+
 	CUserCharacterExtended character = {};
 	character.flag = EXT_UFLAG_KILLSTOGETGACHAPONITEM;
 	g_UserDatabase.GetCharacterExtended(user->GetID(), character);
@@ -392,6 +397,7 @@ void CGameMatch::OnDropBoxPickup(IUser* user, int rewardID)
 	if (!stat)
 		return;
 
+//unnessary
 #ifndef PUBLIC_RELEASE
 	if (m_nGameMode != 15 && m_nGameMode != 17 && m_nGameMode != 26 && m_nGameMode != 28)
 	{
@@ -405,6 +411,10 @@ void CGameMatch::OnDropBoxPickup(IUser* user, int rewardID)
 		return;
 	}
 #endif	
+	if (m_nGameMode == GAMEMODE_ZOMBI_SURVIVAL) {
+		rewardID = ChangeRewardOnZSDifficulty(rewardID);
+	}
+	
 	RewardNotice notice = g_ItemManager.GiveReward(user->GetID(), user, rewardID, 0, true, 0);
 	if (notice.status)
 		g_PacketManager.SendUMsgSystemReply(user->GetExtendedSocket(), SystemReply_Red, OBFUSCATE("EVT_SCENARIO_ITEM_POINT_REWARD"), vector<string> {to_string(notice.points)});
@@ -433,7 +443,7 @@ void CGameMatch::OnGameMatchEnd()
 	CalculateGameResult();
 	ApplyGameResult();
 
-	Logger().Info("CGameMatch::OnGameMatchEnd: gamemode: %d, CT rounds win count: %d, T rounds win count: %d\n", m_nGameMode, m_nCtWinCount, m_nTerWinCount);
+	//Logger().Info("CGameMatch::OnGameMatchEnd: gamemode: %d, CT rounds win count: %d, T rounds win count: %d\n", m_nGameMode, m_nCtWinCount, m_nTerWinCount);
 }
 
 int CGameMatch::GetExpCoefficient()
@@ -490,6 +500,8 @@ bool CGameMatch::IsZombieMode()
 	case 9:
 	case 14:
 	case 29:
+	case 45:
+	case 54:
 		return true;
 	};
 
@@ -533,19 +545,129 @@ void CGameMatch::CalculateGameResult()
 
 	int expCoef = GetExpCoefficient();
 	int pointsCoef = GetPointsCoefficient();
-
+	int isSuper = m_pParentRoom->GetSettings()->superRoom;
+	Logger().Debug("Match ended at room %d\n", m_pParentRoom->GetID());
+	Logger().Debug("========================================================\n");
+	Logger().Debug("Gamemode: %d\n", m_nGameMode);
 	for (auto stat : m_UserStats)
 	{
 		IUser* user = stat->m_pUser;
 
-		// calc exp
-		stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills : expCoef;
+		Logger().Debug("UserID: %d\n", stat->m_pUser->GetID());
+		Logger().Debug("Kills: %d\n", stat->m_nKills);
+		Logger().Debug("Deaths: %d\n", stat->m_nDeaths);
+		Logger().Debug("Score: %d\n", stat->m_nScore);
+		Logger().Debug("Bot Setting: %d\n", m_pParentRoom->GetSettings()->botDifficulty);
 
-		// calc points
-		stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills : pointsCoef;
+		int playerTeamRounds; int enemyTeamRounds; double botDifficultyCoef; double winnerCoef;
+		switch (m_nGameMode) {
+		case 2:
+		case 6:
+		case 7:
+		case 23:
+		case 0:
+			// For modes where you have 2 teams (No bots)
+			playerTeamRounds = user->GetRoomData()->m_Team == 2 ? m_nCtWinCount : m_nTerWinCount;
+			enemyTeamRounds = user->GetRoomData()->m_Team == 2 ? m_nTerWinCount : m_nCtWinCount;
+			winnerCoef = 1.0;
+			if (enemyTeamRounds > playerTeamRounds) {
+				winnerCoef = 0.5;
+			}
+			else if (enemyTeamRounds == playerTeamRounds) {
+				winnerCoef = 0.75;
+			}
+			stat->m_nExpEarned = ((stat->m_nKills + playerTeamRounds) * expCoef * winnerCoef);
+			stat->m_nPointsEarned = ((stat->m_nKills + playerTeamRounds) * pointsCoef * winnerCoef);
+			break;
+		case 3:
+			// For modes where you have 2 teams and bots (Bot Original)
+			playerTeamRounds = user->GetRoomData()->m_Team == 2 ? m_nCtWinCount : m_nTerWinCount;
+			enemyTeamRounds = user->GetRoomData()->m_Team == 2 ? m_nTerWinCount : m_nCtWinCount;
+			winnerCoef = 1.0;
+			if (enemyTeamRounds > playerTeamRounds) {
+				winnerCoef = 0.5;
+			}
+			else if (enemyTeamRounds == playerTeamRounds) {
+				winnerCoef = 0.75;
+			}
+			botDifficultyCoef = 0.2 + m_pParentRoom->GetSettings()->botDifficulty * 0.2;
+			stat->m_nExpEarned = ((stat->m_nKills + playerTeamRounds) * expCoef * winnerCoef * botDifficultyCoef);
+			stat->m_nPointsEarned = ((stat->m_nKills + playerTeamRounds) * pointsCoef * winnerCoef * botDifficultyCoef);
+			break;
+		case 4:
+			// For Bot Deathmatch 
+			botDifficultyCoef = 0.2 + m_pParentRoom->GetSettings()->botDifficulty * 0.2;
+			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * botDifficultyCoef : expCoef;
+			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * botDifficultyCoef : pointsCoef;
+			break;
+		case 5:
+			// For Bot Team Deathmatch 
+			playerTeamRounds = user->GetRoomData()->m_Team == 2 ? m_nCtWinCount : m_nTerWinCount;
+			enemyTeamRounds = user->GetRoomData()->m_Team == 2 ? m_nTerWinCount : m_nCtWinCount;
+			winnerCoef = 1.0;
+			if (enemyTeamRounds > playerTeamRounds) {
+				winnerCoef = 0.5;
+			}
+			else if (enemyTeamRounds == playerTeamRounds) {
+				winnerCoef = 0.75;
+			}
+			botDifficultyCoef = 0.2 + m_pParentRoom->GetSettings()->botDifficulty * 0.2;
+			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * winnerCoef * botDifficultyCoef : expCoef;
+			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * winnerCoef * botDifficultyCoef : pointsCoef;
+			break;
+		case 1:
+		case 22:
+			// Gun Deathmatch and modes with 1st place winner
+			// need test
+			if (m_nFirstPlaceUserId == user->GetID()) {
+				winnerCoef = 1;
+			} else {
+				winnerCoef = 0.5;
+			}
+			botDifficultyCoef = 1.0;
+			if (m_pParentRoom->GetSettings()->botAdd == 1) {
+				botDifficultyCoef = 0.5 + m_pParentRoom->GetSettings()->botDifficulty * 0.5;
+			}
+			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * botDifficultyCoef * winnerCoef : expCoef;
+			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * botDifficultyCoef * winnerCoef : pointsCoef;
+			break;
+		case 24:
+			//Bot zombie
+			botDifficultyCoef = 0.5 + m_pParentRoom->GetSettings()->botDifficulty * 0.25;
+			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * botDifficultyCoef : expCoef;
+			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * botDifficultyCoef : pointsCoef;
+			break;
+		case 45:
+		case 14:
+			//Zombie Hero and Zombie Z
+			botDifficultyCoef = 1.0;
+			if (m_pParentRoom->GetSettings()->botAdd == 1) {
+				botDifficultyCoef = 1.0 + m_pParentRoom->GetSettings()->botDifficulty * 0.25;
+			}
+			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * botDifficultyCoef : expCoef;
+			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * botDifficultyCoef : pointsCoef;
+			break;
+		case 15:
+			//Zombie scenario
+			botDifficultyCoef = 0.5;
+			if (m_nZbsWin) {
+				botDifficultyCoef = GetZSDifficultyCoef(m_pParentRoom->GetSettings()->zsDifficulty);
+			}
+			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * botDifficultyCoef : expCoef;
+			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * botDifficultyCoef : pointsCoef;
+			break;
+		default:
+			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills : expCoef;
+			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills : pointsCoef;
+			break;
+		}
+		Logger().Debug("XP Earned: %d\n", stat->m_nExpEarned);
+		Logger().Debug("Points Earned: %d\n", stat->m_nPointsEarned);
 
 		// calc bonus exp/points
-		auto bonusPercentageClass = find_if(g_pServerConfig->gameMatch.bonusPercentageClasses.begin(), g_pServerConfig->gameMatch.bonusPercentageClasses.end(),
+		// not works correct if you was zombie at the end of the match
+		
+		/*auto bonusPercentageClass = find_if(g_pServerConfig->gameMatch.bonusPercentageClasses.begin(), g_pServerConfig->gameMatch.bonusPercentageClasses.end(),
 			[stat](const BonusPercentage_s& bonus) { return bonus.itemID == stat->m_nClassItemID; });
 		if (bonusPercentageClass != g_pServerConfig->gameMatch.bonusPercentageClasses.end())
 		{
@@ -559,28 +681,31 @@ void CGameMatch::CalculateGameResult()
 				stat->m_nClassBonusExp += bonus.exp;
 				stat->m_nClassBonusPoints += bonus.points;
 			}
-		}
-
-		/*for (auto bonusItem : g_pServerConfig->bonusPercentageClasses)
-		{
-			if (bonusItem.itemID == stat->m_nClassItemID)
-			{
-				vector<CUserInventoryItem*> items = user->GetData()->inventory->GetItemsByItemId(bonusItem.itemID);
-				for (auto item : items)
-				{
-					if (item->m_nInUse && item->m_nStatus)
-					{
-						stat->m_nBonusExpEarned += stat->m_nExpEarned * bonusItem.exp / 100;
-						stat->m_nBonusPointsEarned += stat->m_nPointsEarned * bonusItem.points / 100;
-						stat->m_nItemBonusExp += bonusItem.exp;
-						stat->m_nItemBonusPoints += bonusItem.points;
-						break;
-					}
-				}
-			}
 		}*/
 
+		Logger().Debug("Bonus Class XP Earned: %d\n", stat->m_nBonusExpEarned);
+		Logger().Debug("Bonus Class Points Earned: %d\n", stat->m_nBonusPointsEarned);
+		int bonusExpClass = stat->m_nBonusExpEarned;
+		int bonusPointsClass = stat->m_nBonusPointsEarned;
+
+		// Get bonus for every active item with bonus xp and points
+		for (auto bonusItem : g_pServerConfig->gameMatch.bonusPercentageItems)
+		{
+			//Logger().Debug("Bonus Item %d with %d exp and %d points\n", bonusItem.itemID, bonusItem.exp, bonusItem.points);
+			CUserInventoryItem item;
+			g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), bonusItem.itemID, item);
+			if (item.m_nItemID)
+			{
+				//Logger().Debug("Yes we have that item, trying to add %d exp and %d points\n", stat->m_nExpEarned * bonusItem.exp / 100, stat->m_nPointsEarned * bonusItem.points / 100);
+				stat->m_nBonusExpEarned += stat->m_nExpEarned * bonusItem.exp / 100;
+				stat->m_nBonusPointsEarned += stat->m_nPointsEarned * bonusItem.points / 100;
+			}
+		}
+
+		
+
 		ServerConfigGameMatch_s gameMatch = g_pServerConfig->gameMatch;
+
 
 		// bonus for players
 		if (m_UserStats.size() >= 2)
@@ -601,15 +726,29 @@ void CGameMatch::CalculateGameResult()
 			}
 		}
 
-		if (stat->m_nExpEarned > 9999)
-		{
-			stat->m_nExpEarned = 9999;
+		//Also if we have premium room we need to add other users 10% if they don't have premium
+		if (isSuper == 1) {
+			CUserInventoryItem item;
+			g_UserDatabase.GetFirstActiveItemByItemID(user->GetID(), 8357, item);
+			if (!item.m_nItemID) {
+				stat->m_nBonusExpEarned += stat->m_nExpEarned * 10 / 100;
+				stat->m_nBonusPointsEarned += stat->m_nPointsEarned * 10 / 100;
+			}
 		}
-		if (stat->m_nPointsEarned > 9999)
-		{
-			stat->m_nPointsEarned = 9999;
-		}
+
+		Logger().Debug("Bonus Item XP Earned: %d\n", stat->m_nBonusExpEarned - bonusExpClass);
+		Logger().Debug("Bonus Item Points Earned: %d\n\n", stat->m_nBonusPointsEarned - bonusPointsClass);
+
+		//if (stat->m_nExpEarned > 9999)
+		//{
+		//	stat->m_nExpEarned = 9999;
+		//}
+		//if (stat->m_nPointsEarned > 9999)
+		//{
+		//	stat->m_nPointsEarned = 9999;
+		//}
 	}
+	Logger().Debug("========================================================\n");
 }
 
 void CGameMatch::ApplyGameResult()
@@ -699,12 +838,110 @@ int GetZbsMapSeason(int mapID)
 
 void CGameMatch::OnZBSWin()
 {
+	m_nZbsWin = true;
+	int difficulty = m_pParentRoom->GetSettings()->zsDifficulty;
 	for (auto stat : m_UserStats)
 	{
-		int rewardID = stat->m_nRank <= 3 ? 100 + stat->m_nRank : 100 + stat->m_nRank + GetZbsMapSeason(m_nMapID) - 1;
+		
+		int rewardID = 3950;	// Easy
+		switch (difficulty)
+		{
+		case 2:					// Normal
+			rewardID = 3951;
+			break;
+		case 3:					// Hard
+			rewardID = 2526;
+			break;
+		case 4:					// Very Hard
+			rewardID = 2527;
+			break;
+		case 5:					// Hell
+			rewardID = 2528;
+			break;
+		case 6:					// Inferno
+			rewardID = 3954;
+			break;
+		}
+		//int rewardID = stat->m_nRank <= 3 ? 100 + stat->m_nRank : 100 + stat->m_nRank + GetZbsMapSeason(m_nMapID) - 1;
 
 		Logger().Info(OBFUSCATE("CGameMatch::OnZBSWin: rank: %d, rewardID: %d\n"), stat->m_nRank, rewardID);
+		
+		
 
-		g_ItemManager.GiveReward(stat->m_pUser->GetID(), stat->m_pUser, rewardID, 0, false, 0);
+		g_ItemManager.AddItem(stat->m_pUser->GetID(), stat->m_pUser, rewardID, 1, 0);
+
+		
+
+		// send notification about new item
+		RewardItem rewardItem;
+		rewardItem.itemID = rewardID;
+		rewardItem.count = 1;
+		rewardItem.duration = 0;
+
+		RewardNotice rewardNotice;
+		rewardNotice.status = true;
+		rewardNotice.rewardId = 1;
+		rewardNotice.exp = 0;
+		rewardNotice.points = 0;
+		rewardNotice.honorPoints = 0;
+		rewardNotice.items.push_back(rewardItem);
+
+		//Prize from elites
+		for (int i = 0; i < stat->m_nElites; i++) {
+			RewardNotice notice = g_ItemManager.GiveReward(stat->m_pUser->GetID(), stat->m_pUser, 3050, 0, true);
+			for (auto item : notice.items) {
+				//rewardNotice.items.push_back(item);
+				rewardNotice += notice;
+			}
+		}
+
+		if (rewardNotice.status) {
+			g_PacketManager.SendUMsgRewardNotice(stat->m_pUser->GetExtendedSocket(), rewardNotice, "QUEST_REWARD_TITLE", "QUEST_REWARD_MSG", true);
+
+			if (stat->m_pUser->IsPlaying())
+				g_PacketManager.SendUMsgRewardNotice(stat->m_pUser->GetExtendedSocket(), rewardNotice, "QUEST_REWARD_TITLE", "QUEST_REWARD_MSG", true, true);
+		}
 	}
+}
+
+int CGameMatch::ChangeRewardOnZSDifficulty(int rewardID) {
+	int difficulty = m_pParentRoom->GetSettings()->zsDifficulty;
+	// Change to Easy reward
+	if (difficulty < 3) {
+		switch (rewardID) {
+		case 3000:
+		case 3001:
+		case 3002:
+			return rewardID + 7;
+		}
+	}
+	// Change to Hard reward
+	else if (difficulty > 3) {
+		switch (rewardID) {
+		case 3000:
+		case 3001:
+		case 3002:
+			return rewardID + 3;
+		}
+	}
+	// Stay in normal
+	return rewardID;
+}
+
+double CGameMatch::GetZSDifficultyCoef(int difficulty) {
+	switch (difficulty) {
+		case 1:
+			return 0.5;
+		case 2:
+			return 1.0;
+		case 3:
+			return 1.5;
+		case 4:
+			return 2.0;
+		case 5:
+			return 3.0;
+		case 6:
+			return 4.0;
+	}
+	return 1.0;
 }

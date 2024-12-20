@@ -101,6 +101,7 @@ bool CServerInstance::Init()
 	}
 
 	Logger().Info("Server starts listening. Server developers: Jusic, Hardee, NekoMeow, Smilex_Gamer, xRiseless. Thx to Ochii for CSO2 server.\nFor more information visit discord.gg/EvUAY6D\n");
+	Logger().Info("Modded by larn503, github page: github.com/larn503/CSNZ_Server\n");
 	Logger().Info("Server build: %s, %s\n", build_number(),
 #ifdef PUBLIC_RELEASE
 		"Public Release");
