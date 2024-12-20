@@ -1,7 +1,11 @@
 # About
 This is modified fork for JusicP's CSNZ server made for solo and online play with economic and progression. The main purpose of this project is to create a fully playable CSNZ(CSN) experience with replayability. If you just want to test and play with all new guns, i recommend to use [original repo for this](https://github.com/JusicP/CSNZ_Server).  
-Don't use it for commercial purposes.  
+Still work in progress. Balance can change over time. If you find any server bugs or crashes, feel free to create issue.  
+  
+**Don't use it for commercial purposes.**  
+  
 **Only for 29.11.24 Build Game**. Go to [Download Section](#download-and-installation) to see how to install it.   
+
 
 # Download and installation
 You need to have a specific version of the client. Newest clients are not supported.
