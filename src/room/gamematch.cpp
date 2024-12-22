@@ -633,16 +633,17 @@ void CGameMatch::CalculateGameResult()
 			break;
 		case 24:
 			//Bot zombie
-			botDifficultyCoef = 0.5 + m_pParentRoom->GetSettings()->botDifficulty * 0.25;
+			botDifficultyCoef = 0.125 + m_pParentRoom->GetSettings()->botDifficulty * 0.125;
 			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * botDifficultyCoef : expCoef;
 			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * botDifficultyCoef : pointsCoef;
 			break;
 		case 45:
+		case 54:
 		case 14:
 			//Zombie Hero and Zombie Z
 			botDifficultyCoef = 1.0;
 			if (m_pParentRoom->GetSettings()->botAdd == 1) {
-				botDifficultyCoef = 1.0 + m_pParentRoom->GetSettings()->botDifficulty * 0.25;
+				botDifficultyCoef = 1.0 + m_pParentRoom->GetSettings()->botDifficulty * 0.1;
 			}
 			stat->m_nExpEarned = stat->m_nKills > 0 ? expCoef * stat->m_nKills * botDifficultyCoef : expCoef;
 			stat->m_nPointsEarned = stat->m_nKills > 0 ? pointsCoef * stat->m_nKills * botDifficultyCoef : pointsCoef;
