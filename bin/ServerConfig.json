@@ -427,28 +427,28 @@
 		"CalcResults": {
 			"GameModeCoefficient": {
 				"0": {
-					"Exp": 100,
-					"Points": 200
+					"Exp": 200,
+					"Points": 400
 				},
 				"1": {
-					"Exp": 100,
-					"Points": 200
+					"Exp": 50,
+					"Points": 100
 				},
 				"2": {
-					"Exp": 100,
-					"Points": 200
+					"Exp": 50,
+					"Points": 100
 				},
 				"3": {
-					"Exp": 100,
-					"Points": 200
+					"Exp": 200,
+					"Points": 400
 				},
 				"4": {
-					"Exp": 100,
-					"Points": 200
+					"Exp": 50,
+					"Points": 100
 				},
 				"5": {
-					"Exp": 100,
-					"Points": 200
+					"Exp": 50,
+					"Points": 100
 				},
 				"8": {
 					"Exp": 80,
@@ -507,8 +507,8 @@
 					"Points": 270
 				},
 				"25": {
-					"Exp": 100,
-					"Points": 200
+					"Exp": 50,
+					"Points": 120
 				},
 				"26": {
 					"Exp": 20,
@@ -527,7 +527,11 @@
 					"Points": 50
 				},
 				"45": {
-					"Exp": 100,
+					"Exp": 50,
+					"Points": 150
+				},
+				"54": {
+					"Exp": 50,
 					"Points": 150
 				}
 			},
