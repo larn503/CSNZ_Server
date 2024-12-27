@@ -63,6 +63,7 @@ After some time you are going to get more and more points and it will be easier 
 * Uncapped point and experience. You can get as many as you want in single game.
 * /setprefix <prefixId> command to set any prefix you want.
 * Removed any broken weapons from pool (that cause crashes or not working at all, like some new weapons.). Some of them still have broken modes, but they are still playable.
+* Restored parts combination
 
 ## Bug fixes
 * Fixed win and rounds calculation.
