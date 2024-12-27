@@ -741,7 +741,7 @@ int CItemManager::AddItem(int userID, IUser* user, int itemID, int count, int du
 	int useType = g_pItemTable->GetCell<int>(OBFUSCATE("UseType"), to_string(itemID));
 	int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 	// countable items with use button
-	if ((category == 9 && (useType == 0 || useType == 1 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
+	if (category == 13 || (category == 9 && (useType == 0 || useType == 1 || useType == 2)) || (category == 8 && (useType == 0 || useType == 2)))
 	{
 		vector<CUserInventoryItem> items;
 		if (itemWithSameID.m_nItemID)
@@ -1110,7 +1110,6 @@ int CItemManager::AddItems(int userID, IUser* user, vector<RewardItem>& items)
 
 			continue;
 		}
-
 		string className = g_pItemTable->GetCell<string>("ClassName", to_string(itemID));
 		if (category == 12 || className == "Tattoo")
 		{
@@ -2711,6 +2710,83 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 		OnItemUse(user, part);
 
 		g_PacketManager.SendItemPartCheck(user->GetExtendedSocket(), weaponSlot, partSlot);
+		break;
+	}
+	case 3:	// combine parts
+	{
+		int size = msg->ReadUInt8();
+		vector<int> partsSlots;
+		int level;
+		int chance = size * 20;
+		// Get Items
+		for (int i = 0; i < size; i++) {
+			int slotId = msg->ReadUInt16();
+			//Logger().Info("pos: %d, id: %d\n", i, slotId);
+			if (slotId == 0) {
+				return false;
+			}
+			// Get Level
+			if (i == 0) {
+				CUserInventoryItem part;
+				g_UserDatabase.GetInventoryItemBySlot(user->GetID(), part.GameSlotToSlot(slotId), part);
+				if (part.m_nItemID > 4600) {
+					level = 5;
+				}
+				else {
+					level = (part.m_nItemID - 1) % 5 + 1;
+				}
+			}
+			
+			partsSlots.push_back(slotId);
+		}
+		// Remove used parts
+		for (auto& partSlot : partsSlots) {
+			CUserInventoryItem part;
+			g_UserDatabase.GetInventoryItemBySlot(user->GetID(), part.GameSlotToSlot(partSlot), part);
+			if (part.m_nCount <= 0) {
+				Logger().Warn("CItemManager::OnPartEquipRequest - item not exist\n");
+				return true;
+			}
+			vector<CUserInventoryItem> items;
+			if (part.m_nCount > 1) {
+				part.m_nCount -= 1;
+				
+				part.PushItem(items, part);
+				g_UserDatabase.UpdateInventoryItem(user->GetID(), part, UITEM_FLAG_COUNT);
+				g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
+			}
+			else {
+				part.PushItem(items, part);
+				g_ItemManager.RemoveItem(user->GetID(), user, part);
+				g_PacketManager.SendInventoryRemove(user->GetExtendedSocket(), items);
+			}
+		}
+		
+		// Add reward
+		bool isSuccess = false;
+		int rewardId;
+		RewardNotice reward;
+		if (yesOrNo(chance)) {
+			isSuccess = true;
+			rewardId = 4200 + level + 1;
+		}
+		else {
+			rewardId = 4200 + level;
+		}
+		reward = g_ItemManager.GiveReward(user->GetID(), user, rewardId, 0, true);
+		if (reward.items.size() == 0) {
+			Logger().Warn("CItemManager::OnPartEquipRequest - Error in getting reward item. Check itemReward for %d id\n", rewardId);
+			return true;
+		}
+		
+		// Send message
+		CUserInventoryItem item;
+		g_UserDatabase.GetFirstItemByItemID(user->GetID(), reward.items[0].itemID, item);
+		vector<CUserInventoryItem> items;
+		item.PushItem(items, item);
+		g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
+		g_PacketManager.SendItemPartFinished(user->GetExtendedSocket(), item.GetGameSlot(), isSuccess);
+		return true;
 		break;
 	}
 	default:

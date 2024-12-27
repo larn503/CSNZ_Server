@@ -137,6 +137,7 @@ public:
 	void SendItemEnhanceResult(IExtendedSocket* socket, const EnhResult& result);
 	void SendItemWeaponPaintReply(IExtendedSocket* socket);
 	void SendItemPartCheck(IExtendedSocket* socket, int slot, int partNum);
+	void SendItemPartFinished(IExtendedSocket* socket, int slotId, bool isSuccess);
 	void SendItemGachapon(IExtendedSocket* socket, int gachaponItem);
 
 	void SendLobbyJoin(IExtendedSocket* socket, CChannel* channel);

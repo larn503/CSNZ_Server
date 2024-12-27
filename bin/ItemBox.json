@@ -66,7 +66,7 @@
 			{
 				"Grade": 3,
 				"Duration": [-1],
-				"Items": [2620,2574,9084,957]
+				"Items": [2620,2204,9084,957]
 			},
 			"20": // Good decoders
 			{
@@ -98,13 +98,13 @@
 				"Duration":	[0],
 				"Items": [258]
 			},
-			"20":
+			"18":
 			{
 				"Grade": 2,
 				"Duration":	[0],
 				"Items": [259,260]
 			},
-			"3": {	// Round retry kinda op, it's should be rare
+			"5": {	// Round retry kinda op, it's should be rare
 				"Grade": 2,
 				"Duration":	[0],
 				"Items": [300]

@@ -1734,6 +1734,19 @@ void CPacketManager::SendItemPartCheck(IExtendedSocket* socket, int slot, int pa
 	socket->Send(msg);
 }
 
+void CPacketManager::SendItemPartFinished(IExtendedSocket* socket, int slotId, bool isSuccess)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Item);
+	msg->BuildHeader();
+
+	msg->WriteUInt8(21);
+	msg->WriteUInt8(isSuccess ? 6 : 7);
+	msg->WriteUInt16(slotId);	// idk why it's not working.
+	msg->WriteString("PARTS_SYSTEM_ERROR0");
+
+	socket->Send(msg);
+}
+
 void CPacketManager::SendItemGachapon(IExtendedSocket* socket, int gachaponItem)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Item);

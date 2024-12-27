@@ -43,7 +43,7 @@
 		"Unk49": true,
 		"PPSystem": true,
 		"CodisData": true,
-		"Item": false,
+		"Item": true,
 		"WeaponProp": true,
 		"Hash": false,
 		"RandomWeaponList": true,
