@@ -1608,6 +1608,9 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 	if (className == "LobbyBG")
 	{
+		if (user == NULL) {
+			return false;
+		}
 		CUserCharacter character = user->GetCharacter(UFLAG_LOW_NAMEPLATE);
 		if (character.lowFlag == 0)
 		{
