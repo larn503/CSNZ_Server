@@ -4,14 +4,14 @@ Still work in progress. Balance can change over time. If you find any server bug
   
 **Don't use it for commercial purposes.**  
   
-**Only for 29.11.24 Build Game**. Go to [Download Section](#download-and-installation) to see how to install it.   
+**Only for 14.11.24 Build Game**. Go to [Download Section](#download-and-installation) to see how to install it.   
 
 
 # Download and installation
 You need to have a specific version of the client. Newest clients are not supported.
 1. Download a supported client
     1. Run Steam and open a console. To open the console type `steam://open/console` in a browser url
-    2. Type in the steam console: `download_depot 273110 273111 493173891445608967`
+    2. Type in the steam console: `download_depot 273110 273111 2113215412718188668`
     3. Wait for a download. This can take a while
     4. Now you can find the game client in steam folder: `C:\Program Files (x86)\Steam\steamapps\content\app_273110`
 2. Download the latest server release. [You can find it here](https://github.com/larn503/CSNZ_Server/releases)
